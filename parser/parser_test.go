@@ -151,6 +151,85 @@ func TestParseDocument(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:  "tripe nested strong",
+			input: "*Go *down *below *there***",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Strong{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Go ",
+									},
+								},
+							},
+							&node.Text{
+								Value: "down ",
+							},
+							&node.Strong{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "below ",
+									},
+								},
+							},
+							&node.Text{
+								Value: "there",
+							},
+							&node.Strong{},
+							&node.Strong{},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "intraword emphasis",
+			input: "s_E_pt_E_mb_E_r",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "s",
+							},
+							&node.Emphasis{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "E",
+									},
+								},
+							},
+							&node.Text{
+								Value: "pt",
+							},
+							&node.Emphasis{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "E",
+									},
+								},
+							},
+							&node.Text{
+								Value: "mb",
+							},
+							&node.Emphasis{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "E",
+									},
+								},
+							},
+							&node.Text{
+								Value: "r",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {

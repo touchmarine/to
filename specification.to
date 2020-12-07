@@ -1,0 +1,132 @@
+= Touch Markup (To) Specification
+
+## Introduction
+
+Touch Markup (To) is a lightweight markup language. It uses punctuation characters to inscribe meaning to otherwise plain text.
+
+The grammar is simple to parse, allowing for easy tooling.
+
+### Design Philosophy
+
+_This section is non-normative._
+
+To is designed to be readable and collaborative. It provides features necessary for most writing work without having to resort to other tools. Notations are simple for humans and computers.
+
+One way to do one thing---To does not allow multiple notations to represent one element.
+
+No modifiers---Modifiers, in whatever form, are not allowed.
+
+Considerate---Use notations for their known meaning and reserve common notations for other tools.
+
+Consistent---Simple rules without exceptions.
+
+Dependable---Release a stable version and promise backward compatibility whenever first possible.
+
+Portable---Available across multiple tools and platforms.
+
+## Conformance Requirements
+
+The keywords “MUST”, “MUST NOT”, “REQUIRED”, “SHALL”, “SHALL NOT”, “SHOULD”, “SHOULD NOT”, “RECOMMENDED”, “MAY”, and “OPTIONAL” in this document are to be interpreted as described in <BCP 14><https://tools.ietf.org/html/bcp14> [<RFC 2119><https://tools.ietf.org/html/rfc2119>], [<RFC 8174><https://tools.ietf.org/html/rfc8174>] when, and only when, they appear in all capitals as shown here.
+
+Requirements phrased in the imperative as part of algorithms (such as “strip any leading space characters” or “return false and abort these steps”) are to be interpreted with the meaning of the keyword (“MUST”, “SHOULD”, “MAY”, etc.) used in introducing the algorithm.
+
+Conformance requirements phrased as algorithms or specific steps MAY be implemented in any manner, so long as the end result is equivalent. (In particular, the algorithms defined in this specification are intended to be easy to follow and not intended to be performant.)
+
+## Terminology
+
+: EOL
+    End of line. Represented as <EOL> in examples.
+
+: EOF
+    End of file. Represented as <EOF> in examples. Note that EOF is not a character, it only indicates no more data.
+
+## Notational Conventions
+
+The syntax is specified using Augmented Backus---Naur Form (ANBF) as described in <RFC 5234><https://tools.ietf.org/html/rfc5234> and <RFC 7405><https://tools.ietf.org/html/rfc7405>.
+
+## Source Code Representation
+
+To uses <US-ASCII><https://en.wikipedia.org/wiki/ASCII> character encoding. Source code should be <Unicode><https://en.wikipedia.org/wiki/Unicode> text encoded in <UTF-8><https://en.wikipedia.org/wiki/UTF-8>.
+
+Any sequence of characters is a valid To document.
+
+// The US-ASCII NUL character with hex value 00 (Unicode point U+0000) may be disallowed or replaced for security reasons and compatibility with other tools.
+// 
+// UTF-8-encoded byte order mark (U+FEFF) may be ignored if it is the first Unicode point in the source text for compatibility with other tools. A byte order mark may be disallowed anywhere else in the source.
+
+### Characters
+
+EOL is the US-ASCII line feed (LF) character with hex value 0A (Unicode point U+000A).
+
+## Syntax
+
+There are three notation categories:
+- inline
+- line
+- block
+
+Inline notation spans from the opening delimiter to the closing delimiter, EOL, or EOF, whichever comes first.
+
+``to
+Tibsey is a *friendly coala*
+Tibsey is a *friendly coala<EOL>
+Tibsey is a *friendly coala<EOF>
+``
+
+Line notation spans from the opening delimiter to the EOL or EOF, whichever comes first.
+
+``to
+// comments never hurt anyone<EOL>
+- list // a list item<EOF>
+``
+
+Block notation spans contiguous line notations, often till a blank line or a new block.
+
+``to
+This paragraph
+ends on the next line,
+because of a blank line below.
+
+And this paragraph
+ends on the next line,
+because of a list below.
+- milk
+``
+
+### Text
+
+``
+
+### Emphasis
+
+Emphasis represents stress or emphasis. Use it only if its absence would change the meaning of the content. Do not use it to convey importance, use strong for that.
+
+``to
+Tibsey is a _coala_.
+``
+
+| Notation category          | inline       |
+| Permitted content category | inline, line |
+
+Emphasis starts with an underscore, followed by optional occurrences of strong or text, and stops at an underscore, EOL, or EOF.
+
+``abnf
+emphasis = "_" *(strong / text) ("_" / LF)
+``
+
+### Strong
+
+Strong represents importance, seriousness, or urgency. Use it only if its absence would change the meaning of the content. Do not use it to convey stress or emphasis, use emphasis for that.
+
+``to
+Climb *faster* Tibsey.
+``
+
+| Notation category          | inline       |
+| Permitted content category | inline, line |
+
+Strong starts with an asterisk, followed by optional occurrences of emphasis or text, and stops at an asterisk, EOL, or EOF.
+
+``abnf
+strong = "*" *(emphasis / text) ("*" / LF)
+``
