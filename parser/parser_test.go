@@ -13,24 +13,54 @@ func TestParseDocument(t *testing.T) {
 		doc   *node.Document
 	}{
 		{
-			name:  "emphasis",
-			input: "Touch Markup is a _simple_ markup language.",
+			name:  "underscore",
+			input: "Tibsey is a _coala_.",
 			doc: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
 							&node.Text{
-								Value: "Touch Markup is a ",
+								Value: "Tibsey is a _coala_.",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "emphasis",
+			input: "Tibsey is a __coala__.",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Tibsey is a ",
 							},
 							&node.Emphasis{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "simple",
+										Value: "coala",
 									},
 								},
 							},
 							&node.Text{
-								Value: " markup language.",
+								Value: ".",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "asterisk",
+			input: "Climb *faster* Tibsey.",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Climb *faster* Tibsey.",
 							},
 						},
 					},
@@ -39,23 +69,23 @@ func TestParseDocument(t *testing.T) {
 		},
 		{
 			name:  "strong",
-			input: "Touch Markup is a *simple* markup language.",
+			input: "Climb **faster** Tibsey.",
 			doc: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
 							&node.Text{
-								Value: "Touch Markup is a ",
+								Value: "Climb ",
 							},
 							&node.Strong{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "simple",
+										Value: "faster",
 									},
 								},
 							},
 							&node.Text{
-								Value: " markup language.",
+								Value: " Tibsey.",
 							},
 						},
 					},
@@ -63,28 +93,50 @@ func TestParseDocument(t *testing.T) {
 			},
 		},
 		{
-			name:  "unterminated nested emphasis",
-			input: "Touch Markup is a *_simple* markup language.",
+			name:  "unterminated emphasis",
+			input: "Tibsey is a __coala.",
 			doc: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
 							&node.Text{
-								Value: "Touch Markup is a ",
+								Value: "Tibsey is a ",
+							},
+							&node.Emphasis{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "coala.",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "unterminated emphasis in strong",
+			input: "Tibsey is a **__coala**.",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Tibsey is a ",
 							},
 							&node.Strong{
 								Children: []node.Inline{
 									&node.Emphasis{
 										Children: []node.Inline{
 											&node.Text{
-												Value: "simple",
+												Value: "coala",
 											},
 										},
 									},
 								},
 							},
 							&node.Text{
-								Value: " markup language.",
+								Value: ".",
 							},
 						},
 					},
@@ -93,27 +145,27 @@ func TestParseDocument(t *testing.T) {
 		},
 		{
 			name:  "nested emphasis in strong",
-			input: "Touch Markup is a *_simple_* markup language.",
+			input: "YEAH **__YEAH__** YEAH",
 			doc: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
 							&node.Text{
-								Value: "Touch Markup is a ",
+								Value: "YEAH ",
 							},
 							&node.Strong{
 								Children: []node.Inline{
 									&node.Emphasis{
 										Children: []node.Inline{
 											&node.Text{
-												Value: "simple",
+												Value: "YEAH",
 											},
 										},
 									},
 								},
 							},
 							&node.Text{
-								Value: " markup language.",
+								Value: " YEAH",
 							},
 						},
 					},
@@ -121,30 +173,24 @@ func TestParseDocument(t *testing.T) {
 			},
 		},
 		{
-			name:  "double nested strong",
-			input: "Touch Markup is a *_*simple*_* markup language.",
+			name:  "underscore in emphasis",
+			input: "A __under_score__ inside emphasis.",
 			doc: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
 							&node.Text{
-								Value: "Touch Markup is a ",
+								Value: "A ",
 							},
-							&node.Strong{
+							&node.Emphasis{
 								Children: []node.Inline{
-									&node.Emphasis{},
+									&node.Text{
+										Value: "under_score",
+									},
 								},
 							},
 							&node.Text{
-								Value: "simple",
-							},
-							&node.Strong{
-								Children: []node.Inline{
-									&node.Emphasis{},
-								},
-							},
-							&node.Text{
-								Value: " markup language.",
+								Value: " inside emphasis.",
 							},
 						},
 					},
@@ -152,34 +198,29 @@ func TestParseDocument(t *testing.T) {
 			},
 		},
 		{
-			name:  "tripe nested strong",
-			input: "*Go *down *below *there***",
+			name:  "underscore in nested emphasis",
+			input: "__Printer goes __brr_r__.__",
 			doc: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
-							&node.Strong{
+							&node.Emphasis{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "Go ",
+										Value: "Printer goes ",
 									},
 								},
 							},
 							&node.Text{
-								Value: "down ",
+								Value: "brr_r",
 							},
-							&node.Strong{
+							&node.Emphasis{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "below ",
+										Value: ".",
 									},
 								},
 							},
-							&node.Text{
-								Value: "there",
-							},
-							&node.Strong{},
-							&node.Strong{},
 						},
 					},
 				},
@@ -187,7 +228,7 @@ func TestParseDocument(t *testing.T) {
 		},
 		{
 			name:  "intraword emphasis",
-			input: "s_E_pt_E_mb_E_r",
+			input: "s__E__pt__E__mb__E__r",
 			doc: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{

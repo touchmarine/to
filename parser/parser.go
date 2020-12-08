@@ -94,15 +94,19 @@ func (p *Parser) parseInline(delims []byte) []node.Inline {
 	}
 
 	inline := []node.Inline{}
-	for !byteContains(delims, p.ch) && p.ch != '\n' && p.ch != 0 {
-		if trace {
-			p.print("p.ch=" + string(p.ch))
+	for p.ch != '\n' && p.ch != 0 {
+		if p.ch == p.peek() && byteContains(delims, p.ch) && byteContains(delims, p.peek()) {
+			break
 		}
 
-		switch p.ch {
-		case '_':
+		if trace {
+			p.print(fmt.Sprintf("p.ch=%s, p.peek()=%s", string(p.ch), string(p.peek())))
+		}
+
+		switch {
+		case p.ch == '_' && p.peek() == '_':
 			inline = append(inline, p.parseEmphasis(delims))
-		case '*':
+		case p.ch == '*' && p.peek() == '*':
 			inline = append(inline, p.parseStrong(delims))
 		default:
 			inline = append(inline, p.parseText())
@@ -118,13 +122,15 @@ func (p *Parser) parseInline(delims []byte) []node.Inline {
 	return inline
 }
 
-// parseEmphasis parses until a '_' and consumes it.
+// parseEmphasis parses until a '__' and consumes the closing delimiter.
 func (p *Parser) parseEmphasis(delims []byte) *node.Emphasis {
 	if trace {
 		defer p.trace("parseEmphasis")()
 	}
 
-	p.next() // eat opening '_'
+	// eat opening '__'
+	p.next()
+	p.next()
 
 	// no possible duplicates because parseInline returns on delim match
 	delims = append(delims, '_')
@@ -133,10 +139,15 @@ func (p *Parser) parseEmphasis(delims []byte) *node.Emphasis {
 		Children: p.parseInline(delims),
 	}
 
-	// eat closing delimiter ('_', EOL, EOF) if not other node's
-	// delimiter - so parent nodes are also closed
-	if p.ch == '_' || !isDelimiter(p.ch) {
+	// eat closing delimiter ('__', EOL, EOF) if not other node's delimiter - so
+	// parent nodes are also closed
+	if p.ch == '_' && p.peek() == '_' || !isDelimiter(p.ch) && !isDelimiter(p.peek()) {
 		p.next()
+
+		// eat both '_'
+		if p.ch == '_' {
+			p.next()
+		}
 	}
 
 	if trace {
@@ -146,13 +157,15 @@ func (p *Parser) parseEmphasis(delims []byte) *node.Emphasis {
 	return em
 }
 
-// parseStrong parses until a '*' and consumes it.
+// parseStrong parses until a '**' and consumes it.
 func (p *Parser) parseStrong(delims []byte) *node.Strong {
 	if trace {
 		defer p.trace("parseStrong")()
 	}
 
-	p.next() // eat opening '*'
+	// eat opening '**'
+	p.next()
+	p.next()
 
 	// no possible duplicates because parseInline returns on delim match
 	delims = append(delims, '*')
@@ -161,13 +174,15 @@ func (p *Parser) parseStrong(delims []byte) *node.Strong {
 		Children: p.parseInline(delims),
 	}
 
-	//if p.ch != '_' {
-	//	p.next() // eat closing character
-	//}
-	// eat closing delimiter ('*', EOL, EOF) if not other node's
-	// delimiter - so parent nodes are also closed
-	if p.ch == '*' || !isDelimiter(p.ch) {
+	// eat closing delimiter ('**', EOL, EOF) if not other node's delimiter - so
+	// parent nodes are also closed
+	if p.ch == '*' && p.peek() == '*' || !isDelimiter(p.ch) && !isDelimiter(p.peek()) {
 		p.next()
+
+		// eat both '*'
+		if p.ch == '*' {
+			p.next()
+		}
 	}
 
 	if trace {
@@ -184,7 +199,11 @@ func (p *Parser) parseText() *node.Text {
 	}
 
 	offs := p.offset
-	for !isDelimiter(p.ch) && p.ch != '\n' && p.ch != 0 {
+	for p.ch != '\n' && p.ch != 0 {
+		if p.ch == p.peek() && isDelimiter(p.ch) && isDelimiter(p.peek()) {
+			break
+		}
+
 		p.next()
 	}
 

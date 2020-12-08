@@ -8,7 +8,7 @@ The grammar is simple to parse, allowing for easy tooling.
 
 ### Design Philosophy
 
-_This section is non-normative._
+__This section is non-normative.__
 
 To is designed to be readable and collaborative. It provides features necessary for most writing work without having to resort to other tools. Notations are simple for humans and computers.
 
@@ -68,9 +68,9 @@ There are three notation categories:
 Inline notation spans from the opening delimiter to the closing delimiter, EOL, or EOF, whichever comes first.
 
 ``to
-Tibsey is a *friendly coala*
-Tibsey is a *friendly coala<EOL>
-Tibsey is a *friendly coala<EOF>
+Tibsey is a **friendly coala**
+Tibsey is a **friendly coala<EOL>
+Tibsey is a **friendly coala<EOF>
 ``
 
 Line notation spans from the opening delimiter to the EOL or EOF, whichever comes first.
@@ -93,25 +93,21 @@ because of a list below.
 - milk
 ``
 
-### Text
-
-``
-
 ### Emphasis
 
 Emphasis represents stress or emphasis. Use it only if its absence would change the meaning of the content. Do not use it to convey importance, use strong for that.
 
 ``to
-Tibsey is a _coala_.
+Tibsey is a __coala__.
 ``
 
 | Notation category          | inline       |
 | Permitted content category | inline, line |
 
-Emphasis starts with an underscore, followed by optional occurrences of strong or text, and stops at an underscore, EOL, or EOF.
+Emphasis starts with a double underscore, followed by optional occurrences of strong or text, and stops at a double underscore, EOL, or EOF.
 
 ``abnf
-emphasis = "_" *(strong / text) ("_" / LF)
+emphasis = "__" *(strong / text) ("__" / LF)
 ``
 
 ### Strong
@@ -119,14 +115,14 @@ emphasis = "_" *(strong / text) ("_" / LF)
 Strong represents importance, seriousness, or urgency. Use it only if its absence would change the meaning of the content. Do not use it to convey stress or emphasis, use emphasis for that.
 
 ``to
-Climb *faster* Tibsey.
+Climb **faster** Tibsey.
 ``
 
 | Notation category          | inline       |
 | Permitted content category | inline, line |
 
-Strong starts with an asterisk, followed by optional occurrences of emphasis or text, and stops at an asterisk, EOL, or EOF.
+Strong starts with a double asterisk, followed by optional occurrences of emphasis or text, and stops at a double asterisk, EOL, or EOF.
 
 ``abnf
-strong = "*" *(emphasis / text) ("*" / LF)
+strong = "**" *(emphasis / text) ("**" / LF)
 ``
