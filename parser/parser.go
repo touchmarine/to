@@ -56,16 +56,25 @@ func (p *Parser) ParseDocument() *node.Document {
 	doc := &node.Document{}
 
 	for p.ch != 0 {
-		doc.Children = append(doc.Children, p.parse())
+		doc.Children = append(doc.Children, p.parseBlock())
 		p.next()
 	}
 
 	return doc
 }
 
-func (p *Parser) parse() node.Node {
+func (p *Parser) parseBlock() node.Node {
 	if trace {
-		defer p.trace("parse")()
+		defer p.trace("parseBlock")()
+	}
+
+	// skip blank lines
+	for p.ch == '\t' || p.ch == '\n' || p.ch == ' ' {
+		if trace {
+			p.print(char(p.ch) + ", skip")
+		}
+
+		p.next()
 	}
 
 	return p.parseParagraph()
@@ -78,9 +87,13 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 
 	para := &node.Paragraph{}
 
-	for p.ch != 0 {
+	for p.ch != '\n' && p.ch != 0 {
+		if trace {
+			p.print(fmt.Sprintf("p.ch=%s, p.peek()=%s", char(p.ch), char(p.peek())))
+		}
+
 		para.Children = append(para.Children, p.parseInline(nil)...)
-		p.next()
+		p.next() // eat EOL
 	}
 
 	return para
@@ -100,7 +113,7 @@ func (p *Parser) parseInline(delims []byte) []node.Inline {
 		}
 
 		if trace {
-			p.print(fmt.Sprintf("p.ch=%s, p.peek()=%s", string(p.ch), string(p.peek())))
+			p.print(fmt.Sprintf("p.ch=%s, p.peek()=%s", char(p.ch), char(p.peek())))
 		}
 
 		switch {
@@ -112,7 +125,7 @@ func (p *Parser) parseInline(delims []byte) []node.Inline {
 			inline = append(inline, p.parseText())
 		}
 
-		// next is called by parslets
+		// pointers are advanced by parslets
 	}
 
 	if trace {
@@ -139,15 +152,10 @@ func (p *Parser) parseEmphasis(delims []byte) *node.Emphasis {
 		Children: p.parseInline(delims),
 	}
 
-	// eat closing delimiter ('__', EOL, EOF) if not other node's delimiter - so
-	// parent nodes are also closed
-	if p.ch == '_' && p.peek() == '_' || !isDelimiter(p.ch) && !isDelimiter(p.peek()) {
+	// eat closing '__' if it is the closing delimiter
+	if p.ch == '_' && p.peek() == '_' {
 		p.next()
-
-		// eat both '_'
-		if p.ch == '_' {
-			p.next()
-		}
+		p.next()
 	}
 
 	if trace {
@@ -174,15 +182,10 @@ func (p *Parser) parseStrong(delims []byte) *node.Strong {
 		Children: p.parseInline(delims),
 	}
 
-	// eat closing delimiter ('**', EOL, EOF) if not other node's delimiter - so
-	// parent nodes are also closed
-	if p.ch == '*' && p.peek() == '*' || !isDelimiter(p.ch) && !isDelimiter(p.peek()) {
+	// eat closing '**' if it is the closing delimiter
+	if p.ch == '*' && p.peek() == '*' {
 		p.next()
-
-		// eat both '*'
-		if p.ch == '*' {
-			p.next()
-		}
+		p.next()
 	}
 
 	if trace {
@@ -230,6 +233,20 @@ func (p *Parser) trace(msg string) func() {
 
 func (p *Parser) print(msg string) {
 	fmt.Println(strings.Repeat(".   ", p.indent) + msg)
+}
+
+// char returns a string representation of a character.
+func char(ch byte) string {
+	s := string(ch)
+
+	switch ch {
+	case '\t':
+		s = "\\t"
+	case '\n':
+		s = "\\n"
+	}
+
+	return "'" + s + "'"
 }
 
 // byteContains determines whether needle is in haystack.

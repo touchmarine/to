@@ -68,9 +68,9 @@ There are three notation categories:
 Inline notation spans from the opening delimiter to the closing delimiter, EOL, or EOF, whichever comes first.
 
 ``to
-Tibsey is a **friendly coala**
-Tibsey is a **friendly coala<EOL>
-Tibsey is a **friendly coala<EOF>
+Tibsey is a **friendly koala**
+Tibsey is a **friendly koala<EOL>
+Tibsey is a **friendly koala<EOF>
 ``
 
 Line notation spans from the opening delimiter to the EOL or EOF, whichever comes first.
@@ -80,7 +80,7 @@ Line notation spans from the opening delimiter to the EOL or EOF, whichever come
 - list // a list item<EOF>
 ``
 
-Block notation spans contiguous line notations, often till a blank line or a new block.
+Block notation spans contiguous lines of inline or line content until a blank line or another block.
 
 ``to
 This paragraph
@@ -98,7 +98,7 @@ because of a list below.
 Emphasis represents stress or emphasis. Use it only if its absence would change the meaning of the content. Do not use it to convey importance, use strong for that.
 
 ``to
-Tibsey is a __coala__.
+Tibsey is a __koala__.
 ``
 
 | Notation category          | inline       |
@@ -125,4 +125,26 @@ Strong starts with a double asterisk, followed by optional occurrences of emphas
 
 ``abnf
 strong = "**" *(emphasis / text) ("**" / LF)
+``
+
+### Paragraph
+
+Paragraph represents a paragraph.
+
+``to
+// first paragraph
+Tibsey is eating eucalyptus leaves.
+
+// second paragraph
+Tibsey is going shopping.
+Tibsey likes to sleep.
+``
+
+| Notation category          | block        |
+| Permitted content category | inline, line |
+
+Paragraph spans contiguous lines of emphasis, strong, or text until a blank line or another block.
+
+``abnf
+paragraph = 1*( 1*(emphasis / strong / text) [LF] )
 ``

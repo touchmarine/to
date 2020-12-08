@@ -14,13 +14,13 @@ func TestParseDocument(t *testing.T) {
 	}{
 		{
 			name:  "underscore",
-			input: "Tibsey is a _coala_.",
+			input: "Tibsey is a _koala_.",
 			doc: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
 							&node.Text{
-								Value: "Tibsey is a _coala_.",
+								Value: "Tibsey is a _koala_.",
 							},
 						},
 					},
@@ -29,7 +29,7 @@ func TestParseDocument(t *testing.T) {
 		},
 		{
 			name:  "emphasis",
-			input: "Tibsey is a __coala__.",
+			input: "Tibsey is a __koala__.",
 			doc: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
@@ -40,7 +40,7 @@ func TestParseDocument(t *testing.T) {
 							&node.Emphasis{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "coala",
+										Value: "koala",
 									},
 								},
 							},
@@ -94,7 +94,7 @@ func TestParseDocument(t *testing.T) {
 		},
 		{
 			name:  "unterminated emphasis",
-			input: "Tibsey is a __coala.",
+			input: "Tibsey is a __koala.",
 			doc: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
@@ -105,7 +105,7 @@ func TestParseDocument(t *testing.T) {
 							&node.Emphasis{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "coala.",
+										Value: "koala.",
 									},
 								},
 							},
@@ -116,7 +116,7 @@ func TestParseDocument(t *testing.T) {
 		},
 		{
 			name:  "unterminated emphasis in strong",
-			input: "Tibsey is a **__coala**.",
+			input: "Tibsey is a **__koala**.",
 			doc: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
@@ -129,7 +129,7 @@ func TestParseDocument(t *testing.T) {
 									&node.Emphasis{
 										Children: []node.Inline{
 											&node.Text{
-												Value: "coala",
+												Value: "koala",
 											},
 										},
 									},
@@ -265,6 +265,156 @@ func TestParseDocument(t *testing.T) {
 							},
 							&node.Text{
 								Value: "r",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "not paragraphs",
+			input: `
+Tibsey is eating eucalyptus leaves.
+Tibsey is going shopping.
+Tibsey likes to sleep.
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Tibsey is eating eucalyptus leaves.",
+							},
+							&node.Text{
+								Value: "Tibsey is going shopping.",
+							},
+							&node.Text{
+								Value: "Tibsey likes to sleep.",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "not paragraphs with strong",
+			input: `
+**Tibsey is eating eucalyptus leaves.
+Tibsey is going shopping.**
+Tibsey **likes** to sleep.
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Strong{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey is eating eucalyptus leaves.",
+									},
+								},
+							},
+							&node.Text{
+								Value: "Tibsey is going shopping.",
+							},
+							&node.Strong{},
+							&node.Text{
+								Value: "Tibsey ",
+							},
+							&node.Strong{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "likes",
+									},
+								},
+							},
+							&node.Text{
+								Value: " to sleep.",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "paragraphs",
+			input: `
+Tibsey is eating eucalyptus leaves.
+
+Tibsey is going shopping.
+
+Tibsey likes to sleep.
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Tibsey is eating eucalyptus leaves.",
+							},
+						},
+					},
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Tibsey is going shopping.",
+							},
+						},
+					},
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Tibsey likes to sleep.",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "paragraphs with strong",
+			input: `
+**Tibsey is eating eucalyptus leaves.
+
+Tibsey is going shopping.**
+
+Tibsey **likes** to sleep.
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Strong{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey is eating eucalyptus leaves.",
+									},
+								},
+							},
+						},
+					},
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Tibsey is going shopping.",
+							},
+							&node.Strong{},
+						},
+					},
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Tibsey ",
+							},
+							&node.Strong{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "likes",
+									},
+								},
+							},
+							&node.Text{
+								Value: " to sleep.",
 							},
 						},
 					},
