@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -66,6 +67,18 @@ func (s Strong) node()   {}
 func (s Strong) inline() {}
 func (s *Strong) String(indent int) string {
 	return String(InlinesToNodes(s.Children), "Strong", indent)
+}
+
+type Heading struct {
+	Level    int
+	Children []Inline
+}
+
+func (h Heading) node()  {}
+func (h Heading) block() {}
+func (h *Heading) String(indent int) string {
+	lvl := strconv.Itoa(h.Level)
+	return String(InlinesToNodes(h.Children), "Heading"+lvl, indent)
 }
 
 // String representation of nodes.

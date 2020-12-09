@@ -56,8 +56,11 @@ func (p *Parser) ParseDocument() *node.Document {
 	doc := &node.Document{}
 
 	for p.ch != 0 {
-		doc.Children = append(doc.Children, p.parseBlock())
-		p.next()
+		block := p.parseBlock()
+		if block != nil {
+			doc.Children = append(doc.Children, block)
+		}
+		// pointers are advaced by p.parseBlock()
 	}
 
 	return doc
@@ -77,7 +80,40 @@ func (p *Parser) parseBlock() node.Node {
 		p.next()
 	}
 
-	return p.parseParagraph()
+	switch p.ch {
+	case 0:
+		return nil
+	case '=':
+		return p.parseHeading()
+	default:
+		return p.parseParagraph()
+	}
+}
+
+func (p *Parser) parseHeading() *node.Heading {
+	if trace {
+		defer p.trace("parseHeading")()
+	}
+
+	// count heading level by counting consecutive '='
+	level := 0
+	for p.ch == '=' {
+		level++
+		p.next()
+	}
+
+	// skip whitespace
+	for p.ch == '\t' || p.ch == ' ' {
+		p.next()
+	}
+
+	h := &node.Heading{
+		Level:    level,
+		Children: p.parseInline(nil),
+	}
+	// pointers are advanced by p.parseInline()
+
+	return h
 }
 
 func (p *Parser) parseParagraph() *node.Paragraph {
@@ -88,6 +124,10 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 	para := &node.Paragraph{}
 
 	for p.ch != '\n' && p.ch != 0 {
+		if p.ch == '=' {
+			break
+		}
+
 		if trace {
 			p.print(fmt.Sprintf("p.ch=%s, p.peek()=%s", char(p.ch), char(p.peek())))
 		}
@@ -240,6 +280,8 @@ func char(ch byte) string {
 	s := string(ch)
 
 	switch ch {
+	case 0:
+		s = "EOF"
 	case '\t':
 		s = "\\t"
 	case '\n':

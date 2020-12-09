@@ -421,6 +421,228 @@ Tibsey **likes** to sleep.
 				},
 			},
 		},
+		{
+			name:  "heading 1",
+			input: "= Koala",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "heading 3",
+			input: "=== Australia",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 3,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Australia",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "heading 30",
+			input: "============================== Uh oh",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 30,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Uh oh",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "heading no space after =",
+			input: "==Still a heading",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 2,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Still a heading",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "heading with sprikled =",
+			input: "== ======",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 2,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "======",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "consecutive headings",
+			input: `
+= Koalas
+== Habitat
+=== Australia
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koalas",
+							},
+						},
+					},
+					&node.Heading{
+						Level: 2,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Habitat",
+							},
+						},
+					},
+					&node.Heading{
+						Level: 3,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Australia",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "heading and paragraph",
+			input: `
+= Koala
+
+The koala is an iconic Australian animal. Often called...
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala",
+							},
+						},
+					},
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "The koala is an iconic Australian animal. Often called...",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "heading and paragraph no blank line",
+			input: `
+= Koala
+The koala is an iconic Australian animal. Often called...
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala",
+							},
+						},
+					},
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "The koala is an iconic Australian animal. Often called...",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "paragraph and heading",
+			input: `
+The koala is an iconic Australian animal. Often called...
+
+== Habitat
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "The koala is an iconic Australian animal. Often called...",
+							},
+						},
+					},
+					&node.Heading{
+						Level: 2,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Habitat",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "paragraph and heading no blank line",
+			input: `
+The koala is an iconic Australian animal. Often called...
+== Habitat
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "The koala is an iconic Australian animal. Often called...",
+							},
+						},
+					},
+					&node.Heading{
+						Level: 2,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Habitat",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
