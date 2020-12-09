@@ -1,0 +1,38 @@
+<document> ::= <paragraph> <document>
+             | <heading> <document>
+             | <paragraph>
+             | <heading>
+
+<paragraph>         ::= <paragraph-content> <paragraph>
+                      | <paragraph-content> <EOL>
+<paragraph-content> ::= <emphasis> <paragraph-content>
+                      | <strong> <paragraph-content>
+                      | <text> <paragraph-content>
+                      | <emphasis>
+                      | <strong>
+                      | <text>
+
+<emphasis>         ::= "__" <emphasis-content> "__"
+<emphasis-content> ::= <strong> <emphasis-content>
+                     | <text> <emphasis-content>
+                     | ""
+                     ; __ is not allowed
+
+<strong>         ::= "**" <strong-content> "**"
+<strong-content> ::= <emphasis> <strong-content>
+                   | <text> <strong-content> 
+                   | ""
+                   ; ** is not allowed
+
+<heading>         ::= <heading-marker> <opt-whitespace> <heading-content> <opt-whitespace> <EOL>
+<heading-marker>  ::= "=" <heading-marker> | "="
+<opt-whitespace>  ::= " " <opt-whitespace> | ""
+<heading-content> ::= <strong> <heading-content>
+                    | <text> <heading-content>
+                    | ""
+
+<text>        ::= <character> <text> | <character>
+<character>   ::= <letter> | <digit> | <punctuation>
+<letter>      ::= "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
+<digit>       ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+<punctuation> ::=  "|" | " " | "!" | "#" | "$" | "%" | "&" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | ">" | "=" | "<" | "?" | "@" | "[" | "\" | "]" | "^" | "_" | "`" | "{" | "}" | "~"

@@ -12,7 +12,7 @@ __This section is non-normative.__
 
 To is designed to be readable and collaborative. It provides features necessary for most writing work without having to resort to other tools. Notations are simple for humans and computers.
 
-One way to do one thing---To does not allow multiple notations to represent one element.
+One way to do one thing---To does not permit multiple notations to represent one element.
 
 No modifiers---Modifiers, in whatever form, are not allowed.
 
@@ -42,7 +42,7 @@ Conformance requirements phrased as algorithms or specific steps MAY be implemen
 
 ## Notational Conventions
 
-The syntax is specified using Augmented Backus---Naur Form (ANBF) as described in <RFC 5234><https://tools.ietf.org/html/rfc5234> and <RFC 7405><https://tools.ietf.org/html/rfc7405>.
+The syntax is specified using <Backus---Naur Form><https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form> (BNF).
 
 ## Source Code Representation
 
@@ -60,12 +60,12 @@ EOL is the US-ASCII line feed (LF) character with hex value 0A (Unicode point U+
 
 ## Syntax
 
-There are three notation categories:
+Elements are divided into three categories:
 - inline
 - line
 - block
 
-Inline notation spans from the opening delimiter to the closing delimiter, EOL, or EOF, whichever comes first.
+Inline elements span from the opening delimiter to the closing delimiter, EOL, or EOF, whichever comes first.
 
 ``to
 Tibsey is a **friendly koala**
@@ -73,14 +73,14 @@ Tibsey is a **friendly koala<EOL>
 Tibsey is a **friendly koala<EOF>
 ``
 
-Line notation spans from the opening delimiter to the EOL or EOF, whichever comes first.
+Line elements span from the opening delimiter to the EOL or EOF, whichever comes first.
 
 ``to
 // comments never hurt anyone<EOL>
 - list // a list item<EOF>
 ``
 
-Block notation spans contiguous lines of inline or line content until a blank line or another block.
+Block elements span contiguous lines of inline or line content until a blank line or another block.
 
 ``to
 This paragraph
@@ -95,41 +95,35 @@ because of a list below.
 
 ### Emphasis
 
-Emphasis represents stress or emphasis. Use it only if its absence would change the meaning of the content. Do not use it to convey importance, use strong for that.
+Emphasis represents stress or emphasis of its content. Use it only if its absence would change the meaning of the content. Do not use it to convey importance; use strong for that.
 
 ``to
 Tibsey is a __koala__.
 ``
 
-| Notation category          | inline       |
+| Element category           | inline       |
 | Permitted content category | inline, line |
+| Permitted content          | strong, text |
 
-Emphasis starts with a double underscore, followed by optional occurrences of strong or text, and stops at a double underscore, EOL, or EOF.
-
-``abnf
-emphasis = "__" *(strong / text) ("__" / LF)
-``
+Emphasis starts with a double underscore followed by zero or more occurrences of strong or text and stops at a double underscore, EOL, or EOF.
 
 ### Strong
 
-Strong represents importance, seriousness, or urgency. Use it only if its absence would change the meaning of the content. Do not use it to convey stress or emphasis, use emphasis for that.
+Strong represents importance, seriousness, or urgency of its contents. Use it only if its absence would change the meaning of the content. Do not use it to convey stress or emphasis; use emphasis for that.
 
 ``to
 Climb **faster** Tibsey.
 ``
 
-| Notation category          | inline       |
-| Permitted content category | inline, line |
+| Element category           | inline         |
+| Permitted content category | inline, line   |
+| Permitted content          | emphasis, text |
 
-Strong starts with a double asterisk, followed by optional occurrences of emphasis or text, and stops at a double asterisk, EOL, or EOF.
-
-``abnf
-strong = "**" *(emphasis / text) ("**" / LF)
-``
+Strong starts with a double asterisk followed by zero or more occurrences of emphasis or text and stops at a double asterisk, EOL, or EOF.
 
 ### Paragraph
 
-Paragraph represents a paragraph.
+Paragraph represents a paragraph of content. It is the default block structure.
 
 ``to
 // first paragraph
@@ -140,11 +134,36 @@ Tibsey is going shopping.
 Tibsey likes to sleep.
 ``
 
-| Notation category          | block        |
-| Permitted content category | inline, line |
+| Element category           | block                  |
+| Permitted content category | inline, line           |
+| Permitted content          | emphasis, strong, text |
 
 Paragraph spans contiguous lines of emphasis, strong, or text until a blank line or another block.
 
-``abnf
-paragraph = 1*( 1*(emphasis / strong / text) [LF] )
+### Headings
+
+Headings represent headings for sections and denote the structure of a document. Heading levels range from 1 to unlimited---level 1 being the most important. Use headings to create a hierarchy. Use them to create nested sections where the heading levels are implicit in the resulting structure. Do not use headings for styling, i.e., to render larger font sizes.
+
+``to
+= Koalas
+
+== Introduction
+
+Koalas are not bears---they are marsupials...
+
+== Habitat
+
+Koalas live in the eucalyptus forests of southeastern and eastern Australia. When not sleeping, they are usually eating...
+
+=== Australia
+
+// ...
 ``
+
+* Text in the example above is from <Koala, facts, and photos - National Geographic><https://www.nationalgeographic.com/animals/mammals/k/koala/>.
+
+| Element category           | block        |
+| Permitted content category | inline, line |
+| Permitted content          | strong, text |
+
+Heading starts with one or more equals signs followed by zero or more occurrences of strong or text and stops at the EOL or EOF.
