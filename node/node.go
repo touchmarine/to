@@ -70,15 +70,24 @@ func (s *Strong) String(indent int) string {
 }
 
 type Heading struct {
-	Level    int
-	Children []Inline
+	Level      int
+	IsNumbered bool
+	Children   []Inline
 }
 
 func (h Heading) node()  {}
 func (h Heading) block() {}
 func (h *Heading) String(indent int) string {
-	lvl := strconv.Itoa(h.Level)
-	return String(InlinesToNodes(h.Children), "Heading"+lvl, indent)
+	level := strconv.Itoa(h.Level)
+
+	var name string
+	if h.IsNumbered {
+		name = "NumberedHeading" + level
+	} else {
+		name = "Heading" + level
+	}
+
+	return String(InlinesToNodes(h.Children), name, indent)
 }
 
 // String representation of nodes.

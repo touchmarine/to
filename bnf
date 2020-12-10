@@ -24,12 +24,15 @@
                    | ""
                    ; ** is not allowed
 
-<heading>         ::= <heading-marker> <opt-whitespace> <heading-content> <opt-whitespace> <EOL>
-<heading-marker>  ::= "=" <heading-marker> | "="
-<opt-whitespace>  ::= " " <opt-whitespace> | ""
-<heading-content> ::= <strong> <heading-content>
-                    | <text> <heading-content>
-                    | ""
+<heading>                 ::= <heading-marker> <opt-whitespace> <heading-content> <EOL>
+<numbered-heading>        :: = "#" <numbered-heading-marker> <opt-whitespace> <heading-content> <EOL>
+<heading-marker>          ::= "=" <heading-marker> | "="
+<numbered-heading-marker> ::= "#" <numbered-heading-marker> | "#"
+<opt-whitespace>          ::= " " <opt-whitespace> | ""
+<heading-content>         ::= <emphasis> <heading-content>
+                            | <strong> <heading-content>
+                            | <text> <heading-content>
+                            | ""
 
 <text>        ::= <character> <text> | <character>
 <character>   ::= <letter> | <digit> | <punctuation>

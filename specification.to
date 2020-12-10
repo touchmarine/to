@@ -147,23 +147,31 @@ Headings represent headings for sections and denote the structure of a document.
 ``to
 = Koalas
 
-== Introduction
+## Introduction
 
 Koalas are not bears---they are marsupials...
 
-== Habitat
+## Habitat
 
 Koalas live in the eucalyptus forests of southeastern and eastern Australia. When not sleeping, they are usually eating...
 
-=== Australia
+### Australia
 
 // ...
 ``
 
 * Text in the example above is from <Koala, facts, and photos - National Geographic><https://www.nationalgeographic.com/animals/mammals/k/koala/>.
 
-| Element category           | block        |
-| Permitted content category | inline, line |
-| Permitted content          | strong, text |
+| Element category           | block                  |
+| Permitted content category | inline, line           |
+| Permitted content          | emphasis, strong, text |
 
-Heading starts with one or more equals signs followed by zero or more occurrences of strong or text and stops at the EOL or EOF.
+#### Unnumbered
+
+Unnumbered headings start with one or more equals signs followed by zero or more occurrences of emphasis, strong, or text and stop at the EOL or EOF.
+
+#### Numbered
+
+Numbered headings automatically apply a numbering scheme to the headings. Numbered heading level 1 is not permitted, because level 1 heading should only be used as a document title for which a number most often is not wanted. Additionally, by not allowing a level 1 heading, numbered headings can be easily discernible from hashtags. 
+
+Numbered headings start with two or more number signs followed by zero or more occurrences of emphasis, strong, or text and stop at the EOL or EOF.

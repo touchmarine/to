@@ -486,7 +486,7 @@ Tibsey **likes** to sleep.
 			},
 		},
 		{
-			name:  "heading with sprikled =",
+			name:  "heading with sprinkled =",
 			input: "== ======",
 			doc: &node.Document{
 				Children: []node.Node{
@@ -531,6 +531,176 @@ Tibsey **likes** to sleep.
 						Children: []node.Inline{
 							&node.Text{
 								Value: "Australia",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "heading emphasis and strong",
+			input: "== __**Yee Haw**__",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 2,
+						Children: []node.Inline{
+							&node.Emphasis{
+								Children: []node.Inline{
+									&node.Strong{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Yee Haw",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "numbered heading 1",
+			input: "# Koala",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "# Koala",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "numbered heading 3",
+			input: "### Australia",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level:      3,
+						IsNumbered: true,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Australia",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "numbered heading 30",
+			input: "############################## Uh oh",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level:      30,
+						IsNumbered: true,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Uh oh",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "numbered heading no space after #",
+			input: "##Still a heading",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level:      2,
+						IsNumbered: true,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Still a heading",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "numbered heading with sprinkled #",
+			input: "## ######",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level:      2,
+						IsNumbered: true,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "######",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "consecutive numbered headings",
+			input: `
+= Koalas
+## Habitat
+### Australia
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koalas",
+							},
+						},
+					},
+					&node.Heading{
+						Level:      2,
+						IsNumbered: true,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Habitat",
+							},
+						},
+					},
+					&node.Heading{
+						Level:      3,
+						IsNumbered: true,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Australia",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "numbered heading emphasis and strong",
+			input: "## __**Yee Haw**__",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level:      2,
+						IsNumbered: true,
+						Children: []node.Inline{
+							&node.Emphasis{
+								Children: []node.Inline{
+									&node.Strong{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Yee Haw",
+											},
+										},
+									},
+								},
 							},
 						},
 					},

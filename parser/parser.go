@@ -8,6 +8,11 @@ import (
 
 const trace = false
 
+const (
+	unnumberedHeading = iota
+	numberedHeading
+)
+
 type Parser struct {
 	// immutable stat
 	src string
@@ -55,11 +60,13 @@ func (p *Parser) ParseDocument() *node.Document {
 
 	doc := &node.Document{}
 
-	for p.ch != 0 {
+	for {
 		block := p.parseBlock()
-		if block != nil {
-			doc.Children = append(doc.Children, block)
+		if block == nil {
+			break
 		}
+
+		doc.Children = append(doc.Children, block)
 		// pointers are advaced by p.parseBlock()
 	}
 
@@ -84,20 +91,43 @@ func (p *Parser) parseBlock() node.Node {
 	case 0:
 		return nil
 	case '=':
-		return p.parseHeading()
+		return p.parseHeading(unnumberedHeading)
 	default:
+		if p.ch == '#' && p.peek() == '#' {
+			return p.parseHeading(numberedHeading)
+		}
+
 		return p.parseParagraph()
 	}
 }
 
-func (p *Parser) parseHeading() *node.Heading {
-	if trace {
-		defer p.trace("parseHeading")()
+func (p *Parser) parseHeading(typ int) *node.Heading {
+	var isNumbered bool
+	var delim byte
+
+	// determine heading type we are parsing
+	switch typ {
+	case unnumberedHeading:
+		isNumbered = false
+		delim = '='
+	case numberedHeading:
+		isNumbered = true
+		delim = '#'
+	default:
+		panic("unsupported heading type")
 	}
 
-	// count heading level by counting consecutive '='
+	if trace {
+		if isNumbered {
+			defer p.trace("parseNumberedHeading")()
+		} else {
+			defer p.trace("parseHeading")()
+		}
+	}
+
+	// count heading level by counting consecutive delimiters
 	level := 0
-	for p.ch == '=' {
+	for p.ch == delim {
 		level++
 		p.next()
 	}
@@ -108,8 +138,9 @@ func (p *Parser) parseHeading() *node.Heading {
 	}
 
 	h := &node.Heading{
-		Level:    level,
-		Children: p.parseInline(nil),
+		Level:      level,
+		IsNumbered: isNumbered,
+		Children:   p.parseInline(nil),
 	}
 	// pointers are advanced by p.parseInline()
 
