@@ -8,6 +8,7 @@ import (
 
 const trace = false
 
+// heading types
 const (
 	unnumberedHeading = iota
 	numberedHeading
@@ -60,7 +61,7 @@ func (p *Parser) ParseDocument() *node.Document {
 
 	doc := &node.Document{}
 
-	for {
+	for p.ch != 0 {
 		block := p.parseBlock()
 		if block == nil {
 			break
@@ -140,7 +141,7 @@ func (p *Parser) parseHeading(typ int) *node.Heading {
 	h := &node.Heading{
 		Level:      level,
 		IsNumbered: isNumbered,
-		Children:   p.parseInline(nil),
+		Children:   p.parseInline(delimiters{}),
 	}
 	// pointers are advanced by p.parseInline()
 
@@ -163,23 +164,37 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 			p.print(fmt.Sprintf("p.ch=%s, p.peek()=%s", char(p.ch), char(p.peek())))
 		}
 
-		para.Children = append(para.Children, p.parseInline(nil)...)
+		para.Children = append(para.Children, p.parseInline(delimiters{})...)
 		p.next() // eat EOL
 	}
 
 	return para
 }
 
+type delimiters struct {
+	single []byte // <https://koala.test>
+	double []byte // **strong**
+}
+
 // parseInline parses until one of the provided delims, EOL, or EOF.
-func (p *Parser) parseInline(delims []byte) []node.Inline {
+func (p *Parser) parseInline(delims delimiters) []node.Inline {
 	if trace {
 		defer p.trace("parseInline")()
-		p.print(fmt.Sprintf("delims=%s", delims))
+		p.print(fmt.Sprintf(
+			"single delims=%s, double delims=%s",
+			delims.single,
+			delims.double,
+		))
 	}
 
-	inline := []node.Inline{}
+	inlines := []node.Inline{}
 	for p.ch != '\n' && p.ch != 0 {
-		if p.ch == p.peek() && byteContains(delims, p.ch) && byteContains(delims, p.peek()) {
+		if contains(delims.single, p.ch) {
+			break
+		}
+
+		if p.ch == p.peek() && contains(delims.double, p.ch) &&
+			contains(delims.double, p.peek()) {
 			break
 		}
 
@@ -189,25 +204,29 @@ func (p *Parser) parseInline(delims []byte) []node.Inline {
 
 		switch {
 		case p.ch == '_' && p.peek() == '_':
-			inline = append(inline, p.parseEmphasis(delims))
+			inlines = append(inlines, p.parseEmphasis(delims))
 		case p.ch == '*' && p.peek() == '*':
-			inline = append(inline, p.parseStrong(delims))
+			inlines = append(inlines, p.parseStrong(delims))
+		case p.ch == '<':
+			inlines = append(inlines, p.parseLink(delims))
 		default:
-			inline = append(inline, p.parseText())
+			inlines = append(inlines, p.parseText())
 		}
 
 		// pointers are advanced by parslets
 	}
 
 	if trace {
-		p.print("return " + node.String(node.InlinesToNodes(inline), "Inline", p.indent+1))
+		p.print("return " + node.String("Inline", map[string]interface{}{
+			"Children": node.InlinesToNodes(inlines),
+		}, p.indent+1))
 	}
 
-	return inline
+	return inlines
 }
 
 // parseEmphasis parses until a '__' and consumes the closing delimiter.
-func (p *Parser) parseEmphasis(delims []byte) *node.Emphasis {
+func (p *Parser) parseEmphasis(delims delimiters) *node.Emphasis {
 	if trace {
 		defer p.trace("parseEmphasis")()
 	}
@@ -216,8 +235,8 @@ func (p *Parser) parseEmphasis(delims []byte) *node.Emphasis {
 	p.next()
 	p.next()
 
-	// no possible duplicates because parseInline returns on delim match
-	delims = append(delims, '_')
+	// no possible duplicates because p.parseInline() returns on delim match
+	delims.double = append(delims.double, '_')
 
 	em := &node.Emphasis{
 		Children: p.parseInline(delims),
@@ -237,7 +256,7 @@ func (p *Parser) parseEmphasis(delims []byte) *node.Emphasis {
 }
 
 // parseStrong parses until a '**' and consumes it.
-func (p *Parser) parseStrong(delims []byte) *node.Strong {
+func (p *Parser) parseStrong(delims delimiters) *node.Strong {
 	if trace {
 		defer p.trace("parseStrong")()
 	}
@@ -246,8 +265,8 @@ func (p *Parser) parseStrong(delims []byte) *node.Strong {
 	p.next()
 	p.next()
 
-	// no possible duplicates because parseInline returns on delim match
-	delims = append(delims, '*')
+	// no possible duplicates because p.parseInline() returns on delim match
+	delims.double = append(delims.double, '*')
 
 	em := &node.Strong{
 		Children: p.parseInline(delims),
@@ -266,6 +285,91 @@ func (p *Parser) parseStrong(delims []byte) *node.Strong {
 	return em
 }
 
+// parseLink parses link.
+//
+// Link can consist from one or two parts:
+// <link-destination> | <link-text><link-destination>
+//
+// Link destination is plain text and is also used as link text if link text is
+// no present.
+// Link text is inline content.
+func (p *Parser) parseLink(delims delimiters) *node.Link {
+	if trace {
+		defer p.trace("parseLink")()
+	}
+
+	p.next() // eat opening '<'
+
+	link := &node.Link{}
+	isTwoPartLink := p.isTwoPartLink()
+
+	// parse link text if a two part link
+	// <link-text><link-destination>
+	if isTwoPartLink {
+		delims.single = append(delims.single, '>')
+		link.Children = p.parseInline(delims)
+
+		p.next() // eat closing '>' of link text
+		p.next() // eat opening '<' of link destination
+	}
+
+	// parse link destination which is also link text if no link text is present
+	offs := p.offset
+	for p.ch != '>' && p.ch != '\n' && p.ch != 0 {
+		p.next()
+	}
+
+	text := p.src[offs:p.offset]
+	p.next() // eat closing '>'
+
+	link.Destination = text
+
+	// use link destination as link text if one part link
+	if !isTwoPartLink {
+		link.Children = []node.Inline{
+			&node.Text{
+				Value: text,
+			},
+		}
+	}
+
+	if trace {
+		p.print("return " + link.String(p.indent+1))
+	}
+
+	return link
+}
+
+// isTwoPartLink determnies whether link consists of two consecutive parts:
+// <link-text><link-destination>
+func (p *Parser) isTwoPartLink() bool {
+	if trace {
+		defer p.trace("isTwoPartLink")()
+	}
+
+	// opening '<' already consumed
+
+	// reset pointers to where they were before calling isTwoPartLink
+	defer func(offs int) {
+		p.ch = '<'
+		p.offset = offs
+		p.rdOffset = offs + 1
+		p.next() // eat opening '<' again
+	}(p.offset - 1)
+
+	for p.ch != '>' && p.ch != '\n' && p.ch != 0 {
+		p.next()
+	}
+
+	isTwoPartLink := p.ch == '>' && p.peek() == '<'
+
+	if trace {
+		p.print(fmt.Sprintf("return %t", isTwoPartLink))
+	}
+
+	return isTwoPartLink
+}
+
 // parseText parses until a delimiter, EOL, or EOF.
 func (p *Parser) parseText() *node.Text {
 	if trace {
@@ -274,21 +378,33 @@ func (p *Parser) parseText() *node.Text {
 
 	offs := p.offset
 	for p.ch != '\n' && p.ch != 0 {
-		if p.ch == p.peek() && isDelimiter(p.ch) && isDelimiter(p.peek()) {
+		if isSingleDelim(p.ch) {
+			break
+		}
+
+		if p.ch == p.peek() && isDoubleDelim(p.ch) && isDoubleDelim(p.peek()) {
 			break
 		}
 
 		p.next()
 	}
 
+	text := p.src[offs:p.offset]
+
 	if trace {
-		p.print("return " + p.src[offs:p.offset])
+		p.print("return " + text)
 	}
 
-	return &node.Text{Value: p.src[offs:p.offset]}
+	return &node.Text{
+		Value: text,
+	}
 }
 
-func isDelimiter(ch byte) bool {
+func isSingleDelim(ch byte) bool {
+	return ch == '<' || ch == '>'
+}
+
+func isDoubleDelim(ch byte) bool {
 	return ch == '_' || ch == '*'
 }
 
@@ -322,8 +438,8 @@ func char(ch byte) string {
 	return "'" + s + "'"
 }
 
-// byteContains determines whether needle is in haystack.
-func byteContains(haystack []byte, needle byte) bool {
+// contains determines whether needle is in haystack.
+func contains(haystack []byte, needle byte) bool {
 	for _, v := range haystack {
 		if v == needle {
 			return true

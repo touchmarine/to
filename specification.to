@@ -109,7 +109,7 @@ Emphasis starts with a double underscore followed by zero or more occurrences of
 
 ### Strong
 
-Strong represents importance, seriousness, or urgency of its contents. Use it only if its absence would change the meaning of the content. Do not use it to convey stress or emphasis; use emphasis for that.
+Strong represents the importance, seriousness, or urgency of its contents. Use it only if its absence would change the meaning of the content. Do not use it to convey stress or emphasis; use emphasis for that.
 
 ``to
 Climb **faster** Tibsey.
@@ -123,7 +123,7 @@ Strong starts with a double asterisk followed by zero or more occurrences of emp
 
 ### Paragraph
 
-Paragraph represents a paragraph of content. It is the default block structure.
+A paragraph represents a paragraph of content. It is the default block structure.
 
 ``to
 // first paragraph
@@ -175,3 +175,33 @@ Unnumbered headings start with one or more equals signs followed by zero or more
 Numbered headings automatically apply a numbering scheme to the headings. Numbered heading level 1 is not permitted, because level 1 heading should only be used as a document title for which a number most often is not wanted. Additionally, by not allowing a level 1 heading, numbered headings can be easily discernible from hashtags. 
 
 Numbered headings start with two or more number signs followed by zero or more occurrences of emphasis, strong, or text and stop at the EOL or EOF.
+
+### Links
+
+Links create links to documents, locations in the same document, email addresses, or anything a URL can address.
+
+``to
+// link to location in the same document with text "#references"
+<#references>
+
+// link to a relative web page with text "Mammals"
+<Mammalss></type/mammals>
+
+// link to the National Geographic website with text "Koala, facts, and photos"
+<Koala, facts, and photos><https://www.nationalgeographic.com/animals/mammals/k/koala/>
+
+// link to email with text "mailto:tibsey@koala.test"
+<mailto:tibsey@koala.test>
+``
+
+| Element category           | inline                 |
+| Permitted content category | inline                 |
+| Permitted content          | emphasis, strong, text |
+
+Links consist of a link destination and an optional link text. The link destination is used as the link text if the link text is not present. The link text must be placed right after the link destination if they are both present.
+
+The link destination starts with a less-than sign followed by zero or more occurrences of text and stops at a greater-than sign, EOL, or EOF.
+
+The link text starts with a less-than sign followed by zero or more occurrences of emphasis, strong, or text and stops at a greater-than sign, EOL, or EOF.
+
+Greater-than sign is not permitted as content in either link destination or link text. To avoid unexpected links use percent-encoded URLs. '>' can be percent-encoded as '%3E'.

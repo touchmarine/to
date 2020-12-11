@@ -16,13 +16,13 @@
 <emphasis-content> ::= <strong> <emphasis-content>
                      | <text> <emphasis-content>
                      | ""
-                     ; __ is not allowed
+                     ; __ is not permitted
 
 <strong>         ::= "**" <strong-content> "**"
 <strong-content> ::= <emphasis> <strong-content>
                    | <text> <strong-content> 
                    | ""
-                   ; ** is not allowed
+                   ; ** is not permitted
 
 <heading>                 ::= <heading-marker> <opt-whitespace> <heading-content> <EOL>
 <numbered-heading>        :: = "#" <numbered-heading-marker> <opt-whitespace> <heading-content> <EOL>
@@ -33,6 +33,16 @@
                             | <strong> <heading-content>
                             | <text> <heading-content>
                             | ""
+
+<link>              ::= <link-destination> | <link-text> <link-destination>
+<link-destination>  ::= "<" <opt-text> ">"
+<opt-text>          ::= <text> <opt-text> | "" ; > is not permitted
+<link-text>         ::= "<" <link-content> ">"
+<link-text-content> ::= <emphasis> <link-text-content>
+                      | <strong> <link-text-content>
+                      | <text> <link-text-content>
+                      | ""
+                      ; > is not permitted
 
 <text>        ::= <character> <text> | <character>
 <character>   ::= <letter> | <digit> | <punctuation>

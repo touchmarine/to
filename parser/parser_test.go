@@ -813,6 +813,536 @@ The koala is an iconic Australian animal. Often called...
 				},
 			},
 		},
+		{
+			name:  "link",
+			input: "<https://koala.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "https://koala.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "https://koala.test",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "relative link",
+			input: "</koalas>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "/koalas",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "/koalas",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "reference link",
+			input: "<#habitat>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "#habitat",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "#habitat",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "email link",
+			input: "<mailto:https://koala.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "mailto:https://koala.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "mailto:https://koala.test",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "link after unterminated strong",
+			input: "**<https://koala.test> koalas are awesome",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Strong{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://koala.test",
+											},
+										},
+									},
+									&node.Text{
+										Value: " koalas are awesome",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "link with strong",
+			input: "Look at <https://**koala**.test> website",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Look at ",
+							},
+							&node.Link{
+								Destination: "https://**koala**.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "https://**koala**.test",
+									},
+								},
+							},
+							&node.Text{
+								Value: " website",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "link with unterminated strong",
+			input: "Look at <https://**koala.test> website",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Look at ",
+							},
+							&node.Link{
+								Destination: "https://**koala.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "https://**koala.test",
+									},
+								},
+							},
+							&node.Text{
+								Value: " website",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "unterminated link",
+			input: "Look at <https://koala.test website",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Look at ",
+							},
+							&node.Link{
+								Destination: "https://koala.test website",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "https://koala.test website",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "unterminated link another link",
+			input: "Look at <https://koala.test website <#habitat>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Look at ",
+							},
+							&node.Link{
+								Destination: "https://koala.test website <#habitat",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "https://koala.test website <#habitat",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "two-part link",
+			input: "<Koala bears><https://koala.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "https://koala.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Koala bears",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "two-part link empahsized",
+			input: "__<Koala bears><https://koala.test>__",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Emphasis{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Koala bears",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "two-part link strong text",
+			input: "<**Koala bears**><https://koala.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "https://koala.test",
+								Children: []node.Inline{
+									&node.Strong{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Koala bears",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "two-part link unterminated strong text",
+			input: "<**Koala bears><https://koala.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "https://koala.test",
+								Children: []node.Inline{
+									&node.Strong{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Koala bears",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "link with <",
+			input: "<Koala bears<https://koala.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "Koala bears<https://koala.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Koala bears<https://koala.test",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "link with < unterminated strong",
+			input: "<**Koala bears<https://koala.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "**Koala bears<https://koala.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "**Koala bears<https://koala.test",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "link with < and strong",
+			input: "<**Koala bears**<https://koala.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "**Koala bears**<https://koala.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "**Koala bears**<https://koala.test",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "two-part link strong and emphasis",
+			input: "<**__Koala__ bears**><https://koala.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "https://koala.test",
+								Children: []node.Inline{
+									&node.Strong{
+										Children: []node.Inline{
+											&node.Emphasis{
+												Children: []node.Inline{
+													&node.Text{
+														Value: "Koala",
+													},
+												},
+											},
+											&node.Text{
+												Value: " bears",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "two-part link plain destination",
+			input: "<Koala bears><https://**koala**.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "https://**koala**.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Koala bears",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "consecutive links",
+			input: "<https://koala.test><https://eucalyptus.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "https://eucalyptus.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "https://koala.test",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "two links",
+			input: "<https://koala.test> <https://eucalyptus.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "https://koala.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "https://koala.test",
+									},
+								},
+							},
+							&node.Text{
+								Value: " ",
+							},
+							&node.Link{
+								Destination: "https://eucalyptus.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "https://eucalyptus.test",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "consecutive two-part links",
+			input: "<Koala bears><https://koala.test><Eucalyptus><https://eucalyptus.test>",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "https://koala.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Koala bears",
+									},
+								},
+							},
+							&node.Link{
+								Destination: "https://eucalyptus.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Eucalyptus",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "links in paragraphs",
+			input: `<https://koala.test>
+<https://eucalyptus.test>
+
+<#habitat>`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "https://koala.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "https://koala.test",
+									},
+								},
+							},
+							&node.Link{
+								Destination: "https://eucalyptus.test",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "https://eucalyptus.test",
+									},
+								},
+							},
+						},
+					},
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Link{
+								Destination: "#habitat",
+								Children: []node.Inline{
+									&node.Text{
+										Value: "#habitat",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {

@@ -2,9 +2,12 @@ package node
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
+
+const tab = ".   "
 
 type Node interface {
 	node()                    // dummy method to conform to interface
@@ -26,7 +29,9 @@ type Document struct {
 }
 
 func (d *Document) String() string {
-	return String(d.Children, "Document", 1)
+	return String("Document", map[string]interface{}{
+		"Children": d.Children,
+	}, 1)
 }
 
 type Paragraph struct {
@@ -36,7 +41,9 @@ type Paragraph struct {
 func (p Paragraph) node()  {}
 func (p Paragraph) block() {}
 func (p *Paragraph) String(indent int) string {
-	return String(InlinesToNodes(p.Children), "Paragraph", indent)
+	return String("Paragraph", map[string]interface{}{
+		"Children": InlinesToNodes(p.Children),
+	}, indent)
 }
 
 type Text struct {
@@ -56,7 +63,9 @@ type Emphasis struct {
 func (e Emphasis) node()   {}
 func (e Emphasis) inline() {}
 func (e *Emphasis) String(indent int) string {
-	return String(InlinesToNodes(e.Children), "Emphasis", indent)
+	return String("Emphasis", map[string]interface{}{
+		"Children": InlinesToNodes(e.Children),
+	}, indent)
 }
 
 type Strong struct {
@@ -66,7 +75,9 @@ type Strong struct {
 func (s Strong) node()   {}
 func (s Strong) inline() {}
 func (s *Strong) String(indent int) string {
-	return String(InlinesToNodes(s.Children), "Strong", indent)
+	return String("Strong", map[string]interface{}{
+		"Children": InlinesToNodes(s.Children),
+	}, indent)
 }
 
 type Heading struct {
@@ -78,33 +89,78 @@ type Heading struct {
 func (h Heading) node()  {}
 func (h Heading) block() {}
 func (h *Heading) String(indent int) string {
-	level := strconv.Itoa(h.Level)
-
-	var name string
-	if h.IsNumbered {
-		name = "NumberedHeading" + level
-	} else {
-		name = "Heading" + level
-	}
-
-	return String(InlinesToNodes(h.Children), name, indent)
+	return String("Heading", map[string]interface{}{
+		"Level":      strconv.Itoa(h.Level),
+		"IsNumbered": strconv.FormatBool(h.IsNumbered),
+		"Children":   InlinesToNodes(h.Children),
+	}, indent)
 }
 
-// String representation of nodes.
-func String(nodes []Node, name string, indent int) string {
+type Link struct {
+	Destination string
+	Children    []Inline
+}
+
+func (l Link) node()   {}
+func (l Link) inline() {}
+func (l *Link) String(indent int) string {
+	return String("Link", map[string]interface{}{
+		"Destination": l.Destination,
+		"Children":    InlinesToNodes(l.Children),
+	}, indent)
+}
+
+// String representation of an element.
+func String(name string, fields map[string]interface{}, indent int) string {
+	var b strings.Builder
+	b.WriteString(name + "{")
+
+	// sort map keys
+	keys := make([]string, 0, len(fields))
+	for k := range fields {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	// print fields (key-value pairs) in separate lines, indented
+	for _, k := range keys {
+		i := fields[k]
+		b.WriteString(fmt.Sprintf("\n%s%s: ", strings.Repeat(tab, indent), k))
+
+		switch v := i.(type) {
+		case string:
+			b.WriteString(v)
+		case []Node:
+			b.WriteString(NodesString(v, indent+1))
+		}
+
+		b.WriteString(",")
+	}
+
+	// move into next line and indent closing '}' if fields are present
+	if len(fields) > 0 {
+		b.WriteString("\n" + strings.Repeat(tab, indent-1))
+	}
+
+	b.WriteString("}")
+
+	return b.String()
+}
+
+// NodesString returns a string representation of nodes.
+func NodesString(nodes []Node, indent int) string {
 	if len(nodes) == 0 {
-		return name + "([])"
+		return "[]"
 	}
 
 	var b strings.Builder
-	b.WriteString(name + "([\n")
+	b.WriteString("[\n")
 
-	const tab = ".   "
 	for _, node := range nodes {
-		b.WriteString(strings.Repeat(tab, indent) + node.String(indent+1) + "\n")
+		b.WriteString(strings.Repeat(tab, indent) + node.String(indent+1) + ",\n")
 	}
 
-	b.WriteString(strings.Repeat(tab, indent-1) + "])")
+	b.WriteString(strings.Repeat(tab, indent-1) + "]")
 
 	return b.String()
 }
