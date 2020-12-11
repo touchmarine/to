@@ -761,6 +761,61 @@ The koala is an iconic Australian animal. Often called...
 			},
 		},
 		{
+			name: "numbered heading and paragraph",
+			input: `
+## Habitat
+
+Koala lives in the...
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level:      2,
+						IsNumbered: true,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Habitat",
+							},
+						},
+					},
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala lives in the...",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "numbered heading and paragraph no blank line",
+			input: `
+## Habitat
+Koala lives in the...
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level:      2,
+						IsNumbered: true,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Habitat",
+							},
+						},
+					},
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala lives in the...",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "paragraph and heading",
 			input: `
 The koala is an iconic Australian animal. Often called...
@@ -804,6 +859,61 @@ The koala is an iconic Australian animal. Often called...
 					},
 					&node.Heading{
 						Level: 2,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Habitat",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "paragraph and numbered heading",
+			input: `
+The koala is an iconic Australian animal. Often called...
+
+## Habitat
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "The koala is an iconic Australian animal. Often called...",
+							},
+						},
+					},
+					&node.Heading{
+						Level:      2,
+						IsNumbered: true,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Habitat",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "paragraph and numbered heading no blank line",
+			input: `
+The koala is an iconic Australian animal. Often called...
+## Habitat
+`,
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "The koala is an iconic Australian animal. Often called...",
+							},
+						},
+					},
+					&node.Heading{
+						Level:      2,
+						IsNumbered: true,
 						Children: []node.Inline{
 							&node.Text{
 								Value: "Habitat",

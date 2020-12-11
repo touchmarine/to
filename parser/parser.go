@@ -156,7 +156,13 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 	para := &node.Paragraph{}
 
 	for p.ch != '\n' && p.ch != 0 {
+		// end paragragh if heading
 		if p.ch == '=' {
+			break
+		}
+
+		// end paragraph if numbered heading
+		if p.ch == '#' && p.peek() == '#' {
 			break
 		}
 
