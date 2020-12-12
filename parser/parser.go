@@ -94,8 +94,11 @@ func (p *Parser) parseBlock() node.Node {
 	case '=':
 		return p.parseHeading(unnumberedHeading)
 	default:
-		if p.ch == '#' && p.peek() == '#' {
+		switch {
+		case p.ch == '#' && p.peek() == '#':
 			return p.parseHeading(numberedHeading)
+		case p.ch == '`' && p.peek() == '`':
+			return p.parseCodeBlock()
 		}
 
 		return p.parseParagraph()
@@ -148,6 +151,76 @@ func (p *Parser) parseHeading(typ int) *node.Heading {
 	return h
 }
 
+func (p *Parser) parseCodeBlock() *node.CodeBlock {
+	// count opening delimiters
+	var openingDelims int
+	for p.ch == '`' {
+		openingDelims++
+		p.next()
+	}
+
+	// parse metadata
+	metadataOffs := p.offset
+	for p.ch != '\n' && p.ch != 0 {
+		p.next()
+	}
+
+	metadata := p.src[metadataOffs:p.offset]
+	p.next() // eat EOL or EOF
+
+	// parse body
+	offs := p.offset
+	var closingDelims int // we need this outside to offset closing delims
+	for p.ch != 0 {
+		// count consecutive backticks which may be closing delimiter
+		for p.ch == '`' {
+			closingDelims++
+			p.next()
+		}
+
+		// test for possible closing delimiter
+		// needs >= number of backticks as the opening delimiter
+		if closingDelims >= openingDelims {
+			break
+		}
+		closingDelims = 0 // reset counter if not closing delimiter
+
+		p.next()
+	}
+
+	var body string
+	if endOffs := p.offset - closingDelims; endOffs < len(p.src) {
+		body = p.src[offs:endOffs]
+	}
+
+	// parse metadata language and filename
+	var language string
+	var filename string
+	s := strings.SplitN(metadata, ",", 2)
+
+	// strings.TrimSpace() removes Unicode whitespace so it currently does not
+	// match our other whitespace removal...
+	if len(s) >= 1 {
+		language = strings.TrimSpace(s[0])
+	}
+	if len(s) >= 2 {
+		filename = strings.TrimSpace(s[1])
+	}
+
+	cb := &node.CodeBlock{
+		Language:    language,
+		Filename:    filename,
+		MetadataRaw: metadata,
+		Body:        body,
+	}
+
+	if trace {
+		p.print("return " + cb.String(p.indent+1))
+	}
+
+	return cb
+}
+
 func (p *Parser) parseParagraph() *node.Paragraph {
 	if trace {
 		defer p.trace("parseParagraph")()
@@ -161,8 +234,9 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 			break
 		}
 
-		// end paragraph if numbered heading
-		if p.ch == '#' && p.peek() == '#' {
+		// end paragraph if numbered heading or code block
+		if p.ch == '#' && p.peek() == '#' ||
+			p.ch == '`' && p.peek() == '`' {
 			break
 		}
 

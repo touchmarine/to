@@ -101,9 +101,8 @@ Emphasis represents stress or emphasis of its content. Use it only if its absenc
 Tibsey is a __koala__.
 ``
 
-| Element category           | inline       |
-| Permitted content category | inline, line |
-| Permitted content          | strong, text |
+| Element category  | inline             |
+| Permitted content | strong, link, text |
 
 Emphasis starts with a double underscore followed by zero or more occurrences of strong or text and stops at a double underscore, EOL, or EOF.
 
@@ -115,9 +114,8 @@ Strong represents the importance, seriousness, or urgency of its contents. Use i
 Climb **faster** Tibsey.
 ``
 
-| Element category           | inline         |
-| Permitted content category | inline, line   |
-| Permitted content          | emphasis, text |
+| Element category  | inline               |
+| Permitted content | emphasis, link, text |
 
 Strong starts with a double asterisk followed by zero or more occurrences of emphasis or text and stops at a double asterisk, EOL, or EOF.
 
@@ -134,9 +132,8 @@ Tibsey is going shopping.
 Tibsey likes to sleep.
 ``
 
-| Element category           | block                  |
-| Permitted content category | inline, line           |
-| Permitted content          | emphasis, strong, text |
+| Element category  | block                        |
+| Permitted content | emphasis, strong, link, text |
 
 Paragraph spans contiguous lines of emphasis, strong, or text until a blank line or another block.
 
@@ -162,9 +159,8 @@ Koalas live in the eucalyptus forests of southeastern and eastern Australia. Whe
 
 * Text in the example above is from <Koala, facts, and photos - National Geographic><https://www.nationalgeographic.com/animals/mammals/k/koala/>.
 
-| Element category           | block                  |
-| Permitted content category | inline, line           |
-| Permitted content          | emphasis, strong, text |
+| Element category  | block                        |
+| Permitted content | emphasis, strong, link, text |
 
 #### Unnumbered
 
@@ -194,9 +190,8 @@ Links create links to documents, locations in the same document, email addresses
 <mailto:tibsey@koala.test>
 ``
 
-| Element category           | inline                 |
-| Permitted content category | inline                 |
-| Permitted content          | emphasis, strong, text |
+| Element category  | inline                 |
+| Permitted content | emphasis, strong, text |
 
 Links consist of a link destination and an optional link text. The link destination is used as the link text if the link text is not present. The link text must be placed right after the link destination if they are both present.
 
@@ -205,3 +200,23 @@ The link destination starts with a less-than sign followed by zero or more occur
 The link text starts with a less-than sign followed by zero or more occurrences of emphasis, strong, or text and stops at a greater-than sign, EOL, or EOF.
 
 Greater-than sign is not permitted as content in either link destination or link text. To avoid unexpected links use percent-encoded URLs. '>' can be percent-encoded as '%3E'.
+
+### Code Blocks
+
+Code blocks represent computer code.
+
+```to
+``ts
+function displayButton(): void {
+    const button = document.querySelector("button")
+    button.style.display = "block"
+    // ...
+``
+```
+
+| Element category  | block  |
+| Permitted content | text   |
+
+Code blocks start with two or more occurrences of backticks followed by optional metadata which MUST be on the same line. Next is the code block body which consists of zero or more lines of text. Finally, the code block is closed on a line after the code block body with greater than or equal to the number of backticks used in the opening delimiter.
+
+Metadata consists of a language used in the code block body and an optional filename. The language is usually used for syntax highlighting and the filename may be used in the presentation of the code block.

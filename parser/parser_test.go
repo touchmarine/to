@@ -1453,6 +1453,311 @@ The koala is an iconic Australian animal. Often called...
 				},
 			},
 		},
+		{
+			name: "code block",
+			input: "``ts" + `
+function displayButton(): void {
+	const button = document.querySelector("button")
+	button.style.display = "block"
+	// ...
+}
+` + "``",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "ts",
+						Filename:    "",
+						MetadataRaw: "ts",
+						Body: `function displayButton(): void {
+	const button = document.querySelector("button")
+	button.style.display = "block"
+	// ...
+}
+`,
+					},
+				},
+			},
+		},
+		{
+			name: "code block no metadata",
+			input: "``" + `
+function displayButton(): void {
+	const button = document.querySelector("button")
+	button.style.display = "block"
+	// ...
+}
+` + "``",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "",
+						Filename:    "",
+						MetadataRaw: "",
+						Body: `function displayButton(): void {
+	const button = document.querySelector("button")
+	button.style.display = "block"
+	// ...
+}
+`,
+					},
+				},
+			},
+		},
+		{
+			name: "code block with full metadata and whitespace",
+			input: "``\tts  ,  button.ts  " + `
+function displayButton(): void {
+	const button = document.querySelector("button")
+	button.style.display = "block"
+	// ...
+}
+` + "``",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "ts",
+						Filename:    "button.ts",
+						MetadataRaw: "\tts  ,  button.ts  ",
+						Body: `function displayButton(): void {
+	const button = document.querySelector("button")
+	button.style.display = "block"
+	// ...
+}
+`,
+					},
+				},
+			},
+		},
+		{
+			name:  "code block no body",
+			input: "``ts\n``",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "ts",
+						Filename:    "",
+						MetadataRaw: "ts",
+						Body:        "",
+					},
+				},
+			},
+		},
+		{
+			name: "code block more than two delimiters",
+			input: "````ts" + `
+function displayButton(): void {
+	const button = document.querySelector("button")
+	button.style.display = "block"
+	// ...
+}
+` + "````",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "ts",
+						Filename:    "",
+						MetadataRaw: "ts",
+						Body: `function displayButton(): void {
+	const button = document.querySelector("button")
+	button.style.display = "block"
+	// ...
+}
+`,
+					},
+				},
+			},
+		},
+		{
+			name:  "code block escaped delimiter inside body",
+			input: "````ts\n```\n````",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "ts",
+						Filename:    "",
+						MetadataRaw: "ts",
+						Body:        "```\n",
+					},
+				},
+			},
+		},
+		{
+			name:  "code block delimiter inside body",
+			input: "``ts\n``\n``",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "ts",
+						Filename:    "",
+						MetadataRaw: "ts",
+						Body:        "",
+					},
+					&node.CodeBlock{
+						Language:    "",
+						Filename:    "",
+						MetadataRaw: "",
+						Body:        "",
+					},
+				},
+			},
+		},
+		{
+			name:  "unterminated code block",
+			input: "``ts\n",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "ts",
+						Filename:    "",
+						MetadataRaw: "ts",
+						Body:        "",
+					},
+				},
+			},
+		},
+		{
+			name:  "code block inline",
+			input: "``ts function displayButton(): void``",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "ts function displayButton(): void``",
+						Filename:    "",
+						MetadataRaw: "ts function displayButton(): void``",
+						Body:        "",
+					},
+				},
+			},
+		},
+		{
+			name:  "code block two line",
+			input: "``ts function displayButton(): void\n``",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "ts function displayButton(): void",
+						Filename:    "",
+						MetadataRaw: "ts function displayButton(): void",
+						Body:        "",
+					},
+				},
+			},
+		},
+		{
+			name: "code block text on closing delimiter line",
+			input: "``ts" + `
+function displayButton(): void {
+	const button = document.querySelector("button")
+	button.style.display = "block"
+	// ...
+}
+` + "`` ALREADY A PARAGRAPH",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "ts",
+						Filename:    "",
+						MetadataRaw: "ts",
+						Body: `function displayButton(): void {
+	const button = document.querySelector("button")
+	button.style.display = "block"
+	// ...
+}
+`,
+					},
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "ALREADY A PARAGRAPH",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "code block after heading",
+			input: "= Koala Language\n``koala\nEucalyptus, nom nom\n``",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala Language",
+							},
+						},
+					},
+					&node.CodeBlock{
+						Language:    "koala",
+						MetadataRaw: "koala",
+						Body:        "Eucalyptus, nom nom\n",
+					},
+				},
+			},
+		},
+		{
+			name:  "code block before heading",
+			input: "``koala\nEucalyptus, nom nom\n``\n## Koala Language",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "koala",
+						MetadataRaw: "koala",
+						Body:        "Eucalyptus, nom nom\n",
+					},
+					&node.Heading{
+						Level:      2,
+						IsNumbered: true,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala Language",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "code block after paragraph",
+			input: "Koala Language\n``koala\nEucalyptus, nom nom\n``",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala Language",
+							},
+						},
+					},
+					&node.CodeBlock{
+						Language:    "koala",
+						MetadataRaw: "koala",
+						Body:        "Eucalyptus, nom nom\n",
+					},
+				},
+			},
+		},
+		{
+			name:  "code block before paragraph",
+			input: "``koala\nEucalyptus, nom nom\n``\nKoala Language",
+			doc: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "koala",
+						MetadataRaw: "koala",
+						Body:        "Eucalyptus, nom nom\n",
+					},
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala Language",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {

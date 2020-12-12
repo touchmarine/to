@@ -110,6 +110,24 @@ func (l *Link) String(indent int) string {
 	}, indent)
 }
 
+type CodeBlock struct {
+	Language    string
+	Filename    string
+	MetadataRaw string
+	Body        string
+}
+
+func (cb CodeBlock) node()  {}
+func (cb CodeBlock) block() {}
+func (cb *CodeBlock) String(indent int) string {
+	return String("CodeBlock", map[string]interface{}{
+		"Language":    cb.Language,
+		"Filename":    cb.Filename,
+		"MetadataRaw": cb.MetadataRaw,
+		"Body":        cb.Body,
+	}, indent)
+}
+
 // String representation of an element.
 func String(name string, fields map[string]interface{}, indent int) string {
 	var b strings.Builder
