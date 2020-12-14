@@ -10,12 +10,12 @@ func TestParseDocument(t *testing.T) {
 	cases := []struct {
 		name  string
 		input string
-		doc   *node.Document
+		want  *node.Document
 	}{
 		{
 			name:  "underscore",
 			input: "Tibsey is a _koala_.",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -30,7 +30,7 @@ func TestParseDocument(t *testing.T) {
 		{
 			name:  "emphasis",
 			input: "Tibsey is a __koala__.",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -55,7 +55,7 @@ func TestParseDocument(t *testing.T) {
 		{
 			name:  "asterisk",
 			input: "Climb *faster* Tibsey.",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -70,7 +70,7 @@ func TestParseDocument(t *testing.T) {
 		{
 			name:  "strong",
 			input: "Climb **faster** Tibsey.",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -95,7 +95,7 @@ func TestParseDocument(t *testing.T) {
 		{
 			name:  "unterminated emphasis",
 			input: "Tibsey is a __koala.",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -117,7 +117,7 @@ func TestParseDocument(t *testing.T) {
 		{
 			name:  "unterminated emphasis in strong",
 			input: "Tibsey is a **__koala**.",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -146,7 +146,7 @@ func TestParseDocument(t *testing.T) {
 		{
 			name:  "nested emphasis in strong",
 			input: "YEAH **__YEAH__** YEAH",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -175,7 +175,7 @@ func TestParseDocument(t *testing.T) {
 		{
 			name:  "underscore in emphasis",
 			input: "A __under_score__ inside emphasis.",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -200,7 +200,7 @@ func TestParseDocument(t *testing.T) {
 		{
 			name:  "underscore in nested emphasis",
 			input: "__Printer goes __brr_r__.__",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -229,7 +229,7 @@ func TestParseDocument(t *testing.T) {
 		{
 			name:  "intraword emphasis",
 			input: "s__E__pt__E__mb__E__r",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -278,7 +278,7 @@ Tibsey is eating eucalyptus leaves.
 Tibsey is going shopping.
 Tibsey likes to sleep.
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -303,7 +303,7 @@ Tibsey likes to sleep.
 Tibsey is going shopping.**
 Tibsey **likes** to sleep.
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -345,7 +345,7 @@ Tibsey is going shopping.
 
 Tibsey likes to sleep.
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -380,7 +380,7 @@ Tibsey is going shopping.**
 
 Tibsey **likes** to sleep.
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -424,7 +424,7 @@ Tibsey **likes** to sleep.
 		{
 			name:  "heading 1",
 			input: "= Koala",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level: 1,
@@ -440,7 +440,7 @@ Tibsey **likes** to sleep.
 		{
 			name:  "heading 3",
 			input: "=== Australia",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level: 3,
@@ -456,7 +456,7 @@ Tibsey **likes** to sleep.
 		{
 			name:  "heading 30",
 			input: "============================== Uh oh",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level: 30,
@@ -472,7 +472,7 @@ Tibsey **likes** to sleep.
 		{
 			name:  "heading no space after =",
 			input: "==Still a heading",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level: 2,
@@ -488,7 +488,7 @@ Tibsey **likes** to sleep.
 		{
 			name:  "heading with sprinkled =",
 			input: "== ======",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level: 2,
@@ -508,7 +508,7 @@ Tibsey **likes** to sleep.
 == Habitat
 === Australia
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level: 1,
@@ -540,7 +540,7 @@ Tibsey **likes** to sleep.
 		{
 			name:  "heading emphasis and strong",
 			input: "== __**Yee Haw**__",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level: 2,
@@ -564,7 +564,7 @@ Tibsey **likes** to sleep.
 		{
 			name:  "numbered heading 1",
 			input: "# Koala",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -579,7 +579,7 @@ Tibsey **likes** to sleep.
 		{
 			name:  "numbered heading 3",
 			input: "### Australia",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level:      3,
@@ -596,7 +596,7 @@ Tibsey **likes** to sleep.
 		{
 			name:  "numbered heading 30",
 			input: "############################## Uh oh",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level:      30,
@@ -613,7 +613,7 @@ Tibsey **likes** to sleep.
 		{
 			name:  "numbered heading no space after #",
 			input: "##Still a heading",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level:      2,
@@ -630,7 +630,7 @@ Tibsey **likes** to sleep.
 		{
 			name:  "numbered heading with sprinkled #",
 			input: "## ######",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level:      2,
@@ -651,7 +651,7 @@ Tibsey **likes** to sleep.
 ## Habitat
 ### Australia
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level: 1,
@@ -685,7 +685,7 @@ Tibsey **likes** to sleep.
 		{
 			name:  "numbered heading emphasis and strong",
 			input: "## __**Yee Haw**__",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level:      2,
@@ -714,7 +714,7 @@ Tibsey **likes** to sleep.
 
 The koala is an iconic Australian animal. Often called...
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level: 1,
@@ -740,7 +740,7 @@ The koala is an iconic Australian animal. Often called...
 = Koala
 The koala is an iconic Australian animal. Often called...
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level: 1,
@@ -767,7 +767,7 @@ The koala is an iconic Australian animal. Often called...
 
 Koala lives in the...
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level:      2,
@@ -794,7 +794,7 @@ Koala lives in the...
 ## Habitat
 Koala lives in the...
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level:      2,
@@ -822,7 +822,7 @@ The koala is an iconic Australian animal. Often called...
 
 == Habitat
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -848,7 +848,7 @@ The koala is an iconic Australian animal. Often called...
 The koala is an iconic Australian animal. Often called...
 == Habitat
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -875,7 +875,7 @@ The koala is an iconic Australian animal. Often called...
 
 ## Habitat
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -902,7 +902,7 @@ The koala is an iconic Australian animal. Often called...
 The koala is an iconic Australian animal. Often called...
 ## Habitat
 `,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -926,7 +926,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "link",
 			input: "<https://koala.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -946,7 +946,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "relative link",
 			input: "</koalas>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -966,7 +966,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "reference link",
 			input: "<#habitat>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -986,7 +986,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "email link",
 			input: "<mailto:https://koala.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1006,7 +1006,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "link after unterminated strong",
 			input: "**<https://koala.test> koalas are awesome",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1033,7 +1033,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "link with strong",
 			input: "Look at <https://**koala**.test> website",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1059,7 +1059,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "link with unterminated strong",
 			input: "Look at <https://**koala.test> website",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1085,7 +1085,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "unterminated link",
 			input: "Look at <https://koala.test website",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1108,7 +1108,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "unterminated link another link",
 			input: "Look at <https://koala.test website <#habitat>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1131,7 +1131,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "two-part link",
 			input: "<Koala bears><https://koala.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1151,7 +1151,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "two-part link empahsized",
 			input: "__<Koala bears><https://koala.test>__",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1175,7 +1175,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "two-part link strong text",
 			input: "<**Koala bears**><https://koala.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1199,7 +1199,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "two-part link unterminated strong text",
 			input: "<**Koala bears><https://koala.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1223,7 +1223,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "link with <",
 			input: "<Koala bears<https://koala.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1243,7 +1243,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "link with < unterminated strong",
 			input: "<**Koala bears<https://koala.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1263,7 +1263,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "link with < and strong",
 			input: "<**Koala bears**<https://koala.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1283,7 +1283,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "two-part link strong and emphasis",
 			input: "<**__Koala__ bears**><https://koala.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1314,7 +1314,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "two-part link plain destination",
 			input: "<Koala bears><https://**koala**.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1334,7 +1334,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "consecutive links",
 			input: "<https://koala.test><https://eucalyptus.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1354,7 +1354,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "two links",
 			input: "<https://koala.test> <https://eucalyptus.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1385,7 +1385,7 @@ The koala is an iconic Australian animal. Often called...
 		{
 			name:  "consecutive two-part links",
 			input: "<Koala bears><https://koala.test><Eucalyptus><https://eucalyptus.test>",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1416,7 +1416,7 @@ The koala is an iconic Australian animal. Often called...
 <https://eucalyptus.test>
 
 <#habitat>`,
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1457,19 +1457,19 @@ The koala is an iconic Australian animal. Often called...
 			name: "code block",
 			input: "``ts" + `
 function displayButton(): void {
-	const button = document.querySelector("button")
+	const button = wantument.querySelector("button")
 	button.style.display = "block"
 	// ...
 }
 ` + "``",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "ts",
 						Filename:    "",
 						MetadataRaw: "ts",
 						Body: `function displayButton(): void {
-	const button = document.querySelector("button")
+	const button = wantument.querySelector("button")
 	button.style.display = "block"
 	// ...
 }
@@ -1482,19 +1482,19 @@ function displayButton(): void {
 			name: "code block no metadata",
 			input: "``" + `
 function displayButton(): void {
-	const button = document.querySelector("button")
+	const button = wantument.querySelector("button")
 	button.style.display = "block"
 	// ...
 }
 ` + "``",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "",
 						Filename:    "",
 						MetadataRaw: "",
 						Body: `function displayButton(): void {
-	const button = document.querySelector("button")
+	const button = wantument.querySelector("button")
 	button.style.display = "block"
 	// ...
 }
@@ -1507,19 +1507,19 @@ function displayButton(): void {
 			name: "code block with full metadata and whitespace",
 			input: "``\tts  ,  button.ts  " + `
 function displayButton(): void {
-	const button = document.querySelector("button")
+	const button = wantument.querySelector("button")
 	button.style.display = "block"
 	// ...
 }
 ` + "``",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "ts",
 						Filename:    "button.ts",
 						MetadataRaw: "\tts  ,  button.ts  ",
 						Body: `function displayButton(): void {
-	const button = document.querySelector("button")
+	const button = wantument.querySelector("button")
 	button.style.display = "block"
 	// ...
 }
@@ -1531,7 +1531,7 @@ function displayButton(): void {
 		{
 			name:  "code block no body",
 			input: "``ts\n``",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "ts",
@@ -1546,19 +1546,19 @@ function displayButton(): void {
 			name: "code block more than two delimiters",
 			input: "````ts" + `
 function displayButton(): void {
-	const button = document.querySelector("button")
+	const button = wantument.querySelector("button")
 	button.style.display = "block"
 	// ...
 }
 ` + "````",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "ts",
 						Filename:    "",
 						MetadataRaw: "ts",
 						Body: `function displayButton(): void {
-	const button = document.querySelector("button")
+	const button = wantument.querySelector("button")
 	button.style.display = "block"
 	// ...
 }
@@ -1570,7 +1570,7 @@ function displayButton(): void {
 		{
 			name:  "code block escaped delimiter inside body",
 			input: "````ts\n```\n````",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "ts",
@@ -1584,7 +1584,7 @@ function displayButton(): void {
 		{
 			name:  "code block delimiter inside body",
 			input: "``ts\n``\n``",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "ts",
@@ -1604,7 +1604,7 @@ function displayButton(): void {
 		{
 			name:  "unterminated code block",
 			input: "``ts\n",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "ts",
@@ -1618,7 +1618,7 @@ function displayButton(): void {
 		{
 			name:  "code block inline",
 			input: "``ts function displayButton(): void``",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "ts function displayButton(): void``",
@@ -1632,7 +1632,7 @@ function displayButton(): void {
 		{
 			name:  "code block two line",
 			input: "``ts function displayButton(): void\n``",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "ts function displayButton(): void",
@@ -1647,19 +1647,19 @@ function displayButton(): void {
 			name: "code block text on closing delimiter line",
 			input: "``ts" + `
 function displayButton(): void {
-	const button = document.querySelector("button")
+	const button = wantument.querySelector("button")
 	button.style.display = "block"
 	// ...
 }
 ` + "`` ALREADY A PARAGRAPH",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "ts",
 						Filename:    "",
 						MetadataRaw: "ts",
 						Body: `function displayButton(): void {
-	const button = document.querySelector("button")
+	const button = wantument.querySelector("button")
 	button.style.display = "block"
 	// ...
 }
@@ -1678,7 +1678,7 @@ function displayButton(): void {
 		{
 			name:  "code block after heading",
 			input: "= Koala Language\n``koala\nEucalyptus, nom nom\n``",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Heading{
 						Level: 1,
@@ -1699,7 +1699,7 @@ function displayButton(): void {
 		{
 			name:  "code block before heading",
 			input: "``koala\nEucalyptus, nom nom\n``\n## Koala Language",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "koala",
@@ -1721,7 +1721,7 @@ function displayButton(): void {
 		{
 			name:  "code block after paragraph",
 			input: "Koala Language\n``koala\nEucalyptus, nom nom\n``",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
 						Children: []node.Inline{
@@ -1741,7 +1741,7 @@ function displayButton(): void {
 		{
 			name:  "code block before paragraph",
 			input: "``koala\nEucalyptus, nom nom\n``\nKoala Language",
-			doc: &node.Document{
+			want: &node.Document{
 				Children: []node.Node{
 					&node.CodeBlock{
 						Language:    "koala",
@@ -1758,24 +1758,149 @@ function displayButton(): void {
 				},
 			},
 		},
+		{
+			name:  "unordered list",
+			input: "- milk",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						Type: node.Unordered,
+						ListItems: []*node.ListItem{
+							{
+								Children: [][]node.Node{
+									{
+										&node.Text{
+											Value: " milk",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "unordered list no whitespace after -",
+			input: "-milk",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						Type: node.Unordered,
+						ListItems: []*node.ListItem{
+							{
+								Children: [][]node.Node{
+									{
+										&node.Text{
+											Value: "milk",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "unordered list multiple items",
+			input: `- milk
+- sugar
+- bananas`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						Type: node.Unordered,
+						ListItems: []*node.ListItem{
+							{
+								Children: [][]node.Node{
+									{
+										&node.Text{
+											Value: " milk",
+										},
+									},
+								},
+							},
+							{
+								Children: [][]node.Node{
+									{
+										&node.Text{
+											Value: " sugar",
+										},
+									},
+								},
+							},
+							{
+								Children: [][]node.Node{
+									{
+										&node.Text{
+											Value: " bananas",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "unordered list nested",
+			input: `- Tuesday
+ - milk`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						Type: node.Unordered,
+						ListItems: []*node.ListItem{
+							{
+								Children: [][]node.Node{
+									{
+										&node.Text{
+											Value: " Tuesday",
+										},
+									},
+									{
+										&node.List{
+											Type: node.Unordered,
+											ListItems: []*node.ListItem{
+												{
+													Children: [][]node.Node{
+														{
+															&node.Text{
+																Value: " milk",
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := parser.New(tc.input)
 
-			doc := p.ParseDocument()
-			if doc == nil {
+			want := p.ParseDocument()
+			if want == nil {
 				t.Fatalf("ParseDocument() returned nil")
 			}
 
-			if doc.String() != tc.doc.String() {
+			if want.String() != tc.want.String() {
 				t.Errorf(
-					"document \"%s\" is incorrect, from input `%s` got:\n%s\nwant:\n%s",
+					"wantument \"%s\" is incorrect, from input `%s` got:\n%s\nwant:\n%s",
 					tc.name,
 					tc.input,
-					doc.String(),
-					tc.doc.String(),
+					want.String(),
+					tc.want.String(),
 				)
 			}
 		})

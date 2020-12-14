@@ -9,9 +9,21 @@ import (
 
 const tab = ".   "
 
+type ListType string
+
+// list types
+const (
+	Unordered ListType = "unordered"
+	Numbers            = "numbers"
+	//LowercaseLetters                = "lowercaseLetters"
+	//UppercaseLetters                = "uppercaseLetters"
+	//LowercaseRomanNumerals          = "lowercaseRomanNumerals"
+	//UppercaseRomanNumerals          = "uppercaseRomanNumerals"
+)
+
 type Node interface {
 	node()                    // dummy method to conform to interface
-	String(indent int) string // string representation for testing and debugging
+	Pretty(indent int) string // prettified string representation; usually for testing and debugging
 }
 
 type Block interface {
@@ -29,7 +41,7 @@ type Document struct {
 }
 
 func (d *Document) String() string {
-	return String("Document", map[string]interface{}{
+	return Pretty("Document", map[string]interface{}{
 		"Children": d.Children,
 	}, 1)
 }
@@ -40,8 +52,8 @@ type Paragraph struct {
 
 func (p Paragraph) node()  {}
 func (p Paragraph) block() {}
-func (p *Paragraph) String(indent int) string {
-	return String("Paragraph", map[string]interface{}{
+func (p *Paragraph) Pretty(indent int) string {
+	return Pretty("Paragraph", map[string]interface{}{
 		"Children": InlinesToNodes(p.Children),
 	}, indent)
 }
@@ -52,7 +64,7 @@ type Text struct {
 
 func (t Text) node()   {}
 func (t Text) inline() {}
-func (t *Text) String(indent int) string {
+func (t *Text) Pretty(indent int) string {
 	return fmt.Sprintf("Text(%s)", t.Value)
 }
 
@@ -62,8 +74,8 @@ type Emphasis struct {
 
 func (e Emphasis) node()   {}
 func (e Emphasis) inline() {}
-func (e *Emphasis) String(indent int) string {
-	return String("Emphasis", map[string]interface{}{
+func (e *Emphasis) Pretty(indent int) string {
+	return Pretty("Emphasis", map[string]interface{}{
 		"Children": InlinesToNodes(e.Children),
 	}, indent)
 }
@@ -74,8 +86,8 @@ type Strong struct {
 
 func (s Strong) node()   {}
 func (s Strong) inline() {}
-func (s *Strong) String(indent int) string {
-	return String("Strong", map[string]interface{}{
+func (s *Strong) Pretty(indent int) string {
+	return Pretty("Strong", map[string]interface{}{
 		"Children": InlinesToNodes(s.Children),
 	}, indent)
 }
@@ -88,8 +100,8 @@ type Heading struct {
 
 func (h Heading) node()  {}
 func (h Heading) block() {}
-func (h *Heading) String(indent int) string {
-	return String("Heading", map[string]interface{}{
+func (h *Heading) Pretty(indent int) string {
+	return Pretty("Heading", map[string]interface{}{
 		"Level":      strconv.Itoa(h.Level),
 		"IsNumbered": strconv.FormatBool(h.IsNumbered),
 		"Children":   InlinesToNodes(h.Children),
@@ -103,8 +115,8 @@ type Link struct {
 
 func (l Link) node()   {}
 func (l Link) inline() {}
-func (l *Link) String(indent int) string {
-	return String("Link", map[string]interface{}{
+func (l *Link) Pretty(indent int) string {
+	return Pretty("Link", map[string]interface{}{
 		"Destination": l.Destination,
 		"Children":    InlinesToNodes(l.Children),
 	}, indent)
@@ -119,8 +131,8 @@ type CodeBlock struct {
 
 func (cb CodeBlock) node()  {}
 func (cb CodeBlock) block() {}
-func (cb *CodeBlock) String(indent int) string {
-	return String("CodeBlock", map[string]interface{}{
+func (cb *CodeBlock) Pretty(indent int) string {
+	return Pretty("CodeBlock", map[string]interface{}{
 		"Language":    cb.Language,
 		"Filename":    cb.Filename,
 		"MetadataRaw": cb.MetadataRaw,
@@ -128,8 +140,45 @@ func (cb *CodeBlock) String(indent int) string {
 	}, indent)
 }
 
-// String representation of an element.
-func String(name string, fields map[string]interface{}, indent int) string {
+type List struct {
+	//IsContinued bool     // whether counting continues onward from the previous list
+	Type      ListType // unordered or numbering type if ordered
+	ListItems []*ListItem
+}
+
+func (l List) node()  {}
+func (l List) block() {}
+func (l *List) Pretty(indent int) string {
+	return Pretty("List", map[string]interface{}{
+		"Type":      string(l.Type),
+		"ListItems": ListItemsToNodes(l.ListItems),
+	}, indent)
+}
+
+type ListItem struct {
+	Children [][]Node
+}
+
+func (li ListItem) node()   {}
+func (li ListItem) inline() {}
+func (li *ListItem) Pretty(indent int) string {
+	var b strings.Builder
+	for i, child := range li.Children {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+
+		b.WriteString(PrettyNodes(child, indent+1))
+	}
+
+	return Pretty("ListItem", map[string]interface{}{
+		"Children": b.String(),
+	}, indent)
+}
+
+// Pretty returns a prettified string representation of an element; usually used
+// for testing and debugging.
+func Pretty(name string, fields map[string]interface{}, indent int) string {
 	var b strings.Builder
 	b.WriteString(name + "{")
 
@@ -149,7 +198,7 @@ func String(name string, fields map[string]interface{}, indent int) string {
 		case string:
 			b.WriteString(v)
 		case []Node:
-			b.WriteString(NodesString(v, indent+1))
+			b.WriteString(PrettyNodes(v, indent+1))
 		}
 
 		b.WriteString(",")
@@ -165,8 +214,8 @@ func String(name string, fields map[string]interface{}, indent int) string {
 	return b.String()
 }
 
-// NodesString returns a string representation of nodes.
-func NodesString(nodes []Node, indent int) string {
+// PrettyNodes returns a prettified string representation of nodes.
+func PrettyNodes(nodes []Node, indent int) string {
 	if len(nodes) == 0 {
 		return "[]"
 	}
@@ -175,7 +224,7 @@ func NodesString(nodes []Node, indent int) string {
 	b.WriteString("[\n")
 
 	for _, node := range nodes {
-		b.WriteString(strings.Repeat(tab, indent) + node.String(indent+1) + ",\n")
+		b.WriteString(strings.Repeat(tab, indent) + node.Pretty(indent+1) + ",\n")
 	}
 
 	b.WriteString(strings.Repeat(tab, indent-1) + "]")
@@ -187,6 +236,24 @@ func NodesString(nodes []Node, indent int) string {
 func InlinesToNodes(inlines []Inline) []Node {
 	nodes := make([]Node, len(inlines))
 	for i, v := range inlines {
+		nodes[i] = Node(v)
+	}
+	return nodes
+}
+
+// ListsToNodes converts []*List to []Node.
+func ListsToNodes(lists []*List) []Node {
+	nodes := make([]Node, len(lists))
+	for i, v := range lists {
+		nodes[i] = Node(v)
+	}
+	return nodes
+}
+
+// ListItemsToNodes converts []*ListItem to []Node.
+func ListItemsToNodes(listItems []*ListItem) []Node {
+	nodes := make([]Node, len(listItems))
+	for i, v := range listItems {
 		nodes[i] = Node(v)
 	}
 	return nodes

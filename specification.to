@@ -12,17 +12,31 @@ __This section is non-normative.__
 
 To is designed to be readable and collaborative. It provides features necessary for most writing work without having to resort to other tools. Notations are simple for humans and computers.
 
-One way to do one thing---To does not permit multiple notations to represent one element.
+Guiding principles:
+1. one way to do one thing---makes for easier collaboration
+1. <orthogonality><https://stackoverflow.com/questions/1527393/what-is-orthogonality>---changing A does not change B
+1. be obivous---notations should be obvious in themselves
+1. respect---consider, learn from, and interoperate with existing solutions
+1. universally accessible---available to everyone
 
-No modifiers---Modifiers, in whatever form, are not allowed.
+### Goals
 
-Considerate---Use notations for their known meaning and reserve common notations for other tools.
+__This section is non-normative.__
 
-Consistent---Simple rules without exceptions.
+To aims to be
+1. simple to read and collaborate;
+1. consistent;
+1. dependable; and
+1. able to be used alongside other tools.
 
-Dependable---Release a stable version and promise backward compatibility whenever first possible.
+To will, whenever first sensible, release a stable version and promise backward compatibility.
 
-Portable---Available across multiple tools and platforms.
+//1. No modifiers---the structure of a document should represent the resulting document.
+//1. Orthogonality---notation produces the same result no matter the context.
+//1. Considerate---use notations for their known meaning and reserve common notations for other tools.
+//1. Consistent---Simple rules without exceptions.
+//1. Dependable---Release a stable version and promise backward compatibility whenever first sensible.
+//1. Portable---Available across multiple tools and platforms.
 
 ## Conformance Requirements
 
@@ -60,25 +74,22 @@ EOL is the US-ASCII line feed (LF) character with hex value 0A (Unicode point U+
 
 ## Syntax
 
-Elements are divided into three categories:
-- inline
-- line
-- block
+Elements are divided into inline and block categories. Inline elements operate on the line they are declared on or on a part of the line they are declared on. Block elements operate on multiple contiguous lines. 
 
-Inline elements span from the opening delimiter to the closing delimiter, EOL, or EOF, whichever comes first.
+### Inline Elements
+
+Inline elements span from the opening delimiter to the closing delimiter, EOL or EOF, whichever comes first. Some inline elements do not have a closing delimiter---they always span to the EOL or EOF.
 
 ``to
 Tibsey is a **friendly koala**
 Tibsey is a **friendly koala<EOL>
 Tibsey is a **friendly koala<EOF>
-``
 
-Line elements span from the opening delimiter to the EOL or EOF, whichever comes first.
-
-``to
 // comments never hurt anyone<EOL>
 - list // a list item<EOF>
 ``
+
+### Block Elements
 
 Block elements span contiguous lines of inline or line content until a blank line or another block.
 
@@ -92,6 +103,8 @@ ends on the next line,
 because of a list below.
 - milk
 ``
+
+## Elements
 
 ### Emphasis
 
@@ -220,3 +233,52 @@ function displayButton(): void {
 Code blocks start with two or more occurrences of backticks followed by optional metadata which MUST be on the same line. Next is the code block body which consists of zero or more lines of text. Finally, the code block is closed on a line after the code block body with greater than or equal to the number of backticks used in the opening delimiter.
 
 Metadata consists of a language used in the code block body and an optional filename. The language is usually used for syntax highlighting and the filename may be used in the presentation of the code block.
+
+### Lists
+
+``to
+// unordered
+- milk
+- sugar
+- bananas
+
+// ordered - numbered
+1. eat
+1. sleep
+1. repeat
+
+// ordered - zero-based numbered
+0. eat
+0. sleep
+0. repeat
+
+// ordered - lowercase letters
+a. happiness
+a. sadness
+a. fear
+
+// ordered - lowercase Roman numerals
+i. Find the larges domain that makes...
+i. Construct an example...
+
+// continuation - start counting onward from the previous list
+1. I am climbing down the bamboo,
+1. thinking to myself,
+
+Aha!
+
+1. I must get meself some leaves, // this list will start counting from 3
+1. to get me high again.
+``
+
+| Element category  | block                                     |
+| Permitted content | nested list, emphasis, strong, link, text |
+
+Lists can be unordered or ordered. Ordered list items can be prefixed with
+- numbers
+- lowercase letters
+- uppercase letters
+- lowercase Roman numerals
+- uppercase Roman numerals
+
+Lists can be nested inside other lists by placing the nested list on the next line and indenting it by one or more whitespace characters.

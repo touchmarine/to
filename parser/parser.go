@@ -94,6 +94,11 @@ func (p *Parser) parseBlock() node.Node {
 	case '=':
 		return p.parseHeading(unnumberedHeading)
 	default:
+		// parseList returns nil if not a list without advancing pointers
+		if list := p.parseList(); list != nil {
+			return list
+		}
+
 		switch {
 		case p.ch == '#' && p.peek() == '#':
 			return p.parseHeading(numberedHeading)
@@ -215,10 +220,82 @@ func (p *Parser) parseCodeBlock() *node.CodeBlock {
 	}
 
 	if trace {
-		p.print("return " + cb.String(p.indent+1))
+		p.print("return " + cb.Pretty(p.indent+1))
 	}
 
 	return cb
+}
+
+// parseList returns nil if not a list.
+func (p *Parser) parseList() *node.List {
+	if trace {
+		defer p.trace("parseList")()
+	}
+
+	switch p.ch {
+	case '-':
+		return p.parseUnorderedList()
+	default:
+		return nil
+	}
+}
+
+func (p *Parser) parseUnorderedList() *node.List {
+	if trace {
+		defer p.trace("parseUnorderedList")()
+	}
+
+	list := &node.List{
+		Type: node.Unordered,
+	}
+
+	for p.ch == '-' && p.ch != 0 {
+		p.next() // eat opening '-'
+		list.ListItems = append(list.ListItems, p.parseListItem())
+	}
+
+	return list
+}
+
+func (p *Parser) parseListItem() *node.ListItem {
+	if trace {
+		defer p.trace("parseListItem")()
+	}
+
+	children := [][]node.Node{}
+
+	inlines := node.InlinesToNodes(p.parseInline(delimiters{})) // parse first line
+	children = append(children, inlines)
+	p.next() // eat EOL
+
+	for p.ch != 0 {
+		// indented lines continue list items
+		isIndented := false
+		for p.ch == '\t' || p.ch == ' ' {
+			isIndented = true
+			p.next()
+		}
+
+		if !isIndented {
+			break
+		}
+
+		list := p.parseList()
+		p.print(list.Pretty(p.indent + 1))
+		lists := []node.Node{list}
+		children = append(children, lists)
+		//p.next()
+	}
+
+	listItem := &node.ListItem{
+		Children: children,
+	}
+
+	if trace {
+		p.print("return " + listItem.Pretty(p.indent+1))
+	}
+
+	return listItem
 }
 
 func (p *Parser) parseParagraph() *node.Paragraph {
@@ -297,7 +374,7 @@ func (p *Parser) parseInline(delims delimiters) []node.Inline {
 	}
 
 	if trace {
-		p.print("return " + node.String("Inline", map[string]interface{}{
+		p.print("return " + node.Pretty("Inline", map[string]interface{}{
 			"Children": node.InlinesToNodes(inlines),
 		}, p.indent+1))
 	}
@@ -329,7 +406,7 @@ func (p *Parser) parseEmphasis(delims delimiters) *node.Emphasis {
 	}
 
 	if trace {
-		p.print("return " + em.String(p.indent+1))
+		p.print("return " + em.Pretty(p.indent+1))
 	}
 
 	return em
@@ -359,7 +436,7 @@ func (p *Parser) parseStrong(delims delimiters) *node.Strong {
 	}
 
 	if trace {
-		p.print("return " + em.String(p.indent+1))
+		p.print("return " + em.Pretty(p.indent+1))
 	}
 
 	return em
@@ -414,7 +491,7 @@ func (p *Parser) parseLink(delims delimiters) *node.Link {
 	}
 
 	if trace {
-		p.print("return " + link.String(p.indent+1))
+		p.print("return " + link.Pretty(p.indent+1))
 	}
 
 	return link
