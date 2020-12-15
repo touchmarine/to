@@ -103,7 +103,8 @@ func (p *Parser) parseBlock() node.Node {
 		return p.parseHeading(unnumberedHeading)
 	default:
 		// parseList returns nil if not a list without advancing pointers
-		if list := p.parseList(0); list != nil {
+		// TODO: pass initial list identation
+		if list, _ := p.parseList(0); list != nil {
 			return list
 		}
 
@@ -234,8 +235,9 @@ func (p *Parser) parseCodeBlock() *node.CodeBlock {
 	return cb
 }
 
-// parseList returns nil if not a list.
-func (p *Parser) parseList(indent int) *node.List {
+// parseList returns a list and the ending indentation it consumed.
+// It returns nil if no list present.
+func (p *Parser) parseList(indent int) (*node.List, int) {
 	if trace {
 		defer p.trace(fmt.Sprintf("parseList(%d)", indent))()
 	}
@@ -244,42 +246,43 @@ func (p *Parser) parseList(indent int) *node.List {
 	case '-':
 		return p.parseUnorderedList(indent)
 	default:
-		return nil
+		return nil, 0
 	}
 }
 
-func (p *Parser) parseUnorderedList(indent int) *node.List {
+// parseUnoredredList parses until a line that is indented less than or equal
+// to the opening line. List items on equal indentation are part of the list.
+// It returns an unordered list and the ending indentation it consumed.
+func (p *Parser) parseUnorderedList(indent int) (*node.List, int) {
 	if trace {
 		defer p.trace(fmt.Sprintf("parseUnorderedList(%d)", indent))()
 	}
 
 	var listItems [][]node.Node
 
+	var endIndent int
 	for p.ch == '-' && p.ch != 0 {
 		p.next() // eat opening '-'
 
-		listItems = append(listItems, p.parseListItem(indent))
+		var li []node.Node
+		li, endIndent = p.parseListItem(indent)
+		listItems = append(listItems, li)
 
 		// end list if indentation is less than starting indentation
-		if p.indentation() < indent {
+		if endIndent < indent {
 			break
-		}
-
-		// eat whitespace
-		for p.ch == '\t' || p.ch == ' ' {
-			p.next()
 		}
 	}
 
 	return &node.List{
 		Type:      node.Unordered,
 		ListItems: listItems,
-	}
+	}, endIndent
 }
 
 // parseListItem parses until a line that is indented less than or equal to the
-// opening line.
-func (p *Parser) parseListItem(indent int) []node.Node {
+// opening line. It returns a list item and the ending indentation it consumed.
+func (p *Parser) parseListItem(indent int) ([]node.Node, int) {
 	if trace {
 		defer p.trace(fmt.Sprintf("parseListItem(%d)", indent))()
 	}
@@ -291,21 +294,28 @@ func (p *Parser) parseListItem(indent int) []node.Node {
 	children = append(children, inlines...)
 	p.next() // eat EOL
 
+	var endIndent int
 	for p.ch != 0 {
-		// stop parsing if indentation not greater than starting
-		curIndent := p.indentation()
-		if curIndent <= indent {
-			break
-		}
-
-		// eat whitespace
+		var curIndent int
 		for p.ch == '\t' || p.ch == ' ' {
+			curIndent++ // TODO: tab equals one space
 			p.next()
 		}
 
+		// stop parsing if indentation not greater than starting
+		if curIndent <= indent {
+			// nested list could already consumed the indentation - which we set
+			// below
+			if curIndent > endIndent {
+				endIndent = curIndent
+			}
+			break
+		}
+
 		// parse nested list if present; parseList returns nil if not a list
-		if list := p.parseList(curIndent); list != nil {
+		if list, lEndIndent := p.parseList(curIndent); list != nil {
 			children = append(children, list)
+			endIndent = lEndIndent
 			continue
 		}
 
@@ -319,23 +329,7 @@ func (p *Parser) parseListItem(indent int) []node.Node {
 		p.print("return " + node.PrettyNodes(children, p.indent+1))
 	}
 
-	return children
-}
-
-// indentation returns indentation and resets pointers to where they were before
-// calling.
-// TODO: tab equlas one space of indentation
-func (p *Parser) indentation() int {
-	// reset pointers to where they were before calling indentation
-	defer p.reset(p.offset)
-
-	var indent int
-	for p.ch == '\t' || p.ch == ' ' {
-		indent++
-		p.next()
-	}
-
-	return indent
+	return children, endIndent
 }
 
 func (p *Parser) parseParagraph() *node.Paragraph {
