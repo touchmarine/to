@@ -54,6 +54,14 @@ func (p *Parser) peek() byte {
 	return 0
 }
 
+// reset returns the pointers to the offs position.
+func (p *Parser) reset(offs int) {
+	p.ch = 0 // gets overridden
+	p.offset = offs - 1
+	p.rdOffset = offs
+	p.next() // set ch
+}
+
 func (p *Parser) ParseDocument() *node.Document {
 	if trace {
 		defer p.trace("ParseDocument")()
@@ -95,7 +103,7 @@ func (p *Parser) parseBlock() node.Node {
 		return p.parseHeading(unnumberedHeading)
 	default:
 		// parseList returns nil if not a list without advancing pointers
-		if list := p.parseList(); list != nil {
+		if list := p.parseList(0); list != nil {
 			return list
 		}
 
@@ -227,75 +235,107 @@ func (p *Parser) parseCodeBlock() *node.CodeBlock {
 }
 
 // parseList returns nil if not a list.
-func (p *Parser) parseList() *node.List {
+func (p *Parser) parseList(indent int) *node.List {
 	if trace {
-		defer p.trace("parseList")()
+		defer p.trace(fmt.Sprintf("parseList(%d)", indent))()
 	}
 
 	switch p.ch {
 	case '-':
-		return p.parseUnorderedList()
+		return p.parseUnorderedList(indent)
 	default:
 		return nil
 	}
 }
 
-func (p *Parser) parseUnorderedList() *node.List {
+func (p *Parser) parseUnorderedList(indent int) *node.List {
 	if trace {
-		defer p.trace("parseUnorderedList")()
+		defer p.trace(fmt.Sprintf("parseUnorderedList(%d)", indent))()
 	}
 
-	list := &node.List{
-		Type: node.Unordered,
-	}
+	var listItems [][]node.Node
 
 	for p.ch == '-' && p.ch != 0 {
 		p.next() // eat opening '-'
-		list.ListItems = append(list.ListItems, p.parseListItem())
-	}
 
-	return list
-}
+		listItems = append(listItems, p.parseListItem(indent))
 
-func (p *Parser) parseListItem() *node.ListItem {
-	if trace {
-		defer p.trace("parseListItem")()
-	}
-
-	children := [][]node.Node{}
-
-	inlines := node.InlinesToNodes(p.parseInline(delimiters{})) // parse first line
-	children = append(children, inlines)
-	p.next() // eat EOL
-
-	for p.ch != 0 {
-		// indented lines continue list items
-		isIndented := false
-		for p.ch == '\t' || p.ch == ' ' {
-			isIndented = true
-			p.next()
-		}
-
-		if !isIndented {
+		// end list if indentation is less than starting indentation
+		if p.indentation() < indent {
 			break
 		}
 
-		list := p.parseList()
-		p.print(list.Pretty(p.indent + 1))
-		lists := []node.Node{list}
-		children = append(children, lists)
-		//p.next()
+		// eat whitespace
+		for p.ch == '\t' || p.ch == ' ' {
+			p.next()
+		}
 	}
 
-	listItem := &node.ListItem{
-		Children: children,
+	return &node.List{
+		Type:      node.Unordered,
+		ListItems: listItems,
+	}
+}
+
+// parseListItem parses until a line that is indented less than or equal to the
+// opening line.
+func (p *Parser) parseListItem(indent int) []node.Node {
+	if trace {
+		defer p.trace(fmt.Sprintf("parseListItem(%d)", indent))()
+	}
+
+	var children []node.Node
+
+	// parse opening line
+	inlines := node.InlinesToNodes(p.parseInline(delimiters{}))
+	children = append(children, inlines...)
+	p.next() // eat EOL
+
+	for p.ch != 0 {
+		// stop parsing if indentation not greater than starting
+		curIndent := p.indentation()
+		if curIndent <= indent {
+			break
+		}
+
+		// eat whitespace
+		for p.ch == '\t' || p.ch == ' ' {
+			p.next()
+		}
+
+		// parse nested list if present; parseList returns nil if not a list
+		if list := p.parseList(curIndent); list != nil {
+			children = append(children, list)
+			continue
+		}
+
+		// parse inline
+		inlines := node.InlinesToNodes(p.parseInline(delimiters{}))
+		children = append(children, inlines...)
+		p.next() // eat EOL
 	}
 
 	if trace {
-		p.print("return " + listItem.Pretty(p.indent+1))
+		p.print("return " + node.PrettyNodes(children, p.indent+1))
 	}
 
-	return listItem
+	return children
+}
+
+// indentation returns indentation and resets pointers to where they were before
+// calling.
+// TODO: tab equlas one space of indentation
+func (p *Parser) indentation() int {
+	// reset pointers to where they were before calling indentation
+	defer p.reset(p.offset)
+
+	var indent int
+	for p.ch == '\t' || p.ch == ' ' {
+		indent++
+		p.next()
+	}
+
+	return indent
 }
 
 func (p *Parser) parseParagraph() *node.Paragraph {
@@ -306,8 +346,13 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 	para := &node.Paragraph{}
 
 	for p.ch != '\n' && p.ch != 0 {
-		// end paragragh if heading
-		if p.ch == '=' {
+		// skip leading whitespace
+		for p.ch == '\t' || p.ch == ' ' {
+			p.next()
+		}
+
+		// end paragragh if heading or list
+		if p.ch == '=' || p.ch == '-' {
 			break
 		}
 
@@ -497,7 +542,7 @@ func (p *Parser) parseLink(delims delimiters) *node.Link {
 	return link
 }
 
-// isTwoPartLink determnies whether link consists of two consecutive parts:
+// isTwoPartLink determines whether link consists of two consecutive parts:
 // <link-text><link-destination>
 func (p *Parser) isTwoPartLink() bool {
 	if trace {
@@ -507,12 +552,7 @@ func (p *Parser) isTwoPartLink() bool {
 	// opening '<' already consumed
 
 	// reset pointers to where they were before calling isTwoPartLink
-	defer func(offs int) {
-		p.ch = '<'
-		p.offset = offs
-		p.rdOffset = offs + 1
-		p.next() // eat opening '<' again
-	}(p.offset - 1)
+	defer p.reset(p.offset)
 
 	for p.ch != '>' && p.ch != '\n' && p.ch != 0 {
 		p.next()

@@ -143,36 +143,30 @@ func (cb *CodeBlock) Pretty(indent int) string {
 type List struct {
 	//IsContinued bool     // whether counting continues onward from the previous list
 	Type      ListType // unordered or numbering type if ordered
-	ListItems []*ListItem
+	ListItems [][]Node
 }
 
 func (l List) node()  {}
 func (l List) block() {}
 func (l *List) Pretty(indent int) string {
-	return Pretty("List", map[string]interface{}{
-		"Type":      string(l.Type),
-		"ListItems": ListItemsToNodes(l.ListItems),
-	}, indent)
-}
-
-type ListItem struct {
-	Children [][]Node
-}
-
-func (li ListItem) node()   {}
-func (li ListItem) inline() {}
-func (li *ListItem) Pretty(indent int) string {
 	var b strings.Builder
-	for i, child := range li.Children {
+
+	b.WriteString(fmt.Sprintf("[%d]", len(l.ListItems)))
+	b.WriteString("[\n" + strings.Repeat(tab, indent+1))
+
+	for i, li := range l.ListItems {
 		if i > 0 {
-			b.WriteString(", ")
+			b.WriteString(",\n" + strings.Repeat(tab, indent+1))
 		}
 
-		b.WriteString(PrettyNodes(child, indent+1))
+		b.WriteString(PrettyNodes(li, indent+2))
 	}
 
-	return Pretty("ListItem", map[string]interface{}{
-		"Children": b.String(),
+	b.WriteString("\n" + strings.Repeat(tab, indent) + "]")
+
+	return Pretty("List", map[string]interface{}{
+		"Type":      string(l.Type),
+		"ListItems": b.String(),
 	}, indent)
 }
 
@@ -245,15 +239,6 @@ func InlinesToNodes(inlines []Inline) []Node {
 func ListsToNodes(lists []*List) []Node {
 	nodes := make([]Node, len(lists))
 	for i, v := range lists {
-		nodes[i] = Node(v)
-	}
-	return nodes
-}
-
-// ListItemsToNodes converts []*ListItem to []Node.
-func ListItemsToNodes(listItems []*ListItem) []Node {
-	nodes := make([]Node, len(listItems))
-	for i, v := range listItems {
 		nodes[i] = Node(v)
 	}
 	return nodes
