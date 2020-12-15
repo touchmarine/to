@@ -87,13 +87,20 @@ func (p *Parser) parseBlock() node.Node {
 		defer p.trace("parseBlock")()
 	}
 
-	// skip blank lines
-	for p.ch == '\t' || p.ch == '\n' || p.ch == ' ' {
-		if trace {
-			p.print(char(p.ch) + ", skip")
-		}
-
+	// skip blank lines and count indent
+	var indent int
+	for p.ch == '\t' || p.ch == ' ' {
+		indent++
 		p.next()
+	}
+
+	for p.ch == '\n' {
+		indent = 0
+		p.next()
+		for p.ch == '\t' || p.ch == ' ' {
+			indent++
+			p.next()
+		}
 	}
 
 	switch p.ch {
@@ -103,8 +110,7 @@ func (p *Parser) parseBlock() node.Node {
 		return p.parseHeading(unnumberedHeading)
 	default:
 		// parseList returns nil if not a list without advancing pointers
-		// TODO: pass initial list identation
-		if list, _ := p.parseList(0); list != nil {
+		if list, _ := p.parseList(indent); list != nil {
 			return list
 		}
 
@@ -275,7 +281,7 @@ func (p *Parser) parseUnorderedList(indent int) (*node.List, int) {
 	}
 
 	return &node.List{
-		Type:      node.Unordered,
+		Type:      node.UnorderedList,
 		ListItems: listItems,
 	}, endIndent
 }

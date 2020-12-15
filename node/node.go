@@ -13,8 +13,8 @@ type ListType string
 
 // list types
 const (
-	Unordered ListType = "unordered"
-	Numbers            = "numbers"
+	UnorderedList ListType = "unordered"
+	NumberedList           = "numbers"
 	//LowercaseLetters                = "lowercaseLetters"
 	//UppercaseLetters                = "uppercaseLetters"
 	//LowercaseRomanNumerals          = "lowercaseRomanNumerals"

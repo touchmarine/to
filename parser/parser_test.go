@@ -1764,7 +1764,26 @@ function displayButton(): void {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
+						ListItems: [][]node.Node{
+							{
+								&node.Text{
+									Value: " milk",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "unordered list indented",
+			input: `
+ - milk`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
@@ -1782,7 +1801,7 @@ function displayButton(): void {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
@@ -1796,13 +1815,45 @@ function displayButton(): void {
 		},
 		{
 			name: "unordered list multiple items",
-			input: `- milk
+			input: `
+- milk
 - sugar
 - bananas`,
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
+						ListItems: [][]node.Node{
+							{
+								&node.Text{
+									Value: " milk",
+								},
+							},
+							{
+								&node.Text{
+									Value: " sugar",
+								},
+							},
+							{
+								&node.Text{
+									Value: " bananas",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "unordered list multiple items - first indented",
+			input: `
+  - milk
+  - sugar
+  - bananas`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
@@ -1832,14 +1883,14 @@ function displayButton(): void {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
 									Value: " Tuesday",
 								},
 								&node.List{
-									Type: node.Unordered,
+									Type: node.UnorderedList,
 									ListItems: [][]node.Node{
 										{
 											&node.Text{
@@ -1862,14 +1913,14 @@ function displayButton(): void {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
 									Value: " Tuesday",
 								},
 								&node.List{
-									Type: node.Unordered,
+									Type: node.UnorderedList,
 									ListItems: [][]node.Node{
 										{
 											&node.Text{
@@ -1893,7 +1944,7 @@ function displayButton(): void {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
@@ -1903,7 +1954,7 @@ function displayButton(): void {
 									Value: "Shopping list:",
 								},
 								&node.List{
-									Type: node.Unordered,
+									Type: node.UnorderedList,
 									ListItems: [][]node.Node{
 										{
 											&node.Text{
@@ -1927,11 +1978,11 @@ function displayButton(): void {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.List{
-									Type: node.Unordered,
+									Type: node.UnorderedList,
 									ListItems: [][]node.Node{
 										{
 											&node.Text{
@@ -1955,11 +2006,11 @@ function displayButton(): void {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.List{
-									Type: node.Unordered,
+									Type: node.UnorderedList,
 									ListItems: [][]node.Node{
 										{
 											&node.Text{
@@ -1983,21 +2034,21 @@ function displayButton(): void {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
 									Value: " Tuesday",
 								},
 								&node.List{
-									Type: node.Unordered,
+									Type: node.UnorderedList,
 									ListItems: [][]node.Node{
 										{
 											&node.Text{
 												Value: " milk",
 											},
 											&node.List{
-												Type: node.Unordered,
+												Type: node.UnorderedList,
 												ListItems: [][]node.Node{
 													{
 														&node.Text{
@@ -2017,38 +2068,29 @@ function displayButton(): void {
 		},
 		{
 			name: "unordered list deeply nested 2",
+			// list is indented
 			input: `
-- Tuesday
- - oatmeal
- - milk
-  milk that is:
-  - low-fat`,
+ - Tuesday
+  - milk
+   - low-fat`,
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
 									Value: " Tuesday",
 								},
 								&node.List{
-									Type: node.Unordered,
+									Type: node.UnorderedList,
 									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " oatmeal",
-											},
-										},
 										{
 											&node.Text{
 												Value: " milk",
 											},
-											&node.Text{
-												Value: "milk that is:",
-											},
 											&node.List{
-												Type: node.Unordered,
+												Type: node.UnorderedList,
 												ListItems: [][]node.Node{
 													{
 														&node.Text{
@@ -2068,6 +2110,57 @@ function displayButton(): void {
 		},
 		{
 			name: "unordered list deeply nested 3",
+			input: `
+- Tuesday
+ - oatmeal
+ - milk
+  milk that is:
+  - low-fat`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						Type: node.UnorderedList,
+						ListItems: [][]node.Node{
+							{
+								&node.Text{
+									Value: " Tuesday",
+								},
+								&node.List{
+									Type: node.UnorderedList,
+									ListItems: [][]node.Node{
+										{
+											&node.Text{
+												Value: " oatmeal",
+											},
+										},
+										{
+											&node.Text{
+												Value: " milk",
+											},
+											&node.Text{
+												Value: "milk that is:",
+											},
+											&node.List{
+												Type: node.UnorderedList,
+												ListItems: [][]node.Node{
+													{
+														&node.Text{
+															Value: " low-fat",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "unordered list deeply nested 4",
 			// no additional indent before "milk that is:"
 			input: `
 - Tuesday
@@ -2078,14 +2171,14 @@ function displayButton(): void {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
 									Value: " Tuesday",
 								},
 								&node.List{
-									Type: node.Unordered,
+									Type: node.UnorderedList,
 									ListItems: [][]node.Node{
 										{
 											&node.Text{
@@ -2110,7 +2203,7 @@ function displayButton(): void {
 						},
 					},
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
@@ -2123,7 +2216,7 @@ function displayButton(): void {
 			},
 		},
 		{
-			name: "unordered list deeply nested 4",
+			name: "unordered list deeply nested 5",
 			input: `
 - Tuesday
  - Shopping list:
@@ -2135,14 +2228,14 @@ function displayButton(): void {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
 									Value: " Tuesday",
 								},
 								&node.List{
-									Type: node.Unordered,
+									Type: node.UnorderedList,
 									ListItems: [][]node.Node{
 										{
 											&node.Text{
@@ -2174,7 +2267,7 @@ function displayButton(): void {
 			},
 		},
 		{
-			name: "unordered list deeply nested 5",
+			name: "unordered list deeply nested 6",
 			input: `
 List
 - 1
@@ -2196,28 +2289,28 @@ End
 						},
 					},
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
 									Value: " 1",
 								},
 								&node.List{
-									Type: node.Unordered,
+									Type: node.UnorderedList,
 									ListItems: [][]node.Node{
 										{
 											&node.Text{
 												Value: " 2",
 											},
 											&node.List{
-												Type: node.Unordered,
+												Type: node.UnorderedList,
 												ListItems: [][]node.Node{
 													{
 														&node.Text{
 															Value: " 3",
 														},
 														&node.List{
-															Type: node.Unordered,
+															Type: node.UnorderedList,
 															ListItems: [][]node.Node{
 																{
 																	&node.Text{
@@ -2261,7 +2354,95 @@ End
 			},
 		},
 		{
-			name: "unordered list deeply nested 6",
+			name: "unordered list deeply nested 7",
+			// list is indented
+			input: `
+List
+  - 1
+   - 2
+    - 3
+     - 4
+    - 5
+   - 6
+  - 7
+End
+			`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "List",
+							},
+						},
+					},
+					&node.List{
+						Type: node.UnorderedList,
+						ListItems: [][]node.Node{
+							{
+								&node.Text{
+									Value: " 1",
+								},
+								&node.List{
+									Type: node.UnorderedList,
+									ListItems: [][]node.Node{
+										{
+											&node.Text{
+												Value: " 2",
+											},
+											&node.List{
+												Type: node.UnorderedList,
+												ListItems: [][]node.Node{
+													{
+														&node.Text{
+															Value: " 3",
+														},
+														&node.List{
+															Type: node.UnorderedList,
+															ListItems: [][]node.Node{
+																{
+																	&node.Text{
+																		Value: " 4",
+																	},
+																},
+															},
+														},
+													},
+													{
+														&node.Text{
+															Value: " 5",
+														},
+													},
+												},
+											},
+										},
+										{
+											&node.Text{
+												Value: " 6",
+											},
+										},
+									},
+								},
+							},
+							{
+								&node.Text{
+									Value: " 7",
+								},
+							},
+						},
+					},
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "End",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "unordered list deeply nested 8",
 			input: `
 List
 - 1
@@ -2290,7 +2471,7 @@ End
 						},
 					},
 					&node.List{
-						Type: node.Unordered,
+						Type: node.UnorderedList,
 						ListItems: [][]node.Node{
 							{
 								&node.Text{
@@ -2300,7 +2481,7 @@ End
 									Value: "one",
 								},
 								&node.List{
-									Type: node.Unordered,
+									Type: node.UnorderedList,
 									ListItems: [][]node.Node{
 										{
 											&node.Text{
@@ -2310,7 +2491,7 @@ End
 												Value: "two",
 											},
 											&node.List{
-												Type: node.Unordered,
+												Type: node.UnorderedList,
 												ListItems: [][]node.Node{
 													{
 														&node.Text{
@@ -2320,7 +2501,7 @@ End
 															Value: "three",
 														},
 														&node.List{
-															Type: node.Unordered,
+															Type: node.UnorderedList,
 															ListItems: [][]node.Node{
 																{
 																	&node.Text{
@@ -2388,7 +2569,7 @@ End
 
 			if want.String() != tc.want.String() {
 				t.Errorf(
-					"wantument \"%s\" is incorrect, from input `%s` got:\n%s\nwant:\n%s",
+					"document \"%s\" is incorrect, from input `%s`\ngot:\n%s\nwant:\n%s",
 					tc.name,
 					tc.input,
 					want.String(),
