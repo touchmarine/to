@@ -3,15 +3,15 @@ package renderer
 import (
 	"fmt"
 	"strconv"
-	"to/node"
 	"strings"
+	"to/node"
 )
 
 func HTML(nod node.Node, indent int) string {
 	var b strings.Builder
 
 	switch n := nod.(type) {
-	case *node.Document:	
+	case *node.Document:
 		for _, c := range n.Children {
 			b.WriteString(HTML(c, indent))
 		}
@@ -44,9 +44,9 @@ func HTML(nod node.Node, indent int) string {
 		strLevel := strconv.Itoa(n.Level)
 
 		if n.Level < 7 {
-			b.WriteString(indented("<h" + strLevel +">", indent))
+			b.WriteString(indented("<h"+strLevel+">", indent))
 		} else {
-			b.WriteString(indented(`<div role="heading" aria-level="` + strLevel + `">`, indent))
+			b.WriteString(indented(`<div role="heading" aria-level="`+strLevel+`">`, indent))
 		}
 
 		for _, c := range n.Children {
@@ -54,7 +54,7 @@ func HTML(nod node.Node, indent int) string {
 		}
 
 		if n.Level < 7 {
-			b.WriteString(indented("</h" + strLevel + ">", indent))
+			b.WriteString(indented("</h"+strLevel+">", indent))
 		} else {
 			b.WriteString(indented("</div>", indent))
 		}
@@ -74,7 +74,7 @@ func HTML(nod node.Node, indent int) string {
 			innerIndent++
 
 			b.WriteString(indented("<div>\n", indent))
-			b.WriteString(indented(n.Filename + "\n", innerIndent))
+			b.WriteString(indented(n.Filename+"\n", innerIndent))
 		}
 
 		b.WriteString(indented("<pre><code>\n", innerIndent))
@@ -84,7 +84,7 @@ func HTML(nod node.Node, indent int) string {
 		if n.Filename != "" {
 			b.WriteString(indented("</div>\n", indent))
 		}
-	
+
 	case *node.List:
 		b.WriteString(indented("<ul>\n", indent))
 

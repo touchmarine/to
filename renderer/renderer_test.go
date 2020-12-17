@@ -13,37 +13,37 @@ func TestHTML(t *testing.T) {
 		want  string
 	}{
 		{
-			name: "emphasis",
+			name:  "emphasis",
 			input: "Tibsey __loves__ sleeping.",
-			want: "<p>Tibsey <em>loves</em> sleeping.</p>\n",
+			want:  "<p>Tibsey <em>loves</em> sleeping.</p>\n",
 		},
 		{
-			name: "strong",
+			name:  "strong",
 			input: "Tibsey **loves** sleeping.",
-			want: "<p>Tibsey <strong>loves</strong> sleeping.</p>\n",
+			want:  "<p>Tibsey <strong>loves</strong> sleeping.</p>\n",
 		},
 		{
-			name: "strong in emphasis",
+			name:  "strong in emphasis",
 			input: "Tibsey **__loves__** sleeping.",
-			want: "<p>Tibsey <strong><em>loves</em></strong> sleeping.</p>\n",
+			want:  "<p>Tibsey <strong><em>loves</em></strong> sleeping.</p>\n",
 		},
 		{
-			name: "heading 1",
+			name:  "heading 1",
 			input: "= Koalas",
-			want: "<h1>Koalas</h1>",
+			want:  "<h1>Koalas</h1>",
 		},
 		{
-			name: "heading 3",
+			name:  "heading 3",
 			input: "=== Koalas",
-			want: "<h3>Koalas</h3>",
+			want:  "<h3>Koalas</h3>",
 		},
 		{
-			name: "heading 8",
+			name:  "heading 8",
 			input: "======== Koalas",
-			want: `<div role="heading" aria-level="8">Koalas</div>`,
+			want:  `<div role="heading" aria-level="8">Koalas</div>`,
 		},
 		{
-			name: "link",
+			name:  "link",
 			input: "<Koalas, facts, and photos><https://www.nationalgeographic.com/animals/mammals/k/koala/>",
 			want: `<p><a href="https://www.nationalgeographic.com/animals/mammals/k/koala/">Koalas, facts, and photos</a></p>
 `,

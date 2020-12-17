@@ -4,6 +4,7 @@ import (
 	"testing"
 	"to/node"
 	"to/parser"
+	"to/printer"
 )
 
 func TestParseDocument(t *testing.T) {
@@ -2561,19 +2562,21 @@ End
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := parser.New(tc.input)
-
-			want := p.ParseDocument()
-			if want == nil {
+			doc := p.ParseDocument()
+			if doc == nil {
 				t.Fatalf("ParseDocument() returned nil")
 			}
 
-			if want.Pretty(1) != tc.want.Pretty(1) {
+			got := printer.Pretty(doc, 0)
+			want := printer.Pretty(tc.want, 0)
+
+			if got != want {
 				t.Errorf(
 					"document \"%s\" is incorrect, from input `%s`\ngot:\n%s\nwant:\n%s",
 					tc.name,
 					tc.input,
-					want.Pretty(1),
-					tc.want.Pretty(1),
+					got,
+					want,
 				)
 			}
 		})

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"to/node"
+	"to/printer"
 )
 
 const trace = false
@@ -172,6 +173,10 @@ func (p *Parser) parseHeading(typ int) *node.Heading {
 }
 
 func (p *Parser) parseCodeBlock() *node.CodeBlock {
+	if trace {
+		defer p.trace("parseCodeBlock")()
+	}
+
 	// count opening delimiters
 	var openingDelims int
 	for p.ch == '`' {
@@ -235,7 +240,7 @@ func (p *Parser) parseCodeBlock() *node.CodeBlock {
 	}
 
 	if trace {
-		p.print("return " + cb.Pretty(p.indent+1))
+		p.print("return\n" + printer.Pretty(cb, p.indent+1))
 	}
 
 	return cb
@@ -332,7 +337,7 @@ func (p *Parser) parseListItem(indent int) ([]node.Node, int) {
 	}
 
 	if trace {
-		p.print("return " + node.PrettyNodes(children, p.indent+1))
+		p.print("return " + printer.Pretty(children, p.indent))
 	}
 
 	return children, endIndent
@@ -419,9 +424,7 @@ func (p *Parser) parseInline(delims delimiters) []node.Inline {
 	}
 
 	if trace {
-		p.print("return " + node.Pretty("Inline", map[string]interface{}{
-			"Children": node.InlinesToNodes(inlines),
-		}, p.indent+1))
+		p.print("return " + printer.Pretty(node.InlinesToNodes(inlines), p.indent))
 	}
 
 	return inlines
@@ -451,7 +454,7 @@ func (p *Parser) parseEmphasis(delims delimiters) *node.Emphasis {
 	}
 
 	if trace {
-		p.print("return " + em.Pretty(p.indent+1))
+		p.print("return\n" + printer.Pretty(em, p.indent+1))
 	}
 
 	return em
@@ -470,7 +473,7 @@ func (p *Parser) parseStrong(delims delimiters) *node.Strong {
 	// no possible duplicates because p.parseInline() returns on delim match
 	delims.double = append(delims.double, '*')
 
-	em := &node.Strong{
+	strong := &node.Strong{
 		Children: p.parseInline(delims),
 	}
 
@@ -481,10 +484,10 @@ func (p *Parser) parseStrong(delims delimiters) *node.Strong {
 	}
 
 	if trace {
-		p.print("return " + em.Pretty(p.indent+1))
+		p.print("return\n" + printer.Pretty(strong, p.indent+1))
 	}
 
-	return em
+	return strong
 }
 
 // parseLink parses link.
@@ -536,7 +539,7 @@ func (p *Parser) parseLink(delims delimiters) *node.Link {
 	}
 
 	if trace {
-		p.print("return " + link.Pretty(p.indent+1))
+		p.print("return\n" + printer.Pretty(link, p.indent+1))
 	}
 
 	return link
@@ -586,15 +589,15 @@ func (p *Parser) parseText() *node.Text {
 		p.next()
 	}
 
-	text := p.src[offs:p.offset]
+	text := &node.Text{
+		Value: p.src[offs:p.offset],
+	}
 
 	if trace {
-		p.print("return " + text)
+		p.print("return " + printer.Pretty(text, 0))
 	}
 
-	return &node.Text{
-		Value: text,
-	}
+	return text
 }
 
 func isSingleDelim(ch byte) bool {
