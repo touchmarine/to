@@ -2567,13 +2567,13 @@ End
 				t.Fatalf("ParseDocument() returned nil")
 			}
 
-			if want.String() != tc.want.String() {
+			if want.Pretty(1) != tc.want.Pretty(1) {
 				t.Errorf(
 					"document \"%s\" is incorrect, from input `%s`\ngot:\n%s\nwant:\n%s",
 					tc.name,
 					tc.input,
-					want.String(),
-					tc.want.String(),
+					want.Pretty(1),
+					tc.want.Pretty(1),
 				)
 			}
 		})

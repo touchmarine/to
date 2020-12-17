@@ -40,10 +40,11 @@ type Document struct {
 	Children []Node
 }
 
-func (d *Document) String() string {
+func (d *Document) node() {}
+func (d *Document) Pretty(indent int) string {
 	return Pretty("Document", map[string]interface{}{
 		"Children": d.Children,
-	}, 1)
+	}, indent)
 }
 
 type Paragraph struct {
