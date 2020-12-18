@@ -383,6 +383,11 @@ type delimiters struct {
 	double []byte // **strong**
 }
 
+var inlineDelims = delimiters{
+	single: []byte{'<'},
+	double: []byte{'_', '*'},
+}
+
 // parseInline parses until one of the provided delims, EOL, or EOF.
 func (p *Parser) parseInline(delims delimiters) []node.Inline {
 	if trace {
@@ -417,7 +422,7 @@ func (p *Parser) parseInline(delims delimiters) []node.Inline {
 		case p.ch == '<':
 			inlines = append(inlines, p.parseLink(delims))
 		default:
-			inlines = append(inlines, p.parseText())
+			inlines = append(inlines, p.parseText(delims))
 		}
 
 		// pointers are advanced by parslets
@@ -570,19 +575,24 @@ func (p *Parser) isTwoPartLink() bool {
 	return isTwoPartLink
 }
 
-// parseText parses until a delimiter, EOL, or EOF.
-func (p *Parser) parseText() *node.Text {
+// parseText parses until an inline delimiter, extra delimiter, EOL, or EOF.
+func (p *Parser) parseText(extraDelims delimiters) *node.Text {
 	if trace {
 		defer p.trace("parseText")()
 	}
 
+	delims := inlineDelims
+	delims.single = append(delims.single, extraDelims.single...)
+	delims.double = append(delims.double, extraDelims.double...)
+
 	offs := p.offset
 	for p.ch != '\n' && p.ch != 0 {
-		if isSingleDelim(p.ch) {
+		if contains(delims.single, p.ch) {
 			break
 		}
 
-		if p.ch == p.peek() && isDoubleDelim(p.ch) && isDoubleDelim(p.peek()) {
+		if p.ch == p.peek() && contains(delims.double, p.ch) &&
+			contains(delims.double, p.peek()) {
 			break
 		}
 
@@ -598,14 +608,6 @@ func (p *Parser) parseText() *node.Text {
 	}
 
 	return text
-}
-
-func isSingleDelim(ch byte) bool {
-	return ch == '<' || ch == '>'
-}
-
-func isDoubleDelim(ch byte) bool {
-	return ch == '_' || ch == '*'
 }
 
 func (p *Parser) trace(msg string) func() {

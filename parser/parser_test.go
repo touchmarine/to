@@ -945,6 +945,21 @@ The koala is an iconic Australian animal. Often called...
 			},
 		},
 		{
+			name:  "alone >",
+			input: "1 > 0",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Children: []node.Inline{
+							&node.Text{
+								Value: "1 > 0",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:  "relative link",
 			input: "</koalas>",
 			want: &node.Document{
