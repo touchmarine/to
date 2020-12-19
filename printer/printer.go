@@ -27,6 +27,11 @@ func Pretty(nod interface{}, indent int) string {
 
 	case *node.Paragraph:
 		return element("Paragraph", map[string]interface{}{
+			"Lines": node.LinesToNodes(n.Lines),
+		}, indent)
+
+	case *node.Line:
+		return element("Line", map[string]interface{}{
 			"Children": node.InlinesToNodes(n.Children),
 		}, indent)
 

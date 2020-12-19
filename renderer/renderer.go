@@ -18,10 +18,21 @@ func HTML(nod node.Node, indent int) string {
 
 	case *node.Paragraph:
 		b.WriteString(indented("<p>", indent))
-		for _, c := range n.Children {
-			b.WriteString(HTML(c, 0))
+
+		for i, line := range n.Lines {
+			if i > 0 {
+				b.WriteString("<br>\n")
+			}
+
+			b.WriteString(HTML(line, 0))
 		}
+
 		b.WriteString(indented("</p>\n", indent))
+
+	case *node.Line:
+		for _, c := range n.Children {
+			b.WriteString(HTML(c, indent))
+		}
 
 	case *node.Text:
 		b.WriteString(indented(n.Value, indent))
@@ -54,9 +65,9 @@ func HTML(nod node.Node, indent int) string {
 		}
 
 		if n.Level < 7 {
-			b.WriteString(indented("</h"+strLevel+">", indent))
+			b.WriteString(indented("</h"+strLevel+">\n", indent))
 		} else {
-			b.WriteString(indented("</div>", indent))
+			b.WriteString(indented("</div>\n", indent))
 		}
 
 	case *node.Link:

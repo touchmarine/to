@@ -13,6 +13,18 @@ func TestHTML(t *testing.T) {
 		want  string
 	}{
 		{
+			name: "lines",
+			input: `
+Tibsey is eating eucalyptus leaves.
+Tibsey is going shopping.
+Tibsey likes to sleep.
+`,
+			want: `<p>Tibsey is eating eucalyptus leaves.<br>
+Tibsey is going shopping.<br>
+Tibsey likes to sleep.</p>
+`,
+		},
+		{
 			name:  "emphasis",
 			input: "Tibsey __loves__ sleeping.",
 			want:  "<p>Tibsey <em>loves</em> sleeping.</p>\n",
@@ -30,17 +42,18 @@ func TestHTML(t *testing.T) {
 		{
 			name:  "heading 1",
 			input: "= Koalas",
-			want:  "<h1>Koalas</h1>",
+			want:  "<h1>Koalas</h1>\n",
 		},
 		{
 			name:  "heading 3",
 			input: "=== Koalas",
-			want:  "<h3>Koalas</h3>",
+			want:  "<h3>Koalas</h3>\n",
 		},
 		{
 			name:  "heading 8",
 			input: "======== Koalas",
-			want:  `<div role="heading" aria-level="8">Koalas</div>`,
+			want: `<div role="heading" aria-level="8">Koalas</div>
+`,
 		},
 		{
 			name:  "link",

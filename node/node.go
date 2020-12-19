@@ -33,11 +33,19 @@ type Document struct {
 func (d *Document) node() {}
 
 type Paragraph struct {
-	Children []Inline
+	Lines []*Line
 }
 
 func (p Paragraph) node()  {}
 func (p Paragraph) block() {}
+
+// currently line is used only by paragraph
+type Line struct {
+	Children []Inline
+}
+
+func (l Line) node()   {}
+func (l Line) inline() {}
 
 type Text struct {
 	Value string
@@ -100,6 +108,15 @@ func (l List) block() {}
 func InlinesToNodes(inlines []Inline) []Node {
 	nodes := make([]Node, len(inlines))
 	for i, v := range inlines {
+		nodes[i] = Node(v)
+	}
+	return nodes
+}
+
+// LinesToNodes converts []*Line to []Node.
+func LinesToNodes(lines []*Line) []Node {
+	nodes := make([]Node, len(lines))
+	for i, v := range lines {
 		nodes[i] = Node(v)
 	}
 	return nodes

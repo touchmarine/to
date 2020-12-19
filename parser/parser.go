@@ -343,12 +343,38 @@ func (p *Parser) parseListItem(indent int) ([]node.Node, int) {
 	return children, endIndent
 }
 
+// parseParagraph parses consecutive lines of inline text until another block,
+// EOL, or EOF.
 func (p *Parser) parseParagraph() *node.Paragraph {
 	if trace {
 		defer p.trace("parseParagraph")()
 	}
 
-	para := &node.Paragraph{}
+	var lines []*node.Line
+
+	for {
+		line := p.parseLine()
+		if line == nil {
+			break
+		}
+
+		lines = append(lines, line)
+		p.next() // eat line EOL
+	}
+
+	return &node.Paragraph{
+		Lines: lines,
+	}
+}
+
+// parseLine parses a line of inline elements. It returns nil if line has no
+// inline elements, i.e., if line starts a block or is blank.
+func (p *Parser) parseLine() *node.Line {
+	if trace {
+		defer p.trace("parseLine")()
+	}
+
+	var children []node.Inline
 
 	for p.ch != '\n' && p.ch != 0 {
 		// skip leading whitespace
@@ -371,11 +397,16 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 			p.print(fmt.Sprintf("p.ch=%s, p.peek()=%s", char(p.ch), char(p.peek())))
 		}
 
-		para.Children = append(para.Children, p.parseInline(delimiters{})...)
-		p.next() // eat EOL
+		children = append(children, p.parseInline(delimiters{})...)
 	}
 
-	return para
+	if len(children) == 0 {
+		return nil
+	}
+
+	return &node.Line{
+		Children: children,
+	}
 }
 
 type delimiters struct {

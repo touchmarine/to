@@ -3,8 +3,9 @@
              | <paragraph>
              | <heading>
 
-<paragraph>         ::= <paragraph-content> <paragraph>
-                      | <paragraph-content> <EOL>
+<paragraph>         ::= <line> <paragraph>
+                      | ""
+<line>              ::= <paragraph-content> <EOL>
 <paragraph-content> ::= <emphasis> <paragraph-content>
                       | <strong> <paragraph-content>
                       | <link> <paragraph-content>

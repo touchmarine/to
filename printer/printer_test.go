@@ -27,17 +27,21 @@ paragraph **strong** __emphasis__
 	want := `Document{
 .   Children: [
 .   .   Paragraph{
-.   .   .   Children: [
-.   .   .   .   "paragraph ",
-.   .   .   .   Strong{
+.   .   .   Lines: [
+.   .   .   .   Line{
 .   .   .   .   .   Children: [
-.   .   .   .   .   .   "strong",
-.   .   .   .   .   ],
-.   .   .   .   },
-.   .   .   .   " ",
-.   .   .   .   Emphasis{
-.   .   .   .   .   Children: [
-.   .   .   .   .   .   "emphasis",
+.   .   .   .   .   .   "paragraph ",
+.   .   .   .   .   .   Strong{
+.   .   .   .   .   .   .   Children: [
+.   .   .   .   .   .   .   .   "strong",
+.   .   .   .   .   .   .   ],
+.   .   .   .   .   .   },
+.   .   .   .   .   .   " ",
+.   .   .   .   .   .   Emphasis{
+.   .   .   .   .   .   .   Children: [
+.   .   .   .   .   .   .   .   "emphasis",
+.   .   .   .   .   .   .   ],
+.   .   .   .   .   .   },
 .   .   .   .   .   ],
 .   .   .   .   },
 .   .   .   ],
@@ -57,12 +61,16 @@ paragraph **strong** __emphasis__
 .   .   .   Level: "2",
 .   .   },
 .   .   Paragraph{
-.   .   .   Children: [
-.   .   .   .   Link{
+.   .   .   Lines: [
+.   .   .   .   Line{
 .   .   .   .   .   Children: [
-.   .   .   .   .   .   "Mammals",
+.   .   .   .   .   .   Link{
+.   .   .   .   .   .   .   Children: [
+.   .   .   .   .   .   .   .   "Mammals",
+.   .   .   .   .   .   .   ],
+.   .   .   .   .   .   .   Destination: "/type/mammals",
+.   .   .   .   .   .   },
 .   .   .   .   .   ],
-.   .   .   .   .   Destination: "/type/mammals",
 .   .   .   .   },
 .   .   .   ],
 .   .   },

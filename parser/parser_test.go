@@ -19,9 +19,13 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Tibsey is a _koala_.",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey is a _koala_.",
+									},
+								},
 							},
 						},
 					},
@@ -34,19 +38,23 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Tibsey is a ",
-							},
-							&node.Emphasis{
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "koala",
+										Value: "Tibsey is a ",
+									},
+									&node.Emphasis{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "koala",
+											},
+										},
+									},
+									&node.Text{
+										Value: ".",
 									},
 								},
-							},
-							&node.Text{
-								Value: ".",
 							},
 						},
 					},
@@ -59,9 +67,13 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Climb *faster* Tibsey.",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Climb *faster* Tibsey.",
+									},
+								},
 							},
 						},
 					},
@@ -74,19 +86,23 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Climb ",
-							},
-							&node.Strong{
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "faster",
+										Value: "Climb ",
+									},
+									&node.Strong{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "faster",
+											},
+										},
+									},
+									&node.Text{
+										Value: " Tibsey.",
 									},
 								},
-							},
-							&node.Text{
-								Value: " Tibsey.",
 							},
 						},
 					},
@@ -99,14 +115,18 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Tibsey is a ",
-							},
-							&node.Emphasis{
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "koala.",
+										Value: "Tibsey is a ",
+									},
+									&node.Emphasis{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "koala.",
+											},
+										},
 									},
 								},
 							},
@@ -121,23 +141,27 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Tibsey is a ",
-							},
-							&node.Strong{
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Emphasis{
+									&node.Text{
+										Value: "Tibsey is a ",
+									},
+									&node.Strong{
 										Children: []node.Inline{
-											&node.Text{
-												Value: "koala",
+											&node.Emphasis{
+												Children: []node.Inline{
+													&node.Text{
+														Value: "koala",
+													},
+												},
 											},
 										},
 									},
+									&node.Text{
+										Value: ".",
+									},
 								},
-							},
-							&node.Text{
-								Value: ".",
 							},
 						},
 					},
@@ -150,23 +174,27 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "YEAH ",
-							},
-							&node.Strong{
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Emphasis{
+									&node.Text{
+										Value: "YEAH ",
+									},
+									&node.Strong{
 										Children: []node.Inline{
-											&node.Text{
-												Value: "YEAH",
+											&node.Emphasis{
+												Children: []node.Inline{
+													&node.Text{
+														Value: "YEAH",
+													},
+												},
 											},
 										},
 									},
+									&node.Text{
+										Value: " YEAH",
+									},
 								},
-							},
-							&node.Text{
-								Value: " YEAH",
 							},
 						},
 					},
@@ -179,19 +207,23 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "A ",
-							},
-							&node.Emphasis{
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "under_score",
+										Value: "A ",
+									},
+									&node.Emphasis{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "under_score",
+											},
+										},
+									},
+									&node.Text{
+										Value: " inside emphasis.",
 									},
 								},
-							},
-							&node.Text{
-								Value: " inside emphasis.",
 							},
 						},
 					},
@@ -204,21 +236,25 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Emphasis{
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "Printer goes ",
+									&node.Emphasis{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Printer goes ",
+											},
+										},
 									},
-								},
-							},
-							&node.Text{
-								Value: "brr_r",
-							},
-							&node.Emphasis{
-								Children: []node.Inline{
 									&node.Text{
-										Value: ".",
+										Value: "brr_r",
+									},
+									&node.Emphasis{
+										Children: []node.Inline{
+											&node.Text{
+												Value: ".",
+											},
+										},
 									},
 								},
 							},
@@ -233,39 +269,43 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "s",
-							},
-							&node.Emphasis{
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "E",
+										Value: "s",
 									},
-								},
-							},
-							&node.Text{
-								Value: "pt",
-							},
-							&node.Emphasis{
-								Children: []node.Inline{
+									&node.Emphasis{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "E",
+											},
+										},
+									},
 									&node.Text{
-										Value: "E",
+										Value: "pt",
 									},
-								},
-							},
-							&node.Text{
-								Value: "mb",
-							},
-							&node.Emphasis{
-								Children: []node.Inline{
+									&node.Emphasis{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "E",
+											},
+										},
+									},
 									&node.Text{
-										Value: "E",
+										Value: "mb",
+									},
+									&node.Emphasis{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "E",
+											},
+										},
+									},
+									&node.Text{
+										Value: "r",
 									},
 								},
-							},
-							&node.Text{
-								Value: "r",
 							},
 						},
 					},
@@ -282,15 +322,27 @@ Tibsey likes to sleep.
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Tibsey is eating eucalyptus leaves.",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey is eating eucalyptus leaves.",
+									},
+								},
 							},
-							&node.Text{
-								Value: "Tibsey is going shopping.",
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey is going shopping.",
+									},
+								},
 							},
-							&node.Text{
-								Value: "Tibsey likes to sleep.",
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey likes to sleep.",
+									},
+								},
 							},
 						},
 					},
@@ -307,30 +359,42 @@ Tibsey **likes** to sleep.
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Strong{
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "Tibsey is eating eucalyptus leaves.",
+									&node.Strong{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Tibsey is eating eucalyptus leaves.",
+											},
+										},
 									},
 								},
 							},
-							&node.Text{
-								Value: "Tibsey is going shopping.",
-							},
-							&node.Strong{},
-							&node.Text{
-								Value: "Tibsey ",
-							},
-							&node.Strong{
+							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "likes",
+										Value: "Tibsey is going shopping.",
 									},
+									&node.Strong{},
 								},
 							},
-							&node.Text{
-								Value: " to sleep.",
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey ",
+									},
+									&node.Strong{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "likes",
+											},
+										},
+									},
+									&node.Text{
+										Value: " to sleep.",
+									},
+								},
 							},
 						},
 					},
@@ -349,23 +413,35 @@ Tibsey likes to sleep.
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Tibsey is eating eucalyptus leaves.",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey is eating eucalyptus leaves.",
+									},
+								},
 							},
 						},
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Tibsey is going shopping.",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey is going shopping.",
+									},
+								},
 							},
 						},
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Tibsey likes to sleep.",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey likes to sleep.",
+									},
+								},
 							},
 						},
 					},
@@ -384,38 +460,87 @@ Tibsey **likes** to sleep.
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Strong{
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Strong{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Tibsey is eating eucalyptus leaves.",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					&node.Paragraph{
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey is going shopping.",
+									},
+									&node.Strong{},
+								},
+							},
+						},
+					},
+					&node.Paragraph{
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey ",
+									},
+									&node.Strong{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "likes",
+											},
+										},
+									},
+									&node.Text{
+										Value: " to sleep.",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "paragraph lines",
+			input: `
+Tibsey is eating eucalyptus leaves.
+Tibsey is going shopping.
+Tibsey likes to sleep.
+`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
 									&node.Text{
 										Value: "Tibsey is eating eucalyptus leaves.",
 									},
 								},
 							},
-						},
-					},
-					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Tibsey is going shopping.",
-							},
-							&node.Strong{},
-						},
-					},
-					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Tibsey ",
-							},
-							&node.Strong{
+							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "likes",
+										Value: "Tibsey is going shopping.",
 									},
 								},
 							},
-							&node.Text{
-								Value: " to sleep.",
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Tibsey likes to sleep.",
+									},
+								},
 							},
 						},
 					},
@@ -568,9 +693,13 @@ Tibsey **likes** to sleep.
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "# Koala",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "# Koala",
+									},
+								},
 							},
 						},
 					},
@@ -726,9 +855,13 @@ The koala is an iconic Australian animal. Often called...
 						},
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "The koala is an iconic Australian animal. Often called...",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "The koala is an iconic Australian animal. Often called...",
+									},
+								},
 							},
 						},
 					},
@@ -752,9 +885,13 @@ The koala is an iconic Australian animal. Often called...
 						},
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "The koala is an iconic Australian animal. Often called...",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "The koala is an iconic Australian animal. Often called...",
+									},
+								},
 							},
 						},
 					},
@@ -780,9 +917,13 @@ Koala lives in the...
 						},
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Koala lives in the...",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Koala lives in the...",
+									},
+								},
 							},
 						},
 					},
@@ -807,9 +948,13 @@ Koala lives in the...
 						},
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Koala lives in the...",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Koala lives in the...",
+									},
+								},
 							},
 						},
 					},
@@ -826,9 +971,13 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "The koala is an iconic Australian animal. Often called...",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "The koala is an iconic Australian animal. Often called...",
+									},
+								},
 							},
 						},
 					},
@@ -852,9 +1001,13 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "The koala is an iconic Australian animal. Often called...",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "The koala is an iconic Australian animal. Often called...",
+									},
+								},
 							},
 						},
 					},
@@ -879,9 +1032,13 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "The koala is an iconic Australian animal. Often called...",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "The koala is an iconic Australian animal. Often called...",
+									},
+								},
 							},
 						},
 					},
@@ -906,9 +1063,13 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "The koala is an iconic Australian animal. Often called...",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "The koala is an iconic Australian animal. Often called...",
+									},
+								},
 							},
 						},
 					},
@@ -930,12 +1091,16 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "https://koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "https://koala.test",
+									&node.Link{
+										Destination: "https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://koala.test",
+											},
+										},
 									},
 								},
 							},
@@ -950,9 +1115,13 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "1 > 0",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "1 > 0",
+									},
+								},
 							},
 						},
 					},
@@ -965,12 +1134,16 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "/koalas",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "/koalas",
+									&node.Link{
+										Destination: "/koalas",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "/koalas",
+											},
+										},
 									},
 								},
 							},
@@ -985,12 +1158,16 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "#habitat",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "#habitat",
+									&node.Link{
+										Destination: "#habitat",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "#habitat",
+											},
+										},
 									},
 								},
 							},
@@ -1005,12 +1182,16 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "mailto:https://koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "mailto:https://koala.test",
+									&node.Link{
+										Destination: "mailto:https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "mailto:https://koala.test",
+											},
+										},
 									},
 								},
 							},
@@ -1025,19 +1206,23 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Strong{
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Link{
-										Destination: "https://koala.test",
+									&node.Strong{
 										Children: []node.Inline{
+											&node.Link{
+												Destination: "https://koala.test",
+												Children: []node.Inline{
+													&node.Text{
+														Value: "https://koala.test",
+													},
+												},
+											},
 											&node.Text{
-												Value: "https://koala.test",
+												Value: " koalas are awesome",
 											},
 										},
-									},
-									&node.Text{
-										Value: " koalas are awesome",
 									},
 								},
 							},
@@ -1052,20 +1237,24 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Look at ",
-							},
-							&node.Link{
-								Destination: "https://**koala**.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "https://**koala**.test",
+										Value: "Look at ",
+									},
+									&node.Link{
+										Destination: "https://**koala**.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://**koala**.test",
+											},
+										},
+									},
+									&node.Text{
+										Value: " website",
 									},
 								},
-							},
-							&node.Text{
-								Value: " website",
 							},
 						},
 					},
@@ -1078,20 +1267,24 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Look at ",
-							},
-							&node.Link{
-								Destination: "https://**koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "https://**koala.test",
+										Value: "Look at ",
+									},
+									&node.Link{
+										Destination: "https://**koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://**koala.test",
+											},
+										},
+									},
+									&node.Text{
+										Value: " website",
 									},
 								},
-							},
-							&node.Text{
-								Value: " website",
 							},
 						},
 					},
@@ -1104,15 +1297,19 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Look at ",
-							},
-							&node.Link{
-								Destination: "https://koala.test website",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "https://koala.test website",
+										Value: "Look at ",
+									},
+									&node.Link{
+										Destination: "https://koala.test website",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://koala.test website",
+											},
+										},
 									},
 								},
 							},
@@ -1127,15 +1324,19 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Look at ",
-							},
-							&node.Link{
-								Destination: "https://koala.test website <#habitat",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: "https://koala.test website <#habitat",
+										Value: "Look at ",
+									},
+									&node.Link{
+										Destination: "https://koala.test website <#habitat",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://koala.test website <#habitat",
+											},
+										},
 									},
 								},
 							},
@@ -1150,12 +1351,16 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "https://koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "Koala bears",
+									&node.Link{
+										Destination: "https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Koala bears",
+											},
+										},
 									},
 								},
 							},
@@ -1170,14 +1375,18 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Emphasis{
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Link{
-										Destination: "https://koala.test",
+									&node.Emphasis{
 										Children: []node.Inline{
-											&node.Text{
-												Value: "Koala bears",
+											&node.Link{
+												Destination: "https://koala.test",
+												Children: []node.Inline{
+													&node.Text{
+														Value: "Koala bears",
+													},
+												},
 											},
 										},
 									},
@@ -1194,14 +1403,18 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "https://koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Strong{
+									&node.Link{
+										Destination: "https://koala.test",
 										Children: []node.Inline{
-											&node.Text{
-												Value: "Koala bears",
+											&node.Strong{
+												Children: []node.Inline{
+													&node.Text{
+														Value: "Koala bears",
+													},
+												},
 											},
 										},
 									},
@@ -1218,14 +1431,18 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "https://koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Strong{
+									&node.Link{
+										Destination: "https://koala.test",
 										Children: []node.Inline{
-											&node.Text{
-												Value: "Koala bears",
+											&node.Strong{
+												Children: []node.Inline{
+													&node.Text{
+														Value: "Koala bears",
+													},
+												},
 											},
 										},
 									},
@@ -1242,12 +1459,16 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "Koala bears<https://koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "Koala bears<https://koala.test",
+									&node.Link{
+										Destination: "Koala bears<https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Koala bears<https://koala.test",
+											},
+										},
 									},
 								},
 							},
@@ -1262,12 +1483,16 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "**Koala bears<https://koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "**Koala bears<https://koala.test",
+									&node.Link{
+										Destination: "**Koala bears<https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "**Koala bears<https://koala.test",
+											},
+										},
 									},
 								},
 							},
@@ -1282,12 +1507,16 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "**Koala bears**<https://koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "**Koala bears**<https://koala.test",
+									&node.Link{
+										Destination: "**Koala bears**<https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "**Koala bears**<https://koala.test",
+											},
+										},
 									},
 								},
 							},
@@ -1302,21 +1531,25 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "https://koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Strong{
+									&node.Link{
+										Destination: "https://koala.test",
 										Children: []node.Inline{
-											&node.Emphasis{
+											&node.Strong{
 												Children: []node.Inline{
+													&node.Emphasis{
+														Children: []node.Inline{
+															&node.Text{
+																Value: "Koala",
+															},
+														},
+													},
 													&node.Text{
-														Value: "Koala",
+														Value: " bears",
 													},
 												},
-											},
-											&node.Text{
-												Value: " bears",
 											},
 										},
 									},
@@ -1333,12 +1566,16 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "https://**koala**.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "Koala bears",
+									&node.Link{
+										Destination: "https://**koala**.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Koala bears",
+											},
+										},
 									},
 								},
 							},
@@ -1353,12 +1590,16 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "https://eucalyptus.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "https://koala.test",
+									&node.Link{
+										Destination: "https://eucalyptus.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://koala.test",
+											},
+										},
 									},
 								},
 							},
@@ -1373,23 +1614,27 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "https://koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "https://koala.test",
+									&node.Link{
+										Destination: "https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://koala.test",
+											},
+										},
 									},
-								},
-							},
-							&node.Text{
-								Value: " ",
-							},
-							&node.Link{
-								Destination: "https://eucalyptus.test",
-								Children: []node.Inline{
 									&node.Text{
-										Value: "https://eucalyptus.test",
+										Value: " ",
+									},
+									&node.Link{
+										Destination: "https://eucalyptus.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://eucalyptus.test",
+											},
+										},
 									},
 								},
 							},
@@ -1404,20 +1649,24 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "https://koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "Koala bears",
+									&node.Link{
+										Destination: "https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Koala bears",
+											},
+										},
 									},
-								},
-							},
-							&node.Link{
-								Destination: "https://eucalyptus.test",
-								Children: []node.Inline{
-									&node.Text{
-										Value: "Eucalyptus",
+									&node.Link{
+										Destination: "https://eucalyptus.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Eucalyptus",
+											},
+										},
 									},
 								},
 							},
@@ -1435,32 +1684,44 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "https://koala.test",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "https://koala.test",
+									&node.Link{
+										Destination: "https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://koala.test",
+											},
+										},
 									},
 								},
 							},
-							&node.Link{
-								Destination: "https://eucalyptus.test",
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "https://eucalyptus.test",
+									&node.Link{
+										Destination: "https://eucalyptus.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://eucalyptus.test",
+											},
+										},
 									},
 								},
 							},
 						},
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Link{
-								Destination: "#habitat",
+						Lines: []*node.Line{
+							{
 								Children: []node.Inline{
-									&node.Text{
-										Value: "#habitat",
+									&node.Link{
+										Destination: "#habitat",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "#habitat",
+											},
+										},
 									},
 								},
 							},
@@ -1682,9 +1943,13 @@ function displayButton(): void {
 `,
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "ALREADY A PARAGRAPH",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "ALREADY A PARAGRAPH",
+									},
+								},
 							},
 						},
 					},
@@ -1740,9 +2005,13 @@ function displayButton(): void {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Koala Language",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Koala Language",
+									},
+								},
 							},
 						},
 					},
@@ -1765,9 +2034,13 @@ function displayButton(): void {
 						Body:        "Eucalyptus, nom nom\n",
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Koala Language",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "Koala Language",
+									},
+								},
 							},
 						},
 					},
@@ -2212,9 +2485,13 @@ function displayButton(): void {
 						},
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "milk that is:",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "milk that is:",
+									},
+								},
 							},
 						},
 					},
@@ -2298,9 +2575,13 @@ End
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "List",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "List",
+									},
+								},
 							},
 						},
 					},
@@ -2360,9 +2641,13 @@ End
 						},
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "End",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "End",
+									},
+								},
 							},
 						},
 					},
@@ -2386,9 +2671,13 @@ End
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "List",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "List",
+									},
+								},
 							},
 						},
 					},
@@ -2448,9 +2737,13 @@ End
 						},
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "End",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "End",
+									},
+								},
 							},
 						},
 					},
@@ -2480,9 +2773,13 @@ End
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "List",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "List",
+									},
+								},
 							},
 						},
 					},
@@ -2563,9 +2860,13 @@ End
 						},
 					},
 					&node.Paragraph{
-						Children: []node.Inline{
-							&node.Text{
-								Value: "End",
+						Lines: []*node.Line{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "End",
+									},
+								},
 							},
 						},
 					},
