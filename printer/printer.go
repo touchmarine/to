@@ -70,26 +70,37 @@ func Pretty(nod interface{}, indent int) string {
 		}, indent)
 
 	case *node.List:
-		{
-			var b strings.Builder
-			b.WriteString(fmt.Sprintf("[%d]", len(n.ListItems)))
-			b.WriteString("[\n")
+		return element("List", map[string]interface{}{
+			"Type":      n.Type,
+			"ListItems": node.ListItemsToNodes(n.ListItems),
+		}, indent)
+		/*
+			{
+				var b strings.Builder
+				b.WriteString(fmt.Sprintf("[%d]", len(n.ListItems)))
+				b.WriteString("[\n")
 
-			for i, li := range n.ListItems {
-				if i > 0 {
-					b.WriteString(",\n")
+				for i, li := range n.ListItems {
+					if i > 0 {
+						b.WriteString(",\n")
+					}
+
+					b.WriteString(indented(Pretty(li, indent+2), indent+2))
 				}
 
-				b.WriteString(indented(Pretty(li, indent+2), indent+2))
+				b.WriteString("\n" + indented("]", indent+1))
+
+				return element("List", map[string]interface{}{
+					"Type":      string(n.Type),
+					"ListItems": unquoted(b.String()),
+				}, indent)
 			}
+		*/
 
-			b.WriteString("\n" + indented("]", indent+1))
-
-			return element("List", map[string]interface{}{
-				"Type":      string(n.Type),
-				"ListItems": unquoted(b.String()),
-			}, indent)
-		}
+	case *node.ListItem:
+		return element("ListItem", map[string]interface{}{
+			"Children": n.Children,
+		}, indent)
 
 	default:
 		panic(fmt.Sprintf("printer.Pretty: unexpected node type %T", n))

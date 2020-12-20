@@ -98,11 +98,18 @@ func (cb CodeBlock) block() {}
 type List struct {
 	//IsContinued bool     // whether counting continues onward from the previous list
 	Type      ListType // unordered or numbering type if ordered
-	ListItems [][]Node
+	ListItems []*ListItem
 }
 
 func (l List) node()  {}
 func (l List) block() {}
+
+type ListItem struct {
+	Children []Node
+}
+
+func (li ListItem) node()  {}
+func (li ListItem) block() {}
 
 // InlinesToNodes converts []Inline to []Node.
 func InlinesToNodes(inlines []Inline) []Node {
@@ -117,6 +124,15 @@ func InlinesToNodes(inlines []Inline) []Node {
 func LinesToNodes(lines []*Line) []Node {
 	nodes := make([]Node, len(lines))
 	for i, v := range lines {
+		nodes[i] = Node(v)
+	}
+	return nodes
+}
+
+// ListItemsToNodes converts []*ListItem to []Node.
+func ListItemsToNodes(listItems []*ListItem) []Node {
+	nodes := make([]Node, len(listItems))
+	for i, v := range listItems {
 		nodes[i] = Node(v)
 	}
 	return nodes

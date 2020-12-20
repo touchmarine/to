@@ -82,23 +82,29 @@ paragraph **strong** __emphasis__
 .   .   .   MetadataRaw: "to",
 .   .   },
 .   .   List{
-.   .   .   ListItems: [1][
-.   .   .   .   [
-.   .   .   .   .   " Tuesday:",
-.   .   .   .   .   List{
-.   .   .   .   .   .   ListItems: [2][
-.   .   .   .   .   .   .   [
-.   .   .   .   .   .   .   .   " milk",
+.   .   .   ListItems: [
+.   .   .   .   ListItem{
+.   .   .   .   .   Children: [
+.   .   .   .   .   .   " Tuesday:",
+.   .   .   .   .   .   List{
+.   .   .   .   .   .   .   ListItems: [
+.   .   .   .   .   .   .   .   ListItem{
+.   .   .   .   .   .   .   .   .   Children: [
+.   .   .   .   .   .   .   .   .   .   " milk",
+.   .   .   .   .   .   .   .   .   ],
+.   .   .   .   .   .   .   .   },
+.   .   .   .   .   .   .   .   ListItem{
+.   .   .   .   .   .   .   .   .   Children: [
+.   .   .   .   .   .   .   .   .   .   " sugar",
+.   .   .   .   .   .   .   .   .   ],
+.   .   .   .   .   .   .   .   },
 .   .   .   .   .   .   .   ],
-.   .   .   .   .   .   .   [
-.   .   .   .   .   .   .   .   " sugar",
-.   .   .   .   .   .   .   ]
-.   .   .   .   .   .   ],
-.   .   .   .   .   .   Type: "unordered",
-.   .   .   .   .   },
-.   .   .   .   ]
+.   .   .   .   .   .   .   Type: ,
+.   .   .   .   .   .   },
+.   .   .   .   .   ],
+.   .   .   .   },
 .   .   .   ],
-.   .   .   Type: "unordered",
+.   .   .   Type: ,
 .   .   },
 .   ],
 }`

@@ -2054,10 +2054,12 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " milk",
+								Children: []node.Node{
+									&node.Text{
+										Value: " milk",
+									},
 								},
 							},
 						},
@@ -2073,10 +2075,12 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " milk",
+								Children: []node.Node{
+									&node.Text{
+										Value: " milk",
+									},
 								},
 							},
 						},
@@ -2091,10 +2095,12 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: "milk",
+								Children: []node.Node{
+									&node.Text{
+										Value: "milk",
+									},
 								},
 							},
 						},
@@ -2112,20 +2118,26 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " milk",
+								Children: []node.Node{
+									&node.Text{
+										Value: " milk",
+									},
 								},
 							},
 							{
-								&node.Text{
-									Value: " sugar",
+								Children: []node.Node{
+									&node.Text{
+										Value: " sugar",
+									},
 								},
 							},
 							{
-								&node.Text{
-									Value: " bananas",
+								Children: []node.Node{
+									&node.Text{
+										Value: " bananas",
+									},
 								},
 							},
 						},
@@ -2143,20 +2155,26 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " milk",
+								Children: []node.Node{
+									&node.Text{
+										Value: " milk",
+									},
 								},
 							},
 							{
-								&node.Text{
-									Value: " sugar",
+								Children: []node.Node{
+									&node.Text{
+										Value: " sugar",
+									},
 								},
 							},
 							{
-								&node.Text{
-									Value: " bananas",
+								Children: []node.Node{
+									&node.Text{
+										Value: " bananas",
+									},
 								},
 							},
 						},
@@ -2173,17 +2191,21 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " Tuesday",
-								},
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " milk",
+								Children: []node.Node{
+									&node.Text{
+										Value: " Tuesday",
+									},
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " milk",
+													},
+												},
 											},
 										},
 									},
@@ -2203,17 +2225,21 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " Tuesday",
-								},
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " milk",
+								Children: []node.Node{
+									&node.Text{
+										Value: " Tuesday",
+									},
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " milk",
+													},
+												},
 											},
 										},
 									},
@@ -2234,20 +2260,24 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " Tuesday",
-								},
-								&node.Text{
-									Value: "Shopping list:",
-								},
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " milk",
+								Children: []node.Node{
+									&node.Text{
+										Value: " Tuesday",
+									},
+									&node.Text{
+										Value: "Shopping list:",
+									},
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " milk",
+													},
+												},
 											},
 										},
 									},
@@ -2268,14 +2298,18 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " inner",
+								Children: []node.Node{
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " inner",
+													},
+												},
 											},
 										},
 									},
@@ -2296,14 +2330,18 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " inner",
+								Children: []node.Node{
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " inner",
+													},
+												},
 											},
 										},
 									},
@@ -2324,24 +2362,30 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " Tuesday",
-								},
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " milk",
-											},
-											&node.List{
-												Type: node.UnorderedList,
-												ListItems: [][]node.Node{
-													{
-														&node.Text{
-															Value: " low-fat",
+								Children: []node.Node{
+									&node.Text{
+										Value: " Tuesday",
+									},
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " milk",
+													},
+													&node.List{
+														Type: node.UnorderedList,
+														ListItems: []*node.ListItem{
+															{
+																Children: []node.Node{
+																	&node.Text{
+																		Value: " low-fat",
+																	},
+																},
+															},
 														},
 													},
 												},
@@ -2366,24 +2410,30 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " Tuesday",
-								},
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " milk",
-											},
-											&node.List{
-												Type: node.UnorderedList,
-												ListItems: [][]node.Node{
-													{
-														&node.Text{
-															Value: " low-fat",
+								Children: []node.Node{
+									&node.Text{
+										Value: " Tuesday",
+									},
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " milk",
+													},
+													&node.List{
+														Type: node.UnorderedList,
+														ListItems: []*node.ListItem{
+															{
+																Children: []node.Node{
+																	&node.Text{
+																		Value: " low-fat",
+																	},
+																},
+															},
 														},
 													},
 												},
@@ -2409,32 +2459,40 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " Tuesday",
-								},
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " oatmeal",
+								Children: []node.Node{
+									&node.Text{
+										Value: " Tuesday",
+									},
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " oatmeal",
+													},
+												},
 											},
-										},
-										{
-											&node.Text{
-												Value: " milk",
-											},
-											&node.Text{
-												Value: "milk that is:",
-											},
-											&node.List{
-												Type: node.UnorderedList,
-												ListItems: [][]node.Node{
-													{
-														&node.Text{
-															Value: " low-fat",
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " milk",
+													},
+													&node.Text{
+														Value: "milk that is:",
+													},
+													&node.List{
+														Type: node.UnorderedList,
+														ListItems: []*node.ListItem{
+															{
+																Children: []node.Node{
+																	&node.Text{
+																		Value: " low-fat",
+																	},
+																},
+															},
 														},
 													},
 												},
@@ -2461,22 +2519,28 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " Tuesday",
-								},
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " oatmeal",
+								Children: []node.Node{
+									&node.Text{
+										Value: " Tuesday",
+									},
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " oatmeal",
+													},
+												},
 											},
-										},
-										{
-											&node.Text{
-												Value: " milk",
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " milk",
+													},
+												},
 											},
 										},
 									},
@@ -2497,10 +2561,12 @@ function displayButton(): void {
 					},
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " low-fat",
+								Children: []node.Node{
+									&node.Text{
+										Value: " low-fat",
+									},
 								},
 							},
 						},
@@ -2522,36 +2588,44 @@ function displayButton(): void {
 				Children: []node.Node{
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " Tuesday",
-								},
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " Shopping list:",
+								Children: []node.Node{
+									&node.Text{
+										Value: " Tuesday",
+									},
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " Shopping list:",
+													},
+													&node.Text{
+														Value: "Go buy some milk and sugar",
+													},
+												},
 											},
-											&node.Text{
-												Value: "Go buy some milk and sugar",
-											},
-										},
-										{
-											&node.Text{
-												Value: " Work:",
-											},
-											&node.Text{
-												Value: "Climb the bamboo and eat eucalyptus",
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " Work:",
+													},
+													&node.Text{
+														Value: "Climb the bamboo and eat eucalyptus",
+													},
+												},
 											},
 										},
 									},
 								},
 							},
 							{
-								&node.Text{
-									Value: " Wednesday",
+								Children: []node.Node{
+									&node.Text{
+										Value: " Wednesday",
+									},
 								},
 							},
 						},
@@ -2587,55 +2661,69 @@ End
 					},
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " 1",
-								},
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " 2",
-											},
-											&node.List{
-												Type: node.UnorderedList,
-												ListItems: [][]node.Node{
-													{
-														&node.Text{
-															Value: " 3",
-														},
-														&node.List{
-															Type: node.UnorderedList,
-															ListItems: [][]node.Node{
-																{
+								Children: []node.Node{
+									&node.Text{
+										Value: " 1",
+									},
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " 2",
+													},
+													&node.List{
+														Type: node.UnorderedList,
+														ListItems: []*node.ListItem{
+															{
+																Children: []node.Node{
 																	&node.Text{
-																		Value: " 4",
+																		Value: " 3",
+																	},
+																	&node.List{
+																		Type: node.UnorderedList,
+																		ListItems: []*node.ListItem{
+																			{
+																				Children: []node.Node{
+																					&node.Text{
+																						Value: " 4",
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+															{
+																Children: []node.Node{
+																	&node.Text{
+																		Value: " 5",
 																	},
 																},
 															},
 														},
 													},
-													{
-														&node.Text{
-															Value: " 5",
-														},
-													},
 												},
 											},
-										},
-										{
-											&node.Text{
-												Value: " 6",
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " 6",
+													},
+												},
 											},
 										},
 									},
 								},
 							},
 							{
-								&node.Text{
-									Value: " 7",
+								Children: []node.Node{
+									&node.Text{
+										Value: " 7",
+									},
 								},
 							},
 						},
@@ -2683,55 +2771,69 @@ End
 					},
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " 1",
-								},
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " 2",
-											},
-											&node.List{
-												Type: node.UnorderedList,
-												ListItems: [][]node.Node{
-													{
-														&node.Text{
-															Value: " 3",
-														},
-														&node.List{
-															Type: node.UnorderedList,
-															ListItems: [][]node.Node{
-																{
+								Children: []node.Node{
+									&node.Text{
+										Value: " 1",
+									},
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " 2",
+													},
+													&node.List{
+														Type: node.UnorderedList,
+														ListItems: []*node.ListItem{
+															{
+																Children: []node.Node{
 																	&node.Text{
-																		Value: " 4",
+																		Value: " 3",
+																	},
+																	&node.List{
+																		Type: node.UnorderedList,
+																		ListItems: []*node.ListItem{
+																			{
+																				Children: []node.Node{
+																					&node.Text{
+																						Value: " 4",
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+															{
+																Children: []node.Node{
+																	&node.Text{
+																		Value: " 5",
 																	},
 																},
 															},
 														},
 													},
-													{
-														&node.Text{
-															Value: " 5",
-														},
-													},
 												},
 											},
-										},
-										{
-											&node.Text{
-												Value: " 6",
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " 6",
+													},
+												},
 											},
 										},
 									},
 								},
 							},
 							{
-								&node.Text{
-									Value: " 7",
+								Children: []node.Node{
+									&node.Text{
+										Value: " 7",
+									},
 								},
 							},
 						},
@@ -2785,76 +2887,90 @@ End
 					},
 					&node.List{
 						Type: node.UnorderedList,
-						ListItems: [][]node.Node{
+						ListItems: []*node.ListItem{
 							{
-								&node.Text{
-									Value: " 1",
-								},
-								&node.Text{
-									Value: "one",
-								},
-								&node.List{
-									Type: node.UnorderedList,
-									ListItems: [][]node.Node{
-										{
-											&node.Text{
-												Value: " 2",
-											},
-											&node.Text{
-												Value: "two",
-											},
-											&node.List{
-												Type: node.UnorderedList,
-												ListItems: [][]node.Node{
-													{
-														&node.Text{
-															Value: " 3",
-														},
-														&node.Text{
-															Value: "three",
-														},
-														&node.List{
-															Type: node.UnorderedList,
-															ListItems: [][]node.Node{
-																{
+								Children: []node.Node{
+									&node.Text{
+										Value: " 1",
+									},
+									&node.Text{
+										Value: "one",
+									},
+									&node.List{
+										Type: node.UnorderedList,
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " 2",
+													},
+													&node.Text{
+														Value: "two",
+													},
+													&node.List{
+														Type: node.UnorderedList,
+														ListItems: []*node.ListItem{
+															{
+																Children: []node.Node{
 																	&node.Text{
-																		Value: " 4",
+																		Value: " 3",
 																	},
 																	&node.Text{
-																		Value: "four",
+																		Value: "three",
+																	},
+																	&node.List{
+																		Type: node.UnorderedList,
+																		ListItems: []*node.ListItem{
+																			{
+																				Children: []node.Node{
+																					&node.Text{
+																						Value: " 4",
+																					},
+																					&node.Text{
+																						Value: "four",
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+															{
+																Children: []node.Node{
+																	&node.Text{
+																		Value: " 5",
+																	},
+																	&node.Text{
+																		Value: "five",
 																	},
 																},
 															},
 														},
 													},
-													{
-														&node.Text{
-															Value: " 5",
-														},
-														&node.Text{
-															Value: "five",
-														},
-													},
 												},
 											},
-										},
-										{
-											&node.Text{
-												Value: " 6",
-											},
-											&node.Text{
-												Value: "six",
+											{
+												Children: []node.Node{
+													&node.Text{
+														Value: " 6",
+													},
+													&node.Text{
+														Value: "six",
+													},
+												},
 											},
 										},
 									},
 								},
 							},
 							{
-								&node.Text{
-									Value: " 7",
-								},
-								&node.Text{
-									Value: "seven",
+								Children: []node.Node{
+									&node.Text{
+										Value: " 7",
+									},
+									&node.Text{
+										Value: "seven",
+									},
 								},
 							},
 						},

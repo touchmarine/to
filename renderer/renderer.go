@@ -100,25 +100,20 @@ func HTML(nod node.Node, indent int) string {
 		b.WriteString(indented("<ul>\n", indent))
 
 		for _, listItem := range n.ListItems {
-			b.WriteString(indented("<li>\n", indent+1))
-
-			for j, c := range listItem {
-				if j > 0 {
-					b.WriteString("\n")
-				}
-
-				b.WriteString(HTML(c, indent+2))
-
-				// if not last
-				if j != len(n.ListItems)-1 {
-					b.WriteString("\n")
-				}
-			}
-
-			b.WriteString(indented("</li>\n", indent+1))
+			b.WriteString(HTML(listItem, indent+1))
 		}
 
 		b.WriteString(indented("</ul>\n", indent))
+
+	case *node.ListItem:
+		b.WriteString(indented("<li>\n", indent))
+
+		for _, c := range n.Children {
+			b.WriteString(HTML(c, indent+1))
+			b.WriteString("\n")
+		}
+
+		b.WriteString(indented("</li>\n", indent))
 
 	default:
 		panic(fmt.Sprintf("renderer.HTML: unexpected node type %T", n))

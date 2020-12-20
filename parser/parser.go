@@ -249,9 +249,7 @@ func (p *Parser) parseCodeBlock() *node.CodeBlock {
 // parseList returns a list and the ending indentation it consumed.
 // It returns nil if no list present.
 func (p *Parser) parseList(indent int) (*node.List, int) {
-	if trace {
-		defer p.trace(fmt.Sprintf("parseList(%d)", indent))()
-	}
+	// do not trace as it might not even be a list
 
 	switch p.ch {
 	case '-':
@@ -269,13 +267,13 @@ func (p *Parser) parseUnorderedList(indent int) (*node.List, int) {
 		defer p.trace(fmt.Sprintf("parseUnorderedList(%d)", indent))()
 	}
 
-	var listItems [][]node.Node
+	var listItems []*node.ListItem
 
 	var endIndent int
 	for p.ch == '-' && p.ch != 0 {
 		p.next() // eat opening '-'
 
-		var li []node.Node
+		var li *node.ListItem
 		li, endIndent = p.parseListItem(indent)
 		listItems = append(listItems, li)
 
@@ -293,7 +291,7 @@ func (p *Parser) parseUnorderedList(indent int) (*node.List, int) {
 
 // parseListItem parses until a line that is indented less than or equal to the
 // opening line. It returns a list item and the ending indentation it consumed.
-func (p *Parser) parseListItem(indent int) ([]node.Node, int) {
+func (p *Parser) parseListItem(indent int) (*node.ListItem, int) {
 	if trace {
 		defer p.trace(fmt.Sprintf("parseListItem(%d)", indent))()
 	}
@@ -336,11 +334,16 @@ func (p *Parser) parseListItem(indent int) ([]node.Node, int) {
 		p.next() // eat EOL
 	}
 
-	if trace {
-		p.print("return " + printer.Pretty(children, p.indent))
+	listItem := &node.ListItem{
+		Children: children,
 	}
 
-	return children, endIndent
+	if trace {
+		p.print("return\n" + printer.Pretty(listItem, p.indent))
+		//p.print("return " + printer.Pretty(children, p.indent))
+	}
+
+	return listItem, endIndent
 }
 
 // parseParagraph parses consecutive lines of inline text until another block,

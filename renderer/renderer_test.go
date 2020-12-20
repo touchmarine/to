@@ -88,6 +88,7 @@ function displayButton(): void {
 	- milk
 	- sugar
 	- bananas
+	 5 or 6?
 `,
 			// each text has a space in front as in To
 			want: `<ul>
@@ -102,6 +103,7 @@ function displayButton(): void {
 			</li>
 			<li>
 				 bananas
+				5 or 6?
 			</li>
 		</ul>
 
