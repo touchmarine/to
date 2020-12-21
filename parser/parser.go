@@ -296,12 +296,20 @@ func (p *Parser) parseListItem(indent int) (*node.ListItem, int) {
 		defer p.trace(fmt.Sprintf("parseListItem(%d)", indent))()
 	}
 
-	var children []node.Node
+	// we group consecutive lines into line groups
+	// when a non-line node is encountered we flush current lines to children
+	// and reset lines
+	// grouped lines allow for easier processing
+	var lines node.Lines
 
 	// parse opening line
-	inlines := node.InlinesToNodes(p.parseInline(delimiters{}))
-	children = append(children, inlines...)
+	line := p.parseLine()
+	if line != nil {
+		lines = append(lines, line)
+	}
 	p.next() // eat EOL
+
+	var children []node.Node
 
 	var endIndent int
 	for p.ch != 0 {
@@ -323,15 +331,29 @@ func (p *Parser) parseListItem(indent int) (*node.ListItem, int) {
 
 		// parse nested list if present; parseList returns nil if not a list
 		if list, lEndIndent := p.parseList(curIndent); list != nil {
+			// append lines group and reset lines if not empty
+			if len(lines) > 0 {
+				children = append(children, lines)
+				lines = nil
+			}
+
 			children = append(children, list)
 			endIndent = lEndIndent
 			continue
 		}
 
-		// parse inline
-		inlines := node.InlinesToNodes(p.parseInline(delimiters{}))
-		children = append(children, inlines...)
+		// parse line
+		line := p.parseLine()
+		if line != nil {
+			lines = append(lines, line)
+		}
 		p.next() // eat EOL
+
+	}
+
+	// append lines group if not empty
+	if len(lines) > 0 {
+		children = append(children, lines)
 	}
 
 	listItem := &node.ListItem{
@@ -340,7 +362,6 @@ func (p *Parser) parseListItem(indent int) (*node.ListItem, int) {
 
 	if trace {
 		p.print("return\n" + printer.Pretty(listItem, p.indent))
-		//p.print("return " + printer.Pretty(children, p.indent))
 	}
 
 	return listItem, endIndent
@@ -353,7 +374,7 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 		defer p.trace("parseParagraph")()
 	}
 
-	var lines []*node.Line
+	var lines node.Lines
 
 	for {
 		line := p.parseLine()

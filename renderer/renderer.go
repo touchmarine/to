@@ -7,27 +7,37 @@ import (
 	"to/node"
 )
 
-func HTML(nod node.Node, indent int) string {
+func HTML(nod interface{}, indent int) string {
 	var b strings.Builder
 
 	switch n := nod.(type) {
-	case *node.Document:
-		for _, c := range n.Children {
+	case []node.Node:
+		for _, c := range n {
 			b.WriteString(HTML(c, indent))
 		}
 
-	case *node.Paragraph:
-		b.WriteString(indented("<p>", indent))
-
-		for i, line := range n.Lines {
-			if i > 0 {
-				b.WriteString("<br>\n")
-			}
-
-			b.WriteString(HTML(line, 0))
+	case []node.Inline:
+		for _, c := range n {
+			b.WriteString(HTML(c, indent))
 		}
 
+	case *node.Document:
+		b.WriteString(HTML(n.Children, indent))
+
+	case *node.Paragraph:
+		b.WriteString(indented("<p>", indent))
+		b.WriteString(HTML(n.Lines, indent))
 		b.WriteString(indented("</p>\n", indent))
+
+	case node.Lines:
+		for i, line := range n {
+			b.WriteString(HTML(line, indent))
+
+			// line break if not last
+			if i != len(n)-1 {
+				b.WriteString("<br>\n")
+			}
+		}
 
 	case *node.Line:
 		for _, c := range n.Children {
@@ -39,16 +49,12 @@ func HTML(nod node.Node, indent int) string {
 
 	case *node.Emphasis:
 		b.WriteString("<em>")
-		for _, c := range n.Children {
-			b.WriteString(HTML(c, 0))
-		}
+		b.WriteString(HTML(n.Children, 0))
 		b.WriteString("</em>")
 
 	case *node.Strong:
 		b.WriteString("<strong>")
-		for _, c := range n.Children {
-			b.WriteString(HTML(c, 0))
-		}
+		b.WriteString(HTML(n.Children, 0))
 		b.WriteString("</strong>")
 
 	case *node.Heading:
@@ -60,9 +66,7 @@ func HTML(nod node.Node, indent int) string {
 			b.WriteString(indented(`<div role="heading" aria-level="`+strLevel+`">`, indent))
 		}
 
-		for _, c := range n.Children {
-			b.WriteString(HTML(c, 0))
-		}
+		b.WriteString(HTML(n.Children, 0))
 
 		if n.Level < 7 {
 			b.WriteString(indented("</h"+strLevel+">\n", indent))
@@ -71,12 +75,8 @@ func HTML(nod node.Node, indent int) string {
 		}
 
 	case *node.Link:
-		b.WriteString(indented(`<a href="https://www.nationalgeographic.com/animals/mammals/k/koala/">`, indent))
-
-		for _, c := range n.Children {
-			b.WriteString(HTML(c, 0))
-		}
-
+		b.WriteString(indented(`<a href="`+n.Destination+`">`, indent))
+		b.WriteString(HTML(n.Children, 0))
 		b.WriteString(indented("</a>", indent))
 
 	case *node.CodeBlock:
@@ -98,25 +98,40 @@ func HTML(nod node.Node, indent int) string {
 
 	case *node.List:
 		b.WriteString(indented("<ul>\n", indent))
-
-		for _, listItem := range n.ListItems {
-			b.WriteString(HTML(listItem, indent+1))
-		}
-
+		b.WriteString(HTML(n.ListItems, indent+1))
 		b.WriteString(indented("</ul>\n", indent))
 
-	case *node.ListItem:
-		b.WriteString(indented("<li>\n", indent))
-
-		for _, c := range n.Children {
-			b.WriteString(HTML(c, indent+1))
-			b.WriteString("\n")
+	case []*node.ListItem:
+		for _, listItem := range n {
+			b.WriteString(HTML(listItem, indent))
 		}
 
-		b.WriteString(indented("</li>\n", indent))
+	case *node.ListItem:
+		b.WriteString(indented("<li>", indent))
+
+		for _, c := range n.Children {
+			switch m := c.(type) {
+			case node.Block:
+				if lines, ok := m.(node.Lines); ok && len(lines) == 1 {
+					b.WriteString(HTML(c, 0))
+					break
+				}
+
+				b.WriteString("\n")
+				b.WriteString(HTML(c, indent+1))
+				b.WriteString("\n")
+				b.WriteString(indented("", indent))
+			case node.Inline:
+				b.WriteString(HTML(c, 0))
+			default:
+				panic(fmt.Sprintf("renderer.HTML: unsupported node type %T", m))
+			}
+		}
+
+		b.WriteString("</li>\n")
 
 	default:
-		panic(fmt.Sprintf("renderer.HTML: unexpected node type %T", n))
+		panic(fmt.Sprintf("renderer.HTML: unsupported node type %T", n))
 	}
 
 	return b.String()

@@ -3,8 +3,9 @@
              | <paragraph>
              | <heading>
 
-<paragraph>         ::= <line> <paragraph>
-                      | ""
+<paragraph>         ::= <lines> <paragraph>
+                      | <lines>
+<lines>             ::= <line> <line> | <line>
 <line>              ::= <paragraph-content> <EOL>
 <paragraph-content> ::= <emphasis> <paragraph-content>
                       | <strong> <paragraph-content>
@@ -64,20 +65,18 @@
                              | ""
                              ; up to one less '`' permitted as the number of '`' used for opening delimiter
 
-<list>                ::= <unordered-list> | <ordered-list>
-<unordered-list>      ::= <unordered-list-item> <unordered-list>
-                        | <unordered-list-item>
-<unordered-list-item> ::= "-" <list-item-content> <EOL>
-<ordered-list>        ::= <ordered-list-item> <ordered-list>
-                        | <ordered-list-item>
-<ordered-list-item>   ::= "1." <list-item-content> <EOL>
-<list-item-content>   ::= <nested-list>
-                        | <emphasis> <list-item-content>
-                        | <strong> <list-item-content>
-                        | <link> <list-item-content>
-                        | <text> <list-item-content>
-                        | ""
-<nested-list>         ::= <EOL> " " <opt-whitespace> <list>
+<list>                           ::= <unordered-list> | <ordered-list>
+<unordered-list>                 ::= <unordered-list-item> <unordered-list>
+                                   | <unordered-list-item>
+<unordered-list-item>            ::= "-" <list-item-content> <list-item-content-continuation>
+<ordered-list>                   ::= <ordered-list-item> <ordered-list>
+                                   | <ordered-list-item>
+<ordered-list-item>              ::= "1." <list-item-content> <list-item-content-continuation>
+<list-item-content>              ::= <line> | ""
+<list-item-content-continuation> ::= <EOL> " " <opt-whitespace> <list-item-content-continuation>
+                                   | <EOL> " " <opt-whitespace> <line> ; consecutive lines are grouped into lines
+                                   | <EOL> " " <opt-whitespace> <list>
+                                   | ""
 
 <opt-whitespace> ::= " " <opt-whitespace> | ""
 

@@ -1,15 +1,16 @@
 package node
 
-type ListType string
+//go:generate stringer -type=ListType
+type ListType int
 
 // list types
 const (
-	UnorderedList ListType = "unordered"
-	NumberedList           = "numbers"
-	//LowercaseLetters                = "lowercaseLetters"
-	//UppercaseLetters                = "uppercaseLetters"
-	//LowercaseRomanNumerals          = "lowercaseRomanNumerals"
-	//UppercaseRomanNumerals          = "uppercaseRomanNumerals"
+	UnorderedList ListType = iota
+	NumberedList
+	//LowercaseLetters
+	//UppercaseLetters
+	//LowercaseRomanNumerals
+	//UppercaseRomanNumerals
 )
 
 type Node interface {
@@ -33,13 +34,20 @@ type Document struct {
 func (d *Document) node() {}
 
 type Paragraph struct {
-	Lines []*Line
+	Lines Lines
 }
 
 func (p Paragraph) node()  {}
 func (p Paragraph) block() {}
 
-// currently line is used only by paragraph
+// Lines are used group the consectuive lines together enabling easier
+// rendering. By having a group of lines we can easily not put a line break on
+// the last line, which is what we usually want.
+type Lines []*Line
+
+func (l Lines) node()  {}
+func (l Lines) block() {}
+
 type Line struct {
 	Children []Inline
 }
@@ -120,8 +128,8 @@ func InlinesToNodes(inlines []Inline) []Node {
 	return nodes
 }
 
-// LinesToNodes converts []*Line to []Node.
-func LinesToNodes(lines []*Line) []Node {
+// LinesToNodes converts Lines to []Node.
+func LinesToNodes(lines Lines) []Node {
 	nodes := make([]Node, len(lines))
 	for i, v := range lines {
 		nodes[i] = Node(v)

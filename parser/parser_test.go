@@ -19,7 +19,7 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -38,7 +38,7 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -67,7 +67,7 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -86,7 +86,7 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -115,7 +115,7 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -141,7 +141,7 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -174,7 +174,7 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -207,7 +207,7 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -236,7 +236,7 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Emphasis{
@@ -269,7 +269,7 @@ func TestParseDocument(t *testing.T) {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -322,7 +322,7 @@ Tibsey likes to sleep.
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -359,7 +359,7 @@ Tibsey **likes** to sleep.
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Strong{
@@ -413,7 +413,7 @@ Tibsey likes to sleep.
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -424,7 +424,7 @@ Tibsey likes to sleep.
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -435,7 +435,7 @@ Tibsey likes to sleep.
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -460,7 +460,7 @@ Tibsey **likes** to sleep.
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Strong{
@@ -475,7 +475,7 @@ Tibsey **likes** to sleep.
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -487,7 +487,7 @@ Tibsey **likes** to sleep.
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -520,7 +520,7 @@ Tibsey likes to sleep.
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -693,7 +693,7 @@ Tibsey likes to sleep.
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -855,7 +855,7 @@ The koala is an iconic Australian animal. Often called...
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -885,7 +885,7 @@ The koala is an iconic Australian animal. Often called...
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -917,7 +917,7 @@ Koala lives in the...
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -948,7 +948,7 @@ Koala lives in the...
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -971,7 +971,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -1001,7 +1001,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -1032,7 +1032,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -1063,7 +1063,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -1091,7 +1091,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1115,7 +1115,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -1134,7 +1134,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1158,7 +1158,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1182,7 +1182,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1206,7 +1206,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Strong{
@@ -1237,7 +1237,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -1267,7 +1267,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -1297,7 +1297,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -1324,7 +1324,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -1351,7 +1351,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1375,7 +1375,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Emphasis{
@@ -1403,7 +1403,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1431,7 +1431,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1459,7 +1459,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1483,7 +1483,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1507,7 +1507,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1531,7 +1531,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1566,7 +1566,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1590,7 +1590,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1614,7 +1614,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1649,7 +1649,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1684,7 +1684,7 @@ The koala is an iconic Australian animal. Often called...
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1712,7 +1712,7 @@ The koala is an iconic Australian animal. Often called...
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Link{
@@ -1943,7 +1943,7 @@ function displayButton(): void {
 `,
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -2005,7 +2005,7 @@ function displayButton(): void {
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -2034,7 +2034,7 @@ function displayButton(): void {
 						Body:        "Eucalyptus, nom nom\n",
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -2057,8 +2057,14 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " milk",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "milk",
+												},
+											},
+										},
 									},
 								},
 							},
@@ -2078,8 +2084,14 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " milk",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "milk",
+												},
+											},
+										},
 									},
 								},
 							},
@@ -2098,8 +2110,14 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: "milk",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "milk",
+												},
+											},
+										},
 									},
 								},
 							},
@@ -2121,22 +2139,40 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " milk",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "milk",
+												},
+											},
+										},
 									},
 								},
 							},
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " sugar",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "sugar",
+												},
+											},
+										},
 									},
 								},
 							},
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " bananas",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "bananas",
+												},
+											},
+										},
 									},
 								},
 							},
@@ -2158,22 +2194,40 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " milk",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "milk",
+												},
+											},
+										},
 									},
 								},
 							},
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " sugar",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "sugar",
+												},
+											},
+										},
 									},
 								},
 							},
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " bananas",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "bananas",
+												},
+											},
+										},
 									},
 								},
 							},
@@ -2194,16 +2248,28 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " Tuesday",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "Tuesday",
+												},
+											},
+										},
 									},
 									&node.List{
 										Type: node.UnorderedList,
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " milk",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "milk",
+																},
+															},
+														},
 													},
 												},
 											},
@@ -2228,16 +2294,28 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " Tuesday",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "Tuesday",
+												},
+											},
+										},
 									},
 									&node.List{
 										Type: node.UnorderedList,
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " milk",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "milk",
+																},
+															},
+														},
 													},
 												},
 											},
@@ -2263,19 +2341,35 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " Tuesday",
-									},
-									&node.Text{
-										Value: "Shopping list:",
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "Tuesday",
+												},
+											},
+										},
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "Shopping list:",
+												},
+											},
+										},
 									},
 									&node.List{
 										Type: node.UnorderedList,
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " milk",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "milk",
+																},
+															},
+														},
 													},
 												},
 											},
@@ -2306,8 +2400,14 @@ function displayButton(): void {
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " inner",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "inner",
+																},
+															},
+														},
 													},
 												},
 											},
@@ -2338,8 +2438,14 @@ function displayButton(): void {
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " inner",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "inner",
+																},
+															},
+														},
 													},
 												},
 											},
@@ -2365,24 +2471,42 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " Tuesday",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "Tuesday",
+												},
+											},
+										},
 									},
 									&node.List{
 										Type: node.UnorderedList,
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " milk",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "milk",
+																},
+															},
+														},
 													},
 													&node.List{
 														Type: node.UnorderedList,
 														ListItems: []*node.ListItem{
 															{
 																Children: []node.Node{
-																	&node.Text{
-																		Value: " low-fat",
+																	node.Lines{
+																		&node.Line{
+																			Children: []node.Inline{
+																				&node.Text{
+																					Value: "low-fat",
+																				},
+																			},
+																		},
 																	},
 																},
 															},
@@ -2413,24 +2537,42 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " Tuesday",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "Tuesday",
+												},
+											},
+										},
 									},
 									&node.List{
 										Type: node.UnorderedList,
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " milk",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "milk",
+																},
+															},
+														},
 													},
 													&node.List{
 														Type: node.UnorderedList,
 														ListItems: []*node.ListItem{
 															{
 																Children: []node.Node{
-																	&node.Text{
-																		Value: " low-fat",
+																	node.Lines{
+																		&node.Line{
+																			Children: []node.Inline{
+																				&node.Text{
+																					Value: "low-fat",
+																				},
+																			},
+																		},
 																	},
 																},
 															},
@@ -2462,34 +2604,62 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " Tuesday",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "Tuesday",
+												},
+											},
+										},
 									},
 									&node.List{
 										Type: node.UnorderedList,
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " oatmeal",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "oatmeal",
+																},
+															},
+														},
 													},
 												},
 											},
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " milk",
-													},
-													&node.Text{
-														Value: "milk that is:",
+													node.Lines{
+														{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "milk",
+																},
+															},
+														},
+														{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "milk that is:",
+																},
+															},
+														},
 													},
 													&node.List{
 														Type: node.UnorderedList,
 														ListItems: []*node.ListItem{
 															{
 																Children: []node.Node{
-																	&node.Text{
-																		Value: " low-fat",
+																	node.Lines{
+																		&node.Line{
+																			Children: []node.Inline{
+																				&node.Text{
+																					Value: "low-fat",
+																				},
+																			},
+																		},
 																	},
 																},
 															},
@@ -2522,23 +2692,41 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " Tuesday",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "Tuesday",
+												},
+											},
+										},
 									},
 									&node.List{
 										Type: node.UnorderedList,
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " oatmeal",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "oatmeal",
+																},
+															},
+														},
 													},
 												},
 											},
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " milk",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "milk",
+																},
+															},
+														},
 													},
 												},
 											},
@@ -2549,7 +2737,7 @@ function displayButton(): void {
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -2564,8 +2752,14 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " low-fat",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "low-fat",
+												},
+											},
+										},
 									},
 								},
 							},
@@ -2591,29 +2785,55 @@ function displayButton(): void {
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " Tuesday",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "Tuesday",
+												},
+											},
+										},
 									},
 									&node.List{
 										Type: node.UnorderedList,
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " Shopping list:",
-													},
-													&node.Text{
-														Value: "Go buy some milk and sugar",
+													node.Lines{
+														{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "Shopping list:",
+																},
+															},
+														},
+														{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "Go buy some milk and sugar",
+																},
+															},
+														},
 													},
 												},
 											},
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " Work:",
-													},
-													&node.Text{
-														Value: "Climb the bamboo and eat eucalyptus",
+													node.Lines{
+														{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "Work:",
+																},
+															},
+														},
+														{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "Climb the bamboo and eat eucalyptus",
+																},
+															},
+														},
 													},
 												},
 											},
@@ -2623,8 +2843,14 @@ function displayButton(): void {
 							},
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " Wednesday",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "Wednesday",
+												},
+											},
+										},
 									},
 								},
 							},
@@ -2649,7 +2875,7 @@ End
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -2664,32 +2890,56 @@ End
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " 1",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
 									},
 									&node.List{
 										Type: node.UnorderedList,
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " 2",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "2",
+																},
+															},
+														},
 													},
 													&node.List{
 														Type: node.UnorderedList,
 														ListItems: []*node.ListItem{
 															{
 																Children: []node.Node{
-																	&node.Text{
-																		Value: " 3",
+																	node.Lines{
+																		&node.Line{
+																			Children: []node.Inline{
+																				&node.Text{
+																					Value: "3",
+																				},
+																			},
+																		},
 																	},
 																	&node.List{
 																		Type: node.UnorderedList,
 																		ListItems: []*node.ListItem{
 																			{
 																				Children: []node.Node{
-																					&node.Text{
-																						Value: " 4",
+																					node.Lines{
+																						&node.Line{
+																							Children: []node.Inline{
+																								&node.Text{
+																									Value: "4",
+																								},
+																							},
+																						},
 																					},
 																				},
 																			},
@@ -2699,8 +2949,14 @@ End
 															},
 															{
 																Children: []node.Node{
-																	&node.Text{
-																		Value: " 5",
+																	node.Lines{
+																		&node.Line{
+																			Children: []node.Inline{
+																				&node.Text{
+																					Value: "5",
+																				},
+																			},
+																		},
 																	},
 																},
 															},
@@ -2710,8 +2966,14 @@ End
 											},
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " 6",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "6",
+																},
+															},
+														},
 													},
 												},
 											},
@@ -2721,15 +2983,21 @@ End
 							},
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " 7",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "7",
+												},
+											},
+										},
 									},
 								},
 							},
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -2759,7 +3027,7 @@ End
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -2774,32 +3042,56 @@ End
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " 1",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
 									},
 									&node.List{
 										Type: node.UnorderedList,
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " 2",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "2",
+																},
+															},
+														},
 													},
 													&node.List{
 														Type: node.UnorderedList,
 														ListItems: []*node.ListItem{
 															{
 																Children: []node.Node{
-																	&node.Text{
-																		Value: " 3",
+																	node.Lines{
+																		&node.Line{
+																			Children: []node.Inline{
+																				&node.Text{
+																					Value: "3",
+																				},
+																			},
+																		},
 																	},
 																	&node.List{
 																		Type: node.UnorderedList,
 																		ListItems: []*node.ListItem{
 																			{
 																				Children: []node.Node{
-																					&node.Text{
-																						Value: " 4",
+																					node.Lines{
+																						&node.Line{
+																							Children: []node.Inline{
+																								&node.Text{
+																									Value: "4",
+																								},
+																							},
+																						},
 																					},
 																				},
 																			},
@@ -2809,8 +3101,14 @@ End
 															},
 															{
 																Children: []node.Node{
-																	&node.Text{
-																		Value: " 5",
+																	node.Lines{
+																		&node.Line{
+																			Children: []node.Inline{
+																				&node.Text{
+																					Value: "5",
+																				},
+																			},
+																		},
 																	},
 																},
 															},
@@ -2820,8 +3118,14 @@ End
 											},
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " 6",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "6",
+																},
+															},
+														},
 													},
 												},
 											},
@@ -2831,15 +3135,21 @@ End
 							},
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " 7",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "7",
+												},
+											},
+										},
 									},
 								},
 							},
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -2875,7 +3185,7 @@ End
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{
@@ -2890,44 +3200,84 @@ End
 						ListItems: []*node.ListItem{
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " 1",
-									},
-									&node.Text{
-										Value: "one",
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "one",
+												},
+											},
+										},
 									},
 									&node.List{
 										Type: node.UnorderedList,
 										ListItems: []*node.ListItem{
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " 2",
-													},
-													&node.Text{
-														Value: "two",
+													node.Lines{
+														{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "2",
+																},
+															},
+														},
+														{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "two",
+																},
+															},
+														},
 													},
 													&node.List{
 														Type: node.UnorderedList,
 														ListItems: []*node.ListItem{
 															{
 																Children: []node.Node{
-																	&node.Text{
-																		Value: " 3",
-																	},
-																	&node.Text{
-																		Value: "three",
+																	node.Lines{
+																		{
+																			Children: []node.Inline{
+																				&node.Text{
+																					Value: "3",
+																				},
+																			},
+																		},
+																		{
+																			Children: []node.Inline{
+																				&node.Text{
+																					Value: "three",
+																				},
+																			},
+																		},
 																	},
 																	&node.List{
 																		Type: node.UnorderedList,
 																		ListItems: []*node.ListItem{
 																			{
 																				Children: []node.Node{
-																					&node.Text{
-																						Value: " 4",
-																					},
-																					&node.Text{
-																						Value: "four",
+																					node.Lines{
+																						&node.Line{
+																							Children: []node.Inline{
+																								&node.Text{
+																									Value: "4",
+																								},
+																							},
+																						},
+																						&node.Line{
+																							Children: []node.Inline{
+																								&node.Text{
+																									Value: "four",
+																								},
+																							},
+																						},
 																					},
 																				},
 																			},
@@ -2937,11 +3287,21 @@ End
 															},
 															{
 																Children: []node.Node{
-																	&node.Text{
-																		Value: " 5",
-																	},
-																	&node.Text{
-																		Value: "five",
+																	node.Lines{
+																		&node.Line{
+																			Children: []node.Inline{
+																				&node.Text{
+																					Value: "5",
+																				},
+																			},
+																		},
+																		&node.Line{
+																			Children: []node.Inline{
+																				&node.Text{
+																					Value: "five",
+																				},
+																			},
+																		},
 																	},
 																},
 															},
@@ -2951,11 +3311,21 @@ End
 											},
 											{
 												Children: []node.Node{
-													&node.Text{
-														Value: " 6",
-													},
-													&node.Text{
-														Value: "six",
+													node.Lines{
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "6",
+																},
+															},
+														},
+														&node.Line{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "six",
+																},
+															},
+														},
 													},
 												},
 											},
@@ -2965,18 +3335,28 @@ End
 							},
 							{
 								Children: []node.Node{
-									&node.Text{
-										Value: " 7",
-									},
-									&node.Text{
-										Value: "seven",
+									node.Lines{
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "7",
+												},
+											},
+										},
+										&node.Line{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "seven",
+												},
+											},
+										},
 									},
 								},
 							},
 						},
 					},
 					&node.Paragraph{
-						Lines: []*node.Line{
+						Lines: node.Lines{
 							{
 								Children: []node.Inline{
 									&node.Text{

@@ -30,6 +30,9 @@ func Pretty(nod interface{}, indent int) string {
 			"Lines": node.LinesToNodes(n.Lines),
 		}, indent)
 
+	case node.Lines:
+		return indented("Lines", indent) + prettyNodes(node.LinesToNodes(n), indent)
+
 	case *node.Line:
 		return element("Line", map[string]interface{}{
 			"Children": node.InlinesToNodes(n.Children),
@@ -50,8 +53,8 @@ func Pretty(nod interface{}, indent int) string {
 
 	case *node.Heading:
 		return element("Heading", map[string]interface{}{
-			"Level":      strconv.Itoa(n.Level),
-			"IsNumbered": strconv.FormatBool(n.IsNumbered),
+			"Level":      unquoted(strconv.Itoa(n.Level)),
+			"IsNumbered": unquoted(strconv.FormatBool(n.IsNumbered)),
 			"Children":   node.InlinesToNodes(n.Children),
 		}, indent)
 
@@ -74,28 +77,6 @@ func Pretty(nod interface{}, indent int) string {
 			"Type":      n.Type,
 			"ListItems": node.ListItemsToNodes(n.ListItems),
 		}, indent)
-		/*
-			{
-				var b strings.Builder
-				b.WriteString(fmt.Sprintf("[%d]", len(n.ListItems)))
-				b.WriteString("[\n")
-
-				for i, li := range n.ListItems {
-					if i > 0 {
-						b.WriteString(",\n")
-					}
-
-					b.WriteString(indented(Pretty(li, indent+2), indent+2))
-				}
-
-				b.WriteString("\n" + indented("]", indent+1))
-
-				return element("List", map[string]interface{}{
-					"Type":      string(n.Type),
-					"ListItems": unquoted(b.String()),
-				}, indent)
-			}
-		*/
 
 	case *node.ListItem:
 		return element("ListItem", map[string]interface{}{
@@ -145,12 +126,16 @@ func element(name string, fields map[string]interface{}, indent int) string {
 		b.WriteString(fmt.Sprintf("\n%s: ", indented(k, indent+1))) // print key
 
 		switch v := i.(type) {
-		case unquoted:
-			b.WriteString(string(v))
-		case string:
-			b.WriteString(`"` + v + `"`)
 		case []node.Node:
 			b.WriteString(Pretty(v, indent+1))
+		case string:
+			b.WriteString(`"` + v + `"`)
+		case unquoted:
+			b.WriteString(string(v))
+		case fmt.Stringer:
+			b.WriteString(v.String())
+		default:
+			panic(fmt.Sprintf("unsupported value type"))
 		}
 
 		b.WriteString(",")

@@ -50,15 +50,15 @@ paragraph **strong** __emphasis__
 .   .   .   Children: [
 .   .   .   .   "Heading",
 .   .   .   ],
-.   .   .   IsNumbered: "false",
-.   .   .   Level: "1",
+.   .   .   IsNumbered: false,
+.   .   .   Level: 1,
 .   .   },
 .   .   Heading{
 .   .   .   Children: [
 .   .   .   .   "Numbered",
 .   .   .   ],
-.   .   .   IsNumbered: "true",
-.   .   .   Level: "2",
+.   .   .   IsNumbered: true,
+.   .   .   Level: 2,
 .   .   },
 .   .   Paragraph{
 .   .   .   Lines: [
@@ -85,26 +85,44 @@ paragraph **strong** __emphasis__
 .   .   .   ListItems: [
 .   .   .   .   ListItem{
 .   .   .   .   .   Children: [
-.   .   .   .   .   .   " Tuesday:",
+.   .   .   .   .   .   Lines[
+.   .   .   .   .   .   .   Line{
+.   .   .   .   .   .   .   .   Children: [
+.   .   .   .   .   .   .   .   .   "Tuesday:",
+.   .   .   .   .   .   .   .   ],
+.   .   .   .   .   .   .   },
+.   .   .   .   .   .   ],
 .   .   .   .   .   .   List{
 .   .   .   .   .   .   .   ListItems: [
 .   .   .   .   .   .   .   .   ListItem{
 .   .   .   .   .   .   .   .   .   Children: [
-.   .   .   .   .   .   .   .   .   .   " milk",
+.   .   .   .   .   .   .   .   .   .   Lines[
+.   .   .   .   .   .   .   .   .   .   .   Line{
+.   .   .   .   .   .   .   .   .   .   .   .   Children: [
+.   .   .   .   .   .   .   .   .   .   .   .   .   "milk",
+.   .   .   .   .   .   .   .   .   .   .   .   ],
+.   .   .   .   .   .   .   .   .   .   .   },
+.   .   .   .   .   .   .   .   .   .   ],
 .   .   .   .   .   .   .   .   .   ],
 .   .   .   .   .   .   .   .   },
 .   .   .   .   .   .   .   .   ListItem{
 .   .   .   .   .   .   .   .   .   Children: [
-.   .   .   .   .   .   .   .   .   .   " sugar",
+.   .   .   .   .   .   .   .   .   .   Lines[
+.   .   .   .   .   .   .   .   .   .   .   Line{
+.   .   .   .   .   .   .   .   .   .   .   .   Children: [
+.   .   .   .   .   .   .   .   .   .   .   .   .   "sugar",
+.   .   .   .   .   .   .   .   .   .   .   .   ],
+.   .   .   .   .   .   .   .   .   .   .   },
+.   .   .   .   .   .   .   .   .   .   ],
 .   .   .   .   .   .   .   .   .   ],
 .   .   .   .   .   .   .   .   },
 .   .   .   .   .   .   .   ],
-.   .   .   .   .   .   .   Type: ,
+.   .   .   .   .   .   .   Type: UnorderedList,
 .   .   .   .   .   .   },
 .   .   .   .   .   ],
 .   .   .   .   },
 .   .   .   ],
-.   .   .   Type: ,
+.   .   .   Type: UnorderedList,
 .   .   },
 .   ],
 }`

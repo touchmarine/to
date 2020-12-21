@@ -90,19 +90,13 @@ function displayButton(): void {
 	- bananas
 	 5 or 6?
 `,
-			// each text has a space in front as in To
 			want: `<ul>
-	<li>
-		 Tuesday:
+	<li>Tuesday:
 		<ul>
+			<li>milk</li>
+			<li>sugar</li>
 			<li>
-				 milk
-			</li>
-			<li>
-				 sugar
-			</li>
-			<li>
-				 bananas
+				bananas<br>
 				5 or 6?
 			</li>
 		</ul>
