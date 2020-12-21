@@ -1,0 +1,32 @@
+= Changelog
+
+== 0.2.0 (December 21, 2020)
+
+Printer, renderer, CLI, and lines.
+
+Add a pretty printer (decoupled from nodes), HTML renderer, and a simple CLI which reads To and outputs HTML or pretty printed parse tree.
+
+Add paragraph and list item lines. Lines are now represented the same as in To source. For example, To paragraph lines can now be broken into lines in HTML by line breaks.
+
+Fix '>' causing infinite loop.
+
+== 0.1.0 (December 15, 2020)
+
+Draft of the specification and a working parser.
+
+A recursive descent parser that can parse paragraphs, emphases, strongs, headings, links, code blocks, and unordered, nested lists. Fair number of tests.
+
+Parser uses ASCII; inconsistent whitespace handling. It supports traces and pretty-printing nodes with indentation, both of which are used for tests and debugging.
+
+No tree walker, renderer, or CLI.
+
+Specification documents guiding principles, goals, and the following elements:
+- emphasis
+- strong
+- paragraph
+- headings: unnumbered and numbered
+- links
+- code blocks (with filename metadata)
+- lists: unordered, numbered, zero-base numbered, lowercase/uppercase lettered and Roman numerals, and continuation lists
+
+Rough BNF.
