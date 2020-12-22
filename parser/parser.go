@@ -408,14 +408,14 @@ func (p *Parser) parseLine() *node.Line {
 			p.next()
 		}
 
-		// end if heading or list
-		if p.ch == '=' || p.ch == '-' {
+		// end if single delim block
+		if contains(blockDelims.single, p.ch) {
 			break
 		}
 
-		// end if numbered heading or code block
-		if p.ch == '#' && p.peek() == '#' ||
-			p.ch == '`' && p.peek() == '`' {
+		// end if double or more delims block
+		if p.ch == p.peek() && contains(blockDelims.double, p.ch) &&
+			contains(blockDelims.double, p.peek()) {
 			break
 		}
 
@@ -443,6 +443,11 @@ type delimiters struct {
 var inlineDelims = delimiters{
 	single: []byte{'<'},
 	double: []byte{'_', '*'},
+}
+
+var blockDelims = delimiters{
+	single: []byte{'=', '-'},
+	double: []byte{'#', '`'},
 }
 
 // parseInline parses until one of the provided delims, EOL, or EOF.
@@ -649,7 +654,8 @@ func (p *Parser) parseText(extraDelims delimiters) *node.Text {
 	for p.ch != '\n' && p.ch != 0 {
 		// escape sequences
 		if p.ch == '\\' &&
-			(contains(delims.single, p.peek()) || contains(delims.double, p.peek())) {
+			(contains(delims.single, p.peek()) || contains(delims.double, p.peek()) ||
+				contains(blockDelims.single, p.peek()) || contains(blockDelims.double, p.peek())) {
 			// add offset if consumed any chars before
 			if offs != p.offset {
 				offsets = append(offsets, [2]int{offs, p.offset})

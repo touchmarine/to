@@ -3370,8 +3370,84 @@ End
 			},
 		},
 		{
-			name:  "escape emphasis",
+			name:  "inline backslash",
+			input: `random \ text`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: `random \ text`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape inline backslash",
+			input: `\_\\_a double underscore`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: `_\_a double underscore`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape emphasis 1",
 			input: `\__a double underscore`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "__a double underscore",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape emphasis 2",
+			input: `_\_a double underscore`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "__a double underscore",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape emphasis 3",
+			input: `\_\_a double underscore`,
 			want: &node.Document{
 				Children: []node.Node{
 					&node.Paragraph{
@@ -3518,6 +3594,262 @@ End
 								Children: []node.Inline{
 									&node.Text{
 										Value: `<\>`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape block backslash",
+			input: `\=\\=`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: `=\=`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape heading 1",
+			input: `\=`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "=",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape heading 2",
+			input: `\==`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "==",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape heading 3", // not actually escaped
+			input: `=\=`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "=",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape heading 4",
+			input: `\=\=`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "==",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "escape heading after paragraph",
+			input: `paragraph
+\=`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "paragraph",
+									},
+								},
+							},
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "=",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape numbered heading",
+			input: `\##`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "##",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "escape numbered heading after paragraph",
+			input: `paragraph
+\##`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "paragraph",
+									},
+								},
+							},
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "##",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape code block",
+			input: "\\``",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "``",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape code block after paragraph",
+			input: "paragraph\n\\``",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "paragraph",
+									},
+								},
+							},
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "``",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape unordered list",
+			input: `\-`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: `-`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "escape unordered list after paragraph",
+			input: `paragraph
+\-`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "paragraph",
+									},
+								},
+							},
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: `-`,
 									},
 								},
 							},
