@@ -16,7 +16,7 @@ const (
 )
 
 type Parser struct {
-	// immutable stat
+	// immutable state
 	src string
 
 	// scanning state
@@ -95,6 +95,7 @@ func (p *Parser) parseBlock() node.Node {
 		p.next()
 	}
 
+	// repeat for other blank lines
 	for p.ch == '\n' {
 		indent = 0
 		p.next()
@@ -105,12 +106,13 @@ func (p *Parser) parseBlock() node.Node {
 	}
 
 	switch p.ch {
-	case 0:
+	case 0: // EOF
 		return nil
 	case '=':
 		return p.parseHeading(unnumberedHeading)
 	default:
-		// parseList returns nil if not a list without advancing pointers
+		// test if list; parseList returns nil if not a list without the
+		// advancing pointers
 		if list, _ := p.parseList(indent); list != nil {
 			return list
 		}
@@ -311,7 +313,7 @@ func (p *Parser) parseListItem(indent int) (*node.ListItem, int) {
 
 	var children []node.Node
 
-	var endIndent int
+	var endIndent int // indent after the list; we parse it to determine if still a list
 	for p.ch != 0 {
 		var curIndent int
 		for p.ch == '\t' || p.ch == ' ' {
@@ -406,12 +408,12 @@ func (p *Parser) parseLine() *node.Line {
 			p.next()
 		}
 
-		// end paragragh if heading or list
+		// end if heading or list
 		if p.ch == '=' || p.ch == '-' {
 			break
 		}
 
-		// end paragraph if numbered heading or code block
+		// end if numbered heading or code block
 		if p.ch == '#' && p.peek() == '#' ||
 			p.ch == '`' && p.peek() == '`' {
 			break
@@ -578,7 +580,7 @@ func (p *Parser) parseLink(delims delimiters) *node.Link {
 		p.next() // eat opening '<' of link destination
 	}
 
-	// parse link destination which is also link text if no link text is present
+	// parse link destination (also link text if no link text present)
 	offs := p.offset
 	for p.ch != '>' && p.ch != '\n' && p.ch != 0 {
 		p.next()
@@ -640,8 +642,25 @@ func (p *Parser) parseText(extraDelims delimiters) *node.Text {
 	delims.single = append(delims.single, extraDelims.single...)
 	delims.double = append(delims.double, extraDelims.double...)
 
+	// we may have multiple offsets as we need to leave out '\' in escapes
+	var offsets [][2]int
+
 	offs := p.offset
 	for p.ch != '\n' && p.ch != 0 {
+		// escape sequences
+		if p.ch == '\\' &&
+			(contains(delims.single, p.peek()) || contains(delims.double, p.peek())) {
+			// add offset if consumed any chars before
+			if offs != p.offset {
+				offsets = append(offsets, [2]int{offs, p.offset})
+			}
+
+			p.next()        // eat '\'
+			offs = p.offset // set new offset so we leave out '\'
+			p.next()        // eat escaped char
+			continue
+		}
+
 		if contains(delims.single, p.ch) {
 			break
 		}
@@ -654,8 +673,12 @@ func (p *Parser) parseText(extraDelims delimiters) *node.Text {
 		p.next()
 	}
 
-	text := &node.Text{
-		Value: p.src[offs:p.offset],
+	// add last offset
+	offsets = append(offsets, [2]int{offs, p.offset})
+
+	text := &node.Text{}
+	for _, o := range offsets {
+		text.Value += p.src[o[0]:o[1]]
 	}
 
 	if trace {

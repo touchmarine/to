@@ -3369,6 +3369,163 @@ End
 				},
 			},
 		},
+		{
+			name:  "escape emphasis",
+			input: `\__a double underscore`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "__a double underscore",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape emphasis intraword",
+			input: `file\__name`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "file__name",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape emphasis at end",
+			input: `filename\__`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "filename__",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape strong",
+			input: `\**`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "**",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape link 1",
+			input: `\<>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "<>",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape link 2",
+			input: `<\>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: `\`,
+										Children: []node.Inline{
+											&node.Text{
+												Value: `\`,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape link 3",
+			input: `\>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: `\>`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape link 4",
+			input: `\<\>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: `<\>`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {
