@@ -1110,6 +1110,60 @@ The koala is an iconic Australian animal. Often called...
 			},
 		},
 		{
+			name:  "nested link",
+			input: "<https://</koala>.test>",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "https://</koala",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://</koala",
+											},
+										},
+									},
+									&node.Text{
+										Value: ".test>",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "two-part link nested in link",
+			input: "<https://<koala></koala>.test>",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "/koala",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://<koala",
+											},
+										},
+									},
+									&node.Text{
+										Value: ".test>",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:  "alone >",
 			input: "1 > 0",
 			want: &node.Document{
@@ -1361,6 +1415,124 @@ The koala is an iconic Australian animal. Often called...
 												Value: "Koala bears",
 											},
 										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "link nested in link text",
+			input: "<Koala </bears><https://koala.test>",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Koala </bears",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "link nested in link destination",
+			input: "<Koala><https://</koala>.test>",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "https://</koala",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Koala",
+											},
+										},
+									},
+									&node.Text{
+										Value: ".test>",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "two-part link nested in link text",
+			input: "<Koala <Bears></bears><https://koala.test>",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "/bears",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Koala <Bears",
+											},
+										},
+									},
+									&node.Link{
+										Destination: "https://koala.test",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "https://koala.test",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "two-part link nested in link destination",
+			input: "<Koala><https://<koala></koala>.test>",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "https://<koala",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Koala",
+											},
+										},
+									},
+									&node.Link{
+										Destination: "/koala",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "/koala",
+											},
+										},
+									},
+									&node.Text{
+										Value: ".test>",
 									},
 								},
 							},
@@ -3370,7 +3542,26 @@ End
 			},
 		},
 		{
-			name:  "inline backslash",
+			name:  "escape sequences",
+			input: "\\\\ \\< \\> \\_ \\* \\= \\# \\` \\-",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: `\ < > _ * = # ` + "`" + ` -`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash 1",
 			input: `random \ text`,
 			want: &node.Document{
 				Children: []node.Node{
@@ -3380,6 +3571,100 @@ End
 								Children: []node.Inline{
 									&node.Text{
 										Value: `random \ text`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash 2",
+			input: `random \\ text`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: `random \ text`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash 3",
+			input: `<random \ text>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: `random \ text`,
+										Children: []node.Inline{
+											&node.Text{
+												Value: `random \ text`,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash 4",
+			input: `<random \\ text>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: `random \ text`,
+										Children: []node.Inline{
+											&node.Text{
+												Value: `random \ text`,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash 5",
+			input: `<random \\> text>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: `random \`,
+										Children: []node.Inline{
+											&node.Text{
+												Value: `random \`,
+											},
+										},
+									},
+									&node.Text{
+										Value: " text>",
 									},
 								},
 							},
@@ -3428,6 +3713,25 @@ End
 		},
 		{
 			name:  "escape emphasis 2",
+			input: `\_\__a triple underscore`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "___a triple underscore",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape emphasis 3",
 			input: `_\_a double underscore`,
 			want: &node.Document{
 				Children: []node.Node{
@@ -3446,7 +3750,7 @@ End
 			},
 		},
 		{
-			name:  "escape emphasis 3",
+			name:  "escape emphasis 4",
 			input: `\_\_a double underscore`,
 			want: &node.Document{
 				Children: []node.Node{
@@ -3550,10 +3854,10 @@ End
 							{
 								Children: []node.Inline{
 									&node.Link{
-										Destination: `\`,
+										Destination: ">",
 										Children: []node.Inline{
 											&node.Text{
-												Value: `\`,
+												Value: ">",
 											},
 										},
 									},
@@ -3574,7 +3878,7 @@ End
 							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: `\>`,
+										Value: `>`,
 									},
 								},
 							},
@@ -3593,7 +3897,453 @@ End
 							{
 								Children: []node.Inline{
 									&node.Text{
-										Value: `<\>`,
+										Value: `<>`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape < in link text 1",
+			input: `<<><>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "",
+										Children: []node.Inline{
+											&node.Text{
+												Value: "<",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape < in link text 2",
+			input: `<\<><>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "",
+										Children: []node.Inline{
+											&node.Text{
+												Value: `\<`,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape > in link text 1",
+			input: `<>><>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "",
+										Children: []node.Inline{
+											&node.Text{},
+										},
+									},
+									&node.Text{
+										Value: ">",
+									},
+									&node.Link{
+										Destination: "",
+										Children: []node.Inline{
+											&node.Text{},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape > in link text 2",
+			input: `<\>><>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "",
+										Children: []node.Inline{
+											&node.Text{
+												Value: ">",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape < in link destination 1",
+			input: `<><<>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "<",
+										Children:    []node.Inline{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape < in link destination 2",
+			input: `<><\<>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: `\<`,
+										Children:    []node.Inline{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape > in link destination 1",
+			input: `<><>>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "",
+										Children:    []node.Inline{},
+									},
+									&node.Text{
+										Value: ">",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape > in link destination 2",
+			input: `<><\>>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: ">",
+										Children:    []node.Inline{},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash in link 1",
+			input: `<\>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: ">",
+										Children: []node.Inline{
+											&node.Text{
+												Value: ">",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash in link 2",
+			input: `<\\>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: `\`,
+										Children: []node.Inline{
+											&node.Text{
+												Value: `\`,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash in link 3",
+			input: `<\\\>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: `\>`,
+										Children: []node.Inline{
+											&node.Text{
+												Value: `\>`,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash in link 4",
+			input: `<in bet\ween>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: `in bet\ween`,
+										Children: []node.Inline{
+											&node.Text{
+												Value: `in bet\ween`,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash in link 5",
+			input: `<in bet\\ween>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: `in bet\ween`,
+										Children: []node.Inline{
+											&node.Text{
+												Value: `in bet\ween`,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash in link text 1",
+			input: `<\>><>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "",
+										Children: []node.Inline{
+											&node.Text{
+												Value: ">",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash in link text 2",
+			input: `<\\><>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "",
+										Children: []node.Inline{
+											&node.Text{
+												Value: `\`,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash in link text 3",
+			input: `<\\\>><>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "",
+										Children: []node.Inline{
+											&node.Text{
+												Value: `\>`,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash in link text 4",
+			input: `<in bet\ween><>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "",
+										Children: []node.Inline{
+											&node.Text{
+												Value: `in bet\ween`,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash in link text 5",
+			input: `<in bet\\ween><>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: "",
+										Children: []node.Inline{
+											&node.Text{
+												Value: `in bet\ween`,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "escape backslash in link destination",
+			input: `<><\\\>>`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Link{
+										Destination: `\>`,
+										Children:    []node.Inline{},
 									},
 								},
 							},

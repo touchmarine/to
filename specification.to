@@ -10,7 +10,7 @@ The grammar is simple to parse, allowing for easy tooling.
 
 __This section is non-normative.__
 
-To is designed to be readable and collaborative. It provides features necessary for most writing work without having to resort to other tools. Notations are simple for humans and computers.
+To is designed to be readable and collaborative. It provides features necessary for most writing work without having to resort to other tools. Notations are simple for humans and computers to understand.
 
 Guiding principles:
 1. one way to do one thing---makes for easier collaboration
@@ -48,11 +48,11 @@ Conformance requirements phrased as algorithms or specific steps MAY be implemen
 
 ## Terminology
 
-: EOL
-    End of line. Represented as <EOL> in examples.
+:: EOL
+    End of line. Represented as \<EOL\> in examples.
 
-: EOF
-    End of file. Represented as <EOF> in examples. Note that EOF is not a character, it only indicates no more data.
+:: EOF
+    End of file. Represented as \<EOF\> in examples. Note that EOF is not a character, it only indicates no more data.
 
 ## Notational Conventions
 
@@ -72,13 +72,33 @@ Any sequence of characters is a valid To document.
 
 EOL is the US-ASCII line feed (LF) character with hex value 0A (Unicode point U+000A).
 
+## Escape Sequences
+
+Escape sequences are used to represent special characters.
+
+All escape sequences consist of two characters. First is always the escape character '\' and the second is a special character we want to escape.
+
+The following escape sequences are available:
+
+| Escape sequence | Description       |
+|-----------------|-------------------|
+| \\\\            | backslash         |
+| \\\<            | less-than sign    |
+| \\\>            | greater-than sign |
+| \\\_            | underscore        |
+| \\\*            | asterisk          |
+| \\\=            | equals sign       |
+| \\\#            | number sign       |
+| \\\`            | backtick          |
+| \\\-            | hypen-minus sign  |
+
 ## Syntax
 
 Elements are divided into inline and block categories. Inline elements operate on the line they are declared on or on a part of the line they are declared on. Block elements operate on multiple contiguous lines. 
 
 ### Inline Elements
 
-Inline elements span from the opening delimiter to the closing delimiter, EOL or EOF, whichever comes first. Some inline elements do not have a closing delimiter---they always span to the EOL or EOF.
+Inline elements span from the opening delimiter to the closing delimiter, EOL, or EOF, whichever comes first. Some inline elements do not have a closing delimiter---they span to the EOL or EOF.
 
 ``to
 Tibsey is a **friendly koala**
@@ -91,7 +111,7 @@ Tibsey is a **friendly koala<EOF>
 
 ### Block Elements
 
-Block elements span contiguous lines of inline or line content until a blank line or another block.
+Block elements span contiguous lines of inline content until a blank line or another block.
 
 ``to
 This paragraph
@@ -117,7 +137,7 @@ Tibsey is a __koala__.
 | Element category  | inline             |
 | Permitted content | strong, link, text |
 
-Emphasis starts with a double underscore followed by zero or more occurrences of strong or text and stops at a double underscore, EOL, or EOF.
+Emphasis starts with a double underscore followed by zero or more occurrences of strong, link, or text and stops at a double underscore, EOL, or EOF.
 
 ### Strong
 
@@ -130,7 +150,7 @@ Climb **faster** Tibsey.
 | Element category  | inline               |
 | Permitted content | emphasis, link, text |
 
-Strong starts with a double asterisk followed by zero or more occurrences of emphasis or text and stops at a double asterisk, EOL, or EOF.
+Strong starts with a double asterisk followed by zero or more occurrences of emphasis, link, or text and stops at a double asterisk, EOL, or EOF.
 
 ### Paragraph
 
@@ -148,7 +168,7 @@ Tibsey likes to sleep.
 | Element category  | block                        |
 | Permitted content | emphasis, strong, link, text |
 
-Paragraph spans contiguous lines of emphasis, strong, or text until a blank line or another block.
+Paragraph spans contiguous lines of emphasis, strong, link, or text until a blank line or another block.
 
 ### Headings
 
@@ -177,13 +197,13 @@ Koalas live in the eucalyptus forests of southeastern and eastern Australia. Whe
 
 #### Unnumbered
 
-Unnumbered headings start with one or more equals signs followed by zero or more occurrences of emphasis, strong, or text and stop at the EOL or EOF.
+Unnumbered headings start with one or more equals signs followed by zero or more occurrences of emphasis, strong, link, or text and stop at the EOL or EOF.
 
 #### Numbered
 
 Numbered headings automatically apply a numbering scheme to the headings. Numbered heading level 1 is not permitted, because level 1 heading should only be used as a document title for which a number most often is not wanted. Additionally, by not allowing a level 1 heading, numbered headings can be easily discernible from hashtags. 
 
-Numbered headings start with two or more number signs followed by zero or more occurrences of emphasis, strong, or text and stop at the EOL or EOF.
+Numbered headings start with two or more number signs followed by zero or more occurrences of emphasis, strong, link, or text and stop at the EOL or EOF.
 
 ### Links
 

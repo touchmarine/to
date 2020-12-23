@@ -1,3 +1,5 @@
+; EOF can be treated the same as <EOL>
+
 <document> ::= <paragraph> <document>
              | <heading> <document>
              | <paragraph>
@@ -16,19 +18,21 @@
                       | <link>
                       | <text>
 
-<emphasis>         ::= "__" <emphasis-content> "__"
-<emphasis-content> ::= <strong> <emphasis-content>
-                     | <link> <emphasis-content>
-                     | <text> <emphasis-content>
-                     | ""
-                     ; __ is not permitted
+<emphasis>            ::= "__" <emphasis-content> <emphasis-end-marker>
+<emhpasis-end-marker> ::= "__" | <EOL>
+<emphasis-content>    ::= <strong> <emphasis-content>
+                        | <link> <emphasis-content>
+                        | <text> <emphasis-content>
+                        | ""
+                        ; __ is not permitted
 
-<strong>         ::= "**" <strong-content> "**"
-<strong-content> ::= <emphasis> <strong-content>
-                   | <link> <strong-content> 
-                   | <text> <strong-content> 
-                   | ""
-                   ; ** is not permitted
+<strong>            ::= "**" <strong-content> <strong-end-marker>
+<strong-end-marker> ::= "**" | <EOL>
+<strong-content>    ::= <emphasis> <strong-content>
+                      | <link> <strong-content> 
+                      | <text> <strong-content> 
+                      | ""
+                      ; ** is not permitted
 
 <heading>                     ::= <unnumbered-heading> | <numbered-heading>
 <unnumbered-heading>          ::= <unnumbered-heading-marker> <opt-whitespace> <heading-content> <EOL>
@@ -42,14 +46,15 @@
                                 | ""
 
 <link>                     ::= <link-destination> | <link-text> <link-destination>
-<link-destination>         ::= "<" <link-destination-content> ">"
+<link-destination>         ::= "<" <link-destination-content> <link-end-marker>
+<link-end-marker>          ::= ">" | <EOL>
 <link-destination-content> ::= <text> <link-destination-content> | "" ; > is not permitted
 <link-text>                ::= "<" <link-text-content> ">"
 <link-text-content>        ::= <emphasis> <link-text-content>
                              | <strong> <link-text-content>
                              | <text> <link-text-content>
                              | ""
-                             ; > is not permitted
+                             ; > is not permitted (but can be escaped)
 
 ; number of '`' in the closing delimiter must be greater than or equal to the
 ; number of '`' used in the opening delimiter
@@ -79,6 +84,9 @@
                                    | ""
 
 <opt-whitespace> ::= " " <opt-whitespace> | ""
+
+;<escape-sequence> ::= "\" <escape-char>
+;<escape-char> ::= "\" | "<" | ">" | "_" | "*" | "=" | "#" | "`" | "-"
 
 <text>        ::= <character> <text> | <character>
 <character>   ::= <letter> | <digit> | <punctuation>

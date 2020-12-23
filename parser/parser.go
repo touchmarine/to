@@ -9,10 +9,21 @@ import (
 
 const trace = false
 
+type headingTyp uint
+
 // heading types
 const (
-	unnumberedHeading = iota
+	unnumberedHeading headingTyp = iota
 	numberedHeading
+)
+
+//go:generate stringer -type=linkVariant
+type linkVariant uint
+
+// link variants
+const (
+	onePartLink linkVariant = iota
+	twoPartLink
 )
 
 type Parser struct {
@@ -128,7 +139,7 @@ func (p *Parser) parseBlock() node.Node {
 	}
 }
 
-func (p *Parser) parseHeading(typ int) *node.Heading {
+func (p *Parser) parseHeading(typ headingTyp) *node.Heading {
 	var isNumbered bool
 	var delim byte
 
@@ -167,7 +178,7 @@ func (p *Parser) parseHeading(typ int) *node.Heading {
 	h := &node.Heading{
 		Level:      level,
 		IsNumbered: isNumbered,
-		Children:   p.parseInline(delimiters{}),
+		Children:   p.parseInline(delimiters{}, 0),
 	}
 	// pointers are advanced by p.parseInline()
 
@@ -423,7 +434,7 @@ func (p *Parser) parseLine() *node.Line {
 			p.print(fmt.Sprintf("p.ch=%s, p.peek()=%s", char(p.ch), char(p.peek())))
 		}
 
-		children = append(children, p.parseInline(delimiters{})...)
+		children = append(children, p.parseInline(delimiters{}, 0)...)
 	}
 
 	if len(children) == 0 {
@@ -451,25 +462,30 @@ var blockDelims = delimiters{
 }
 
 // parseInline parses until one of the provided delims, EOL, or EOF.
-func (p *Parser) parseInline(delims delimiters) []node.Inline {
+// exclude excludes the provided character as a delimiter if not 0.
+func (p *Parser) parseInline(delims delimiters, exclude byte) []node.Inline {
 	if trace {
 		defer p.trace("parseInline")()
 		p.print(fmt.Sprintf(
-			"single delims=%s, double delims=%s",
+			"single delims=%s, double delims=%s, exclude=%s",
 			delims.single,
 			delims.double,
+			string(exclude),
 		))
 	}
 
-	inlines := []node.Inline{}
+	var inlines []node.Inline
 	for p.ch != '\n' && p.ch != 0 {
-		if contains(delims.single, p.ch) {
-			break
-		}
+		// end if delimiter but not if excluded, non-zero delimiter
+		if exclude == 0 || exclude != 0 && p.ch != exclude {
+			if contains(delims.single, p.ch) {
+				break
+			}
 
-		if p.ch == p.peek() && contains(delims.double, p.ch) &&
-			contains(delims.double, p.peek()) {
-			break
+			if p.ch == p.peek() && contains(delims.double, p.ch) &&
+				contains(delims.double, p.peek()) {
+				break
+			}
 		}
 
 		if trace {
@@ -477,6 +493,8 @@ func (p *Parser) parseInline(delims delimiters) []node.Inline {
 		}
 
 		switch {
+		case exclude != 0 && p.ch == exclude:
+			inlines = append(inlines, p.parseText(delims, exclude))
 		case p.ch == '_' && p.peek() == '_':
 			inlines = append(inlines, p.parseEmphasis(delims))
 		case p.ch == '*' && p.peek() == '*':
@@ -484,7 +502,7 @@ func (p *Parser) parseInline(delims delimiters) []node.Inline {
 		case p.ch == '<':
 			inlines = append(inlines, p.parseLink(delims))
 		default:
-			inlines = append(inlines, p.parseText(delims))
+			inlines = append(inlines, p.parseText(delims, exclude))
 		}
 
 		// pointers are advanced by parslets
@@ -511,7 +529,7 @@ func (p *Parser) parseEmphasis(delims delimiters) *node.Emphasis {
 	delims.double = append(delims.double, '_')
 
 	em := &node.Emphasis{
-		Children: p.parseInline(delims),
+		Children: p.parseInline(delims, 0),
 	}
 
 	// eat closing '__' if it is the closing delimiter
@@ -541,7 +559,7 @@ func (p *Parser) parseStrong(delims delimiters) *node.Strong {
 	delims.double = append(delims.double, '*')
 
 	strong := &node.Strong{
-		Children: p.parseInline(delims),
+		Children: p.parseInline(delims, 0),
 	}
 
 	// eat closing '**' if it is the closing delimiter
@@ -572,37 +590,64 @@ func (p *Parser) parseLink(delims delimiters) *node.Link {
 
 	p.next() // eat opening '<'
 
-	link := &node.Link{}
-	isTwoPartLink := p.isTwoPartLink()
+	var children []node.Inline
+	linkVariant := p.linkVariant()
 
 	// parse link text if a two part link
 	// <link-text><link-destination>
-	if isTwoPartLink {
+	if linkVariant == twoPartLink {
 		delims.single = append(delims.single, '>')
-		link.Children = p.parseInline(delims)
+		children = p.parseInline(delims, '<')
 
 		p.next() // eat closing '>' of link text
 		p.next() // eat opening '<' of link destination
 	}
 
+	// we may have multiple offsets as we need to leave out '\' in escapes
+	var offsets [][2]int
+
 	// parse link destination (also link text if no link text present)
 	offs := p.offset
-	for p.ch != '>' && p.ch != '\n' && p.ch != 0 {
+	for p.ch != '\n' && p.ch != 0 {
+		// escape sequences
+		if p.ch == '\\' && (p.peek() == '\\' || p.peek() == '>') {
+			if offs != p.offset {
+				offsets = append(offsets, [2]int{offs, p.offset})
+			}
+
+			p.next()        // eat '\'
+			offs = p.offset // set new offset so we leave out '\'
+			p.next()        // eat escaped char
+			continue
+		}
+
+		if p.ch == '>' {
+			break
+		}
+
 		p.next()
 	}
 
-	text := p.src[offs:p.offset]
+	// add last offset
+	offsets = append(offsets, [2]int{offs, p.offset})
+
+	var text string
+	for _, o := range offsets {
+		text += p.src[o[0]:o[1]]
+	}
+
 	p.next() // eat closing '>'
 
-	link.Destination = text
-
 	// use link destination as link text if one part link
-	if !isTwoPartLink {
-		link.Children = []node.Inline{
-			&node.Text{
-				Value: text,
-			},
-		}
+	if linkVariant == onePartLink {
+		children = append(children, &node.Text{
+			Value: text,
+		})
+	}
+
+	link := &node.Link{
+		Destination: text,
+		Children:    children,
 	}
 
 	if trace {
@@ -612,50 +657,67 @@ func (p *Parser) parseLink(delims delimiters) *node.Link {
 	return link
 }
 
-// isTwoPartLink determines whether link consists of two consecutive parts:
-// <link-text><link-destination>
-func (p *Parser) isTwoPartLink() bool {
+// linkVariant determines whether link consists of one or two consecutive parts:
+// <link-destination> | <link-text><link-destination>
+func (p *Parser) linkVariant() linkVariant {
 	if trace {
-		defer p.trace("isTwoPartLink")()
+		defer p.trace("linkVariant")()
 	}
 
 	// opening '<' already consumed
 
-	// reset pointers to where they were before calling isTwoPartLink
+	// reset pointers to where they were before calling linkVariant
 	defer p.reset(p.offset)
 
-	for p.ch != '>' && p.ch != '\n' && p.ch != 0 {
+	for p.ch != '\n' && p.ch != 0 {
+		// escape sequences
+		if p.ch == '\\' && (p.peek() == '\\' || p.peek() == '>') {
+			// eat escape sequence
+			p.next()
+			p.next()
+			continue
+		}
+
+		if p.ch == '>' {
+			break
+		}
+
 		p.next()
 	}
 
-	isTwoPartLink := p.ch == '>' && p.peek() == '<'
-
-	if trace {
-		p.print(fmt.Sprintf("return %t", isTwoPartLink))
+	var lv linkVariant
+	if p.ch == '>' && p.peek() == '<' {
+		lv = twoPartLink
+	} else {
+		lv = onePartLink
 	}
 
-	return isTwoPartLink
+	if trace {
+		p.print("return " + lv.String())
+	}
+
+	return lv
 }
 
 // parseText parses until an inline delimiter, extra delimiter, EOL, or EOF.
-func (p *Parser) parseText(extraDelims delimiters) *node.Text {
+// exclude excludes the provided character as a delimiter if not 0.
+func (p *Parser) parseText(extraDelims delimiters, exclude byte) *node.Text {
 	if trace {
 		defer p.trace("parseText")()
 	}
 
-	delims := inlineDelims
-	delims.single = append(delims.single, extraDelims.single...)
-	delims.double = append(delims.double, extraDelims.double...)
+	// add extra delims
+	inDelims := inlineDelims
+	inDelims.single = append(inDelims.single, extraDelims.single...)
+	inDelims.double = append(inDelims.double, extraDelims.double...)
 
 	// we may have multiple offsets as we need to leave out '\' in escapes
 	var offsets [][2]int
 
 	offs := p.offset
 	for p.ch != '\n' && p.ch != 0 {
-		// escape sequences
-		if p.ch == '\\' &&
-			(contains(delims.single, p.peek()) || contains(delims.double, p.peek()) ||
-				contains(blockDelims.single, p.peek()) || contains(blockDelims.double, p.peek())) {
+		// escape sequences; do not escape excluded delim if present
+		if p.ch == '\\' && isEscapeChar(p.peek(), exclude) {
 			// add offset if consumed any chars before
 			if offs != p.offset {
 				offsets = append(offsets, [2]int{offs, p.offset})
@@ -667,12 +729,18 @@ func (p *Parser) parseText(extraDelims delimiters) *node.Text {
 			continue
 		}
 
-		if contains(delims.single, p.ch) {
+		// consume excluded delim as text if present
+		if exclude != 0 && p.ch == exclude {
+			p.next()
+			continue
+		}
+
+		if contains(inDelims.single, p.ch) {
 			break
 		}
 
-		if p.ch == p.peek() && contains(delims.double, p.ch) &&
-			contains(delims.double, p.peek()) {
+		if p.ch == p.peek() && contains(inDelims.double, p.ch) &&
+			contains(inDelims.double, p.peek()) {
 			break
 		}
 
@@ -692,6 +760,20 @@ func (p *Parser) parseText(extraDelims delimiters) *node.Text {
 	}
 
 	return text
+}
+
+func isEscapeChar(ch, exclude byte) bool {
+	// do not treat excluded delim as escape if present
+	if exclude != 0 && ch == exclude {
+		return false
+	}
+
+	// always escape '\' and '>' for consistency
+	return ch == '\\' || ch == '>' ||
+		contains(inlineDelims.single, ch) ||
+		contains(inlineDelims.double, ch) ||
+		contains(blockDelims.single, ch) ||
+		contains(blockDelims.double, ch)
 }
 
 func (p *Parser) trace(msg string) func() {

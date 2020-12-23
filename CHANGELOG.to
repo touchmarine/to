@@ -1,5 +1,13 @@
 = Changelog
 
+== 0.3.0 (December 23, 2020)
+
+Escape sequences, disallow nested links.
+
+Add escape sequences to represent special characters. Escape sequences start with a backslash '\' and are followed by the special character we want to escape. All delimiter characters and the backslash can be escaped.
+
+Fix links; do not permit nested links and allow '\<' to be placed inside the link (link text or destination).
+
 == 0.2.0 (December 21, 2020)
 
 Printer, renderer, CLI, and lines.
