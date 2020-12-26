@@ -3542,6 +3542,410 @@ End
 			},
 		},
 		{
+			name:  "list no identation",
+			input: "-1\n-2",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
+									},
+								},
+							},
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "2",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "list space identation",
+			input: "-1\n -2",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
+									},
+									&node.List{
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													node.Lines{
+														{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "2",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "list tab identation",
+			input: "-1\n\t-2",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
+									},
+									&node.List{
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													node.Lines{
+														{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "2",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "list one space zero space identation",
+			input: " -1\n-2",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "2",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "list one space one space identation",
+			input: " -1\n -2",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
+									},
+								},
+							},
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "2",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "list one space one tab identation",
+			input: " -1\n\t-2",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
+									},
+									&node.List{
+										ListItems: []*node.ListItem{
+											{
+												Children: []node.Node{
+													node.Lines{
+														{
+															Children: []node.Inline{
+																&node.Text{
+																	Value: "2",
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "list four spaces one tab identation",
+			input: "    -1\n\t-2",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
+									},
+								},
+							},
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "2",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "list five spaces one tab identation",
+			input: "     -1\n\t-2",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "2",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "list five spaces one tab + one space identation",
+			input: "     -1\n\t -2",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
+									},
+								},
+							},
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "2",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "list one tab two spaces identation",
+			input: "\t-1\n  -2",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "1",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					&node.List{
+						ListItems: []*node.ListItem{
+							{
+								Children: []node.Node{
+									node.Lines{
+										{
+											Children: []node.Inline{
+												&node.Text{
+													Value: "2",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:  "escape sequences",
 			input: "\\\\ \\< \\> \\_ \\* \\= \\# \\` \\-",
 			want: &node.Document{

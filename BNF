@@ -1,0 +1,154 @@
+; EOF can be treated the same as <newline>
+
+<document> ::= <paragraph> <document>
+             | <heading> <document>
+             | <code-block> <document>
+             | <list> <document>
+             | <paragraph>
+             | <heading>
+             | <code-block>
+             | <list>
+
+<paragraph>         ::= <lines>
+<lines>             ::= <line> <line> | <line>
+<line>              ::= <spacing> <paragraph-content> <spacing> <newline>
+<paragraph-content> ::= <emphasis> <paragraph-content>
+                      | <strong> <paragraph-content>
+                      | <link> <paragraph-content>
+                      | <text> <paragraph-content>
+                      | <emphasis>
+                      | <strong>
+                      | <link>
+                      | <text>
+
+<emphasis>            ::= "__" <emphasis-content> <emphasis-end-marker>
+<emphasis-content>    ::= <strong> <emphasis-content>
+                        | <link> <emphasis-content>
+                        | <text> <emphasis-content>
+                        | ""
+                        ; __ is not permitted
+<emhpasis-end-marker> ::= "__" | <newline>
+
+<strong>            ::= "**" <strong-content> <strong-end-marker>
+<strong-content>    ::= <emphasis> <strong-content>
+                      | <link> <strong-content> 
+                      | <text> <strong-content> 
+                      | ""
+                      ; ** is not permitted
+<strong-end-marker> ::= "**" | <newline>
+
+<heading>                     ::= <unnumered-heading> | <numbered-heading>
+<unnumbered-heading>          ::= <spacing> <unnumbered-heading-marker> <spacing> <heading-content> <spacing> <newline>
+<unnumbered-heading-marker>   ::= "=" <unnumbered-heading-marker> | "="
+<numbered-heading>            ::= <spacing> "##" <opt-numbered-heading-marker> <spacing> <heading-content> <spacing> <newline>
+<opt-numbered-heading-marker> ::= "#" <opt-numbered-heading-marker> | ""
+<heading-content>             ::= <emphasis> <heading-content>
+                                | <strong> <heading-content>
+                                | <link> <heading-content>
+                                | <text> <heading-content>
+                                | ""
+
+<link>                        ::= <link-destination> | <link-text> <link-destination>
+<link-destination>            ::= "<" <link-destination-content> <link-destination-end-marker>
+<link-destination-end-marker> ::= ">" | <newline>
+<link-destination-content>    ::= <text> <link-destination-content> | "" ; > is not permitted
+<link-text>                   ::= "<" <link-text-content> ">"
+<link-text-content>           ::= <emphasis> <link-text-content>
+                                | <strong> <link-text-content>
+                                | <text> <link-text-content>
+                                | ""
+                                ; > is not permitted
+
+; number of '`' in the closing delimiter must be greater than or equal to the
+; number of '`' used in the opening delimiter
+<code-block>               ::= <spacing> <code-block-delimiter> <spacing> <code-block-metadata> <spacing> <newline> <code-block-body> <code-block-delimiter>
+<code-block-delimiter>     ::= "``" <opt-code-block-delimiter>
+<opt-code-block-delimiter> ::= "`" <opt-code-block-delimiter> | ""
+<code-block-metadata>      ::= <code-block-language>
+                             | <code-block-language> <spacing> "," <spacing> <code-block-filename>
+                             | ""
+<code-block-language>      ::= <text>
+<code-block-filename>      ::= <text>
+<code-block-body>          ::= <text> <spacing> <newline> <code-block-body>
+                             | ""
+                             ; up to one less '`' permitted as the number of '`' used for opening delimiter
+
+<list>                   ::= <spacing> <unordered-list> | <ordered-list>
+<unordered-list>         ::= <unordered-list-item> <unordered-list>
+                           | <unordered-list-item>
+<unordered-list-item>    ::= "-" <list-item-content> <list-item-continuation>
+<ordered-list>           ::= <ordered-list-item> <ordered-list>
+                           | <ordered-list-item>
+<ordered-list-item>      ::= "1." <list-item-content> <list-item-continuation>
+<list-item-content>      ::= <line> | <spacing> <newline>
+<list-item-continuation> ::= " " <line> <list-item-continuation> ; consecutive lines are grouped into lines
+                           | " " <list> <list-item-continuation>
+                           | ""
+
+; a fun try at writing a restricted, iterative grammar for indented lists
+; list items must be equally indented
+; list item continuation must have greater indentation
+; tab equals 4 spaces if mixed indenation
+; might be more sensible to try with two-level grammars (hyperrules) or less
+; restrictive one, but this is already getting out of hand...
+<list>                ::= <unordered-list>
+<unordered-list>      ::= <unordered-list->
+                        | <unordered-list-i>
+                        | <unordered-list-ii>
+                        | ; iterate
+
+<unordered-list->   ::= <unordered-list-item-> <unordered-list->
+                      | <unordered-list-item->
+<unordered-list-i>  ::= <unordered-list-item-i> <unordered-list-i>
+                      | <unordered-list-item-i>
+<unordered-list-ii> ::= <unordered-list-item-ii> <unordered-list-ii>
+                      | <unordered-list-item-ii>
+; iterate
+
+<unordered-list-item->      ::= "-" <list-item-content> <list-item-continuation-i>
+                              | "-" <list-item-content>
+<unordered-list-item-i>     ::= " " "-" <list-item-content> <list-item-continuation-ii>
+                              | " " "-" <list-item-content>
+<unordered-list-item-ii>    ::= "  " "-" <list-item-content> <list-item-continuation-iii>
+                              | "  " "-" <list-item-content>
+<unordered-list-item-iii>   ::= "   " "-" <list-item-content> <list-item-continuation-iiii>
+                              | "   " "-" <list-item-content>
+<unordered-list-item-iiii>  ::= "    " "-" <list-item-content> <list-item-continuation-iiiii>
+                              | "    " "-" <list-item-content>
+<unordered-list-item-iiiii> ::= "     " "-" <list-item-content> <list-item-continuation-iiiiii>
+                              | "     " "-" <list-item-content>
+                              | " " <tab> "-" <list-item-content>
+                              | <tab> ""  "-" <list-item-content>
+; ... iterate
+
+<list-item-content> ::= <line> | <spacing> <newline> ; always ends with a newline
+
+; list-item-continuation- does not exist as continuation is always indented
+<list-item-continuation-i>  ::= " " <list-item-continuation>
+                              | " " <list-item-continuation> <list-item-continuation-i>
+                              | " " <list-item-continuation> <list-item-continuation-ii>
+                              | " " <list-item-continuation> <list-item-continuation-iii>
+                              ; ... iterate
+<list-item-continuation-ii> ::= "  " <list-item-continuation>
+                              | "  " <list-item-continuation> <list-item-continuation-ii>
+                              | "  " <list-item-continuation> <list-item-continuation-iii>
+                              | "  " <list-item-continuation> <list-item-continuation-iiii>
+                              ; ... iterate
+; iterate; handle tabs and spaces like in lists
+
+<list-item-continuation> ::= <line> | <list> ; both end with newline; consecutive lines are grouped into lines
+
+<spacing> ::= " " <spacing>
+            | <tab> <spacing>
+            | ""
+
+<newline> ::= ; U+000A
+<tab>     ::= ; U+0009
+
+<text>            ::= <code-point> <text>
+                    | <escape-sequnce> <text>
+                    | <code-point>
+                    | <escape-sequence>
+<code-point>      ::= ; any Unicode code point except newline
+<escape-sequence> ::= "\" <escape-char>
+<escape-char>     ::= "\" | "<" | ">" | "_" | "*" | "=" | "#" | "`" | "-"

@@ -9,6 +9,9 @@ import (
 
 const trace = false
 
+// tabWidth in spaces; used for determining list item identation
+const tabWidth = 4
+
 type headingTyp uint
 
 // heading types
@@ -94,27 +97,39 @@ func (p *Parser) ParseDocument() *node.Document {
 	return doc
 }
 
+// eatIndent consumes consecutive tabs and spaces and counts them.
+// skipBlankLines skips a blank line and resets count. It returns the identation
+// of the first non-blank line if enabled.
+// tab width = tabWidth spaces
+func (p *Parser) eatIndent(skipBlankLines bool) int {
+	var indent int
+	for {
+		if skipBlankLines && p.ch == '\n' {
+			indent = 0
+			p.next()
+			continue
+		}
+
+		switch p.ch {
+		case '\t':
+			indent += tabWidth
+		case ' ':
+			indent++
+		default:
+			return indent
+		}
+
+		p.next()
+	}
+}
+
 func (p *Parser) parseBlock() node.Node {
 	if trace {
 		defer p.trace("parseBlock")()
 	}
 
-	// skip blank lines and count indent
-	var indent int
-	for p.ch == '\t' || p.ch == ' ' {
-		indent++
-		p.next()
-	}
-
-	// repeat for other blank lines
-	for p.ch == '\n' {
-		indent = 0
-		p.next()
-		for p.ch == '\t' || p.ch == ' ' {
-			indent++
-			p.next()
-		}
-	}
+	// count first non-blank line indent
+	indent := p.eatIndent(true)
 
 	switch p.ch {
 	case 0: // EOF
@@ -326,11 +341,7 @@ func (p *Parser) parseListItem(indent int) (*node.ListItem, int) {
 
 	var endIndent int // indent after the list; we parse it to determine if still a list
 	for p.ch != 0 {
-		var curIndent int
-		for p.ch == '\t' || p.ch == ' ' {
-			curIndent++ // TODO: tab equals one space
-			p.next()
-		}
+		curIndent := p.eatIndent(false)
 
 		// stop parsing if indentation not greater than starting
 		if curIndent <= indent {

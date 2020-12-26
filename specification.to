@@ -13,11 +13,11 @@ __This section is non-normative.__
 To is designed to be readable and collaborative. It provides features necessary for most writing work without having to resort to other tools. Notations are simple for humans and computers to understand.
 
 Guiding principles:
-1. one way to do one thing---makes for easier collaboration
-1. <orthogonality><https://stackoverflow.com/questions/1527393/what-is-orthogonality>---changing A does not change B
-1. be obivous---notations should be obvious in themselves
-1. respect---consider, learn from, and interoperate with existing solutions
-1. universally accessible---available to everyone
+1. one way to do one thing—makes for easier collaboration
+1. <orthogonality><https://stackoverflow.com/questions/1527393/what-is-orthogonality>—changing A does not change B
+1. be obivous—notations should be obvious in themselves
+1. respect—consider, learn from, and interoperate with existing solutions
+1. universally accessible—available to everyone
 
 ### Goals
 
@@ -31,12 +31,12 @@ To aims to be
 
 To will, whenever first sensible, release a stable version and promise backward compatibility.
 
-//1. No modifiers---the structure of a document should represent the resulting document.
-//1. Orthogonality---notation produces the same result no matter the context.
-//1. Considerate---use notations for their known meaning and reserve common notations for other tools.
-//1. Consistent---Simple rules without exceptions.
-//1. Dependable---Release a stable version and promise backward compatibility whenever first sensible.
-//1. Portable---Available across multiple tools and platforms.
+//1. No modifiers—the structure of a document should represent the resulting document.
+//1. Orthogonality—notation produces the same result no matter the context.
+//1. Considerate—use notations for their known meaning and reserve common notations for other tools.
+//1. Consistent—Simple rules without exceptions.
+//1. Dependable—Release a stable version and promise backward compatibility whenever first sensible.
+//1. Portable—Available across multiple tools and platforms.
 
 ## Conformance Requirements
 
@@ -48,29 +48,22 @@ Conformance requirements phrased as algorithms or specific steps MAY be implemen
 
 ## Terminology
 
-:: EOL
-    End of line. Represented as \<EOL\> in examples.
-
 :: EOF
     End of file. Represented as \<EOF\> in examples. Note that EOF is not a character, it only indicates no more data.
 
 ## Notational Conventions
 
-The syntax is specified using <Backus---Naur Form><https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form> (BNF).
+The syntax is specified using <Backus—Naur Form><https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_form> (BNF).
 
 ## Source Code Representation
 
-To uses <US-ASCII><https://en.wikipedia.org/wiki/ASCII> character encoding. Source code should be <Unicode><https://en.wikipedia.org/wiki/Unicode> text encoded in <UTF-8><https://en.wikipedia.org/wiki/UTF-8>.
+Source code MUST be Unicode text encoded in <UTF-8><https://en.wikipedia.org/wiki/UTF-8>. Anything produced by To SHOULD be encoded in UTF-8.
 
-Any sequence of characters is a valid To document.
+Whitespace consists of spaces (U+0020), horizontal tabs (U+0009), and newlines (U+000A). Carriage returns (U+000D) SHOULD be skipped. Anything produced by To SHOULD use only newlines as line endings.
 
-// The US-ASCII NUL character with hex value 00 (Unicode point U+0000) may be disallowed or replaced for security reasons and compatibility with other tools.
-// 
-// UTF-8-encoded byte order mark (U+FEFF) may be ignored if it is the first Unicode point in the source text for compatibility with other tools. A byte order mark may be disallowed anywhere else in the source.
+The NUL character (U+0000) MUST be replaced with the replacement character (U+FFFD) for security reasons and compatibility with other tools.
 
-### Characters
-
-EOL is the US-ASCII line feed (LF) character with hex value 0A (Unicode point U+000A).
+UTF-8-encoded byte order mark (U+FEFF) MUST be ignored if it is the first Unicode point in the source text for compatibility with other tools. A byte order mark SHOULD be disallowed anywhere else in the source.
 
 ## Escape Sequences
 
@@ -98,14 +91,14 @@ Elements are divided into inline and block categories. Inline elements operate o
 
 ### Inline Elements
 
-Inline elements span from the opening delimiter to the closing delimiter, EOL, or EOF, whichever comes first. Some inline elements do not have a closing delimiter---they span to the EOL or EOF.
+Inline elements span from the opening delimiter to the closing delimiter, newline, or EOF, whichever comes first. Some inline elements do not have a closing delimiter—they span to the newline or EOF.
 
 ``to
 Tibsey is a **friendly koala**
-Tibsey is a **friendly koala<EOL>
+Tibsey is a **friendly koala<newline>
 Tibsey is a **friendly koala<EOF>
 
-// comments never hurt anyone<EOL>
+// comments never hurt anyone<newline>
 - list // a list item<EOF>
 ``
 
@@ -137,7 +130,7 @@ Tibsey is a __koala__.
 | Element category  | inline             |
 | Permitted content | strong, link, text |
 
-Emphasis starts with a double underscore followed by zero or more occurrences of strong, link, or text and stops at a double underscore, EOL, or EOF.
+Emphasis starts with a double underscore followed by zero or more occurrences of strong, link, or text and stops at a double underscore, newline, or EOF.
 
 ### Strong
 
@@ -150,7 +143,7 @@ Climb **faster** Tibsey.
 | Element category  | inline               |
 | Permitted content | emphasis, link, text |
 
-Strong starts with a double asterisk followed by zero or more occurrences of emphasis, link, or text and stops at a double asterisk, EOL, or EOF.
+Strong starts with a double asterisk followed by zero or more occurrences of emphasis, link, or text and stops at a double asterisk, newline, or EOF.
 
 ### Paragraph
 
@@ -172,14 +165,14 @@ Paragraph spans contiguous lines of emphasis, strong, link, or text until a blan
 
 ### Headings
 
-Headings represent headings for sections and denote the structure of a document. Heading levels range from 1 to unlimited---level 1 being the most important. Use headings to create a hierarchy. Use them to create nested sections where the heading levels are implicit in the resulting structure. Do not use headings for styling, i.e., to render larger font sizes.
+Headings represent headings for sections and denote the structure of a document. Heading levels range from 1 to unlimited—level 1 being the most important. Use headings to create a hierarchy. Use them to create nested sections where the heading levels are implicit in the resulting structure. Do not use headings for styling, i.e., to render larger font sizes.
 
 ``to
 = Koalas
 
 ## Introduction
 
-Koalas are not bears---they are marsupials...
+Koalas are not bears—they are marsupials...
 
 ## Habitat
 
@@ -197,13 +190,13 @@ Koalas live in the eucalyptus forests of southeastern and eastern Australia. Whe
 
 #### Unnumbered
 
-Unnumbered headings start with one or more equals signs followed by zero or more occurrences of emphasis, strong, link, or text and stop at the EOL or EOF.
+Unnumbered headings start with one or more equals signs followed by zero or more occurrences of emphasis, strong, link, or text and stop at the newline or EOF.
 
 #### Numbered
 
 Numbered headings automatically apply a numbering scheme to the headings. Numbered heading level 1 is not permitted, because level 1 heading should only be used as a document title for which a number most often is not wanted. Additionally, by not allowing a level 1 heading, numbered headings can be easily discernible from hashtags. 
 
-Numbered headings start with two or more number signs followed by zero or more occurrences of emphasis, strong, link, or text and stop at the EOL or EOF.
+Numbered headings start with two or more number signs followed by zero or more occurrences of emphasis, strong, link, or text and stop at the newline or EOF.
 
 ### Links
 
@@ -228,9 +221,9 @@ Links create links to documents, locations in the same document, email addresses
 
 Links consist of a link destination and an optional link text. The link destination is used as the link text if the link text is not present. The link text must be placed right after the link destination if they are both present.
 
-The link destination starts with a less-than sign followed by zero or more occurrences of text and stops at a greater-than sign, EOL, or EOF.
+The link destination starts with a less-than sign followed by zero or more occurrences of text and stops at a greater-than sign, newline, or EOF.
 
-The link text starts with a less-than sign followed by zero or more occurrences of emphasis, strong, or text and stops at a greater-than sign, EOL, or EOF.
+The link text starts with a less-than sign followed by zero or more occurrences of emphasis, strong, or text and stops at a greater-than sign, newline, or EOF.
 
 Greater-than sign is not permitted as content in either link destination or link text. To avoid unexpected links use percent-encoded URLs. '>' can be percent-encoded as '%3E'.
 
@@ -291,14 +284,30 @@ Aha!
 1. to get me high again.
 ``
 
-| Element category  | block                                     |
-| Permitted content | nested list, emphasis, strong, link, text |
+| Element category  | block                              |
+| Permitted content | list, emphasis, strong, link, text |
 
-Lists can be unordered or ordered. Ordered list items can be prefixed with
+Lists can be unordered or ordered. Ordered lists are available in the following numbering types:
 - numbers
 - lowercase letters
 - uppercase letters
 - lowercase Roman numerals
 - uppercase Roman numerals
 
-Lists can be nested inside other lists by placing the nested list on the next line and indenting it by one or more whitespace characters.
+Lists consist of consecutive list items of the same type. For example, an unordered list item followed by a numbered list item represent two lists, an unordered list followed by a numbered list.
+
+List items start with a marker, followed by optional whitespace, followed by optional inline content and list item continuation, and end with a newline.
+
+List marker depends on the list type and the list numbering type if an ordered list. Unordered list marker is `-` and the ordered list markers are
+- `0.` for zero-based numbers
+- `1.` for one-based numbers
+- `a.` for lowercase letters
+- `A.` for uppercase letters
+- `i.` for lowercase Roman numerals
+- `I.` for uppercase Roman numerals
+
+Inline content must be placed on the line the list item is declared on or as a part of list item continuation. Nested lists must be placed as a part of list item contiunuation.
+
+List item continuation are the lines following the list item line that have greater indentation than the line the list item is declared on and span until a blank line or another block element.
+
+Tab equals the width of 4 spaces in case of mixed indentation. For example, a list item indented by a tab and another by four spaces will be treated the same. Note that the tab width is used only for determining the indentation of lists if mixed indentation is used. It does not mean that tabs equal 4 spaces; a tab is a tab, its width depends on the environment and is variable.
