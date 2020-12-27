@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"errors"
 	"testing"
 	"to/node"
 	"to/parser"
@@ -5016,24 +5017,291 @@ End
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			p := parser.New(tc.input)
-			doc := p.ParseDocument()
-			if doc == nil {
-				t.Fatalf("ParseDocument() returned nil")
-			}
-
-			got := printer.Pretty(doc, 0)
-			want := printer.Pretty(tc.want, 0)
-
-			if got != want {
-				t.Errorf(
-					"document \"%s\" is incorrect, from input `%s`\ngot:\n%s\nwant:\n%s",
-					tc.name,
-					tc.input,
-					got,
-					want,
-				)
-			}
+			cmpPretty(t, cmpData{
+				name:  tc.name,
+				input: tc.input,
+				want:  tc.want,
+			})
 		})
+	}
+}
+
+func TestBOM(t *testing.T) {
+	const BOM = "\uFEFF"
+
+	cases := []struct {
+		name      string
+		isAllowed bool
+		input     string
+		want      *node.Document
+	}{
+		{
+			name:      "BOM at the beginning",
+			isAllowed: true,
+			input:     BOM + "= Koala",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:      "BOM in the middle",
+			isAllowed: false,
+			input:     "= Ko" + BOM + "ala",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Ko" + BOM + "ala",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:      "BOM at the end",
+			isAllowed: false,
+			input:     "= Koala" + BOM,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala" + BOM,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var errHandler = func(err error, count uint) {
+		if count != 1 || !errors.Is(err, parser.ErrIllegalBOM) {
+			t.Error(err)
+		}
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.isAllowed {
+				cmpPretty(t, cmpData{
+					name:  tc.name,
+					input: tc.input,
+					want:  tc.want,
+				})
+				return
+			}
+
+			cmpPretty(t, cmpData{
+				name:       tc.name,
+				input:      tc.input,
+				want:       tc.want,
+				errCount:   1,
+				errHandler: errHandler,
+			})
+
+		})
+	}
+}
+
+func TestNUL(t *testing.T) {
+	const NUL = "\u0000"
+
+	cases := []struct {
+		name  string
+		input string
+		want  *node.Document
+	}{
+		{
+			name:  "NUL at the beginning",
+			input: NUL + "= Koala",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala", // NUL is skipped as it is the first...
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "NUL in the middle",
+			input: "= Ko" + NUL + "ala",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Ko" + NUL + "ala",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "NUL at the end",
+			input: "= Koala" + NUL,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala" + NUL,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var errHandler = func(err error, count uint) {
+		if count != 1 || !errors.Is(err, parser.ErrIllegalNUL) {
+			t.Error(err)
+		}
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cmpPretty(t, cmpData{
+				name:       tc.name,
+				input:      tc.input,
+				want:       tc.want,
+				errCount:   1,
+				errHandler: errHandler,
+			})
+		})
+	}
+}
+
+func TestIllegalUTF8Encoding(t *testing.T) {
+	const fcb = "\x80" // first continuation byte
+
+	cases := []struct {
+		name  string
+		input string
+		want  *node.Document
+	}{
+		{
+			name:  "fcb at the beginning",
+			input: fcb + "= Koala",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala", // fcb is skipped as it is the first...
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "fcb in the middle",
+			input: "= Ko" + fcb + "ala",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Ko" + fcb + "ala",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "fcb at the end",
+			input: "= Koala" + fcb,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala" + fcb,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var errHandler = func(err error, count uint) {
+		if count != 1 || !errors.Is(err, parser.ErrIllegalUTF8Encoding) {
+			t.Error(err)
+		}
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cmpPretty(t, cmpData{
+				name:       tc.name,
+				input:      tc.input,
+				want:       tc.want,
+				errCount:   1,
+				errHandler: errHandler,
+			})
+		})
+	}
+}
+
+type cmpData struct {
+	name       string
+	input      string
+	want       *node.Document
+	errCount   uint
+	errHandler parser.ErrorHandler
+}
+
+func cmpPretty(t *testing.T, data cmpData) {
+	t.Helper()
+
+	p := parser.New(data.input, data.errHandler)
+
+	doc, errCount := p.ParseDocument()
+	if doc == nil {
+		t.Fatalf("ParseDocument() returned nil")
+	}
+	if errCount != data.errCount {
+		t.Errorf("got %d errors, want %d", errCount, data.errCount)
+	}
+
+	gotPretty := printer.Pretty(doc, 0)
+	wantPretty := printer.Pretty(data.want, 0)
+
+	if gotPretty != wantPretty {
+		t.Errorf(
+			"document \"%s\" is incorrect, from input `%s`\ngot:\n%s\nwant:\n%s",
+			data.name,
+			data.input,
+			gotPretty,
+			wantPretty,
+		)
 	}
 }

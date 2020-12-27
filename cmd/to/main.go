@@ -17,6 +17,7 @@ var (
 )
 
 func main() {
+	log.SetFlags(0)
 	flag.Parse()
 
 	b, err := ioutil.ReadAll(os.Stdin)
@@ -24,8 +25,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	p := parser.New(string(b))
-	doc := p.ParseDocument()
+	p := parser.New(string(b), nil)
+	doc, errCount := p.ParseDocument()
+	if errCount > 0 {
+		log.Fatalf("ParseDocument encountered %d errors", errCount)
+	}
 
 	if *html {
 		fmt.Print(renderer.HTML(doc, 0))

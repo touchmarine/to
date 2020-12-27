@@ -109,10 +109,13 @@ function displayButton(): void {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			p := parser.New(tc.input)
-			doc := p.ParseDocument()
-			html := renderer.HTML(doc, 0)
+			p := parser.New(tc.input, nil)
+			doc, errCount := p.ParseDocument()
+			if errCount > 0 {
+				t.Fatalf("ParseDocument encountered %d errors", errCount)
+			}
 
+			html := renderer.HTML(doc, 0)
 			if html != tc.want {
 				t.Errorf("\ngot:\n%swant:\n%s", html, tc.want)
 			}

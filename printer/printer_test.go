@@ -127,8 +127,11 @@ paragraph **strong** __emphasis__
 .   ],
 }`
 
-	p := parser.New(input)
-	doc := p.ParseDocument()
+	p := parser.New(input, nil)
+	doc, errCount := p.ParseDocument()
+	if errCount > 0 {
+		t.Fatalf("ParseDocument encountered %d errors", errCount)
+	}
 
 	if got := printer.Pretty(doc, 0); got != want {
 		t.Errorf("\ngot:\n%s\nwant:\n%s", got, want)

@@ -1,37 +1,20 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"to/node"
 	"to/printer"
+	"unicode/utf8"
 )
 
 const trace = false
 
-// tabWidth in spaces; used for determining list item identation
-const tabWidth = 4
-
-type headingTyp uint
-
-// heading types
-const (
-	unnumberedHeading headingTyp = iota
-	numberedHeading
-)
-
-//go:generate stringer -type=linkVariant
-type linkVariant uint
-
-// link variants
-const (
-	onePartLink linkVariant = iota
-	twoPartLink
-)
-
 type Parser struct {
 	// immutable state
-	src string
+	src          string
+	errorHandler ErrorHandler
 
 	// scanning state
 	ch       byte // current character
@@ -39,25 +22,88 @@ type Parser struct {
 	rdOffset int  // reading offset (position after current character)
 
 	indent int // trace indentation level
+
+	errCount uint // number of errors encountered
 }
 
-func New(src string) *Parser {
-	p := &Parser{src: src}
+// ErrorHandler is called with an error message if an error is encountered.
+type ErrorHandler func(err error, errCount uint)
+
+func New(src string, errorHandler ErrorHandler) *Parser {
+	p := &Parser{
+		src:          src,
+		errorHandler: errorHandler,
+	}
 	// initialize ch, offset, and rdOffset
 	p.next()
 	return p
 }
 
-// next reads the next character into p.ch.
-// p.ch < 0 means end-of-file.
-func (p *Parser) next() {
-	if p.rdOffset < len(p.src) {
-		p.ch = p.src[p.rdOffset]
-	} else {
-		p.ch = 0 // eof
+// error calls the p.errorHandler() if available and increases the total error
+// count.
+func (p *Parser) error(err error) {
+	p.errCount++
+	if p.errorHandler != nil {
+		p.errorHandler(err, p.errCount)
 	}
+}
+
+// illegal character errors
+var (
+	ErrIllegalNUL          = errors.New("illegal character NUL")
+	ErrIllegalUTF8Encoding = errors.New("illegal UTF-8 encoding")
+	ErrIllegalBOM          = errors.New("illegal byte order mark")
+)
+
+// next reads the next ASCII character into p.ch; other non-ASCII Unicode code
+// points are skipped as we use only ASCII symbols.
+//
+// NUL characters, byte order marks in the middle, or invalid UTF-8 encoding
+// call p.error(). They are not skipped.
+//
+// An encoding is invalid if it is incorrect UTF-8, encodes a rune that is out
+// of range, or is not the shortest possible UTF-8 encoding for the value.
+//
+// p.ch == 0 means end-of-file.
+func (p *Parser) next() {
+skip:
+	// if end of data
+	if p.rdOffset >= len(p.src) {
+		p.ch = 0 // eof
+		p.offset = len(p.src)
+		return
+	}
+
+	ch := p.src[p.rdOffset]
+
+	// if not ASCII
+	if ch >= utf8.RuneSelf {
+		// validate UTF-8 encoding and get rune width
+		r, width := utf8.DecodeRuneInString(p.src[p.rdOffset:])
+		if r == utf8.RuneError && width == 1 {
+			p.error(fmt.Errorf("%w: %U", ErrIllegalUTF8Encoding, r))
+		}
+
+		// disallow byte order mark in the middle
+		const BOM = 0xFEFF
+		if r == BOM && p.rdOffset > 0 {
+			p.error(fmt.Errorf("%w: %U", ErrIllegalBOM, r))
+		}
+
+		p.rdOffset += width
+		goto skip
+	}
+
 	p.offset = p.rdOffset
-	p.rdOffset += 1
+	p.rdOffset++
+
+	// disallow NUL
+	if ch == 0 {
+		p.error(fmt.Errorf("%w: %U", ErrIllegalNUL, ch))
+		goto skip
+	}
+
+	p.ch = ch
 }
 
 // peek returns the byte following the most recently read character without
@@ -77,7 +123,7 @@ func (p *Parser) reset(offs int) {
 	p.next() // set ch
 }
 
-func (p *Parser) ParseDocument() *node.Document {
+func (p *Parser) ParseDocument() (*node.Document, uint) {
 	if trace {
 		defer p.trace("ParseDocument")()
 	}
@@ -94,8 +140,11 @@ func (p *Parser) ParseDocument() *node.Document {
 		// pointers are advaced by p.parseBlock()
 	}
 
-	return doc
+	return doc, p.errCount
 }
+
+// tabWidth in spaces; used for determining list item identation
+const tabWidth = 4
 
 // eatIndent consumes consecutive tabs and spaces and counts them.
 // skipBlankLines skips a blank line and resets count. It returns the identation
@@ -154,6 +203,14 @@ func (p *Parser) parseBlock() node.Node {
 	}
 }
 
+type headingTyp uint
+
+// heading types
+const (
+	unnumberedHeading headingTyp = iota
+	numberedHeading
+)
+
 func (p *Parser) parseHeading(typ headingTyp) *node.Heading {
 	var isNumbered bool
 	var delim byte
@@ -186,7 +243,7 @@ func (p *Parser) parseHeading(typ headingTyp) *node.Heading {
 	}
 
 	// skip whitespace
-	for p.ch == '\t' || p.ch == ' ' {
+	for isSpacing(p.ch) {
 		p.next()
 	}
 
@@ -251,13 +308,11 @@ func (p *Parser) parseCodeBlock() *node.CodeBlock {
 	var filename string
 	s := strings.SplitN(metadata, ",", 2)
 
-	// strings.TrimSpace() removes Unicode whitespace so it currently does not
-	// match our other whitespace removal...
 	if len(s) >= 1 {
-		language = strings.TrimSpace(s[0])
+		language = strings.Trim(s[0], "\t ")
 	}
 	if len(s) >= 2 {
-		filename = strings.TrimSpace(s[1])
+		filename = strings.Trim(s[1], "\t ")
 	}
 
 	cb := &node.CodeBlock{
@@ -426,7 +481,7 @@ func (p *Parser) parseLine() *node.Line {
 
 	for p.ch != '\n' && p.ch != 0 {
 		// skip leading whitespace
-		for p.ch == '\t' || p.ch == ' ' {
+		for isSpacing(p.ch) {
 			p.next()
 		}
 
@@ -585,6 +640,15 @@ func (p *Parser) parseStrong(delims delimiters) *node.Strong {
 
 	return strong
 }
+
+//go:generate stringer -type=linkVariant
+type linkVariant uint
+
+// link variants
+const (
+	onePartLink linkVariant = iota
+	twoPartLink
+)
 
 // parseLink parses link.
 //
@@ -799,6 +863,10 @@ func (p *Parser) trace(msg string) func() {
 
 func (p *Parser) print(msg string) {
 	fmt.Println(strings.Repeat(".   ", p.indent) + msg)
+}
+
+func isSpacing(ch byte) bool {
+	return ch == '\t' || ch == ' '
 }
 
 // char returns a string representation of a character.
