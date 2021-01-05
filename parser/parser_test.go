@@ -3788,8 +3788,8 @@ End
 			},
 		},
 		{
-			name:  "list four spaces one tab identation",
-			input: "    -1\n\t-2",
+			name:  "list eight spaces one tab identation",
+			input: "        -1\n\t-2",
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
@@ -3826,8 +3826,8 @@ End
 			},
 		},
 		{
-			name:  "list five spaces one tab identation",
-			input: "     -1\n\t-2",
+			name:  "list nine spaces one tab identation",
+			input: "         -1\n\t-2",
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{
@@ -3868,8 +3868,8 @@ End
 			},
 		},
 		{
-			name:  "list five spaces one tab + one space identation",
-			input: "     -1\n\t -2",
+			name:  "list nine spaces one tab + one space identation",
+			input: "         -1\n\t -2",
 			want: &node.Document{
 				Children: []node.Node{
 					&node.List{

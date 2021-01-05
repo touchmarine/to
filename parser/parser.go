@@ -146,7 +146,7 @@ func (p *Parser) ParseDocument() (*node.Document, uint) {
 }
 
 // tabWidth in spaces; used for determining list item identation
-const tabWidth = 4
+const tabWidth = 8
 
 // eatIndent consumes consecutive tabs and spaces and counts them.
 // skipBlankLines skips a blank line and resets count. It returns the identation
