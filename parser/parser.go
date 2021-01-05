@@ -94,15 +94,17 @@ skip:
 		goto skip
 	}
 
-	p.offset = p.rdOffset
-	p.rdOffset++
-
 	// disallow NUL
 	if ch == 0 {
 		p.error(fmt.Errorf("%w: %U", ErrIllegalNUL, ch))
+		// replace with the Unicode replacement character U+FFFD
+		p.src = p.src[:p.rdOffset] + string(utf8.RuneError) + p.src[p.rdOffset+1:]
+		p.rdOffset += utf8.RuneLen(utf8.RuneError)
 		goto skip
 	}
 
+	p.offset = p.rdOffset
+	p.rdOffset++
 	p.ch = ch
 }
 

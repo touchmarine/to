@@ -6,6 +6,7 @@ import (
 	"to/node"
 	"to/parser"
 	"to/printer"
+	"unicode/utf8"
 )
 
 func TestParseDocument(t *testing.T) {
@@ -5134,7 +5135,7 @@ func TestNUL(t *testing.T) {
 						Level: 1,
 						Children: []node.Inline{
 							&node.Text{
-								Value: "Koala", // NUL is skipped as it is the first...
+								Value: "Koala", // no NUL as it is not part of any content...
 							},
 						},
 					},
@@ -5150,7 +5151,7 @@ func TestNUL(t *testing.T) {
 						Level: 1,
 						Children: []node.Inline{
 							&node.Text{
-								Value: "Ko" + NUL + "ala",
+								Value: "Ko" + string(utf8.RuneError) + "ala",
 							},
 						},
 					},
@@ -5166,7 +5167,7 @@ func TestNUL(t *testing.T) {
 						Level: 1,
 						Children: []node.Inline{
 							&node.Text{
-								Value: "Koala" + NUL,
+								Value: "Koala" + string(utf8.RuneError),
 							},
 						},
 					},
