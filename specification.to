@@ -49,7 +49,7 @@ Conformance requirements phrased as algorithms or specific steps MAY be implemen
 ## Terminology
 
 :: EOF
-    End of file. Represented as \<EOF\> in examples. Note that EOF is not a character, it only indicates no more data.
+    End of file. Represented as \<EOF\> in examples. Note that EOF is not a character, it merely indicates no more data.
 
 ## Notational Conventions
 
@@ -59,7 +59,9 @@ The syntax is specified using <Backus—Naur Form><https://en.wikipedia.org/wiki
 
 Source code MUST be Unicode text encoded in <UTF-8><https://en.wikipedia.org/wiki/UTF-8>. Anything produced by To SHOULD be encoded in UTF-8.
 
-Whitespace consists of spaces (U+0020), horizontal tabs (U+0009), and newlines (U+000A). Carriage returns (U+000D) SHOULD be skipped. Anything produced by To SHOULD use only newlines as line endings.
+Whitespace consists of spaces (U+0020) and horizontal tabs (U+0009).
+
+Newlines (U+000A) are used for line endings. Carriage returns (U+000D) SHOULD be skipped. Anything produced by To SHOULD use only newlines as line endings.
 
 The NUL character (U+0000) MUST be replaced with the replacement character (U+FFFD) for security reasons and compatibility with other tools.
 
@@ -91,7 +93,7 @@ Elements are divided into inline and block categories. Inline elements operate o
 
 ### Inline Elements
 
-Inline elements span from the opening delimiter to the closing delimiter, newline, or EOF, whichever comes first. Some inline elements do not have a closing delimiter—they span to the newline or EOF.
+Inline elements span from the opening delimiter to the closing delimiter, newline, or EOF, whichever comes first. Some inline elements do not have a closing delimiter—they span until a newline or EOF.
 
 ``to
 Tibsey is a **friendly koala**
@@ -104,7 +106,7 @@ Tibsey is a **friendly koala<EOF>
 
 ### Block Elements
 
-Block elements span contiguous lines of inline content until a blank line or another block.
+Block elements span contiguous lines until a blank line, closing delimiter, or another block.
 
 ``to
 This paragraph
@@ -130,7 +132,7 @@ Tibsey is a __koala__.
 | Element category  | inline             |
 | Permitted content | strong, link, text |
 
-Emphasis starts with a double underscore followed by zero or more occurrences of strong, link, or text and stops at a double underscore, newline, or EOF.
+Emphasis starts with a double underscore followed by zero or more occurrences of strong, link, or text and ends with a double underscore, newline, or EOF.
 
 ### Strong
 
@@ -143,7 +145,7 @@ Climb **faster** Tibsey.
 | Element category  | inline               |
 | Permitted content | emphasis, link, text |
 
-Strong starts with a double asterisk followed by zero or more occurrences of emphasis, link, or text and stops at a double asterisk, newline, or EOF.
+Strong starts with a double asterisk followed by zero or more occurrences of emphasis, link, or text and ends with a double asterisk, newline, or EOF.
 
 ### Paragraph
 
@@ -161,7 +163,7 @@ Tibsey likes to sleep.
 | Element category  | block                        |
 | Permitted content | emphasis, strong, link, text |
 
-Paragraph spans contiguous lines of emphasis, strong, link, or text until a blank line or another block.
+Paragraph consists of contiguous lines and spans until a blank line or another block. A line starts with optional whitespace, followed by zero or more occurrences of emphasis, strong, link, or text, followed by optional whitespace, and ends with a newline or EOF.
 
 ### Headings
 
@@ -190,13 +192,13 @@ Koalas live in the eucalyptus forests of southeastern and eastern Australia. Whe
 
 #### Unnumbered
 
-Unnumbered headings start with one or more equals signs followed by zero or more occurrences of emphasis, strong, link, or text and stop at the newline or EOF.
+Unnumbered headings start with optional whitespace, followed by one or more equals signs, followed by optional whitespace, followed by zero or more occurrences of emphasis, strong, link, or text, followed by optional whitespace, and end with a newline or EOF.
 
 #### Numbered
 
-Numbered headings automatically apply a numbering scheme to the headings. Numbered heading level 1 is not permitted, because level 1 heading should only be used as a document title for which a number most often is not wanted. Additionally, by not allowing a level 1 heading, numbered headings can be easily discernible from hashtags. 
+Numbered headings automatically apply a numbering scheme to the headings. Numbered heading level 1 is not permitted as it should only be used as a document title for which a number most often is not wanted. Additionally, by not allowing a level 1 heading, numbered headings can be easily discernible from hashtags. 
 
-Numbered headings start with two or more number signs followed by zero or more occurrences of emphasis, strong, link, or text and stop at the newline or EOF.
+Numbered headings start with optional whitespace, followed by two or more number signs, followed by zero or more occurrences of emphasis, strong, link, or text, followed by optional whitespace, and end with a newline or EOF.
 
 ### Links
 
@@ -221,11 +223,11 @@ Links create links to documents, locations in the same document, email addresses
 
 Links consist of a link destination and an optional link text. The link destination is used as the link text if the link text is not present. The link text must be placed right after the link destination if they are both present.
 
-The link destination starts with a less-than sign followed by zero or more occurrences of text and stops at a greater-than sign, newline, or EOF.
+The link destination starts with a less-than sign followed by zero or more occurrences of text and ends with a greater-than sign, newline, or EOF.
 
-The link text starts with a less-than sign followed by zero or more occurrences of emphasis, strong, or text and stops at a greater-than sign, newline, or EOF.
+The link text starts with a less-than sign followed by zero or more occurrences of emphasis, strong, or text and ends with a greater-than sign, newline, or EOF.
 
-Greater-than sign is not permitted as content in either link destination or link text. To avoid unexpected links use percent-encoded URLs. '>' can be percent-encoded as '%3E'.
+Greater-than sign is not permitted as content in either link destination or link text. To avoid unexpected links use percent-encoded URLs or escape sequences. '>' can be percent-encoded as '%3E' or escaped as '\>'.
 
 ### Code Blocks
 
@@ -243,9 +245,9 @@ function displayButton(): void {
 | Element category  | block  |
 | Permitted content | text   |
 
-Code blocks start with two or more occurrences of backticks followed by optional metadata which MUST be on the same line. Next is the code block body which consists of zero or more lines of text. Finally, the code block is closed on a line after the code block body with greater than or equal to the number of backticks used in the opening delimiter.
+A code block starts with optional whitespace, followed by two or more occurrences of backticks, followed by optional whitespace, followed by optional metadata, followed by optional whitespace, followed by a newline or EOF. Next is the code block body which consists of zero or more lines of text. Finally, the code block ends with greater than or equal to number of backticks as the number of backticks used  in the opening delimiter.
 
-Metadata consists of a language used in the code block body and an optional filename. The language is usually used for syntax highlighting and the filename may be used in the presentation of the code block.
+Metadata consists of a language used in the code block body, followed by an optional sequence of whitespace, a comma, whitespace, and a filename. The language is usually used for syntax highlighting and the filename may be used in the presentation of the code block.
 
 ### Lists
 
@@ -296,7 +298,7 @@ Lists can be unordered or ordered. Ordered lists are available in the following 
 
 Lists consist of consecutive list items of the same type. For example, an unordered list item followed by a numbered list item represent two lists, an unordered list followed by a numbered list.
 
-List items start with a marker, followed by optional whitespace, followed by optional inline content and list item continuation, and end with a newline.
+List items start with a marker, followed by optional whitespace, followed by optional inline content and list item continuation, and end with a newline or EOF.
 
 List marker depends on the list type and the list numbering type if an ordered list. Unordered list marker is `-` and the ordered list markers are
 - `0.` for zero-based numbers
@@ -310,4 +312,4 @@ Inline content must be placed on the line the list item is declared on or as a p
 
 List item continuation are the lines following the list item line that have greater indentation than the line the list item is declared on and span until a blank line or another block element.
 
-Tab equals the width of 4 spaces in case of mixed indentation. For example, a list item indented by a tab and another by four spaces will be treated the same. Note that the tab width is used only for determining the indentation of lists if mixed indentation is used. It does not mean that tabs equal 4 spaces; a tab is a tab, its width depends on the environment and is variable.
+Tab equals the width of 8 spaces in case of mixed indentation. For example, a list item indented by a tab and another by eight spaces will be treated the same. Note that the tab width is used only for determining the indentation of lists if mixed indentation is used. It does not mean that tabs equal 8 spaces; a tab is a tab, its width depends on the environment and is variable.

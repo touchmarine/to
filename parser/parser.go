@@ -278,7 +278,7 @@ func (p *Parser) parseCodeBlock() *node.CodeBlock {
 	}
 
 	metadata := p.src[metadataOffs:p.offset]
-	p.next() // eat EOL or EOF
+	p.next() // eat newline or EOF
 
 	// parse body
 	offs := p.offset
@@ -392,7 +392,7 @@ func (p *Parser) parseListItem(indent int) (*node.ListItem, int) {
 	if line != nil {
 		lines = append(lines, line)
 	}
-	p.next() // eat EOL
+	p.next() // eat newline
 
 	var children []node.Node
 
@@ -428,7 +428,7 @@ func (p *Parser) parseListItem(indent int) (*node.ListItem, int) {
 		if line != nil {
 			lines = append(lines, line)
 		}
-		p.next() // eat EOL
+		p.next() // eat newline
 
 	}
 
@@ -449,7 +449,7 @@ func (p *Parser) parseListItem(indent int) (*node.ListItem, int) {
 }
 
 // parseParagraph parses consecutive lines of inline text until another block,
-// EOL, or EOF.
+// newline, or EOF.
 func (p *Parser) parseParagraph() *node.Paragraph {
 	if trace {
 		defer p.trace("parseParagraph")()
@@ -464,7 +464,7 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 		}
 
 		lines = append(lines, line)
-		p.next() // eat line EOL
+		p.next() // eat line newline
 	}
 
 	return &node.Paragraph{
@@ -529,7 +529,7 @@ var blockDelims = delimiters{
 	double: []byte{'#', '`'},
 }
 
-// parseInline parses until one of the provided delims, EOL, or EOF.
+// parseInline parses until one of the provided delims, newline, or EOF.
 // exclude excludes the provided character as a delimiter if not 0.
 func (p *Parser) parseInline(delims delimiters, exclude byte) []node.Inline {
 	if trace {
@@ -776,7 +776,7 @@ func (p *Parser) linkVariant() linkVariant {
 	return lv
 }
 
-// parseText parses until an inline delimiter, extra delimiter, EOL, or EOF.
+// parseText parses until an inline delimiter, extra delimiter, newline, or EOF.
 // exclude excludes the provided character as a delimiter if not 0.
 func (p *Parser) parseText(extraDelims delimiters, exclude byte) *node.Text {
 	if trace {

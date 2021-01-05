@@ -1088,6 +1088,38 @@ The koala is an iconic Australian animal. Often called...
 			},
 		},
 		{
+			name:  "heading leading space",
+			input: "=   \tKoala",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "heading trailing space",
+			input: "= Koala  \t",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala  \t",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:  "link",
 			input: "<https://koala.test>",
 			want: &node.Document{

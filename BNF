@@ -69,7 +69,8 @@
                              | ""
 <code-block-language>      ::= <text>
 <code-block-filename>      ::= <text>
-<code-block-body>          ::= <text> <spacing> <newline> <code-block-body>
+<code-block-body>          ::= <text> <newline> <code-block-body>
+			     | <text> <code-block-body>
                              | ""
                              ; up to one less '`' permitted as the number of '`' used for opening delimiter
 
