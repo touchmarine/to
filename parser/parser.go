@@ -55,11 +55,14 @@ var (
 	ErrIllegalBOM          = errors.New("illegal byte order mark")
 )
 
-// next reads the next ASCII character into p.ch; other non-ASCII Unicode code
-// points are skipped as we use only ASCII symbols.
+// next reads the next character into p.ch.
 //
-// NUL characters, byte order marks in the middle, or invalid UTF-8 encoding
-// call p.error(). They are not skipped.
+// p.ch == utf8.RuneSelf if a non-ASCII char is encountered. We skip Unicode
+// chars that way as we do not need them for our notations.
+//
+// NUL characters, byte order marks (BOM) in the middle, or invalid UTF-8
+// encoding calls p.error(). NULs are replaced with the replacement character.
+// BOMs in the middle and invalid UTF-8 encoding chars are skipped.
 //
 // An encoding is invalid if it is incorrect UTF-8, encodes a rune that is out
 // of range, or is not the shortest possible UTF-8 encoding for the value.
@@ -76,31 +79,41 @@ skip:
 
 	ch := p.src[p.rdOffset]
 
+	// disallow NUL
+	if ch == 0 {
+		p.error(fmt.Errorf("%w: %U", ErrIllegalNUL, ch))
+		// replace with the Unicode replacement character U+FFFD
+		p.src = p.src[:p.rdOffset] + string(utf8.RuneError) + p.src[p.rdOffset+1:]
+		p.offset = p.rdOffset
+		p.rdOffset += utf8.RuneLen(utf8.RuneError)
+		p.ch = utf8.RuneSelf // one-byte char that we do not use
+		return
+	}
+
 	// if not ASCII
 	if ch >= utf8.RuneSelf {
 		// validate UTF-8 encoding and get rune width
 		r, width := utf8.DecodeRuneInString(p.src[p.rdOffset:])
 		if r == utf8.RuneError && width == 1 {
 			p.error(fmt.Errorf("%w: %U", ErrIllegalUTF8Encoding, r))
+			p.rdOffset += width
+			goto skip
 		}
 
-		// disallow byte order mark in the middle
 		const BOM = 0xFEFF
-		if r == BOM && p.rdOffset > 0 {
-			p.error(fmt.Errorf("%w: %U", ErrIllegalBOM, r))
+		if r == BOM {
+			// disallow byte order mark in the middle
+			if p.rdOffset > 0 {
+				p.error(fmt.Errorf("%w: %U", ErrIllegalBOM, r))
+			}
+			p.rdOffset += width
+			goto skip
 		}
 
+		p.offset = p.rdOffset
 		p.rdOffset += width
-		goto skip
-	}
-
-	// disallow NUL
-	if ch == 0 {
-		p.error(fmt.Errorf("%w: %U", ErrIllegalNUL, ch))
-		// replace with the Unicode replacement character U+FFFD
-		p.src = p.src[:p.rdOffset] + string(utf8.RuneError) + p.src[p.rdOffset+1:]
-		p.rdOffset += utf8.RuneLen(utf8.RuneError)
-		goto skip
+		p.ch = ch
+		return
 	}
 
 	p.offset = p.rdOffset

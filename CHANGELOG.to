@@ -1,5 +1,11 @@
 = Changelog
 
+== 0.4.1 (January 6, 2021)
+
+Fix parser skipping valid UTF-8 encoded characters. For example, a Unicode character at the start of a paragraph was being skipped.
+
+Fix parser not replacing NULs at the beginning.
+
 == 0.4.0 (January 6, 2021)
 
 Define source code representation: encoding, whitespace, newlines, and disallowed characters. Update parser to specifcation.

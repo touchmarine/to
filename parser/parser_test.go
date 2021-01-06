@@ -5163,11 +5163,14 @@ func TestNUL(t *testing.T) {
 			input: NUL + "= Koala",
 			want: &node.Document{
 				Children: []node.Node{
-					&node.Heading{
-						Level: 1,
-						Children: []node.Inline{
-							&node.Text{
-								Value: "Koala", // no NUL as it is not part of any content...
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: string(utf8.RuneError) + "= Koala",
+									},
+								},
 							},
 						},
 					},
@@ -5298,6 +5301,86 @@ func TestIllegalUTF8Encoding(t *testing.T) {
 				input:      tc.input,
 				want:       tc.want,
 				errCount:   1,
+				errHandler: errHandler,
+			})
+		})
+	}
+}
+
+func TestUnicode(t *testing.T) {
+	const eur = "\u20AC" // euro sign
+
+	cases := []struct {
+		name  string
+		input string
+		want  *node.Document
+	}{
+		{
+			name:  "code point at the beginning",
+			input: eur + "= Koala",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: eur + "= Koala",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "code point in the middle",
+			input: "= Ko" + eur + "ala",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Ko" + eur + "ala",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:  "code point at the end",
+			input: "= Koala" + eur,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.Heading{
+						Level: 1,
+						Children: []node.Inline{
+							&node.Text{
+								Value: "Koala" + eur,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	var errHandler = func(err error, count uint) {
+		if count > 0 {
+			t.Error(err)
+		}
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cmpPretty(t, cmpData{
+				name:       tc.name,
+				input:      tc.input,
+				want:       tc.want,
+				errCount:   0,
 				errHandler: errHandler,
 			})
 		})
