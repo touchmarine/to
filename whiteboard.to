@@ -1,0 +1,1114 @@
+;; title:  Touch Markup
+;; author: @touch_marine
+;; date:   January 6, 2021
+
+.tableOfContents
+
+## Introduction
+
+A place for whatever comes to mind...
+
+## Inspiration
+
+> Be conservative in what you do, be liberal in what you accept from others (often reworded as "Be conservative in what you send, be liberal in what you accept").
+— Jon Postel, <Robustness principle - Wikipedia><https://en.wikipedia.org/wiki/Robustness_principle>
+
+<Request For Comments (RFC)><https://tools.ietf.org/rfc/index>
+
+Design of <The Go Programming Language><https://golang.org/>.
+
+Markup languages: Markdown, CommonMark, Org mode, Creole, rST, Texttile, AsciiDoc, roff-like, Jira Text Formatting Notation, The Community Club Markdown, Liquid tags, idyll, emunotes, Accord Project, c2 Wiki, Leanpub/Markua, Slack, WhatsApp, ArchieML, CriticMarkup, WordPress Shortcodes, Apple Markup Formatting Reference, Go tools present, Setext, atx, R Markdown (bookdown).
+
+<Pandoc><https://pandoc.org/>, <jgm (John MacFarlane) - GitHub><https://github.com/jgm>
+
+<Wiki Principles><https://wiki.c2.com/?WikiPrinciples> — good reasoning for lightweight markup language, why not HTML (<Why Doesn't Wiki Do Html><https://wiki.c2.com/?WhyDoesntWikiDoHtml>, <Not On This Wiki><http://wiki.c2.com/?NotOnThisWiki>)...
+
+<Beyond Markdown><https://talk.commonmark.org/t/beyond-markdown/2787>, especially comment 35 from alehed and 37 from JCPayne:
+
+> I like this proposal. Markdown has some strengths without which it would not have gained its current popularity, but not everything about it is great.
+> 
+> The mentioned pain points fall into two categories: many ways to do the same thing (1, 3, 4) and missing power/generality (2, 5, 6).
+> 
+> Having more than one way to emphasize a word makes absolutely no sense. What does nested emphasis even mean?
+> 
+> The second point is that given markdowns limited power (basically everything that is discussed in extensions), it probably seemed like an easy fix to just allow in-lining arbitrary HTML. Today, Markdown has become so much more than just a fast way of writing HTML (for arbitrary HTML it is not even the best tool) so tying it to HTML does more harm than help. What Markdown needs is to natively support constructs that appear in written text (definition lists, tables, etc.) and then a way of annotating the document so that the document converter can do something smart with it. These annotations should reflect the semantic meaning of parts of the document or add some metadata to it, similar to LaTeX.
+> 
+> Getting 6. right could be tricky though: What if you want to give a few adjacent words or paragraphs a slightly different semantic meaning? Do you have to emphasize the words first and then apply the attribute? Do you have to add the attributes separately to all the paragraphs?
+> 
+> The main selling point about markdown is its beauty and its flat learning curve. None of that is taken away by simplifying it and adding some general way to extend it.
+> 
+> You can’t make an omelette without breaking some eggs.
+— alehed, <Beyond Markdown - Spec - CommonMark Discussion><https://talk.commonmark.org/t/beyond-markdown/2787/36>
+
+> Simpler is better for everyone. Common Mark should stand apart with no (or minimal) reliance on other other languages. IMO, backward compatibility is a goal not an absolute. Where backward compatibility is possible go for it but do not be bound by it. Very probable not all variants of Markdown can be built into Common Mark. Common Mark needs to “exceed” the other variants so they go away. Simplicity and unambiguous ways of writing will eventually prevail. Getting all to use Common Mark not likely.
+> 
+> I agree with @alehed that Common Mark should provide the ability to create the “normal” features of writing documents (tables; footnotes and so on).
+> 
+> Eliminate multiple ways of performing the same task. For example, no short reference links. There are probable others.
+> 
+> Emphasis: not sure how to solve bold and strong. Bold = " * “. Strong +” ** ". I agree with one character to identify letter format.
+> 
+> A truly radical proposal: use words, ie this becomes an attribute so there is no ambiguity (strong is strong; bold is bold). For clarity in human readability each attribute stands alone; cannot put multiple attributes in the same “holder”.
+> 
+> For attributes: {=…} @adiantwoods.
+> 
+> With a unambiguous statement of attributes HTML not needed. Not all know HTML or care to learn HTML.
+> 
+> A list should only be a list (no fancy complications).
+> 
+> All code that needs to “pass through” inside a code block.
+> 
+> Always open to comments and suggestions.
+— JCPayne, <Beyond Markdown - Spec - CommonMark Discussion><https://talk.commonmark.org/t/beyond-markdown/2787/38>
+
+<vfmd><http://www.vfmd.org/vfmd-spec/specification/> — Markdown with an an unambiguous spec of its syntax.
+
+<Babelmark 2><https://johnmacfarlane.net/babelmark2/> - Compare markdown implementations. <Emphasis intersection bug?><https://github.com/commonmark/commonmark-spec/issues/475> includes a link to babelmark with different results...
+
+<Feature Request: Admonitions in CommonMark? - Spec - CommonMark Discussion><https://talk.commonmark.org/t/feature-request-admonitions-in-commonmark/3619>
+
+Easier, unambiguous syntax -> easier representation/implementation -> easier interopability <MediaWiki has a talk page about Markdown><https://talk.commonmark.org/t/mediawiki-has-a-talk-page-about-markdown/3684>
+
+## Syntax
+
+Everything goes here, but prefer
+- simple, obvious, good-looking notations
+- no overloading
+- no modifiers
+- composability
+- custom notations only for common elements
+- extensible systems for less common elements (collaboration/portability issues)
+
+**Exceptions apply to everything, including this statement.**
+
+## Examples
+
+### Headings
+
+``to
+// normal headings
+= Heading 1
+== Heading 2
+=== Heading 3
+==== Heading 4
+
+// numbered headings
+# Heading 1
+## Heading 2
+### Heading 3
+#### Heading 4
+
+// or
+
+===== Heading 1
+==== Heading 2
+=== Heading 3
+== Heading 4
+
+##### Heading 1
+#### Heading 2
+### Heading 3
+## Heading 4
+
+// or
+
+// hard to differentiate counting the dots, would work only at start of line
+.. Heading 2
+... Heading 3 // clashes with ellipses
+.... Heading 4
+..... Heading 5
+...... Heading 6
+
+// or
+
+// widely used, needs space to differentiate from hashtag
+# Heading 1
+## Heading 2
+### Heading 3
+#### Heading 4
+##### Heading 5
+###### Heading 6
+
+// or
+
+// represents document heading numberings, long
+x Heading 1
+x.x Heading 2
+x.x.x Heading 3
+x.x.x.x Heading 4
+x.x.x.x.x Heading 5
+x.x.x.x.x.x Heading 6
+
+// or
+
+1 Heading 1
+1.1 Heading 2
+1.1.1 Heading 3
+1.1.1.1 Heading 4
+1.1.1.1.1 Heading 5
+1.1.1.1.1.1 Heading 6
+``
+
+### Comments
+
+``to
+// Line comment
+
+/*
+Block comment
+*/
+``
+
+### Links
+
+``to
+https://koala.test // automagically link
+\https://koala.test // escape, do not link
+
+// different text variants
+
+(Home)https://koala.test
+{Multi word link)https://koala.test
+(Look at this (multi word link)https://koala.test)
+(RFC2119)#rfc2119
+
+// or (preferred, easiest to read, does not need parens around single word)
+
+// () is just a grouper
+[/relative]
+Home[https://koala.test]
+(Multi word link)[https://koala.test]
+(Look at this (multi word link)[https://koala.test])
+RFC2119[#rfc2119]
+
+// or markdown
+
+[#HTTP]
+[/relative]
+^\[[#footnote]\]^
+[Home]https://koala.test
+[Multi word link]https://koala.test
+[Multi work link]/relative
+(Look at this [multi word link](https://koala.test))
+
+// or ' grouper (' is widely used)
+
+Home[https://koala.test]
+'Multi word link[https://koala.test]
+(Look at this 'multi word link[https://koala.test])
+RFC2119[#rfc2119]
+
+// or
+
+Home(https://koala.test)
+(Multi word link)(https://koala.test)
+(Look at this (multi word link)(https://koala.test))
+RFC2119(#rfc2119)
+
+// or
+<#HTTP>
+</relative>
+^[<#footnote>]^
+<Multi word link><https://koala.test>
+<Multi word link></relative>
+(Look at this <multi word link><https://koala.teskoala.test... and an <image of a duck><https://images.com/duck.jpg>.
+``
+
+### References
+
+By composition of Description List and Link elements.
+
+``to
+? [RFC2119]
+= Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997, <https://www.rfc-editor.org/info/rfc2119>.
+
+[RFC2119]
+: Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997, <https://www.rfc-editor.org/info/rfc2119>.
+``
+
+``html
+<dl>
+    <dt id="rfc2119">[RFC2119]</dt>
+    <dd>
+    Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997, <https://www.rfc-editor.org/info/rfc2119>.
+    </dd>
+</dl>
+``
+
+### Code
+
+``to
+`func ScanLine() {`
+``
+
+### Preformatted Text
+
+``to
+''
+  ___________________________
+< I'm an expert in my field. >
+  ---------------------------
+         \   ^__^ 
+          \  (oo)\_______
+             (__)\       )\/\
+                 ||----w |
+                 ||     ||
+''
+``
+
+ASCII art from: <https://developer.mozilla.org/en-US/docs/Web/HTML/Element/pre>
+
+### Code Block
+
+```to
+``ts
+function displayButton(): void {
+    const button = document.querySelector("button")
+    button.style.display = "block"
+    // ...
+``
+
+// Shortcut
+`ts
+function displayButton(): void {
+    const button = document.querySelector("button")
+    button.style.display = "block"
+    // ...
+`
+
+// or
+
+// By composition of the Code and Preformatted Text elements.
+
+// language: ts
+'''`
+function displayButton(): void {
+    const button = document.querySelector("button")
+    button.style.display = "block"
+    // ...
+`'''
+
+// or
+
+ts{
+function displayButton(): void {
+    const button = document.querySelector("button")
+    button.style.display = "block"
+    // ...
+}
+}
+```
+
+### Table
+
+Most of the examples below do not support or at least have great readability for any content. E.g., lists in tables need to break lines...
+
+<plain-text-table><https://plaintexttools.github.io/plain-text-table/>
+
+``to
+// Widely used and looks like table
+|Syntax|Description|
+|------|-----------|
+|Header|Title      |
+|Paragraph|Text    |
+
+// or
+
+||Syntax|Description|
+|Header   |Title    |
+|Paragraph|Text     |
+
+// or
+
+// CSV-like, easiest to write, does not look so much like a table, can
+// use the same format as a possible include. E.g., write table in the
+// document, when it gets to large, move it to a CSV file and include.
+Syntax   ,Description
+-------->,<--------->
+Header   ,Title
+Paragraph,Text
+
+// or
+
+// Looks most like table, easiest to read, hardest to write
++-----------+-------------+
+| Syntax    | Description |
++-----------+-------------+
+| Header    | Title       |
++-----------+-------------+
+| Paragraph | Text        |
++-----------+-------------+
+
+// or
+
+Syntax    | Description
+----------+------------
+Header    | Title
+Paragraph | Text
+
+// or
+
+// Column oriented, easy to read and write
+// Columns separated by column position, rows separated by newlines,
+// header by `-`
+Syntax    Description
+--------- -----------
+Header    Title
+Paragraph Text
+``
+
+### Table Caption
+
+``to
+// top
+
+|= Caption
+|Syntax|Description|
+|------|-----------|
+|Header|Title      |
+|Paragraph|Text    |
+
+// bottom
+
+// preferred as no sense to use headings in tables, caption is sort of
+// table heading, '=' not very often used in tables
+
+|Syntax|Description|
+|------|-----------|
+|Header|Title      |
+|Paragraph|Text    |
+|= Caption
+
+// or
+
+|Syntax|Description|
+|------|-----------|
+|Header|Title      |
+|Paragraph|Text    |
+|> Caption
+
+// or
+
+|Syntax|Description|
+|------|-----------|
+|Header|Title      |
+|Paragraph|Text    |
+|| Caption
+``
+
+### Lists
+
+#### Unordered List
+
+``to
+- Milk
+- Butter
+    - Bread // one space is required
+``
+
+#### Ordered List
+
+``to
+# Introduction
+    # Background
+# Syntax
+    # Headings
+
+// or
+
+1. Introduction
+    1. Background
+1. Syntax
+    1. Headings
+
+3. Buy // start counter from 3
+3. Sell
+
+// or
+
+3) Buy
+3) Sell
+``
+
+### Description List
+
+``to
+[RFC2119]#rfc2119: DD
+
+// or
+
+[RFC2119]#rfc2119:
+    DD
+
+// or
+
+:: Term 1
+:: Term 2
+    Description 1
+    Description 2
+:: Term 3
+    Description 3
+
+:: RFC2119[#rfc2119]
+    DD
+
+// or
+
+: Term 1
+: Term 2
+    Description 1
+    Description 2
+: Term 3
+    Description 3
+
+: RFC2119[#rfc2119]
+    DD
+``
+
+### Sample
+
+``to
+$$Keyboard not found$$
+``
+
+### Sample Block
+
+By composition of the Sample and Preformatted Text elements.
+
+``to
+'''$$
+Uncaught TypeError: Cannot read property 'bar' of undefined
+  at <anonymous>:1:5
+$$'''
+``
+
+### Front Matter/Metadata
+
+``to
+/// title:      Title
+/// date:       November 30, 2020
+/// authors[]:  John
+/// authors[]:  Steve
+/// object.key: value
+
+// or
+
+// title:  Koalas
+// author: John A.
+// date:   October 5, 2020 
+
+// or
+
+/ title   Koalas
+/ authors John A.
+/ authors Anne B.
+/ date    October 5, 2020
+
+// or (preferred)
+
+// works only at the top of the document
+;; title: Koalas
+``
+
+### Task Lists
+
+``to
+- [x] Buy milk
+- [ ] Publish Jon Postel post
+- [ ] Make To mailing list
+
+// or
+
+[x] Buy milk
+[ ] Publish Jon Postel post
+[ ] Make To mailing list
+``
+
+### Blockquote
+
+``to
+> quote
+--- Someone, ''Work''
+
+// or
+
+""
+quote
+-- <cite></cite>
+""
+
+// or
+
+// looks most like actual blockquote
+// can clash with tables
+| quote
+--- ''Work''
+
+// or (preferred)
+
+// leaves < for HTML tags/escaping and | for tables
+// additionally, it allows for cite URL and to prevent abuse
+// cannot be nested
+""https://citepage.com/great.html
+Bla bla bla
+- Joe
+""
+``
+
+### Spans
+
+``to
+A %red% text. // (color: red), 
+
+// or
+
+A [red] text. // color: red
+
+// or
+
+A {red} text. // color: red
+
+// or
+
+A %red% text. ;; %color: red
+// numbered
+A %red% text. ;; %1(color: red)
+// named
+A @a%red% text. ;; %a(color: red)
+
+// or
+
+A ~red~ text. ;; ~color: red // reads quite nicely
+A ~red~ text and some ~blue~. ;; ~color: red // both red
+A ~red~ text and some ~blue~. ;; ~1(color: red) ~2(color: blue)
+
+// or
+
+A ~red~ text. ;; -color red
+``
+
+### Table of Contents
+
+``to
+---
+table-of-contents: "Table of Contents"
+---
+
+++TOC
+``
+
+### Replaced Elements
+
+(Visual/Presentational Blocks)
+
+<Replaced elements - CSS: Cascading Style Sheets | MDN><https://developer.mozilla.org/en-US/docs/Web/CSS/Replaced_element>
+
+``to
+[[image, src: image.png, alt: Sunset]]
+((Sunset)) // caption
+
+[[image
+src: image.png,
+alt: Sunset,
+]]
+
+// or
+
+((image, src: image.png, alt: Sunset))
+
+((image
+src: image.png
+alt: Sunset,
+;; align-right
+))
+
+// or
+
+((image, image.png, Caption ;; align right))
+
+// or
+
+// image
+--image
+source: "image.png"
+alt:    "Sunset"
+--
+
+// TOC
+--table-of-contents
+title:  "Table of Contents"
+depth:  4 // the number of levels to include in the TOC
+--
+
+// anchor
+--anchor
+name: "anchor point"
+--
+
+// include
+--include
+path: "data.csv"
+--
+
+// or
+
+__image
+src:     image.png
+alt:     Sunset
+caption: A beautiful sunset
+__
+
+__table of contents
+title: Table of Contents
+__
+
+__video
+src:  waves.webm
+type: video/webm
+__
+
+__audio
+src:      soothing-sounds.mp3
+controls: true
+caption:  Listen to soothing sounds
+__
+
+__embed // iframe
+src: https://peervid.test/embed/5u7120612fa
+__
+
+..bibliography
+..
+
+// or (LaTeX-like)
+
+\image{
+src:     image.png
+alt:     Sunset
+caption: A beautiful sunset
+}
+
+\tableofcontents{}
+
+// or
+
+..bibliography
+..
+
+// or
+
+/image
+/src:     image.png
+/alt:     Sunset
+/caption: A beautiful sunset
+
+/tableOfContents
+
+// or
+
+// line
+
+.tableOfContents
+
+.bibliography
+
+// block
+
+..tableOfcontents
+..
+
+..bibliography
+metadata
+..
+
+// or (preferred)
+
+.tableOfContents
+.title: Table Of Contents
+
+.audio
+.src: see.mp3
+
+.video
+.src: flying.mp4
+
+.image images/sun.jpg 100 200
+.image
+.src: images/sun.jpg
+.size: 100 auto
+``
+
+### Image
+
+``to
+(Image)image.png // Display image.png with alt Image.
+[Image]image.png // Display link Image to image.png.
+
+// image: image.png, alt: home
+
+---
+image:  "image.png"
+alt:    "home.png"
+width:  "50%"
+height: "50%"
+---
+
+__image
+src:    image.png
+alt:    home
+width:  50%
+height: 50%
+__
+
+// or
+
+((image.png, Caption, alt, 200x200))
+
+// or
+
+((image.png, caption: Caption, alt: Hi, size: 200x200)
+
+~~
+source: "image.png"
+alt:    "Sunset"
+width:  "200px"
+height: "200px"
+~~
+
+// or
+
+--
+source: image.png
+alt:    Sunset
+width:  200px
+height: 200px
+--
+
+// or (preferred)
+
+.image image.png caption alt 200
+
+.image -src image.png -caption caption -alt alt -size 200x200
+
+.image
+.src: image.png
+.caption: caption
+.alt: alt
+.size: x200
+
+//inline - when not inline parens not needed
+(.image image.png caption alt 200x200)
+(.image -src image.png -caption caption -alt alt -size 200x200)
+``
+
+### Escape
+
+````to
+~~
+<div>
+</div>
+~~
+
+// or
+
+--
+<div>
+</div>
+--
+
+// or
+
+// block
+<<
+<div></div>
+>>
+
+<<unsafeNoSanitize
+>>
+
+// inline
+// escape is from each < to the next > (would need double < and >)
+<div>In here its To again</div>
+
+// or
+
+```
+No To in here. I can do what I want!
+```
+
+// or
+
+~~
+No To in here too.
+~~
+
+// or
+
+A source targeted only at HTML can do this {<marquee width="100">BTC-USD 51,943.05</marquee>}. // inline
+
+{*
+No To in here also.
+*}
+````
+
+### Anchor
+
+``to
+^anchorPoint
+
+// or
+
+&anchorPoint
+
+// or
+
+/#anchorPoint
+
+(Link to anchorPoint)[#anchorPoint]
+
+// or
+
+;; #anchorPoint
+
+<Link to anchorPoint><#anchorPoint>
+
+// or
+
+.#anchorPoint
+
+// or
+
+.anchor: anchorPoint
+``
+
+### Superscript/Subscript
+
+``to
+^superscript^
+~subscript~
+``
+
+### En/Em Dash
+
+<Hypen | The Punctuation Guide><https://www.thepunctuationguide.com/hyphen.html>
+
+``to
+-   // dash
+--  // en
+--- // em
+``
+
+### Note/Admonition
+
+``to
+// ugly
+!!warning
+This feature has practically zero browser support.
+!!
+
+// or
+
+!! This feature has practically zero browser support.
+
+// or
+
+<< Note
+< This feature has practically zero browser support.
+
+// or
+
+>> Note
+> This feature has practically zero browser support.
+
+// or
+
+|| Note
+| This feature has practically zero browser support.
+
+// or
+
+---
+Note
+---
+Since the...
+---
+
+// or
+
+| Note
+|---
+| Since the...
+
+// or
+
+~~note
+Title
+~~
+Since the...
+~~
+
+// without title
+~~note
+Since the...
+~~
+
+// or
+
+::note
+Title
+::
+Since the...
+::
+
+// or (preferred semantic)
+
+: Note text.
+
+// or
+
+/ Note text.
+
+// or (preferred presentational)
+
+;; note
+Note text.
+``
+
+### Attribute/Tag
+
+``to
+;; anchor: bottom
+
+// or
+
+// Comment before
+;; style: center
+Paragraph here.
+
+// or
+
+;; #bottom // anchor
+
+;; center, red // just tags separated by commas, no key-value pairs
+Paragraph here.
+
+// or flag-like
+
+;; -position center -color red
+``
+
+### Cite
+
+``to
+--- ''Mosul''
+``
+
+### Details
+
+``to
+++ Summary
++ Body shown only when the widget is toggled into an open state.
+``
+
+### Ellipsis
+
+<Ellipses | The Punctuation Guide><https://www.thepunctuationguide.com/ellipses.html>
+
+``to
+. . . // replace spaces with non-breaking spaces
+``
+
+### Emoji
+
+Like in <Text Formatting Notation><https://jira.atlassian.com/secure/WikiRendererHelpAction.jspa?section=all> and additonally symbols for copyright and such.
+
+``to
+(c) // copyright
+:)  // smiley
+(+) // plus sign
+
+
+// or
+:blush:
+:smiley:
+:to-like: // namespaced
+``
+
+### Quote
+
+``to
+The following is quoted: ""I will be displayed with quotes around"".
+``
+
+### Time
+
+``to
+Meeting at @(10:00).
+``
+
+### Line Break
+
+``to
+|Heading|A rather long line\\split|Bla|
+``
+
+### Footnote
+
+``to
+At the end of this line is a footnote ^[This is the footnote text and the number will be automatically generated].
+
+// or
+
+// Footnote text will be placed after the block, at the bottom of the page, or as a tooltip.
+<<This is the footnote text and the number will be automatically generated>>
+``
+
+### Math
+
+```to
+~~
+LaTeX/KaTeX in here
+~~
+
+// or
+
+$$
+LaTeX/KaTex in here
+$$
+
+// or (preferred)
+
+// normal escape
+``latex
+LaTeX/KaTex in here
+```
+
+### Thematic Break
+
+``to
+***
+
+// or
+
+* * *
+
+// or
+
+---
+``
+
+### Caption
+
+``to
+/image
+/src: flowers.jpg
+[[Yellow flowers]]
+
+// or
+
+/ caption
+
+// or 
+
+((Caption))
+``
