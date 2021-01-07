@@ -8,67 +8,6 @@
 
 A place for whatever comes to mind...
 
-## Inspiration
-
-> Be conservative in what you do, be liberal in what you accept from others (often reworded as "Be conservative in what you send, be liberal in what you accept").
-— Jon Postel, <Robustness principle - Wikipedia><https://en.wikipedia.org/wiki/Robustness_principle>
-
-<Request For Comments (RFC)><https://tools.ietf.org/rfc/index>
-
-Design of <The Go Programming Language><https://golang.org/>.
-
-Markup languages: Markdown, CommonMark, Org mode, Creole, rST, Texttile, AsciiDoc, roff-like, Jira Text Formatting Notation, The Community Club Markdown, Liquid tags, idyll, emunotes, Accord Project, c2 Wiki, Leanpub/Markua, Slack, WhatsApp, ArchieML, CriticMarkup, WordPress Shortcodes, Apple Markup Formatting Reference, Go tools present, Setext, atx, R Markdown (bookdown).
-
-<Pandoc><https://pandoc.org/>, <jgm (John MacFarlane) - GitHub><https://github.com/jgm>
-
-<Wiki Principles><https://wiki.c2.com/?WikiPrinciples> — good reasoning for lightweight markup language, why not HTML (<Why Doesn't Wiki Do Html><https://wiki.c2.com/?WhyDoesntWikiDoHtml>, <Not On This Wiki><http://wiki.c2.com/?NotOnThisWiki>)...
-
-<Beyond Markdown><https://talk.commonmark.org/t/beyond-markdown/2787>, especially comment 35 from alehed and 37 from JCPayne:
-
-> I like this proposal. Markdown has some strengths without which it would not have gained its current popularity, but not everything about it is great.
-> 
-> The mentioned pain points fall into two categories: many ways to do the same thing (1, 3, 4) and missing power/generality (2, 5, 6).
-> 
-> Having more than one way to emphasize a word makes absolutely no sense. What does nested emphasis even mean?
-> 
-> The second point is that given markdowns limited power (basically everything that is discussed in extensions), it probably seemed like an easy fix to just allow in-lining arbitrary HTML. Today, Markdown has become so much more than just a fast way of writing HTML (for arbitrary HTML it is not even the best tool) so tying it to HTML does more harm than help. What Markdown needs is to natively support constructs that appear in written text (definition lists, tables, etc.) and then a way of annotating the document so that the document converter can do something smart with it. These annotations should reflect the semantic meaning of parts of the document or add some metadata to it, similar to LaTeX.
-> 
-> Getting 6. right could be tricky though: What if you want to give a few adjacent words or paragraphs a slightly different semantic meaning? Do you have to emphasize the words first and then apply the attribute? Do you have to add the attributes separately to all the paragraphs?
-> 
-> The main selling point about markdown is its beauty and its flat learning curve. None of that is taken away by simplifying it and adding some general way to extend it.
-> 
-> You can’t make an omelette without breaking some eggs.
-— alehed, <Beyond Markdown - Spec - CommonMark Discussion><https://talk.commonmark.org/t/beyond-markdown/2787/36>
-
-> Simpler is better for everyone. Common Mark should stand apart with no (or minimal) reliance on other other languages. IMO, backward compatibility is a goal not an absolute. Where backward compatibility is possible go for it but do not be bound by it. Very probable not all variants of Markdown can be built into Common Mark. Common Mark needs to “exceed” the other variants so they go away. Simplicity and unambiguous ways of writing will eventually prevail. Getting all to use Common Mark not likely.
-> 
-> I agree with @alehed that Common Mark should provide the ability to create the “normal” features of writing documents (tables; footnotes and so on).
-> 
-> Eliminate multiple ways of performing the same task. For example, no short reference links. There are probable others.
-> 
-> Emphasis: not sure how to solve bold and strong. Bold = " * “. Strong +” ** ". I agree with one character to identify letter format.
-> 
-> A truly radical proposal: use words, ie this becomes an attribute so there is no ambiguity (strong is strong; bold is bold). For clarity in human readability each attribute stands alone; cannot put multiple attributes in the same “holder”.
-> 
-> For attributes: {=…} @adiantwoods.
-> 
-> With a unambiguous statement of attributes HTML not needed. Not all know HTML or care to learn HTML.
-> 
-> A list should only be a list (no fancy complications).
-> 
-> All code that needs to “pass through” inside a code block.
-> 
-> Always open to comments and suggestions.
-— JCPayne, <Beyond Markdown - Spec - CommonMark Discussion><https://talk.commonmark.org/t/beyond-markdown/2787/38>
-
-<vfmd><http://www.vfmd.org/vfmd-spec/specification/> — Markdown with an an unambiguous spec of its syntax.
-
-<Babelmark 2><https://johnmacfarlane.net/babelmark2/> - Compare markdown implementations. <Emphasis intersection bug?><https://github.com/commonmark/commonmark-spec/issues/475> includes a link to babelmark with different results...
-
-<Feature Request: Admonitions in CommonMark? - Spec - CommonMark Discussion><https://talk.commonmark.org/t/feature-request-admonitions-in-commonmark/3619>
-
-Easier, unambiguous syntax -> easier representation/implementation -> easier interopability <MediaWiki has a talk page about Markdown><https://talk.commonmark.org/t/mediawiki-has-a-talk-page-about-markdown/3684>
-
 ## Syntax
 
 Everything goes here, but prefer
@@ -898,7 +837,7 @@ No To in here also.
 --- // em
 ``
 
-### Note/Admonition
+### Callouts
 
 ``to
 // ugly
@@ -972,9 +911,24 @@ Since the...
 
 ;; note
 Note text.
+
+// or
+
+: Note
+	Text
+
+// or
+
+^ Note
+	Text
+
+// or
+
+| Note
+	Text
 ``
 
-### Attribute/Tag
+### Tags
 
 ``to
 ;; anchor: bottom
@@ -1112,3 +1066,109 @@ LaTeX/KaTex in here
 
 ((Caption))
 ``
+
+## Inspiration
+
+> Be conservative in what you do, be liberal in what you accept from others.
+— Jon Postel, <RFC 761 - DoD Standard Transmission Control Protocol><https://tools.ietf.org/html/rfc761>
+
+Ethos, design, usefulness of the following tools:
+- <Request For Comments (RFC)><https://tools.ietf.org/rfc/index>
+- <The Go Programming Language><https://golang.org/>
+- <Pandoc><https://pandoc.org/>, <jgm (John MacFarlane) - GitHub><https://github.com/jgm>
+
+Why simple, lightweight, and easy to implement:
+- <Wiki Principles><https://wiki.c2.com/?WikiPrinciples> — good reasoning for lightweight markup language, why not HTML (<Why Doesn't Wiki Do Html><https://wiki.c2.com/?WhyDoesntWikiDoHtml>, <Not On This Wiki><http://wiki.c2.com/?NotOnThisWiki>)...
+- <MediaWiki has a talk page about Markdown><https://talk.commonmark.org/t/mediawiki-has-a-talk-page-about-markdown/3684> (easier, unambiguous syntax -> easier representation/implementation -> easier interopability)
+
+Importance of well defined specification:
+- <Babelmark 2><https://johnmacfarlane.net/babelmark2/> - Compare markdown implementations. <Emphasis intersection bug?><https://github.com/commonmark/commonmark-spec/issues/475> includes a link to babelmark with different results
+- <vfmd><http://www.vfmd.org/vfmd-spec/specification/> — Markdown with an an unambiguous spec of its syntax
+
+Missing features that cause misuse of other elements:
+- <Feature Request: Admonitions in CommonMark? - Spec - CommonMark Discussion><https://talk.commonmark.org/t/feature-request-admonitions-in-commonmark/3619>
+
+Existing solutions to learn from:
+- markup
+	- <Apple Markup Formatting Reference><https://developer.apple.com/library/archive/documentation/Xcode/Reference/xcode_markup_formatting_ref/>
+	- <AsciiDoc><https://asciidoc.org/>
+	- <CommonMark><https://commonmark.org/>
+	- <Creole><http://www.wikicreole.org/>
+	- <CriticMarkup><http://criticmarkup.com/>
+	- <Go tools present><https://pkg.go.dev/golang.org/x/tools/present>
+	- <Jira Text Formatting Notation><https://jira.atlassian.com/secure/WikiRendererHelpAction.jspa?section=all>
+	- <Leanpub/Markua><http://markua.com/>
+	- <Markdown><https://daringfireball.net/projects/markdown/>
+	- <Org Mode><https://orgmode.org/>
+	- <R Markdown><https://rmarkdown.rstudio.com/>
+	- <Setext><https://docutils.sourceforge.io/mirror/setext.html>
+	- <Slack><https://slack.com/intl/en-si/help/articles/202288908-Format-your-messages>
+	- <Textile><https://textile-lang.com/>
+	- <The Community Club Markdown><https://the.community.club/p/editor_guide>
+	- <WhatsApp><https://faq.whatsapp.com/general/chats/how-to-format-your-messages/?lang=en>
+	- <atx><http://www.aaronsw.com/2002/atx/intro>
+	- <c2 Wiki><https://wiki.c2.com/?TextFormattingRules>
+	- <emunotes><http://emunotes.com/#/welcome/login>
+	- <idyll><https://idyll-lang.org/>
+	- <rST><https://docutils.sourceforge.io/rst.html>
+- TeX family
+	- <BibTeX><http://www.bibtex.org/>
+	- <ConTeXt><https://wiki.contextgarden.net/Main_Page>
+	- <LaTeX><https://www.latex-project.org/>
+	- <TeX><https://en.wikipedia.org/wiki/TeX>
+- roff family
+	- <RUNOFF><https://en.wikipedia.org/wiki/TYPSET_and_RUNOFF>
+	- <SCRIPT><https://en.wikipedia.org/wiki/SCRIPT_(markup)>
+	- <groff><https://en.wikipedia.org/wiki/Groff_(software)>
+	- <nroff><https://en.wikipedia.org/wiki/Nroff>
+	- <roff><https://en.wikipedia.org/wiki/Roff_(software)>
+	- <troff><https://en.wikipedia.org/wiki/Troff>
+- miscellaneous
+	- <Accord Project><https://accordproject.org/>
+	- <ArchieML><http://archieml.org/>
+	- <Curl><https://www.curl.com/products/prod/language/>
+	- <Liquid><https://shopify.github.io/liquid/>
+	- <WordPress Shortcodes><https://codex.wordpress.org/Shortcode>
+	- <bookdown><https://bookdown.org/>
+
+... and many more.
+
+### Beyond Markdown
+
+On complexity, from the thread <Beyond Markdown - Spec - CommonMark Discussion><https://talk.commonmark.org/t/beyond-markdown/2787>:
+
+> I like this proposal. Markdown has some strengths without which it would not have gained its current popularity, but not everything about it is great.
+> 
+> The mentioned pain points fall into two categories: many ways to do the same thing (1, 3, 4) and missing power/generality (2, 5, 6).
+> 
+> Having more than one way to emphasize a word makes absolutely no sense. What does nested emphasis even mean?
+> 
+> The second point is that given markdowns limited power (basically everything that is discussed in extensions), it probably seemed like an easy fix to just allow in-lining arbitrary HTML. Today, Markdown has become so much more than just a fast way of writing HTML (for arbitrary HTML it is not even the best tool) so tying it to HTML does more harm than help. What Markdown needs is to natively support constructs that appear in written text (definition lists, tables, etc.) and then a way of annotating the document so that the document converter can do something smart with it. These annotations should reflect the semantic meaning of parts of the document or add some metadata to it, similar to LaTeX.
+> 
+> Getting 6. right could be tricky though: What if you want to give a few adjacent words or paragraphs a slightly different semantic meaning? Do you have to emphasize the words first and then apply the attribute? Do you have to add the attributes separately to all the paragraphs?
+> 
+> The main selling point about markdown is its beauty and its flat learning curve. None of that is taken away by simplifying it and adding some general way to extend it.
+> 
+> You can’t make an omelette without breaking some eggs.
+— alehed, <Beyond Markdown - Spec - CommonMark Discussion><https://talk.commonmark.org/t/beyond-markdown/2787/36>
+
+> Simpler is better for everyone. Common Mark should stand apart with no (or minimal) reliance on other other languages. IMO, backward compatibility is a goal not an absolute. Where backward compatibility is possible go for it but do not be bound by it. Very probable not all variants of Markdown can be built into Common Mark. Common Mark needs to “exceed” the other variants so they go away. Simplicity and unambiguous ways of writing will eventually prevail. Getting all to use Common Mark not likely.
+> 
+> I agree with @alehed that Common Mark should provide the ability to create the “normal” features of writing documents (tables; footnotes and so on).
+> 
+> Eliminate multiple ways of performing the same task. For example, no short reference links. There are probable others.
+> 
+> Emphasis: not sure how to solve bold and strong. Bold = " * “. Strong +” ** ". I agree with one character to identify letter format.
+> 
+> A truly radical proposal: use words, ie this becomes an attribute so there is no ambiguity (strong is strong; bold is bold). For clarity in human readability each attribute stands alone; cannot put multiple attributes in the same “holder”.
+> 
+> For attributes: {=…} @adiantwoods.
+> 
+> With a unambiguous statement of attributes HTML not needed. Not all know HTML or care to learn HTML.
+> 
+> A list should only be a list (no fancy complications).
+> 
+> All code that needs to “pass through” inside a code block.
+> 
+> Always open to comments and suggestions.
+— JCPayne, <Beyond Markdown - Spec - CommonMark Discussion><https://talk.commonmark.org/t/beyond-markdown/2787/38>
