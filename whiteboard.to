@@ -296,6 +296,82 @@ Header    Title
 Paragraph Text
 ``
 
+Concrete example:
+
+``ts
+| Escape sequence | Description       |
+|-----------------|-------------------|
+| \\\\            | backslash         |
+| \\\<            | less-than sign    |
+| \\\>            | greater-than sign |
+| \\\_            | underscore        |
+| \\\*            | asterisk          |
+| \\\=            | equals sign       |
+| \\\#            | number sign       |
+| \\\`            | backtick          |
+| \\\-            | hypen-minus sign  |
+
+|| Escape sequence | Description       |
+||-----------------|-------------------|
+|| \\\\            | backslash         |
+|| \\\<            | less-than sign    |
+|| \\\>            | greater-than sign |
+|| \\\_            | underscore        |
+|| \\\*            | asterisk          |
+|| \\\=            | equals sign       |
+|| \\\#            | number sign       |
+|| \\\`            | backtick          |
+|| \\\-            | hypen-minus sign  |
+
+;; fixed
+-------------------------------------
+ Escape sequence   Description       
+ ;; right          ;; left
+------------------ ------------------
+ \\\\              backslash         
+
+ \\\<              less-than sign    
+
+ \\\>              greater-than sign 
+
+ \\\_              underscore        
+
+ \\\*              asterisk          
+
+ \\\=              equals sign       
+
+ \\\#              number sign       
+
+ \\\`              backtick          
+
+ \\\-              hypen-minus sign  
+-------------------------------------
+
+;; fixed
++-----------------+-------------------+
+| Escape sequence | Description       |
+| ;; right        | ;; left           |
++-----------------|-------------------+
+| \\\\            | backslash         |
++-----------------+-------------------+
+| \\\<            | less-than sign    |
++-----------------+-------------------+
+| \\\>            | greater-than sign |
++-----------------+-------------------+
+| \\\_            | underscore        |
++-----------------+-------------------+
+| \\\*            | asterisk          |
++-----------------+-------------------+
+| \\\=            | equals sign       |
++-----------------+-------------------+
+| \\\#            | number sign       |
++-----------------+-------------------+
+| \\\`            | backtick          |
++-----------------+-------------------+
+| \\\-            | hypen-minus sign  |
++-----------------+-------------------+
+``
+
 ### Table Caption
 
 ``to
@@ -1087,6 +1163,8 @@ Importance of well defined specification:
 
 Missing features that cause misuse of other elements:
 - <Feature Request: Admonitions in CommonMark? - Spec - CommonMark Discussion><https://talk.commonmark.org/t/feature-request-admonitions-in-commonmark/3619>
+
+<The Plain Text Project><https://plaintextproject.online/index.html>
 
 Existing solutions to learn from:
 - markup

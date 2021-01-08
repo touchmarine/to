@@ -72,8 +72,7 @@ function displayButton(): void {
 ` + "``",
 			want: `<div>
 	button.ts
-	<pre><code>
-function displayButton(): void {
+	<pre><code>function displayButton(): void {
 	const button = document.querySelector("button")
 	button.style.display = "block"
 	// ...

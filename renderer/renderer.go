@@ -88,7 +88,7 @@ func HTML(nod interface{}, indent int) string {
 			b.WriteString(indented(n.Filename+"\n", innerIndent))
 		}
 
-		b.WriteString(indented("<pre><code>\n", innerIndent))
+		b.WriteString(indented("<pre><code>", innerIndent))
 		b.WriteString(n.Body)
 		b.WriteString(indented("</code></pre>\n", innerIndent))
 
