@@ -1,6 +1,6 @@
-;; title:  Touch Markup
-;; author: @touch_marine
-;; date:   January 6, 2021
+|| title  Touch Markup
+|| author @touch_marine
+|| date   January 6, 2021
 
 .tableOfContents
 
@@ -18,6 +18,8 @@ Everything goes here, but prefer
 - custom notations only for common elements
 - extensible systems for less common elements (collaboration/portability issues)
 
+We have a limited set of ASCII characters for our notations—do not use them for representing Unicode characters. Smart quotes, ellipses, en and em dashes, emojis, etc. are all part of Unicode. By leaving them to Unicode, we keep precious characters and improve collaborativity (which is apparently not a word).
+
 **Exceptions apply to everything, including this statement.**
 
 ## Examples
@@ -32,10 +34,14 @@ Everything goes here, but prefer
 ==== Heading 4
 
 // numbered headings
-# Heading 1
 ## Heading 2
 ### Heading 3
 #### Heading 4
+
+// alpha headings (appendices)
+@@ Heading 2
+@@@ Heading 3
+@@@@ Heading 4
 
 // or
 
@@ -151,27 +157,6 @@ RFC2119(#rfc2119)
 <Multi word link><https://koala.test>
 <Multi word link></relative>
 (Look at this <multi word link><https://koala.teskoala.test... and an <image of a duck><https://images.com/duck.jpg>.
-``
-
-### References
-
-By composition of Description List and Link elements.
-
-``to
-? [RFC2119]
-= Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997, <https://www.rfc-editor.org/info/rfc2119>.
-
-[RFC2119]
-: Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997, <https://www.rfc-editor.org/info/rfc2119>.
-``
-
-``html
-<dl>
-    <dt id="rfc2119">[RFC2119]</dt>
-    <dd>
-    Bradner, S., "Key words for use in RFCs to Indicate Requirement Levels", BCP 14, RFC 2119, DOI 10.17487/RFC2119, March 1997, <https://www.rfc-editor.org/info/rfc2119>.
-    </dd>
-</dl>
 ``
 
 ### Code
@@ -600,6 +585,11 @@ A ~red~ text and some ~blue~. ;; ~1(color: red) ~2(color: blue)
 // or
 
 A ~red~ text. ;; -color red
+
+// or (preferred)
+
+Some --highlighted-- text. ;; -highlight // '-' indicates to tag only the span
+...and Tom --walked down the hall--, never to be seen again.  All while thinking to --himself--, this is a long paragraph with multiple spans! ;; -italic,underline -underline
 ``
 
 ### Table of Contents
@@ -801,6 +791,18 @@ height: 200px
 
 // or (preferred)
 
+.image image.png Caption Alt 200x200
+
+.image image.png
+       caption Caption
+               Still Going on here
+       alt Alt
+       size 200x200
+
+/.image image.png Caption Alt 200x200./ // inline
+
+// or (also preferred)
+
 .image image.png caption alt 200
 
 .image -src image.png -caption caption -alt alt -size 200x200
@@ -812,8 +814,11 @@ height: 200px
 .size: x200
 
 //inline - when not inline parens not needed
-(.image image.png caption alt 200x200)
-(.image -src image.png -caption caption -alt alt -size 200x200)
+(.image image.png caption alt 200x200.)
+(.image -src image.png -caption caption -alt alt -size 200x200.)
+
+// or
+/.image image.png caption alt 200x200./
 ``
 
 ### Escape
@@ -975,7 +980,7 @@ Title
 Since the...
 ::
 
-// or (preferred semantic)
+// or
 
 : Note text.
 
@@ -983,12 +988,12 @@ Since the...
 
 / Note text.
 
-// or (preferred presentational)
+// or
 
 ;; note
 Note text.
 
-// or
+// or (preferred, heading usually rendered as larger font)
 
 : Note
 	Text
@@ -1002,6 +1007,26 @@ Note text.
 
 | Note
 	Text
+
+// or
+
+;; info
+--
+_Block Title
+
+First para...
+
+Second para...
+--
+
+// or
+
+;; info
+| /Block Title
+|
+| First para...
+|
+| Second para...
 ``
 
 ### Tags
@@ -1082,15 +1107,90 @@ Meeting at @(10:00).
 |Heading|A rather long line\\split|Bla|
 ``
 
-### Footnote
+### Footnotes And Endnotes
+
+#### Reference-Style
 
 ``to
-At the end of this line is a footnote ^[This is the footnote text and the number will be automatically generated].
+Auto-numbered footnote [[STD552]].
+
+// footnote
+^^ STD552
+	Teapot standard
+
+// endnote
+~~ STD552
+	Teapot standard
+``
+
+#### Inline
+
+``to
+At the end of this line is a footnote that says ^[Teapot standard].
 
 // or
 
-// Footnote text will be placed after the block, at the bottom of the page, or as a tooltip.
-<<This is the footnote text and the number will be automatically generated>>
+At the end of this line is a footnote that says <<Teapot standard>>.
+
+// or (preferred)
+
+// footnote
+At the end of this line is a footnote that says ^^Teapot standard^^.
+
+// endnote
+At the end of this line is an endnote that says ~~Teapot standard~~.
+``
+
+#### Linked
+
+References to definitions (automatically replaced by a number):
+
+``to
+// footnote
+Teapot standard was defined in ^^STD552^^.
+
+// endnote
+Teapot standard was defined in ~~STD552~~.
+
+// or
+
+Teapot standard was defined in ^<STD552>.
+
+Teapot standard was defined in ~<STD552>.
+``
+
+Definitions:
+
+``to
+^:STD552
+	Teapot standard
+
+// or (preferred)
+
+:^STD552
+	Teapot standard
+
+// or
+
+^^ STD552
+	Teapot standard
+
+// or
+
+[[STD552]]
+	Teapot standard
+
+// or
+
+^[STD552]
+	Teapot standard
+
+// or
+
+^^
+STD552
+	Teapot standard
+^^
 ``
 
 ### Math
@@ -1124,7 +1224,11 @@ LaTeX/KaTex in here
 
 // or
 
----
+--
+
+// or
+
+~~
 ``
 
 ### Caption
@@ -1141,6 +1245,66 @@ LaTeX/KaTex in here
 // or 
 
 ((Caption))
+``
+
+### Subtitle
+
+``to
+= Title
+_ Subtitle
+
+// or (no clash with emphasis)
+
+= Title
+/ Subtitle
+``
+
+Adds semantic by wrapping title and subtitle together. For example, in HTML (<HTML 5.2: 4.13.1. Subheadings, subtitles, alternative titles and taglines><https://www.w3.org/TR/html52/common-idioms-without-dedicated-elements.html#subheadings-subtitles-alternative-titles-and-taglines>):
+
+``html
+<header>
+	<h2>Title</h2>
+	<p>Subtitle</p>
+</header>
+``
+
+### Modifiers
+
+``to
+// continuation list
+
+1. Milk   // 1. Milk
+
+Intermediate paragrapah.
+
+|1. Sugar // 1. Sugar
+
+// reset heading counter
+
+## Introduction    // 1 Introduction
+
+|## Reintroduction // 1 Reintroduction
+
+// reset footnote counter
+
+## First Chapter
+
+^^Footnote 1^^
+
+## Second Chapter
+
+|^^Footnote 1^^
+``
+
+### Citations
+
+``to
+// very similar to pandoc
+
+[[@john18]]
+[[prefix @john18 suffix]]
+[[prefix -@john18 suffix]] // omit author
+[[@john18; @chomsky95]]
 ``
 
 ## Inspiration
@@ -1164,7 +1328,20 @@ Importance of well defined specification:
 Missing features that cause misuse of other elements:
 - <Feature Request: Admonitions in CommonMark? - Spec - CommonMark Discussion><https://talk.commonmark.org/t/feature-request-admonitions-in-commonmark/3619>
 
-<The Plain Text Project><https://plaintextproject.online/index.html>
+Bibliogrpahy:
+- <A Citation Style Language (CSL) workshop - Daniel Stender><https://tug.org/TUGboat/tb35-3/tb111stender.pdf>
+- <CSL is more than citation styles><https://blog.martinfenner.org/2013/08/08/csl-is-more-than-citation-styles/>
+- <Citation Style Language><https://citationstyles.org/>
+- <GitHub - Juris-M/citeproc-js: A JavaScript implementation of the Citation Style Language (CSL)><https://github.com/juris-m/citeproc-js>
+- <Mendeley><https://www.mendeley.com>
+- <bibliographies - Citation Style Language vs. biblatex (vs. possibly other "citing-systems"?) - TeX - LaTeX Stack Exchange><https://tex.stackexchange.com/questions/434946/citation-style-language-vs-biblatex-vs-possibly-other-citing-systems>
+
+Miscellaneous:
+- <A Call for Schoraly Markdown><https://blog.martinfenner.org/2012/12/13/a-call-for-scholarly-markdown/>
+- <Additional Markdown we need in Scholarly Texts><https://blog.martinfenner.org/2012/12/18/additional-markdown-we-need-in-scholarly-texts/>
+- <Journal Article Tag Suite - Wikipedia><https://en.wikipedia.org/wiki/Journal_Article_Tag_Suite>
+- <Journal Article Tag Suite><https://jats.nlm.nih.gov/>
+- <The Plain Text Project><https://plaintextproject.online/index.html>
 
 Existing solutions to learn from:
 - markup
