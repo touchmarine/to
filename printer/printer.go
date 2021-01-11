@@ -53,7 +53,7 @@ func Pretty(nod interface{}, indent int) string {
 
 	case *node.Heading:
 		return element("Heading", map[string]interface{}{
-			"Level":      unquoted(strconv.Itoa(n.Level)),
+			"Level":      unquoted(strconv.FormatUint(uint64(n.Level), 10)),
 			"IsNumbered": unquoted(strconv.FormatBool(n.IsNumbered)),
 			"Children":   node.InlinesToNodes(n.Children),
 		}, indent)

@@ -24,6 +24,8 @@ type Parser struct {
 	indent int // trace indentation level
 
 	errCount uint // number of errors encountered
+
+	hls map[uint]uint // numbered heading level sequences
 }
 
 // ErrorHandler is called with an error message if an error is encountered.
@@ -33,6 +35,7 @@ func New(src string, errorHandler ErrorHandler) *Parser {
 	p := &Parser{
 		src:          src,
 		errorHandler: errorHandler,
+		hls:          map[uint]uint{},
 	}
 	// initialize ch, offset, and rdOffset
 	p.next()
@@ -251,7 +254,7 @@ func (p *Parser) parseHeading(typ headingTyp) *node.Heading {
 	}
 
 	// count heading level by counting consecutive delimiters
-	level := 0
+	var level uint
 	for p.ch == delim {
 		level++
 		p.next()
@@ -262,9 +265,25 @@ func (p *Parser) parseHeading(typ headingTyp) *node.Heading {
 		p.next()
 	}
 
+	var seqNums []uint
+	if isNumbered {
+		p.hls[level]++
+
+		for lvl := range p.hls {
+			if lvl > level {
+				p.hls[lvl] = 0
+			}
+		}
+
+		for i := uint(2); i <= level; i++ {
+			seqNums = append(seqNums, p.hls[i])
+		}
+	}
+
 	h := &node.Heading{
-		Level:      level,
 		IsNumbered: isNumbered,
+		Level:      level,
+		SeqNums:    seqNums,
 		Children:   p.parseInline(delimiters{}, 0),
 	}
 	// pointers are advanced by p.parseInline()

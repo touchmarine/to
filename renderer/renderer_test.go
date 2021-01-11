@@ -56,6 +56,23 @@ Tibsey likes to sleep.</p>
 `,
 		},
 		{
+			name:  "numbered heading 3",
+			input: "### Koalas",
+			want:  "<h3>0.1 Koalas</h3>\n",
+		},
+		{
+			name: "numbered headings",
+			input: `
+= Koalas
+## Habitat
+### Australia
+`,
+			want: `<h1>Koalas</h1>
+<h2>1 Habitat</h2>
+<h3>1.1 Australia</h3>
+`,
+		},
+		{
 			name:  "link",
 			input: "<Koalas, facts, and photos><https://www.nationalgeographic.com/animals/mammals/k/koala/>",
 			want: `<p><a href="https://www.nationalgeographic.com/animals/mammals/k/koala/">Koalas, facts, and photos</a></p>

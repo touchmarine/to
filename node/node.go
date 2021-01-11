@@ -77,8 +77,9 @@ func (s Strong) node()   {}
 func (s Strong) inline() {}
 
 type Heading struct {
-	Level      int
 	IsNumbered bool
+	Level      uint
+	SeqNums    []uint // current and parent level sequence numbers
 	Children   []Inline
 }
 

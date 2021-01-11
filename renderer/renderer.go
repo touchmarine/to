@@ -58,12 +58,23 @@ func HTML(nod interface{}, indent int) string {
 		b.WriteString("</strong>")
 
 	case *node.Heading:
-		strLevel := strconv.Itoa(n.Level)
+		strLevel := strconv.FormatUint(uint64(n.Level), 10)
 
 		if n.Level < 7 {
 			b.WriteString(indented("<h"+strLevel+">", indent))
 		} else {
 			b.WriteString(indented(`<div role="heading" aria-level="`+strLevel+`">`, indent))
+		}
+
+		if n.IsNumbered {
+			for i, seqNum := range n.SeqNums {
+				if i > 0 {
+					b.WriteString(".")
+				}
+
+				b.WriteString(strconv.FormatUint(uint64(seqNum), 10))
+			}
+			b.WriteString(" ")
 		}
 
 		b.WriteString(HTML(n.Children, 0))
