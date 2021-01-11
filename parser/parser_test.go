@@ -2051,6 +2051,42 @@ function displayButton(): void {
 			},
 		},
 		{
+			name: "code block more closing delimiters",
+			input: "``ts" + `
+function displayButton(): void {
+	const button = wantument.querySelector("button")
+	button.style.display = "block"
+	// ...
+}
+` + "```",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.CodeBlock{
+						Language:    "ts",
+						Filename:    "",
+						MetadataRaw: "ts",
+						Body: `function displayButton(): void {
+	const button = wantument.querySelector("button")
+	button.style.display = "block"
+	// ...
+}
+`,
+					},
+					&node.Paragraph{
+						Lines: node.Lines{
+							{
+								Children: []node.Inline{
+									&node.Text{
+										Value: "`",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:  "code block escaped delimiter inside body",
 			input: "````ts\n```\n````",
 			want: &node.Document{

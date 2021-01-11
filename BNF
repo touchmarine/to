@@ -59,8 +59,8 @@
                                 | ""
                                 ; > is not permitted
 
-; number of '`' in the closing delimiter must be greater than or equal to the
-; number of '`' used in the opening delimiter
+; number of '`' for the closing delimiter must be equal to the number of '`'
+; used for the opening delimiter
 <code-block>               ::= <spacing> <code-block-delimiter> <spacing> <code-block-metadata> <spacing> <newline> <code-block-body> <code-block-delimiter>
 <code-block-delimiter>     ::= "``" <opt-code-block-delimiter>
 <opt-code-block-delimiter> ::= "`" <opt-code-block-delimiter> | ""

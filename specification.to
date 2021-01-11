@@ -245,7 +245,7 @@ function displayButton(): void {
 | Element category  | block  |
 | Permitted content | text   |
 
-A code block starts with optional whitespace, followed by two or more occurrences of backticks, followed by optional whitespace, followed by optional metadata, followed by optional whitespace, followed by a newline or EOF. Next is the code block body which consists of zero or more lines of text. Finally, the code block ends with greater than or equal to number of backticks as the number of backticks used  in the opening delimiter.
+A code block starts with optional whitespace, followed by two or more occurrences of backticks, followed by optional whitespace, followed by optional metadata, followed by optional whitespace, followed by a newline or EOF. Next is the code block body which consists of zero or more lines of text. Finally, the code block ends with a number of backticks as the number of backticks used for the opening delimiter.
 
 Metadata consists of a language used in the code block body, followed by an optional sequence of whitespace, a comma, whitespace, and a filename. The language is usually used for syntax highlighting and the filename may be used in the presentation of the code block.
 

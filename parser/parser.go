@@ -315,20 +315,21 @@ func (p *Parser) parseCodeBlock() *node.CodeBlock {
 	// parse body
 	offs := p.offset
 	var closingDelims int // we need this outside to offset closing delims
+OuterLoop:
 	for p.ch != 0 {
 		// count consecutive backticks which may be closing delimiter
 		for p.ch == '`' {
 			closingDelims++
 			p.next()
+
+			// test for possible closing delimiter; needs equal
+			// number of backticks as the opening delimiter
+			if closingDelims == openingDelims {
+				break OuterLoop
+			}
 		}
 
-		// test for possible closing delimiter
-		// needs >= number of backticks as the opening delimiter
-		if closingDelims >= openingDelims {
-			break
-		}
 		closingDelims = 0 // reset counter if not closing delimiter
-
 		p.next()
 	}
 
