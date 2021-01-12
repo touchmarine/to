@@ -120,6 +120,22 @@ type ListItem struct {
 func (li ListItem) node()  {}
 func (li ListItem) block() {}
 
+type BlockQuote struct {
+	Children []Block
+}
+
+func (bq BlockQuote) node()  {}
+func (bq BlockQuote) block() {}
+
+// BlocksToNodes converts []Block to []Node.
+func BlocksToNodes(blocks []Block) []Node {
+	nodes := make([]Node, len(blocks))
+	for i, v := range blocks {
+		nodes[i] = Node(v)
+	}
+	return nodes
+}
+
 // InlinesToNodes converts []Inline to []Node.
 func InlinesToNodes(inlines []Inline) []Node {
 	nodes := make([]Node, len(inlines))

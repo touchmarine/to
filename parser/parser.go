@@ -149,7 +149,7 @@ func (p *Parser) ParseDocument() (*node.Document, uint) {
 	doc := &node.Document{}
 
 	for p.ch != 0 {
-		block := p.parseBlock()
+		block := p.parseBlock(document)
 		if block == nil {
 			break
 		}
@@ -190,9 +190,17 @@ func (p *Parser) eatIndent(skipBlankLines bool) int {
 	}
 }
 
-func (p *Parser) parseBlock() node.Node {
+//go:generate stringer -type=blockTyp
+type blockTyp uint
+
+const (
+	blockQuote blockTyp = iota
+	document
+)
+
+func (p *Parser) parseBlock(curBlock blockTyp) node.Block {
 	if trace {
-		defer p.trace("parseBlock")()
+		defer p.trace(fmt.Sprintf("parseBlock(%s)", curBlock))()
 	}
 
 	// count first non-blank line indent
@@ -201,6 +209,8 @@ func (p *Parser) parseBlock() node.Node {
 	switch p.ch {
 	case 0: // EOF
 		return nil
+	case '>':
+		return p.parseBlockQuote()
 	case '=':
 		return p.parseHeading(unnumberedHeading)
 	default:
@@ -217,7 +227,30 @@ func (p *Parser) parseBlock() node.Node {
 			return p.parseCodeBlock()
 		}
 
-		return p.parseParagraph()
+		return p.parseParagraph(curBlock)
+	}
+}
+
+func (p *Parser) parseBlockQuote() *node.BlockQuote {
+	if trace {
+		defer p.trace("parseBlockQuote")()
+	}
+
+	p.next() // eat opening '>'
+
+	var children []node.Block
+	for p.ch != 0 {
+		block := p.parseBlock(blockQuote)
+		if block == nil {
+			break
+		}
+
+		children = append(children, block)
+		// pointers are advaced by p.parseBlock()
+	}
+
+	return &node.BlockQuote{
+		Children: children,
 	}
 }
 
@@ -483,7 +516,7 @@ func (p *Parser) parseListItem(indent int) (*node.ListItem, int) {
 
 // parseParagraph parses consecutive lines of inline text until another block,
 // newline, or EOF.
-func (p *Parser) parseParagraph() *node.Paragraph {
+func (p *Parser) parseParagraph(curBlock blockTyp) *node.Paragraph {
 	if trace {
 		defer p.trace("parseParagraph")()
 	}
@@ -493,6 +526,11 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 	for {
 		line := p.parseLine()
 		if line == nil {
+			// continue if in '>'
+			if curBlock == blockQuote && p.ch == '>' {
+				p.next()
+				continue
+			}
 			break
 		}
 
@@ -558,7 +596,7 @@ var inlineDelims = delimiters{
 }
 
 var blockDelims = delimiters{
-	single: []byte{'=', '-'},
+	single: []byte{'=', '-', '>'},
 	double: []byte{'#', '`'},
 }
 

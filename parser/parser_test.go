@@ -5082,6 +5082,62 @@ End
 				},
 			},
 		},
+		{
+			name:  "block quote",
+			input: "> Get me some leafs",
+			want: &node.Document{
+				Children: []node.Node{
+					&node.BlockQuote{
+						Children: []node.Block{
+							&node.Paragraph{
+								Lines: node.Lines{
+									{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Get me some leafs",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "block quote multiline",
+			input: `
+> Get me some leafs
+> and some juice
+`,
+			want: &node.Document{
+				Children: []node.Node{
+					&node.BlockQuote{
+						Children: []node.Block{
+							&node.Paragraph{
+								Lines: node.Lines{
+									{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "Get me some leafs",
+											},
+										},
+									},
+									{
+										Children: []node.Inline{
+											&node.Text{
+												Value: "and some juice",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range cases {

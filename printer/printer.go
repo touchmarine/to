@@ -20,6 +20,9 @@ func Pretty(nod interface{}, indent int) string {
 	case []node.Node:
 		return prettyNodes(n, indent)
 
+	case []node.Block:
+		return prettyNodes(node.BlocksToNodes(n), indent)
+
 	case *node.Document:
 		return element("Document", map[string]interface{}{
 			"Children": n.Children,
@@ -83,6 +86,11 @@ func Pretty(nod interface{}, indent int) string {
 			"Children": n.Children,
 		}, indent)
 
+	case *node.BlockQuote:
+		return element("BlockQuote", map[string]interface{}{
+			"Children": n.Children,
+		}, indent)
+
 	default:
 		panic(fmt.Sprintf("printer.Pretty: unexpected node type %T", n))
 	}
@@ -128,6 +136,8 @@ func element(name string, fields map[string]interface{}, indent int) string {
 		switch v := i.(type) {
 		case []node.Node:
 			b.WriteString(Pretty(v, indent+1))
+		case []node.Block:
+			b.WriteString(Pretty(v, indent+1))
 		case string:
 			b.WriteString(`"` + v + `"`)
 		case unquoted:
@@ -135,7 +145,7 @@ func element(name string, fields map[string]interface{}, indent int) string {
 		case fmt.Stringer:
 			b.WriteString(v.String())
 		default:
-			panic(fmt.Sprintf("unsupported value type"))
+			panic(fmt.Sprintf("unsupported value type: %T", i))
 		}
 
 		b.WriteString(",")

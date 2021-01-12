@@ -89,7 +89,7 @@
 ; a fun try at writing a restricted, iterative grammar for indented lists
 ; list items must be equally indented
 ; list item continuation must have greater indentation
-; tab equals 4 spaces if mixed indenation
+; tab equals 8 spaces if mixed indenation
 ; might be more sensible to try with two-level grammars (hyperrules) or less
 ; restrictive one, but this is already getting out of hand...
 <list>                ::= <unordered-list>
@@ -138,6 +138,14 @@
 ; iterate; handle tabs and spaces like in lists
 
 <list-item-continuation> ::= <line> | <list> ; both end with newline; consecutive lines are grouped into lines
+
+<blockquote> ::= <spacing> ">" <spacing> <blockquote-content> <spacing> <newline> <blockquote>
+	       | <spacing> ">" <spacing> <blockquote-content> <spacing> <newline>
+<blockquote-content> ::= <paragraph> <blockquote-content>
+		       | <heading> <blockquote-content>
+		       | <code-block> <blockquote-content>
+		       | <list> <blockquote-content>
+		       | ""
 
 <spacing> ::= " " <spacing>
             | <tab> <spacing>
