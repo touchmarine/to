@@ -336,7 +336,7 @@ Concrete example:
 +-----------------+-------------------+
 | Escape sequence | Description       |
 | ;; right        | ;; left           |
-+-----------------|-------------------+
++=================+===================+
 | \\\\            | backslash         |
 +-----------------+-------------------+
 | \\\<            | less-than sign    |
@@ -360,6 +360,15 @@ Concrete example:
 ### Table Caption
 
 ``to
++ Caption top
++-----------------+-------------------+
+| Escape sequence | Description       |
+| ;; right        | ;; left           |
++=================+===================+
++ Caption bottom
+
+// or
+
 // top
 
 |= Caption

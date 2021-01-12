@@ -1,0 +1,294 @@
+% Title Refactor1
+% Date  January 12, 2021
+
+= Refactor1
+_ Everything is a walled | fenced | normal | raw element simplification
+
+.tableOfContents
+
+== Abstract
+
+Simplify, unify, and abstract parsing: break down syntax into four groups into which (almost) all elements will fit.
+
+## Block Elements
+_ Elements that operate on contiguous homogeneous lines.
+
+Block element delimiters must always be placed at the start of the line or at the start of a block if nested. Only whitespace can be placed before them.
+
+There are two block variations: walled and fenced.
+
+### Walled
+
+Walled elements span homogeneous block-prefixed lines. Whitespace after the prefix delimiters is discarded. For example, a block quote looks like:
+
+``to
+> Quote
+> still
+> here
+but not here
+``
+
+Walled elements can contain any element.
+
+### Fenced
+
+Fenced elements start with a delimiter and end with a delimiter—delimiters must be on their own lines. Everything between the delimiters, except the line of the opening delimiter, is the element's content. Unlike walled elements, fenced elements can only contain raw content. For example, a code block looks like:
+
+```to
+``
+this
+is
+all
+code
+block
+content
+and
+**other elements do not work here**
+``
+```
+
+Content on the opening delimiter's line can be used for metadata. For example, here we declare the language of the code block:
+
+```to
+``to
+= Title
+``
+```
+
+Content on the closing delimiter's line is discarded. For example:
+
+```to
+``
+code...
+``this is discarded
+```
+
+As only raw content is permitted, escape sequences do not work. For that reason, escaping works by adding more delimiter characters. For example, to use `*``*` inside a code block:
+
+````to
+```to
+``We used three backticks for delimiters so we can use two backticks in here.
+```
+````
+
+Use as few delimiter characters as possible.
+
+## Inline Elements
+_ Elements that operate inside lines.
+
+Inline elements start, most usually, with two US-ASCII characters and end with a closing delimiter of the same two characters or if unterminated at the end of the line or file. We use two characters as to minimize the need for escaping. We do not want to surprise writers with unexpected elements. At the heart of To is a pleasurable writing experience for everyone, including newcomers.
+
+There are two inline variations similar to block variations: normal and raw.
+
+### Normal
+
+Normal elements are just that—normal. They are like walled block elements. For example, emphasis looks like:
+
+``to
+Some __emphasis__.
+``
+
+Normal elements can contain any inline element except themselves.
+
+### Raw
+
+Raw elements are like fenced block elements—they can only contain raw content. Everything between the delimiters is raw content. For example, inline code looks like:
+
+```to
+Some ``inline code``.
+```
+
+Like with fenced blocks, escape sequences do not work in raw elements. We could try escaping by adding more delimiter characters like in fenced blocks. However, we soon run into trouble if we want use the delimiter characters at the start of the content. Let us try to escape two backticks:
+
+`````````to
+```````` // three backticks delimiter
+`````````
+
+Clearly, we cannot determine where the delimiters start and end. Another option would be to require a single space after the opening and before the closing delimiters:
+
+````to
+``` `` ```
+````
+
+As we can see, this hurts readability and is unwelcoming. Luckily, we have a third option that we use. We require that delimiters be two characters long. However, unlike normal elements, the second opening delimiter and the first closing delimiter charaters can be any US-ASCII puncutation character. Now, if we want to escape `*``*`, we can do so by simply using another delimiter character (``*`` in our case):
+
+```to
+`*``*`
+```
+
+One should use equal delimiter characters if possible.
+
+### Links
+
+Links are a notable exception in inline elements. Let us break down the problem first.
+
+Links consist of two parts: the text and the destination. The text is optional and can contain any inline element except itself. Meanwhile, the destination is required and cannot contain any element, only raw content.
+
+Why do not we try thinking of syntax that fulfils our requirements? To remind us, our requirements are: no unexpected elements, normal text, and raw destination. Here is one variant of how such a notation could look:
+
+``to
+[[Koala **photos**]] // link text with emphasis inside
+
+// link destination (raw content only)
+//
+// note we do not use '<<' as the closing delimiter would also have to be '<<'
+// if we follow our raw element rules
+||https://koalaphotos.test||
+
+// together
+Look at these cute [[koala **photos**||https://koalaphotos.test||]].
+
+// link inside parentheses
+Tibsey climbs the tree ([[slowly||https://koalaphotos.test||]]).
+``
+
+This looks terrible and would still need some ad hoc function to use the link destination only as the destination of the link text element and not render a link inside the link text. This is no good...
+
+We remember that links were often denoted by angle brackets, like so: ``<https://koala.test>``. Then why not do something with angle brackets? Let us forget most of the rules for a bit while still trying to prevent unexpected elements by using two characters for delimiters. Such notation could look something like this:
+
+``to
+// link with text the same as destination
+<<https://koala.test>>
+
+// link with custom text (pretty similar to Slack API link format)
+Look at these cute <<Koala **photos** https://koalaphotos.test>>.
+
+// link inside parentheses
+Tibsey climbs the tree (<<Slowly https://koalaphotos.test>>).
+``
+
+This is still pretty bad—there are no clear, simple rules. The link destination is recognized by being the last word in a string of space delimited words. Then, the normal and raw content are mixed. Can we use ``**`` as part of the destination? Can we use escape sequences in the link destination? Or only in the text part? Still no good...
+
+What if we decide that links are first-class citizens and we will make an exception for them? We use the old, common notation with angle brackets for links. The first part is the link text—it is delimited by angle brackets, can contain any inline element by itself, and is optional. The second part is the link destination—it is delimited by angle brackets, can only contain raw content, and is required. The two parts must be placed consecutively if both are present. Here is how it looks:
+
+``to
+// link with text the same as destination
+<https://koalaphotos.test>
+
+// link with custom text
+Look at these cute <Koala **photos**><https://koalaphotos.test>.
+
+// link inside parentheses
+Tibsey climbs the tree (<Slowly><https://koalaphotos.test>).
+``
+
+We do not fulfil our no unexpected elements requirement. If we write ``a < b``, we will get ``a `` and the link with destination `` b``. We deviate from our simple rules. But the readability is good and the rules are still pretty simple. To conclude, this solution is the worst solution—except for all the others.
+
+## Precedence
+
+What happens if a line starts with characters that can start a block or an inline element? For example:
+
+```to
+--                      // nested list (list item in a list item)
+Some --red-- ;; -red ;; // span
+
+-- // a nested list or a span?
+```
+
+Block elements always take precedence in such cases. This means that our example above represents a nested list. But what if we wanted a span? In such cases we can use an explicit paragraph block:
+
+``to
+|-- // span
+``
+Use paragraph block explicitly only if necessary.
+
+## Nested Elements
+
+### Block Elements
+
+#### Walled
+
+Walled elements can contain any element. Block elements inside block elements follow the same rules as outside. A nested block element must be placed at the start of the parent block. Only whitespace can be in between.
+
+A block quote in a block quote:
+
+``to
+> This
+> > might
+> > > be
+> > > > a
+> > > > > thread
+``
+
+A list in a list:
+
+``to
+--nested list // pretty much useless
+
+// or more commonly
+- 1
+ - 2
+``
+
+A code block in a block quote:
+
+```to
+> ``c
+> int x = 1;
+> ``
+```
+
+A block quote in a list:
+
+``to
+- > Be smart!
+— John
+``
+
+Inline elements in a list:
+
+```to
+- **reasonable**
+- __dynamic__
+- ``echo "yes"``
+```
+
+##### Paragraphs
+
+Paragraphs are an exception. They can contain only inline elements.
+
+Block quote in a paragraph (invalid):
+
+``to
+// invalid!
+// also, do not use explicit paragraphs if not necessary
+| > Multi
+| > line
+| > paragraph.
+``
+
+#### Fenced
+
+Fenced elements cannot contain any element, only raw content.
+
+### Inline Elements
+
+#### Normal
+
+Normal elements can contain any inline element except themselves.
+
+Strong in emphasis:
+
+``to
+__Some **strong** here__.
+``
+
+Link in strong:
+
+``to
+**<Koala photos><https://koalaphotos.test>**
+``
+
+Strong in link:
+
+``to
+<**Koala** photos><https://koalaphotos.test>
+``
+
+#### Raw
+
+Raw elements cannot contain any element, only raw content.
+
+## Indentation
+
+// TODO

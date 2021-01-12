@@ -140,6 +140,13 @@ func HTML(nod interface{}, indent int) string {
 		}
 
 		b.WriteString("</li>\n")
+	
+	case *node.BlockQuote:
+		b.WriteString("<blockquote>")
+		for _, c := range n.Children {
+			b.WriteString(HTML(c, 0))
+		}
+		b.WriteString("</blockquote>")
 
 	default:
 		panic(fmt.Sprintf("renderer.HTML: unsupported node type %T", n))
