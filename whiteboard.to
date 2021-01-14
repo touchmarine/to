@@ -1,6 +1,6 @@
-|| title  Touch Markup
-|| author @touch_marine
-|| date   January 6, 2021
+% title  Touch Markup
+% author @touch_marine
+% date   January 6, 2021
 
 .tableOfContents
 
@@ -1102,6 +1102,10 @@ Like in <Text Formatting Notation><https://jira.atlassian.com/secure/WikiRendere
 
 ``to
 The following is quoted: ""I will be displayed with quotes around"".
+
+// or
+
+The following is quoted: >>I will be displayed with quotes around<<.
 ``
 
 ### Time
@@ -1286,13 +1290,13 @@ Adds semantic by wrapping title and subtitle together. For example, in HTML (<HT
 
 Intermediate paragrapah.
 
-|1. Sugar // 1. Sugar
+/1. Sugar // 1. Sugar
 
 // reset heading counter
 
 ## Introduction    // 1 Introduction
 
-|## Reintroduction // 1 Reintroduction
+/## Reintroduction // 1 Reintroduction
 
 // reset footnote counter
 
@@ -1302,7 +1306,7 @@ Intermediate paragrapah.
 
 ## Second Chapter
 
-|^^Footnote 1^^
+/^^Footnote 1^^
 ``
 
 ### Citations
@@ -1351,6 +1355,7 @@ Miscellaneous:
 - <Journal Article Tag Suite - Wikipedia><https://en.wikipedia.org/wiki/Journal_Article_Tag_Suite>
 - <Journal Article Tag Suite><https://jats.nlm.nih.gov/>
 - <The Plain Text Project><https://plaintextproject.online/index.html>
+- <Towards a best practice for marking up quoatations in HTML+CSS - W3C><https://www.w3.org/Style/2013/quote-marks>
 
 Existing solutions to learn from:
 - markup
