@@ -7,14 +7,14 @@ import (
 )
 
 type Parser struct {
-	scanner *scanner.Scanner
+	scanner scanner.Scanner
 	errors  []error
 
 	tok token.Token
 	lit string
 }
 
-func New(scanner *scanner.Scanner) *Parser {
+func New(scanner scanner.Scanner) *Parser {
 	p := &Parser{
 		scanner: scanner,
 	}

@@ -7,6 +7,10 @@ import (
 	"unicode/utf8"
 )
 
+type Scanner interface {
+	Scan() (token.Token, string)
+}
+
 // Mode controls which tokens to return.
 type Mode uint
 
@@ -19,8 +23,8 @@ const (
 // encounterd.
 type ErrorHandler func(err error, errCount uint)
 
-// Scanner holds the scanning state.
-type Scanner struct {
+// scanner holds the scanning state.
+type scanner struct {
 	src        string       // source
 	mode       Mode         // which tokens to return
 	errHandler ErrorHandler // error callback func
@@ -33,8 +37,8 @@ type Scanner struct {
 }
 
 // New returns a new Scanner.
-func New(src string, mode Mode, errHandler ErrorHandler) *Scanner {
-	s := &Scanner{
+func New(src string, mode Mode, errHandler ErrorHandler) Scanner {
+	s := &scanner{
 		src:        src,
 		mode:       mode,
 		errHandler: errHandler,
@@ -44,7 +48,7 @@ func New(src string, mode Mode, errHandler ErrorHandler) *Scanner {
 }
 
 // error increments s.errCount and calls s.errHandler() if present.
-func (s *Scanner) error(err error) {
+func (s *scanner) error(err error) {
 	s.errCount++
 	if s.errHandler != nil {
 		s.errHandler(err, s.errCount)
@@ -69,7 +73,7 @@ var (
 //
 // An encoding is invalid if it is incorrect UTF-8, encodes a rune that is out
 // of range, or is not the shortest possible UTF-8 encoding for the value.
-func (s *Scanner) next() {
+func (s *scanner) next() {
 skip:
 	// handle end of file
 	if s.rdOffs >= len(s.src) {
@@ -125,14 +129,14 @@ skip:
 
 // peek returns the byte following the most recently read character without
 // advancing the scanner. peek returns 0 if at EOF.
-func (s *Scanner) peek() byte {
+func (s *scanner) peek() byte {
 	if s.rdOffs < len(s.src) {
 		return s.src[s.rdOffs]
 	}
 	return 0
 }
 
-func (s *Scanner) Scan() (token.Token, string) {
+func (s *scanner) Scan() (token.Token, string) {
 	var tok token.Token
 	var lit string
 
@@ -166,7 +170,7 @@ skip:
 }
 
 // scanComment scans until a newline or EOF. Delimiter is included.
-func (s *Scanner) scanComment() string {
+func (s *scanner) scanComment() string {
 	// first '/' already consumed, onsume the second '/'
 	offs := s.offs
 	s.next()
@@ -179,7 +183,7 @@ func (s *Scanner) scanComment() string {
 }
 
 // scanText scans until an inline element delimiter, newline, or EOF.
-func (s *Scanner) scanText() string {
+func (s *scanner) scanText() string {
 	offs := s.offs
 	for !s.isInlineDelim() && s.ch != '\n' && s.ch > 0 {
 		s.next()
@@ -189,12 +193,12 @@ func (s *Scanner) scanText() string {
 
 // isBlockDelim determines whether there is a block delimiter at the current
 // position.
-func (s *Scanner) isBlockDelim() bool {
+func (s *scanner) isBlockDelim() bool {
 	return token.IsBlockDelim(s.ch)
 }
 
 // isInlineDelim determines whether there is an inline delimiter at the current
 // position.
-func (s *Scanner) isInlineDelim() bool {
+func (s *scanner) isInlineDelim() bool {
 	return token.IsInlineDelim(s.ch, s.peek())
 }
