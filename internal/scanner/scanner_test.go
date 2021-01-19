@@ -47,6 +47,13 @@ func TestScanner_Scan(t *testing.T) {
 		{"<`", token.InlineDelim, "<`"},
 		{"<*", token.InlineDelim, "<*"},
 		{"<_", token.InlineDelim, "<_"},
+
+		/*
+			{">>", token.InlineDelim, ">>"},
+			{"`>", token.InlineDelim, "`>"},
+			{"*>", token.InlineDelim, "*>"},
+			{"_>", token.InlineDelim, "_>"},
+		*/
 	}
 
 	for _, c := range cases {

@@ -1,0 +1,70 @@
+= The Touch Lightweight Markup Language Specification
+
+.tableOfContents
+
+## Introduction
+
+Touch is a lightweight markup language. It uses US-ASCII puncutation characters to inscribe meaning to otherwise plain text. The grammar is simple to parse, allowing for easy tooling.
+
+### Design Philosophy
+
+Touch is designed to be progressive, expressive, and collaborative. It provides features necessary for most writing work without having to resort to other tools. Notations are simple for humans and computers to understand.
+
+Guiding principles:
+- universally accessible
+- progressiveness—from plain text to printer ready
+- one way to do one thing
+- <<orthogonality><https://stackoverflow.com/questions/1527393/what-is-orthogonality>>—changing A does not change B
+- be obivous
+- respect—consider, learn from, and interoperate with existing solutions
+
+### Goals
+
+Touch aims to be
+- progressive
+- expressive
+- collaborative
+- consistent
+- dependable
+
+Touch will, whenever first sensible, release a stable version and promise backward compatibility.
+
+## Conventions
+
+### Characters and Encodings
+
+A character is the smallest (atomic) unit of a written language that refers to its abstract meaning, rather than a specific shape.
+
+A code point is any value in the Unicode codespace. A character may be represente by a sequence of code points, often even by a number of different sequences of code points.
+
+Characters are represented using Unicode code points and named using <<Unicode character names<>https://unicode.org/glossary/#character_name>>. (<<Unicode Code Charts<>https://unicode.org/charts/>>)
+
+Code points, when referred to in text, are listed in hexadecimal form following the prefix "U+". Letters in hexadecimal numbers are capitals. For example, the code ooint U+0041 is the hexadecimal number 0041 (equal to decimal number 65). It representes the character "A" in the Unicdoe Standard. ^^Assigning Character Codes^^
+
+^Assigning Character Codes
+	<<Assigning Character Codes - Unicode Techical Introduction<>https://unicode.org/standard/principles.html#:~:text=A%20single%20number%20is%20assigned%20to,character%20%22A%22%20in%20the%20Unicode%20Standard.>>
+
+## Notation
+
+The syntax is specified using the Augmented Backus-Naur Form (ABNF) grammar notation defined in <<RFC 5234<>https://tools.ietf.org/html/rfc5234>>.
+
+### Naming
+
+Non-terminals are in camelCase.
+Non-terminals representing lexical tokens are in upper case.
+Terminals are enclosed by quotation marks.
+
+## Source Code Representation
+
+Source code must be Unicode text encoded in <<UTF-8<>https://tools.ietf.org/html/rfc5234>>.
+
+Spacing consists of SPACEs (U+0020) and CHARACTER TABULATIONs (U+0009).
+
+Lines endings consist of a single LINE FEED (U+000A).
+
+For security reasons and compatibility with other tools, NULLs (U+0000) should be replaced with REPLACEMENT CHARACTERs (U+FFFD).
+
+For compatibility with other tools, byte order marks (U+FEFF, ZERO WIDTH NO-BREAK SPACE) should be ignored if it is the first Unicode code point and replaced if used elsewhere. ^^Unicode BOM FAQ^^
+
+^Unicode BOM FAQ
+	<<Byte Order Mark (BOM) FAQ - Unicode<>https://unicode.org/faq/utf_bom.html#BOM>>

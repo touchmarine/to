@@ -1,0 +1,6 @@
+block = lines
+
+paragraph = "|" [block] / block
+
+lines = 1*line
+line  = *inline NEWLINE
