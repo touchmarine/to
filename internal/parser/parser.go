@@ -39,15 +39,40 @@ func (p *Parser) parseBlock() node.Block {
 	var block node.Block
 	switch {
 	case p.tok == token.BlockDelim:
-		block = p.parseParagraph()
+		switch p.lit {
+		case ">":
+			block = p.parseBlockquote()
+		case "|":
+			block = p.parseParagraph()
+		default:
+			panic("parser.parseBlock: unsupported block delimiter " + p.lit)
+		}
 	default:
 		block = p.parseLines()
 	}
 	return block
 }
 
+func (p *Parser) parseBlockquote() *node.Blockquote {
+	p.next() // consume ">"
+
+	var children []node.Block
+	for {
+		if p.tok == token.Newline || p.tok == token.EOF {
+			break
+		}
+
+		block := p.parseBlock()
+		children = append(children, block)
+	}
+
+	return &node.Blockquote{
+		Children: children,
+	}
+}
+
 func (p *Parser) parseParagraph() *node.Paragraph {
-	p.next()
+	p.next() // consume "|"
 
 	var children []node.Block
 	for {

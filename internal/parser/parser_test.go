@@ -30,8 +30,11 @@ func TestParse_Parse(t *testing.T) {
 			},
 		},
 		{
-			[]tl{{token.BlockDelim, "|"}, {token.BlockDelim, "|"},
-				{token.Text, "a"}},
+			[]tl{
+				{token.BlockDelim, "|"},
+				{token.BlockDelim, "|"},
+				{token.Text, "a"},
+			},
 			[]node.Block{
 				&node.Paragraph{
 					[]node.Block{
@@ -41,6 +44,69 @@ func TestParse_Parse(t *testing.T) {
 									"a",
 								},
 							},
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{{token.BlockDelim, ">"}},
+			[]node.Block{
+				&node.Blockquote{},
+			},
+		},
+		{
+			[]tl{{token.BlockDelim, ">"}, {token.BlockDelim, ">"}},
+			[]node.Block{
+				&node.Blockquote{
+					[]node.Block{
+						&node.Blockquote{},
+					},
+				},
+			},
+		},
+		{
+			[]tl{{token.BlockDelim, ">"}, {token.BlockDelim, "|"}},
+			[]node.Block{
+				&node.Blockquote{
+					[]node.Block{
+						&node.Paragraph{},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.BlockDelim, ">"},
+				{token.BlockDelim, ">"},
+				{token.Text, "a"},
+			},
+			[]node.Block{
+				&node.Blockquote{
+					[]node.Block{
+						&node.Blockquote{
+							[]node.Block{
+								node.Lines{
+									"a",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.BlockDelim, ">"},
+				{token.Text, "a"},
+				{token.BlockDelim, ">"},
+				{token.Text, "b"},
+			},
+			[]node.Block{
+				&node.Blockquote{
+					[]node.Block{
+						node.Lines{
+							"a>b",
 						},
 					},
 				},

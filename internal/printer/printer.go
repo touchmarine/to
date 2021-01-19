@@ -32,6 +32,8 @@ func (p *Printer) printBlocks(blocks []node.Block) {
 
 func (p *Printer) printBlock(block node.Block) {
 	switch n := block.(type) {
+	case *node.Blockquote:
+		p.printBlockquote(n)
 	case *node.Paragraph:
 		p.printParagraph(n)
 	case node.Lines:
@@ -39,6 +41,11 @@ func (p *Printer) printBlock(block node.Block) {
 	default:
 		panic(fmt.Sprintf("printer.printBlock: unsupported block type %T", block))
 	}
+}
+
+func (p *Printer) printBlockquote(bq *node.Blockquote) {
+	defer p.open("Blockquote")()
+	p.printBlocks(bq.Children)
 }
 
 func (p *Printer) printParagraph(para *node.Paragraph) {

@@ -1,4 +1,6 @@
-block = lines
+block = blockquote / paragraph / lines
+
+blockquote = ">" [block]
 
 paragraph = "|" [block] / block
 

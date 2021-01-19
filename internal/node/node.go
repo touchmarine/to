@@ -4,6 +4,12 @@ type Block interface {
 	block()
 }
 
+type Blockquote struct {
+	Children []Block
+}
+
+func (bq *Blockquote) block() {}
+
 type Paragraph struct {
 	Children []Block
 }
