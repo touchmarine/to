@@ -1,8 +1,13 @@
 block = blockquote / paragraph / lines
 
-blockquote = ">" [block]
+listItem = "-" [block] *(NEWLINE INDENT [block])
 
-paragraph = "|" [block] / block
+blockquote = ">" [block] *(NEWLINE blockquote)
 
-lines = 1*line
-line  = *inline NEWLINE
+paragraph = "|" [block] *(NEWLINE paragraph)
+
+lines = line *(NEWLINE line)
+line  = 1*inline
+
+inline = TEXT
+TEXT = ; anything except NEWLINE until an inline delimiter

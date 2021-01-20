@@ -193,7 +193,7 @@ Composite elements can consist of multiple parts. These parts can, depending on 
 
 ## Precedence
 
-Block elements always take precedence if a line or a block starts with characters that can start either a block or an inline element. To represent such clashing inline elements use explicit paragraphs. (The paragraph delimiter is ``|``.) Use explicit paragraphs only when necessary.
+Block elements always take precedence if a line or a block starts with characters that can start either a block or an inline element. To represent such clashing inline elements escape the block with the REVERSE SOLIDUS (``\``).
 
 + description list started by an asterisk
 ``to
@@ -203,12 +203,12 @@ Block elements always take precedence if a line or a block starts with character
 
 + strong started by two asterisks
 ``to
-|**Strong**
+\ **Strong**
 ``
 
 + asterisk as a footnote symbol
 ``to
-|* Note
+\* Note
 ``
 
 @@ Examples

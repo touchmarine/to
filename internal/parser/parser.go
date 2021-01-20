@@ -104,13 +104,13 @@ func (p *Parser) parseLines() node.Lines {
 
 func (p *Parser) parseLine() string {
 	var line string
-	for p.tok != token.EOF {
-		line += p.lit
-		p.next()
-
-		if p.tok == token.Newline {
+	for {
+		if p.tok == token.Newline || p.tok == token.EOF {
 			break
 		}
+
+		line += p.lit
+		p.next()
 	}
 	return line
 }

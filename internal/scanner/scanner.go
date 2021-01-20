@@ -29,11 +29,13 @@ type scanner struct {
 	mode       Mode         // which tokens to return
 	errHandler ErrorHandler // error callback func
 
-	ch     byte // cur character
-	offs   int  // cur offs
-	rdOffs int  // read offs
-
-	errCount uint
+	ch        byte   // current character
+	offs      int    // current offset
+	rdOffs    int    // read offset
+	indent    []uint // indentation stack
+	sol       bool   // at start of line
+	dedentBuf uint   // dedent buffer
+	errCount  uint   // number of errors encountered
 }
 
 // New returns a new Scanner.
@@ -42,6 +44,8 @@ func New(src string, mode Mode, errHandler ErrorHandler) Scanner {
 		src:        src,
 		mode:       mode,
 		errHandler: errHandler,
+		indent:     []uint{0},
+		sol:        true,
 	}
 	s.next() // initialize pointers
 	return s
@@ -141,10 +145,28 @@ func (s *scanner) Scan() (token.Token, string) {
 	var lit string
 
 skip:
+	if s.sol {
+		s.sol = false
+		lit := s.scanIndent()
+		if lit == "" {
+			// if dedent, dedentBuf will handle it
+			// if no change, noop
+			goto skip
+		} else {
+			return token.Indent, lit
+		}
+	}
+
+	if s.dedentBuf > 0 {
+		s.dedentBuf--
+		return token.Dedent, ""
+	}
+
 	switch {
 	case s.ch == 0:
 		tok = token.EOF
 	case s.ch == '\n':
+		s.sol = true
 		tok = token.Newline
 		lit = "\n"
 	case s.ch == '/' && s.peek() == '/':
@@ -169,7 +191,7 @@ skip:
 	return tok, lit
 }
 
-// scanComment scans until a newline or EOF. Delimiter is included.
+// scanComment scans until line feed or EOF. Delimiter is included.
 func (s *scanner) scanComment() string {
 	// first '/' already consumed, onsume the second '/'
 	offs := s.offs
@@ -182,13 +204,60 @@ func (s *scanner) scanComment() string {
 	return s.src[offs:s.offs]
 }
 
-// scanText scans until an inline element delimiter, newline, or EOF.
+// scanText scans until an inline element delimiter, line feed, or EOF.
 func (s *scanner) scanText() string {
 	offs := s.offs
 	for !s.isInlineDelim() && s.ch != '\n' && s.ch > 0 {
 		s.next()
 	}
 	return s.src[offs:s.offs]
+}
+
+const tabWidth = 8 // how many spaces a tab equals when indenting
+
+func (s *scanner) scanIndent() string {
+	offs := s.offs
+	var indent uint
+Loop:
+	for {
+		switch s.ch {
+		case '\t':
+			indent += tabWidth
+		case ' ':
+			indent++
+		default:
+			break Loop
+		}
+
+		s.next()
+	}
+
+	if len(s.indent) == 0 {
+		// 0 should always be in the indent stack
+		panic("scanner.scanIndent: s.indent == 0")
+	}
+
+	top := s.indent[len(s.indent)-1]
+	if indent > top {
+		s.indent = append(s.indent, indent)
+		return s.src[offs:s.offs]
+	}
+
+	for {
+		if len(s.indent) == 0 {
+			break
+		}
+
+		top = s.indent[len(s.indent)-1]
+		if top > indent {
+			s.indent = s.indent[:len(s.indent)-1]
+			s.dedentBuf++
+		} else {
+			break
+		}
+	}
+
+	return ""
 }
 
 // isBlockDelim determines whether there is a block delimiter at the current
