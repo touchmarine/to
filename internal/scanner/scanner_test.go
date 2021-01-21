@@ -36,31 +36,57 @@ func TestScanner_Scan(t *testing.T) {
 		{"\n", token.Newline, "\n"},
 		{"// comment", token.Comment, "// comment"},
 
-		{"|", token.BlockDelim, "|"},
-		{">", token.BlockDelim, ">"},
-		{"-", token.BlockDelim, "-"},
-
-		{"__", token.InlineDelim, "__"},
-		{"**", token.InlineDelim, "**"},
-		{"``", token.InlineDelim, "``"},
-		{"`*", token.InlineDelim, "`*"},
-		{"`_", token.InlineDelim, "`_"},
-		{"<<", token.InlineDelim, "<<"},
-		{"<`", token.InlineDelim, "<`"},
-		{"<*", token.InlineDelim, "<*"},
-		{"<_", token.InlineDelim, "<_"},
-
-		/*
-			{">>", token.InlineDelim, ">>"},
-			{"`>", token.InlineDelim, "`>"},
-			{"*>", token.InlineDelim, "*>"},
-			{"_>", token.InlineDelim, "_>"},
-		*/
+		{"|", token.Pipeline, "|"},
+		{">", token.GreaterThan, ">"},
 	}
 
 	for _, c := range cases {
 		t.Run(strconv.Quote(c.src), func(t *testing.T) {
 			test(t, c.src, []tl{{c.tok, c.lit}})
+		})
+	}
+
+}
+
+func TestPipeline(t *testing.T) {
+	cases := []struct {
+		src           string
+		tokenLiterals []tl
+	}{
+		{"|", []tl{{token.Pipeline, "|"}}},
+		{
+			"||",
+			[]tl{
+				{token.Pipeline, "|"},
+				{token.Pipeline, "|"},
+			},
+		},
+		{
+			"| |",
+			[]tl{
+				{token.Pipeline, "|"},
+				{token.Pipeline, "|"},
+			},
+		},
+		{
+			"|a|",
+			[]tl{
+				{token.Pipeline, "|"},
+				{token.Text, "a|"},
+			},
+		},
+		{
+			"| a |",
+			[]tl{
+				{token.Pipeline, "|"},
+				{token.Text, "a |"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(strconv.Quote(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenLiterals)
 		})
 	}
 

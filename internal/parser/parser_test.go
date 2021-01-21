@@ -1,6 +1,7 @@
 package parser_test
 
 import (
+	"strconv"
 	"testing"
 	"to/internal/node"
 	"to/internal/parser"
@@ -14,13 +15,13 @@ func TestParse_Parse(t *testing.T) {
 		blocks []node.Block
 	}{
 		{
-			[]tl{{token.BlockDelim, "|"}},
+			[]tl{{token.Pipeline, "|"}},
 			[]node.Block{
 				&node.Paragraph{},
 			},
 		},
 		{
-			[]tl{{token.BlockDelim, "|"}, {token.BlockDelim, "|"}},
+			[]tl{{token.Pipeline, "|"}, {token.Pipeline, "|"}},
 			[]node.Block{
 				&node.Paragraph{
 					[]node.Block{
@@ -31,8 +32,8 @@ func TestParse_Parse(t *testing.T) {
 		},
 		{
 			[]tl{
-				{token.BlockDelim, "|"},
-				{token.BlockDelim, "|"},
+				{token.Pipeline, "|"},
+				{token.Pipeline, "|"},
 				{token.Text, "a"},
 			},
 			[]node.Block{
@@ -50,13 +51,186 @@ func TestParse_Parse(t *testing.T) {
 			},
 		},
 		{
-			[]tl{{token.BlockDelim, ">"}},
+			[]tl{
+				{token.Pipeline, "|"},
+				{token.Newline, "\n"},
+				{token.Pipeline, "|"},
+				{token.Text, "a"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						node.Lines{
+							"a",
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.Pipeline, "|"},
+				{token.Text, "a"},
+				{token.Newline, "\n"},
+				{token.Pipeline, "|"},
+				{token.Text, "b"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						node.Lines{
+							"a",
+							"b",
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.Pipeline, "|"},
+				{token.Text, "a"},
+				{token.Newline, "\n"},
+				{token.Text, "b"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						node.Lines{
+							"a",
+						},
+					},
+				},
+				node.Lines{
+					"b",
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.Pipeline, "|"},
+				{token.Pipeline, "|"},
+				{token.Text, "a"},
+				{token.Newline, "\n"},
+				{token.Text, "b"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						&node.Paragraph{
+							[]node.Block{
+								node.Lines{
+									"a",
+								},
+							},
+						},
+					},
+				},
+				node.Lines{
+					"b",
+				},
+			},
+		},
+		/*
+			{
+				[]tl{
+					{token.Pipeline, "|"},
+					{token.Text, "a"},
+					{token.Newline, "\n"},
+					{token.Pipeline, "|"},
+					{token.Pipeline, "|"},
+					{token.Text, "b"},
+				},
+				[]node.Block{
+					&node.Paragraph{
+						[]node.Block{
+							node.Lines{
+								"a",
+							},
+							&node.Paragraph{
+								[]node.Block{
+									node.Lines{
+										"b",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		*/
+		{
+			[]tl{
+				{token.Pipeline, "|"},
+				{token.Pipeline, "|"},
+				{token.Text, "a"},
+				{token.Newline, "\n"},
+				{token.Pipeline, "|"},
+				{token.Text, "b"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						&node.Paragraph{
+							[]node.Block{
+								node.Lines{
+									"a",
+								},
+							},
+						},
+						node.Lines{
+							"b",
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.Pipeline, "|"},
+				{token.Pipeline, "|"},
+				{token.Pipeline, "|"},
+				{token.Text, "a"},
+				{token.Newline, "\n"},
+				{token.Pipeline, "|"},
+				{token.Pipeline, "|"},
+				{token.Text, "b"},
+				{token.Newline, "\n"},
+				{token.Pipeline, "|"},
+				{token.Text, "c"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						&node.Paragraph{
+							[]node.Block{
+								&node.Paragraph{
+									[]node.Block{
+										node.Lines{
+											"a",
+										},
+									},
+								},
+								node.Lines{
+									"b",
+								},
+							},
+						},
+						node.Lines{
+							"c",
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{{token.GreaterThan, ">"}},
 			[]node.Block{
 				&node.Blockquote{},
 			},
 		},
 		{
-			[]tl{{token.BlockDelim, ">"}, {token.BlockDelim, ">"}},
+			[]tl{{token.GreaterThan, ">"}, {token.GreaterThan, ">"}},
 			[]node.Block{
 				&node.Blockquote{
 					[]node.Block{
@@ -66,7 +240,7 @@ func TestParse_Parse(t *testing.T) {
 			},
 		},
 		{
-			[]tl{{token.BlockDelim, ">"}, {token.BlockDelim, "|"}},
+			[]tl{{token.GreaterThan, ">"}, {token.Pipeline, "|"}},
 			[]node.Block{
 				&node.Blockquote{
 					[]node.Block{
@@ -77,8 +251,8 @@ func TestParse_Parse(t *testing.T) {
 		},
 		{
 			[]tl{
-				{token.BlockDelim, ">"},
-				{token.BlockDelim, ">"},
+				{token.GreaterThan, ">"},
+				{token.GreaterThan, ">"},
 				{token.Text, "a"},
 			},
 			[]node.Block{
@@ -97,16 +271,39 @@ func TestParse_Parse(t *testing.T) {
 		},
 		{
 			[]tl{
-				{token.BlockDelim, ">"},
+				{token.GreaterThan, ">"},
+				{token.Pipeline, "|"},
+				{token.GreaterThan, ">"},
 				{token.Text, "a"},
-				{token.BlockDelim, ">"},
+				{token.Newline, "\n"},
 				{token.Text, "b"},
+				{token.Newline, "\n"},
+				{token.Pipeline, "|"},
+				{token.Text, "c"},
 			},
 			[]node.Block{
 				&node.Blockquote{
 					[]node.Block{
+						&node.Paragraph{
+							[]node.Block{
+								&node.Blockquote{
+									[]node.Block{
+										node.Lines{
+											"a",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				node.Lines{
+					"b",
+				},
+				&node.Paragraph{
+					[]node.Block{
 						node.Lines{
-							"a>b",
+							"c",
 						},
 					},
 				},
@@ -120,15 +317,13 @@ func TestParse_Parse(t *testing.T) {
 			name += pair.lit
 		}
 
-		t.Run(name, func(t *testing.T) {
+		t.Run(literal(name), func(t *testing.T) {
 			s := &scanner{tokenLiterals: c.tokens}
 			p := parser.New(s)
 			blocks := p.Parse()
 
-			print := printer.New()
-			got := print.Print(blocks)
-			print.Reset()
-			want := print.Print(c.blocks)
+			got := printer.Print(blocks)
+			want := printer.Print(c.blocks)
 
 			if got != want {
 				t.Errorf("\ngot\n%s\nwant\n%s", got, want)
@@ -156,4 +351,9 @@ func (s *scanner) Scan() (token.Token, string) {
 	p := s.tokenLiterals[s.i]
 	s.i++
 	return p.tok, p.lit
+}
+
+func literal(s string) string {
+	q := strconv.Quote(s)
+	return q[1 : len(q)-1]
 }

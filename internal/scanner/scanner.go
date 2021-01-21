@@ -145,6 +145,7 @@ func (s *scanner) Scan() (token.Token, string) {
 	var lit string
 
 skip:
+	// Handle indentation at line starts.
 	if s.sol {
 		s.sol = false
 		lit := s.scanIndent()
@@ -157,6 +158,7 @@ skip:
 		}
 	}
 
+	// Return dedent tokens if they are buffered.
 	if s.dedentBuf > 0 {
 		s.dedentBuf--
 		return token.Dedent, ""
@@ -169,6 +171,10 @@ skip:
 		s.sol = true
 		tok = token.Newline
 		lit = "\n"
+	case s.ch == '\t' || s.ch == ' ':
+		// skip non-indentation spacing
+		s.next()
+		goto skip
 	case s.ch == '/' && s.peek() == '/':
 		comment := s.scanComment()
 		if s.mode&ScanComments == 0 {
@@ -176,13 +182,12 @@ skip:
 		}
 		tok = token.Comment
 		lit = comment
-	case s.isBlockDelim():
-		tok = token.BlockDelim
+	case s.ch == '|':
+		tok = token.Pipeline
 		lit = string(s.ch)
-	case s.isInlineDelim():
-		tok = token.InlineDelim
-		lit = s.src[s.offs : s.offs+2]
-		s.next() // consume first delim
+	case s.ch == '>':
+		tok = token.GreaterThan
+		lit = string(s.ch)
 	default:
 		return token.Text, s.scanText()
 	}
@@ -207,7 +212,7 @@ func (s *scanner) scanComment() string {
 // scanText scans until an inline element delimiter, line feed, or EOF.
 func (s *scanner) scanText() string {
 	offs := s.offs
-	for !s.isInlineDelim() && s.ch != '\n' && s.ch > 0 {
+	for s.ch != '\n' && s.ch > 0 {
 		s.next()
 	}
 	return s.src[offs:s.offs]
@@ -215,6 +220,19 @@ func (s *scanner) scanText() string {
 
 const tabWidth = 8 // how many spaces a tab equals when indenting
 
+// scanIndent calculates whether the current line indentation is larger, equal,
+// or smaller than the previous line. It returns a literal string of the
+// indentation if larger, an empty string if equal and increments s.dedentBuf
+// and returns an empty string if smaller.
+//
+// The algorithm is basically the same as Python uses
+// (https://docs.python.org/3/reference/lexical_analysis.html#indentation):
+//	Compare the current line indentation to the top of s.indent.
+//	If equal, nothing happens.
+//	If current is larger, push it onto s.indent and generate one indent
+//	token.
+//	If current is smaller, pop all larger indents from s.indent and for
+//	each pop generate a dedent token.
 func (s *scanner) scanIndent() string {
 	offs := s.offs
 	var indent uint
@@ -258,16 +276,4 @@ Loop:
 	}
 
 	return ""
-}
-
-// isBlockDelim determines whether there is a block delimiter at the current
-// position.
-func (s *scanner) isBlockDelim() bool {
-	return token.IsBlockDelim(s.ch)
-}
-
-// isInlineDelim determines whether there is an inline delimiter at the current
-// position.
-func (s *scanner) isInlineDelim() bool {
-	return token.IsInlineDelim(s.ch, s.peek())
 }

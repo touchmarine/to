@@ -13,15 +13,14 @@ func _() {
 	_ = x[Dedent-2]
 	_ = x[Newline-3]
 	_ = x[Comment-4]
-	_ = x[BlockDelim-5]
-	_ = x[InlineDelim-6]
-	_ = x[Sep-7]
-	_ = x[Text-8]
+	_ = x[Pipeline-5]
+	_ = x[GreaterThan-6]
+	_ = x[Text-7]
 }
 
-const _Token_name = "EOFIndentDedentNewlineCommentBlockDelimInlineDelimSepText"
+const _Token_name = "EOFIndentDedentNewlineCommentPipelineGreaterThanText"
 
-var _Token_index = [...]uint8{0, 3, 9, 15, 22, 29, 39, 50, 53, 57}
+var _Token_index = [...]uint8{0, 3, 9, 15, 22, 29, 37, 48, 52}
 
 func (i Token) String() string {
 	if i >= Token(len(_Token_index)-1) {
