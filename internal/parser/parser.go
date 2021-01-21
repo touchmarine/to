@@ -10,7 +10,7 @@ import (
 	"to/internal/token"
 )
 
-const trace = true
+const trace = false
 
 type Parser struct {
 	scanner scanner.Scanner
@@ -165,8 +165,15 @@ func (p *Parser) parseLines() node.Lines {
 			break
 		}
 
-		if p.tok == token.Newline && !p.continues() {
-			break
+		if p.tok == token.Newline {
+			if !p.continues() {
+				break
+			}
+
+			// only text can continue lines
+			if p.tok != token.Text {
+				break
+			}
 		}
 
 		line := p.parseLine()

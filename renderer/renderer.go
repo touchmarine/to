@@ -140,7 +140,7 @@ func HTML(nod interface{}, indent int) string {
 		}
 
 		b.WriteString("</li>\n")
-	
+
 	case *node.BlockQuote:
 		b.WriteString("<blockquote>")
 		for _, c := range n.Children {
