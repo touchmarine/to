@@ -154,14 +154,14 @@ skip:
 			// if no change, noop
 			goto skip
 		} else {
-			return token.Indent, lit
+			return token.INDENT, lit
 		}
 	}
 
 	// Return dedent tokens if they are buffered.
 	if s.dedentBuf > 0 {
 		s.dedentBuf--
-		return token.Dedent, ""
+		return token.DEDENT, ""
 	}
 
 	switch {
@@ -169,7 +169,7 @@ skip:
 		tok = token.EOF
 	case s.ch == '\n':
 		s.sol = true
-		tok = token.Newline
+		tok = token.LINEFEED
 		lit = "\n"
 	case s.ch == '\t' || s.ch == ' ':
 		// skip non-indentation spacing
@@ -180,16 +180,16 @@ skip:
 		if s.mode&ScanComments == 0 {
 			goto skip
 		}
-		tok = token.Comment
+		tok = token.COMMENT
 		lit = comment
 	case s.ch == '|':
-		tok = token.Pipeline
+		tok = token.VLINE
 		lit = string(s.ch)
 	case s.ch == '>':
-		tok = token.GreaterThan
+		tok = token.GT
 		lit = string(s.ch)
 	default:
-		return token.Text, s.scanText()
+		return token.TEXT, s.scanText()
 	}
 
 	s.next()

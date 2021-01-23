@@ -48,11 +48,11 @@ func (p *Parser) parseBlock() (node.Block, bool) {
 
 	var block node.Block
 	switch {
-	case p.tok == token.GreaterThan:
-		block = p.parseBlockquote()
-	case p.tok == token.Pipeline:
+	case p.tok == token.VLINE:
 		block = p.parseParagraph()
-	case p.tok == token.Text:
+	case p.tok == token.GT:
+		block = p.parseBlockquote()
+	case p.tok == token.TEXT:
 		block = p.parseLines()
 	default:
 		panic("parser.parseBlock: unsupported token " + p.tok.String())
@@ -98,7 +98,7 @@ func (p *Parser) parseBlockquote() *node.Blockquote {
 			break
 		}
 
-		if p.tok == token.Newline && !p.continues() {
+		if p.tok == token.LINEFEED && !p.continues() {
 			break
 		}
 
@@ -134,7 +134,7 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 			break
 		}
 
-		if p.tok == token.Newline && !p.continues() {
+		if p.tok == token.LINEFEED && !p.continues() {
 			break
 		}
 
@@ -165,13 +165,13 @@ func (p *Parser) parseLines() node.Lines {
 			break
 		}
 
-		if p.tok == token.Newline {
+		if p.tok == token.LINEFEED {
 			if !p.continues() {
 				break
 			}
 
 			// only text can continue lines
-			if p.tok != token.Text {
+			if p.tok != token.TEXT {
 				break
 			}
 		}
@@ -197,16 +197,16 @@ func (p *Parser) parseLines() node.Lines {
 //	If not equal, pop the current and following blocks from the open blocks,
 //	and return false.
 func (p *Parser) continues() bool {
-	if p.tok != token.Newline {
-		panic(fmt.Sprintf("parser.continues: token %s is not Newline", p.tok))
+	if p.tok != token.LINEFEED {
+		panic(fmt.Sprintf("parser.continues: token %s is not LINEFEED", p.tok))
 	}
 
-	p.next() // consume newline
+	p.next() // consume LINEFEED
 
 	// only text can continue the lines block
 	blocks := p.openBlocks
 	if len(blocks) == 0 {
-		return p.tok == token.Text
+		return p.tok == token.TEXT
 	}
 
 	for i := 0; len(blocks) > 0; i++ {
@@ -225,7 +225,7 @@ func (p *Parser) continues() bool {
 
 func (p *Parser) parseLine() string {
 	var line string
-	for p.tok == token.Text {
+	for p.tok == token.TEXT {
 		line += p.lit
 		p.next()
 	}
