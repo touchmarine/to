@@ -27,13 +27,112 @@ func ExampleScanner_Scan() {
 	}
 }
 
+func TestIndent(t *testing.T) {
+	cases := []struct {
+		src        string
+		tokenPairs []tl
+	}{
+		{
+			" a",
+			[]tl{
+				{token.INDENT, " "},
+				{token.TEXT, "a"},
+			},
+		},
+		{
+			"a\n b",
+			[]tl{
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.INDENT, " "},
+				{token.TEXT, "b"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenPairs)
+		})
+	}
+}
+
+func TestDedent(t *testing.T) {
+	cases := []struct {
+		src        string
+		tokenPairs []tl
+	}{
+		{
+			" a\nb",
+			[]tl{
+				{token.INDENT, " "},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.DEDENT, ""},
+				{token.TEXT, "b"},
+			},
+		},
+		{
+			"  a\n b\nc",
+			[]tl{
+				{token.INDENT, "  "},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.DEDENT, ""},
+				{token.TEXT, "b"},
+				{token.LINEFEED, "\n"},
+				{token.DEDENT, ""},
+				{token.TEXT, "c"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenPairs)
+		})
+	}
+}
+
+func TestEqualIndentation(t *testing.T) {
+	cases := []struct {
+		src        string
+		tokenPairs []tl
+	}{
+		{
+			"a\nb",
+			[]tl{
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.TEXT, "b"},
+			},
+		},
+		{
+			" a\n b",
+			[]tl{
+				{token.INDENT, "  "},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.TEXT, "b"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenPairs)
+		})
+	}
+}
+
+/*
 func TestScanner_Scan(t *testing.T) {
 	cases := []struct {
 		src string
 		tok token.Token
 		lit string
 	}{
-		{"\n", token.Newline, "\n"},
+		{"\n", token.LINEFEED, "\n"},
 		{"// comment", token.Comment, "// comment"},
 
 		{"|", token.Pipeline, "|"},
@@ -125,7 +224,7 @@ func TestIndentation(t *testing.T) {
 				[]tl{
 					{token.Indent, " "},
 					{token.Text, "a"},
-					{token.Newline, "\n"},
+					{token.LINEFEED, "\n"},
 					{token.Indent, "  "},
 					{token.Text, "b"},
 				},
@@ -135,7 +234,7 @@ func TestIndentation(t *testing.T) {
 				[]tl{
 					{token.Indent, "  "},
 					{token.Text, "a"},
-					{token.Newline, "\n"},
+					{token.LINEFEED, "\n"},
 					{token.Indent, "   "},
 					{token.Text, "b"},
 				},
@@ -145,7 +244,7 @@ func TestIndentation(t *testing.T) {
 				[]tl{
 					{token.Indent, "        "},
 					{token.Text, "a"},
-					{token.Newline, "\n"},
+					{token.LINEFEED, "\n"},
 					{token.Indent, "         "},
 					{token.Text, "b"},
 				},
@@ -155,7 +254,7 @@ func TestIndentation(t *testing.T) {
 				[]tl{
 					{token.Indent, "\t"},
 					{token.Text, "a"},
-					{token.Newline, "\n"},
+					{token.LINEFEED, "\n"},
 					{token.Indent, "\t\t"},
 					{token.Text, "b"},
 				},
@@ -165,7 +264,7 @@ func TestIndentation(t *testing.T) {
 				[]tl{
 					{token.Indent, "\t\t"},
 					{token.Text, "a"},
-					{token.Newline, "\n"},
+					{token.LINEFEED, "\n"},
 					{token.Indent, "\t\t\t"},
 					{token.Text, "b"},
 				},
@@ -175,7 +274,7 @@ func TestIndentation(t *testing.T) {
 				[]tl{
 					{token.Indent, " \t"},
 					{token.Text, "a"},
-					{token.Newline, "\n"},
+					{token.LINEFEED, "\n"},
 					{token.Indent, " \t\t"},
 					{token.Text, "b"},
 				},
@@ -185,7 +284,7 @@ func TestIndentation(t *testing.T) {
 				[]tl{
 					{token.Indent, "\t "},
 					{token.Text, "a"},
-					{token.Newline, "\n"},
+					{token.LINEFEED, "\n"},
 					{token.Indent, "\t\t "},
 					{token.Text, "b"},
 				},
@@ -195,7 +294,7 @@ func TestIndentation(t *testing.T) {
 				[]tl{
 					{token.Indent, "\t"},
 					{token.Text, "a"},
-					{token.Newline, "\n"},
+					{token.LINEFEED, "\n"},
 					{token.Indent, "         "},
 					{token.Text, "b"},
 				},
@@ -205,7 +304,7 @@ func TestIndentation(t *testing.T) {
 				[]tl{
 					{token.Indent, "       "},
 					{token.Text, "a"},
-					{token.Newline, "\n"},
+					{token.LINEFEED, "\n"},
 					{token.Indent, "\t"},
 					{token.Text, "b"},
 				},
@@ -252,7 +351,7 @@ func TestDedent(t *testing.T) {
 			" \na",
 			[]tl{
 				{token.Indent, " "},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Dedent, ""},
 				{token.Text, "a"},
 			},
@@ -262,10 +361,10 @@ func TestDedent(t *testing.T) {
 			[]tl{
 				{token.Indent, " "},
 				{token.Text, "a"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Indent, "  "},
 				{token.Text, "b"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Dedent, ""},
 				{token.Dedent, ""},
 				{token.Text, "c"},
@@ -276,13 +375,13 @@ func TestDedent(t *testing.T) {
 			[]tl{
 				{token.Indent, " "},
 				{token.Text, "a"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Indent, "  "},
 				{token.Text, "b"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Dedent, ""},
 				{token.Text, "c"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Dedent, ""},
 				{token.Text, "d"},
 			},
@@ -291,7 +390,7 @@ func TestDedent(t *testing.T) {
 			"\t\na",
 			[]tl{
 				{token.Indent, "\t"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Dedent, ""},
 				{token.Text, "a"},
 			},
@@ -301,10 +400,10 @@ func TestDedent(t *testing.T) {
 			[]tl{
 				{token.Indent, "\t"},
 				{token.Text, "a"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Indent, "\t\t"},
 				{token.Text, "b"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Dedent, ""},
 				{token.Dedent, ""},
 				{token.Text, "c"},
@@ -315,13 +414,13 @@ func TestDedent(t *testing.T) {
 			[]tl{
 				{token.Indent, "\t"},
 				{token.Text, "a"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Indent, "\t\t"},
 				{token.Text, "b"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Dedent, ""},
 				{token.Text, "c"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Dedent, ""},
 				{token.Text, "d"},
 			},
@@ -332,13 +431,13 @@ func TestDedent(t *testing.T) {
 			[]tl{
 				{token.Indent, "\t"},
 				{token.Text, "a"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Indent, "        \t"},
 				{token.Text, "b"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Dedent, ""},
 				{token.Text, "c"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Dedent, ""},
 				{token.Text, "d"},
 			},
@@ -361,7 +460,7 @@ func TestNoDedent(t *testing.T) {
 			" \n a",
 			[]tl{
 				{token.Indent, " "},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Text, "a"},
 			},
 		},
@@ -369,7 +468,7 @@ func TestNoDedent(t *testing.T) {
 			" \n a",
 			[]tl{
 				{token.Indent, " "},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Text, "a"},
 			},
 		},
@@ -377,7 +476,7 @@ func TestNoDedent(t *testing.T) {
 			"\t\n\ta",
 			[]tl{
 				{token.Indent, "\t"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Text, "a"},
 			},
 		},
@@ -385,7 +484,7 @@ func TestNoDedent(t *testing.T) {
 			"\t \n\t a",
 			[]tl{
 				{token.Indent, "\t "},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Text, "a"},
 			},
 		},
@@ -393,7 +492,7 @@ func TestNoDedent(t *testing.T) {
 			" \t\n \ta",
 			[]tl{
 				{token.Indent, " \t"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Text, "a"},
 			},
 		},
@@ -401,7 +500,7 @@ func TestNoDedent(t *testing.T) {
 			"\t\n        a",
 			[]tl{
 				{token.Indent, "\t"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Text, "a"},
 			},
 		},
@@ -409,7 +508,7 @@ func TestNoDedent(t *testing.T) {
 			"        \n\ta",
 			[]tl{
 				{token.Indent, "        "},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Text, "a"},
 			},
 		},
@@ -417,7 +516,7 @@ func TestNoDedent(t *testing.T) {
 			"\t\t\n\t\ta",
 			[]tl{
 				{token.Indent, "\t\t"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Text, "a"},
 			},
 		},
@@ -425,7 +524,7 @@ func TestNoDedent(t *testing.T) {
 			"\t\t\n\t        a",
 			[]tl{
 				{token.Indent, "\t\t"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Text, "a"},
 			},
 		},
@@ -433,7 +532,7 @@ func TestNoDedent(t *testing.T) {
 			"\t\t\n                a",
 			[]tl{
 				{token.Indent, "\t\t"},
-				{token.Newline, "\n"},
+				{token.LINEFEED, "\n"},
 				{token.Text, "a"},
 			},
 		},
@@ -445,6 +544,7 @@ func TestNoDedent(t *testing.T) {
 		})
 	}
 }
+*/
 
 // token-literal pair struct
 type tl struct {
@@ -520,4 +620,9 @@ func test(t *testing.T, src string, tokenPairs []tl) {
 			bw.String(),
 		)
 	}
+}
+
+func literal(s string) string {
+	q := strconv.Quote(s)
+	return q[1 : len(q)-1]
 }

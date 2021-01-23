@@ -9,18 +9,19 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[EOF-0]
-	_ = x[Indent-1]
-	_ = x[Dedent-2]
-	_ = x[Newline-3]
-	_ = x[Comment-4]
-	_ = x[Pipeline-5]
-	_ = x[GreaterThan-6]
-	_ = x[Text-7]
+	_ = x[LINEFEED-1]
+	_ = x[COMMENT-2]
+	_ = x[INDENT-3]
+	_ = x[DEDENT-4]
+	_ = x[BEGINBQUOTE-5]
+	_ = x[BEGINPARA-6]
+	_ = x[ENDWALLED-7]
+	_ = x[TEXT-8]
 }
 
-const _Token_name = "EOFIndentDedentNewlineCommentPipelineGreaterThanText"
+const _Token_name = "EOFLINEFEEDCOMMENTINDENTDEDENTBEGINBQUOTEBEGINPARAENDWALLEDTEXT"
 
-var _Token_index = [...]uint8{0, 3, 9, 15, 22, 29, 37, 48, 52}
+var _Token_index = [...]uint8{0, 3, 11, 18, 24, 30, 41, 50, 59, 63}
 
 func (i Token) String() string {
 	if i >= Token(len(_Token_index)-1) {

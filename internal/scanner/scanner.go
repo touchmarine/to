@@ -29,13 +29,17 @@ type scanner struct {
 	mode       Mode         // which tokens to return
 	errHandler ErrorHandler // error callback func
 
-	ch        byte   // current character
-	offs      int    // current offset
-	rdOffs    int    // read offset
-	indent    []uint // indentation stack
-	sol       bool   // at start of line
-	dedentBuf uint   // dedent buffer
-	errCount  uint   // number of errors encountered
+	ch       byte     // current character
+	offs     int      // current offset
+	rdOffs   int      // read offset
+	indent   []uint   // indentation stack
+	outBuf   []tokLit // output token buffer
+	errCount uint     // number of errors encountered
+}
+
+type tokLit struct {
+	tok token.Token
+	lit string
 }
 
 // New returns a new Scanner.
@@ -45,7 +49,6 @@ func New(src string, mode Mode, errHandler ErrorHandler) Scanner {
 		mode:       mode,
 		errHandler: errHandler,
 		indent:     []uint{0},
-		sol:        true,
 	}
 	s.next() // initialize pointers
 	return s
@@ -145,51 +148,36 @@ func (s *scanner) Scan() (token.Token, string) {
 	var lit string
 
 skip:
-	// Handle indentation at line starts.
-	if s.sol {
-		s.sol = false
-		lit := s.scanIndent()
-		if lit == "" {
-			// if dedent, dedentBuf will handle it
-			// if no change, noop
-			goto skip
-		} else {
-			return token.Indent, lit
-		}
-	}
+	s.scanIndent() // scanIndent queues any tokens in s.outBuf
 
-	// Return dedent tokens if they are buffered.
-	if s.dedentBuf > 0 {
-		s.dedentBuf--
-		return token.Dedent, ""
+	// handle buffered tokens
+	if len(s.outBuf) > 0 {
+		bot := s.outBuf[0]
+		s.outBuf = s.outBuf[1:]
+		return bot.tok, bot.lit
 	}
 
 	switch {
 	case s.ch == 0:
 		tok = token.EOF
 	case s.ch == '\n':
-		s.sol = true
-		tok = token.Newline
+		tok = token.LINEFEED
 		lit = "\n"
-	case s.ch == '\t' || s.ch == ' ':
-		// skip non-indentation spacing
-		s.next()
-		goto skip
 	case s.ch == '/' && s.peek() == '/':
 		comment := s.scanComment()
 		if s.mode&ScanComments == 0 {
 			goto skip
 		}
-		tok = token.Comment
+		tok = token.COMMENT
 		lit = comment
-	case s.ch == '|':
-		tok = token.Pipeline
-		lit = string(s.ch)
 	case s.ch == '>':
-		tok = token.GreaterThan
+		tok = token.BEGINBQUOTE
+		lit = string(s.ch)
+	case s.ch == '|':
+		tok = token.BEGINPARA
 		lit = string(s.ch)
 	default:
-		return token.Text, s.scanText()
+		return token.TEXT, s.scanText()
 	}
 
 	s.next()
@@ -209,10 +197,14 @@ func (s *scanner) scanComment() string {
 	return s.src[offs:s.offs]
 }
 
-// scanText scans until an inline element delimiter, line feed, or EOF.
+// scanText scans until an inline element delimiter, comment, line feed, or EOF.
 func (s *scanner) scanText() string {
 	offs := s.offs
 	for s.ch != '\n' && s.ch > 0 {
+		if s.ch == '/' && s.peek() == '/' {
+			break
+		}
+
 		s.next()
 	}
 	return s.src[offs:s.offs]
@@ -222,18 +214,17 @@ const tabWidth = 8 // how many spaces a tab equals when indenting
 
 // scanIndent calculates whether the current line indentation is larger, equal,
 // or smaller than the previous line. It returns a literal string of the
-// indentation if larger, an empty string if equal and increments s.dedentBuf
-// and returns an empty string if smaller.
+// indentation if larger, an empty string if equal, and queues DEDENT and
+// returns an empty string if smaller.
 //
 // The algorithm is basically the same as Python uses
 // (https://docs.python.org/3/reference/lexical_analysis.html#indentation):
 //	Compare the current line indentation to the top of s.indent.
 //	If equal, nothing happens.
-//	If current is larger, push it onto s.indent and generate one indent
-//	token.
+//	If current is larger, push it onto s.indent and generate one INDENT.
 //	If current is smaller, pop all larger indents from s.indent and for
-//	each pop generate a dedent token.
-func (s *scanner) scanIndent() string {
+//	each pop generate DEDENT.
+func (s *scanner) scanIndent() {
 	offs := s.offs
 	var indent uint
 Loop:
@@ -258,7 +249,9 @@ Loop:
 	top := s.indent[len(s.indent)-1]
 	if indent > top {
 		s.indent = append(s.indent, indent)
-		return s.src[offs:s.offs]
+		tl := tokLit{token.INDENT, s.src[offs:s.offs]}
+		s.outBuf = append(s.outBuf, tl)
+		return
 	}
 
 	for {
@@ -269,11 +262,9 @@ Loop:
 		top = s.indent[len(s.indent)-1]
 		if top > indent {
 			s.indent = s.indent[:len(s.indent)-1]
-			s.dedentBuf++
+			s.outBuf = append(s.outBuf, tokLit{token.DEDENT, ""})
 		} else {
 			break
 		}
 	}
-
-	return ""
 }

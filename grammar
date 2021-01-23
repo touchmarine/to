@@ -1,13 +1,19 @@
 block = blockquote / paragraph / lines
 
-listItem = "-" [block] *(NEWLINE INDENT [block])
+listItem = "-" [block] [offsideBody]
 
-blockquote = ">" [block] *(NEWLINE blockquote)
+offsideBody = LINEFEED INDENT [block] DEDENT
 
-paragraph = "|" [block] *(NEWLINE paragraph)
+blockquote = BEGINBQUOTE [block] *(LINEFEED [block]) ENDWALLED
+BEGINBQUOTE = ">" ; at start of line or another block
 
-lines = line *(NEWLINE line)
+paragraph = BEGINPARA [block] *(LINEFEED [block]) ENDWALLED
+BEGINPARA = "|" ; at start of line or another block
+
+ENDWALLED = ; line starting with another or no block delimiter
+
+lines = line *(LINEFEED line)
 line  = 1*inline
 
 inline = TEXT
-TEXT = ; anything except NEWLINE until an inline delimiter
+TEXT = ; anything except inline delimiters, comments, or LINEFEEDs

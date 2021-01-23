@@ -1,0 +1,158 @@
+= Parsing
+
+## Introduction
+
+Touch is parsed using a handwritten scanner and recursive descent parser.
+
+Touch is orthogonal, which means that no matter where an element notation is placed it represents the same element.
+
+``to
+- a
+
+> - a
+``
+
+List item notations ``- a`` in the above example represents the same list items.
+
+## Terminology
+
+* EOF
+	End of file. Note that EOF is not a character, it merely indicates no more data.
+
+## Scanning
+
+Scanning is a bit more complex than just matching tokens with regular expressions. Scanning requires tracking state; we cannot scan INDENT, DEDENT, and opening and closing block tokens without state.
+
+### Comments
+
+Comments start with a double SOLIDUS ("/") and end at LINE FEED or EOF.
+
+### Indentation
+
+We generate INDENT and DEDENT tokens basically the same as Python does. The only difference is we do not require that when an indentation is smaller than the previous indentation that it must be one of the previous indentations on the stack. (<<Lexical analysis - Python 3.9.1 documentation<>https://docs.python.org/3/reference/lexical_analysis.html#indentation>>)
+
+The modified Python indentation algorithm:
+Before the first line of the file is read, a single zero is pushed on the stack; this will never be popped off again. The numbers pushed on the stack will always be strictly increasing from bottom to top. At the beginning of each line or block, the line’s indentation level is compared to the top of the stack. If it is equal, nothing happens. If it is larger, it is pushed on the stack, and one INDENT token is generated. If it is smaller, all numbers on the stack that are larger are popped off, and for each number popped off a DEDENT token is generated. At the end of the file, a DEDENT token is generated for each number remaining on the stack that is larger than zero.
+
+### Blocks
+
+* Block continuation
+	A block is continued if its delimiter or indentation is present at the start of a line or another block if it is nested.
+
+BEGIN-style tokens represent the start of a block. They consist of a block delimiter, most usually a single US-ASCII puncutation character. Block continuations do not generate a token, only the first block delimiter generates it. 
+
+END-style tokens represent the end of a block. They are generated if a block is not continued.
+
++ block continuation example
+''
+| a
+| b
+
+BEGINPARA  |
+TEXT       a
+LINEFEED   \n
+               // no BEGINPARA here; this "|" is a block continuation
+TEXT       b
+EOF        ''
+''
+
++ END-style token example
+''
+|a
+b
+
+BEGINPARA  |
+TEXT       a
+LINEFEED   \n
+ENDWALLED  ""  // we end the paragraph because there is no "|" at start of line
+TEXT       b
+EOF        ''
+''
+
++ offside block
+''
+-a
+b
+
+HYPEN     -
+TEXT      a
+LINEFEED  \n
+DEDENT    ''
+TEXT      b
+
+BEGINLISTITEM  -
+TEXT           a
+LINEFEED       \n
+ENDOFFSIDE     ''
+TEXT           b
+''
+
++ open blocks queue
+''
+-a
+b
+
+BEGINLISTITEM  -   openBlocks [BEGINLISTITEM]
+TEXT           a
+LINEFEED       \n
+ENDLITEM       ''  openBlocks []
+
+|-a
+|b
+
+BEGINPARA      |   openBlocks [BEGINPARA]
+BEGINLISTITEM  -   openBlocks [BEGINPARA BEGINLISTITEM]
+LINEFEED       \n
+// 1. | matches BEGINPARA, skip
+// 2. b is indented equal or less than -, end
+ENDLITEM       -   openBlocks [BEGINPARA]
+''
+
+#### Block Continuation Algorithm
+
+Block continuation algorithm determines whether a block continues on subsequent lines. It is used when parsing walled or offside block elements. Walled element continues if the subsequent lines are prefixed with its delimiter. Offside element continues if the subsequent lines are indented more that the start of its delimiter.
+
+Algorithm:
+1. at the block beginning, enqueue the block delimiter
+1. at the start of a line, compare current characters to queued delimiters:
+	a. if the queue is empty, panic
+	a. make a copy of the queue
+	a. if the copy is empty, return true
+	a. dequeue a delimiter from the copy
+	a. compare the dequeued delimiter to the current character:
+		i. if equal
+			1) advance current chracter
+			1) repeat from step b.
+		i. if not equal
+			1) remove the dequeued delimiter and the following delimiters from the original queue
+			1) return false
+
+''
+|a
+|b
+c
+''
+
+Block continuation in the above example would be parsed as follows:
+1. "|"
+	a. enqueue "|"
+	a. advance
+1. "a"  -> advance
+1. "\n" -> advance
+1. "|"
+	a. queue is not empty, ok
+	a. copy = queue
+	a. copy is not empty, continue
+	a. dequeue a delimiter ("|") from copy
+	a. current chracter is equal to the dequeued delimiter, continue
+	a. advance; current delimiter is now "b"
+	a. copy is empty, block continues
+1. "b"  -> advance
+1. "\n" -> advance
+1. "c"
+	a. queue is not empty, ok
+	a. copy = queue
+	a. copy is not empty, continue
+	a. dequeue a delimiter ("|") from copy
+	a. current chracter is not equal to the dequeued delimiter, block does not continue
+	a. remove dequeued delimiter and the following delimiters from queue

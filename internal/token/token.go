@@ -5,13 +5,14 @@ type Token uint
 
 // tokens
 const (
-	EOF     Token = iota
-	Indent        // larger indentation
-	Dedent        // smaller indentation
-	Newline       // \n
-	Comment       // //
+	EOF      Token = iota
+	LINEFEED       // \n
+	COMMENT        // //
+	INDENT         // larger indentation
+	DEDENT         // smaller indentation
 
-	Pipeline    // |
-	GreaterThan // >
-	Text        // text
+	BEGINBQUOTE // > at start of line or another block
+	BEGINPARA   // | at start of line or another block
+	ENDWALLED   // line starting with another or no block delimiter
+	TEXT        // text
 )
