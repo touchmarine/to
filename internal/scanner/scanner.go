@@ -29,13 +29,10 @@ type scanner struct {
 	mode       Mode         // which tokens to return
 	errHandler ErrorHandler // error callback func
 
-	ch        byte   // current character
-	offs      int    // current offset
-	rdOffs    int    // read offset
-	indent    []uint // indentation stack
-	sol       bool   // at start of line
-	dedentBuf uint   // dedent buffer
-	errCount  uint   // number of errors encountered
+	ch       byte // current character
+	offs     int  // current offset
+	rdOffs   int  // read offset
+	errCount uint // number of errors encountered
 }
 
 // New returns a new Scanner.
@@ -44,8 +41,6 @@ func New(src string, mode Mode, errHandler ErrorHandler) Scanner {
 		src:        src,
 		mode:       mode,
 		errHandler: errHandler,
-		indent:     []uint{0},
-		sol:        true,
 	}
 	s.next() // initialize pointers
 	return s
@@ -145,36 +140,14 @@ func (s *scanner) Scan() (token.Token, string) {
 	var lit string
 
 skip:
-	// Handle indentation at line starts.
-	if s.sol {
-		s.sol = false
-		lit := s.scanIndent()
-		if lit == "" {
-			// if dedent, dedentBuf will handle it
-			// if no change, noop
-			goto skip
-		} else {
-			return token.INDENT, lit
-		}
-	}
-
-	// Return dedent tokens if they are buffered.
-	if s.dedentBuf > 0 {
-		s.dedentBuf--
-		return token.DEDENT, ""
-	}
-
 	switch {
 	case s.ch == 0:
 		tok = token.EOF
 	case s.ch == '\n':
-		s.sol = true
 		tok = token.LINEFEED
 		lit = "\n"
 	case s.ch == '\t' || s.ch == ' ':
-		// skip non-indentation spacing
-		s.next()
-		goto skip
+		return token.INDENT, s.scanIndent()
 	case s.ch == '/' && s.peek() == '/':
 		comment := s.scanComment()
 		if s.mode&ScanComments == 0 {
@@ -194,6 +167,15 @@ skip:
 
 	s.next()
 	return tok, lit
+}
+
+// scanIndent scans spacing.
+func (s *scanner) scanIndent() string {
+	offs := s.offs
+	for s.ch == '\t' || s.ch == ' ' {
+		s.next()
+	}
+	return s.src[offs:s.offs]
 }
 
 // scanComment scans until line feed or EOF. Delimiter is included.
@@ -216,64 +198,4 @@ func (s *scanner) scanText() string {
 		s.next()
 	}
 	return s.src[offs:s.offs]
-}
-
-const tabWidth = 8 // how many spaces a tab equals when indenting
-
-// scanIndent calculates whether the current line indentation is larger, equal,
-// or smaller than the previous line. It returns a literal string of the
-// indentation if larger, an empty string if equal and increments s.dedentBuf
-// and returns an empty string if smaller.
-//
-// The algorithm is basically the same as Python uses
-// (https://docs.python.org/3/reference/lexical_analysis.html#indentation):
-//	Compare the current line indentation to the top of s.indent.
-//	If equal, nothing happens.
-//	If current is larger, push it onto s.indent and generate one indent
-//	token.
-//	If current is smaller, pop all larger indents from s.indent and for
-//	each pop generate a dedent token.
-func (s *scanner) scanIndent() string {
-	offs := s.offs
-	var indent uint
-Loop:
-	for {
-		switch s.ch {
-		case '\t':
-			indent += tabWidth
-		case ' ':
-			indent++
-		default:
-			break Loop
-		}
-
-		s.next()
-	}
-
-	if len(s.indent) == 0 {
-		// 0 should always be in the indent stack
-		panic("scanner.scanIndent: s.indent == 0")
-	}
-
-	top := s.indent[len(s.indent)-1]
-	if indent > top {
-		s.indent = append(s.indent, indent)
-		return s.src[offs:s.offs]
-	}
-
-	for {
-		if len(s.indent) == 0 {
-			break
-		}
-
-		top = s.indent[len(s.indent)-1]
-		if top > indent {
-			s.indent = s.indent[:len(s.indent)-1]
-			s.dedentBuf++
-		} else {
-			break
-		}
-	}
-
-	return ""
 }
