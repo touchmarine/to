@@ -11,7 +11,7 @@ type Scanner interface {
 	Scan() (token.Token, string)
 }
 
-// Mode controls which tokens to return.
+// Mode controls which tokens the scanner will return.
 type Mode uint
 
 // Mode flags
@@ -19,8 +19,8 @@ const (
 	ScanComments Mode = 1 << iota
 )
 
-// ErrorHandler is called with an error message and count if an error is
-// encounterd.
+// ErrorHandler is called with an error message and error count if an error is
+// encountered.
 type ErrorHandler func(err error, errCount uint)
 
 // scanner holds the scanning state.
@@ -35,7 +35,10 @@ type scanner struct {
 	errCount uint // number of errors encountered
 }
 
-// New returns a new Scanner.
+// New returns a new Scanner and prepares it for scanning by setting the initial
+// state. The src argument is the source text it will scan. The mode controls
+// which tokens to scan. The errHandler is called with an error message and
+// error count if an error is encountered.
 func New(src string, mode Mode, errHandler ErrorHandler) Scanner {
 	s := &scanner{
 		src:        src,
@@ -135,6 +138,7 @@ func (s *scanner) peek() byte {
 	return 0
 }
 
+// Scan returns the next token and a literal string of it.
 func (s *scanner) Scan() (token.Token, string) {
 	var tok token.Token
 	var lit string

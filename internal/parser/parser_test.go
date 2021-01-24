@@ -15,297 +15,6 @@ func TestParse_Parse(t *testing.T) {
 		blocks []node.Block
 	}{
 		{
-			[]tl{{token.VLINE, "|"}},
-			[]node.Block{
-				&node.Paragraph{},
-			},
-		},
-		{
-			[]tl{{token.VLINE, "|"}, {token.VLINE, "|"}},
-			[]node.Block{
-				&node.Paragraph{
-					[]node.Block{
-						&node.Paragraph{},
-					},
-				},
-			},
-		},
-		{
-			[]tl{
-				{token.VLINE, "|"},
-				{token.VLINE, "|"},
-				{token.TEXT, "a"},
-			},
-			[]node.Block{
-				&node.Paragraph{
-					[]node.Block{
-						&node.Paragraph{
-							[]node.Block{
-								node.Lines{
-									"a",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			[]tl{
-				{token.VLINE, "|"},
-				{token.LINEFEED, "\n"},
-				{token.VLINE, "|"},
-				{token.TEXT, "a"},
-			},
-			[]node.Block{
-				&node.Paragraph{
-					[]node.Block{
-						node.Lines{
-							"a",
-						},
-					},
-				},
-			},
-		},
-		{
-			[]tl{
-				{token.VLINE, "|"},
-				{token.TEXT, "a"},
-				{token.LINEFEED, "\n"},
-				{token.VLINE, "|"},
-				{token.TEXT, "b"},
-			},
-			[]node.Block{
-				&node.Paragraph{
-					[]node.Block{
-						node.Lines{
-							"a",
-							"b",
-						},
-					},
-				},
-			},
-		},
-		{
-			[]tl{
-				{token.VLINE, "|"},
-				{token.TEXT, "a"},
-				{token.LINEFEED, "\n"},
-				{token.VLINE, "|"},
-				{token.VLINE, "|"},
-				{token.TEXT, "b"},
-			},
-			[]node.Block{
-				&node.Paragraph{
-					[]node.Block{
-						node.Lines{
-							"a",
-						},
-						&node.Paragraph{
-							[]node.Block{
-								node.Lines{
-									"b",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			[]tl{
-				{token.VLINE, "|"},
-				{token.TEXT, "a"},
-				{token.LINEFEED, "\n"},
-				{token.VLINE, "|"},
-				{token.VLINE, "|"},
-				{token.TEXT, "b"},
-				{token.LINEFEED, "\n"},
-				{token.VLINE, "|"},
-				{token.VLINE, "|"},
-				{token.VLINE, "|"},
-				{token.TEXT, "c"},
-			},
-			[]node.Block{
-				&node.Paragraph{
-					[]node.Block{
-						node.Lines{
-							"a",
-						},
-						&node.Paragraph{
-							[]node.Block{
-								node.Lines{
-									"b",
-								},
-								&node.Paragraph{
-									[]node.Block{
-										node.Lines{
-											"c",
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			[]tl{
-				{token.VLINE, "|"},
-				{token.TEXT, "a"},
-				{token.LINEFEED, "\n"},
-				{token.TEXT, "b"},
-			},
-			[]node.Block{
-				&node.Paragraph{
-					[]node.Block{
-						node.Lines{
-							"a",
-						},
-					},
-				},
-				node.Lines{
-					"b",
-				},
-			},
-		},
-		{
-			[]tl{
-				{token.VLINE, "|"},
-				{token.VLINE, "|"},
-				{token.TEXT, "a"},
-				{token.LINEFEED, "\n"},
-				{token.TEXT, "b"},
-			},
-			[]node.Block{
-				&node.Paragraph{
-					[]node.Block{
-						&node.Paragraph{
-							[]node.Block{
-								node.Lines{
-									"a",
-								},
-							},
-						},
-					},
-				},
-				node.Lines{
-					"b",
-				},
-			},
-		},
-		{
-			[]tl{
-				{token.VLINE, "|"},
-				{token.VLINE, "|"},
-				{token.TEXT, "a"},
-				{token.LINEFEED, "\n"},
-				{token.VLINE, "|"},
-				{token.TEXT, "b"},
-			},
-			[]node.Block{
-				&node.Paragraph{
-					[]node.Block{
-						&node.Paragraph{
-							[]node.Block{
-								node.Lines{
-									"a",
-								},
-							},
-						},
-						node.Lines{
-							"b",
-						},
-					},
-				},
-			},
-		},
-		{
-			[]tl{
-				{token.VLINE, "|"},
-				{token.VLINE, "|"},
-				{token.VLINE, "|"},
-				{token.TEXT, "a"},
-				{token.LINEFEED, "\n"},
-				{token.VLINE, "|"},
-				{token.VLINE, "|"},
-				{token.TEXT, "b"},
-				{token.LINEFEED, "\n"},
-				{token.VLINE, "|"},
-				{token.TEXT, "c"},
-			},
-			[]node.Block{
-				&node.Paragraph{
-					[]node.Block{
-						&node.Paragraph{
-							[]node.Block{
-								&node.Paragraph{
-									[]node.Block{
-										node.Lines{
-											"a",
-										},
-									},
-								},
-								node.Lines{
-									"b",
-								},
-							},
-						},
-						node.Lines{
-							"c",
-						},
-					},
-				},
-			},
-		},
-		{
-			[]tl{{token.GT, ">"}},
-			[]node.Block{
-				&node.Blockquote{},
-			},
-		},
-		{
-			[]tl{{token.GT, ">"}, {token.GT, ">"}},
-			[]node.Block{
-				&node.Blockquote{
-					[]node.Block{
-						&node.Blockquote{},
-					},
-				},
-			},
-		},
-		{
-			[]tl{
-				{token.GT, ">"},
-				{token.GT, ">"},
-				{token.TEXT, "a"},
-			},
-			[]node.Block{
-				&node.Blockquote{
-					[]node.Block{
-						&node.Blockquote{
-							[]node.Block{
-								node.Lines{
-									"a",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			[]tl{{token.GT, ">"}, {token.VLINE, "|"}},
-			[]node.Block{
-				&node.Blockquote{
-					[]node.Block{
-						&node.Paragraph{},
-					},
-				},
-			},
-		},
-		{
 			[]tl{
 				{token.GT, ">"},
 				{token.VLINE, "|"},
@@ -551,16 +260,336 @@ func TestParse_Parse(t *testing.T) {
 		}
 
 		t.Run(literal(name), func(t *testing.T) {
-			s := &scanner{tokenLiterals: c.tokens}
-			p := parser.New(s)
-			blocks := p.Parse()
+			test(t, c.tokens, c.blocks)
+		})
+	}
+}
 
-			got := printer.Print(blocks)
-			want := printer.Print(c.blocks)
+func TestParagraph(t *testing.T) {
+	cases := []struct {
+		tokens []tl
+		blocks []node.Block
+	}{
+		{
+			[]tl{{token.VLINE, "|"}},
+			[]node.Block{
+				&node.Paragraph{},
+			},
+		},
+		{
+			[]tl{{token.VLINE, "|"}, {token.VLINE, "|"}},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						&node.Paragraph{},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.VLINE, "|"},
+				{token.VLINE, "|"},
+				{token.TEXT, "a"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						&node.Paragraph{
+							[]node.Block{
+								node.Lines{
+									"a",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.VLINE, "|"},
+				{token.LINEFEED, "\n"},
+				{token.VLINE, "|"},
+				{token.TEXT, "a"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						node.Lines{
+							"a",
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.VLINE, "|"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.VLINE, "|"},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						node.Lines{
+							"a",
+							"b",
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.VLINE, "|"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.VLINE, "|"},
+				{token.VLINE, "|"},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						node.Lines{
+							"a",
+						},
+						&node.Paragraph{
+							[]node.Block{
+								node.Lines{
+									"b",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.VLINE, "|"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.VLINE, "|"},
+				{token.VLINE, "|"},
+				{token.TEXT, "b"},
+				{token.LINEFEED, "\n"},
+				{token.VLINE, "|"},
+				{token.VLINE, "|"},
+				{token.VLINE, "|"},
+				{token.TEXT, "c"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						node.Lines{
+							"a",
+						},
+						&node.Paragraph{
+							[]node.Block{
+								node.Lines{
+									"b",
+								},
+								&node.Paragraph{
+									[]node.Block{
+										node.Lines{
+											"c",
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.VLINE, "|"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						node.Lines{
+							"a",
+						},
+					},
+				},
+				node.Lines{
+					"b",
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.VLINE, "|"},
+				{token.VLINE, "|"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						&node.Paragraph{
+							[]node.Block{
+								node.Lines{
+									"a",
+								},
+							},
+						},
+					},
+				},
+				node.Lines{
+					"b",
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.VLINE, "|"},
+				{token.VLINE, "|"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.VLINE, "|"},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						&node.Paragraph{
+							[]node.Block{
+								node.Lines{
+									"a",
+								},
+							},
+						},
+						node.Lines{
+							"b",
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.VLINE, "|"},
+				{token.VLINE, "|"},
+				{token.VLINE, "|"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.VLINE, "|"},
+				{token.VLINE, "|"},
+				{token.TEXT, "b"},
+				{token.LINEFEED, "\n"},
+				{token.VLINE, "|"},
+				{token.TEXT, "c"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						&node.Paragraph{
+							[]node.Block{
+								&node.Paragraph{
+									[]node.Block{
+										node.Lines{
+											"a",
+										},
+									},
+								},
+								node.Lines{
+									"b",
+								},
+							},
+						},
+						node.Lines{
+							"c",
+						},
+					},
+				},
+			},
+		},
+	}
 
-			if got != want {
-				t.Errorf("\ngot\n%s\nwant\n%s", got, want)
-			}
+	for _, c := range cases {
+		var name string
+		for _, pair := range c.tokens {
+			name += pair.lit
+		}
+
+		t.Run(literal(name), func(t *testing.T) {
+			test(t, c.tokens, c.blocks)
+		})
+	}
+}
+
+func TestBlockquote(t *testing.T) {
+	cases := []struct {
+		tokens []tl
+		blocks []node.Block
+	}{
+		{
+			[]tl{{token.GT, ">"}},
+			[]node.Block{
+				&node.Blockquote{},
+			},
+		},
+		{
+			[]tl{{token.GT, ">"}, {token.GT, ">"}},
+			[]node.Block{
+				&node.Blockquote{
+					[]node.Block{
+						&node.Blockquote{},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.GT, ">"},
+				{token.GT, ">"},
+				{token.TEXT, "a"},
+			},
+			[]node.Block{
+				&node.Blockquote{
+					[]node.Block{
+						&node.Blockquote{
+							[]node.Block{
+								node.Lines{
+									"a",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{{token.GT, ">"}, {token.VLINE, "|"}},
+			[]node.Block{
+				&node.Blockquote{
+					[]node.Block{
+						&node.Paragraph{},
+					},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		var name string
+		for _, pair := range c.tokens {
+			name += pair.lit
+		}
+
+		t.Run(literal(name), func(t *testing.T) {
+			test(t, c.tokens, c.blocks)
 		})
 	}
 }
@@ -569,6 +598,21 @@ func TestParse_Parse(t *testing.T) {
 type tl struct {
 	tok token.Token
 	lit string
+}
+
+func test(t *testing.T, tokens []tl, wBlocks []node.Block) {
+	t.Helper()
+
+	s := &scanner{tokenLiterals: tokens}
+	p := parser.New(s)
+	blocks := p.Parse()
+
+	got := printer.Print(blocks)
+	want := printer.Print(wBlocks)
+
+	if got != want {
+		t.Errorf("\ngot\n%s\nwant\n%s", got, want)
+	}
 }
 
 type scanner struct {

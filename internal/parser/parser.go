@@ -12,16 +12,19 @@ import (
 
 const trace = false
 
+// Parser holds the parsing state.
 type Parser struct {
 	scanner scanner.Scanner
 
 	tok        token.Token   // current token
 	lit        string        // current literal
-	openBlocks []token.Token // current open block delimiters
+	openBlocks []token.Token // current open block tokens
 
 	indent uint // tracing indentation
 }
 
+// New returns a new Parser and prepares it for parsing by setting the initial
+// state.
 func New(scanner scanner.Scanner) *Parser {
 	p := &Parser{
 		scanner: scanner,
@@ -30,6 +33,7 @@ func New(scanner scanner.Scanner) *Parser {
 	return p
 }
 
+// Parse the tokens provided by the scanner until token.EOF.
 func (p *Parser) Parse() []node.Block {
 	var blocks []node.Block
 	for p.tok != token.EOF {
