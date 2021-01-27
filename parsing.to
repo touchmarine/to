@@ -1,0 +1,118 @@
+= Parsing
+
+## Scanning
+
+### Identation
+
+Leading spacing (CHARACTER TABULATION and SPACE) generates INDENT tokens:
+
+``to
+// source:
+	a
+|	b
+
+// scanner output:
+INDENT    "\t"
+TEXT      "a"
+LINEFEED  "\n"
+VLINE     "|"
+INDENT    "\t"
+TEXT      "b"
+EOF       ""
+``
+
+## Parsing
+
+### Offside Block Elements
+
++ list item
+``to
+- a
+  b
+``
+
++ list item tokens
+''
+HYPEN    "-"
+INDENT   " "
+TEXT     "a"
+LINFEED  "\n"
+INDENT   "  "
+TEXT     "b"
+EOF      ""
+''
+
+Offside element continues if it is prefixed with more indentation than its opening delimiter and with other block delimiters if it is nested in them.
+
++ nested list item
+``to
+| - a
+|  b
+``
+
++ nested list item tokens
+''
+VLINE     "|"
+INDENT    " "
+HYPEN     "-"
+INDENT    " "
+TEXT      "a"
+LINEFEED  "\n"
+VLINE     "|"
+INDENT    "  "
+TEXT      "b"
+EOF       ""
+''
+
++ example parsing steps
+''
+open blocks=[]
+token=VLINE literal="|" -> parse paragraph (
+	open blocks=[VLINE "|"]
+	token=INDENT literal=" " -> parse block (
+		open blocks=[VLINE "|", INDENT " "]
+		token=HYPEN  literal="-" -> parse list item (
+			// do not open a block for offside elements, except if
+			// the top of open blocks is not indent, add INDENT ""
+			open blocks=[VLINE "|", INDENT " "]
+			token=INDENT literal=" " -> parse block (
+				open blocks=[VLINE "|", INDENT " ", INDENT " "]
+				token=TEXT literal="a" -> parse lines (
+					// remove last INDENT if token is TEXT
+					// and top two open blocks are both INDENT
+					// tokens
+					open blocks=[VLINE "|", INDENT " "]
+					token=TEXT literal="a" -> parse line (
+						return "a"
+					)
+					token=LINEFEED literal="\n" -> continues (
+						copy=[VLINE "|", INDENT " "]
+						bottom=VLINE "|"
+						token=VLINE literal="|" -> equals bottom, continue
+						copy=[INDENT " "]
+						bottom=INDENT " "
+						token=INDENT literal="  " -> greater indentation than bottom, continue
+						copy=[] -> empty, return true
+					)
+					// ...
+				)
+			)
+		)
+	)
+)
+''
+
+''
+- a
+ | b
+
+HYPEN     "-"
+INDENT    " "
+TEXT      "a"
+LINEFEED  "\n"
+INDENT    " "
+VLINE     "|"
+INDENT    " "
+TEXT      "b"
+EOF       ""
+''

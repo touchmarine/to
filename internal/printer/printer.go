@@ -49,6 +49,8 @@ func (p *Printer) printBlocks(blocks []node.Block) {
 
 func (p *Printer) printBlock(block node.Block, isLast bool) {
 	switch n := block.(type) {
+	case *node.ListItem:
+		p.printListItem(n, isLast)
 	case *node.Blockquote:
 		p.printBlockquote(n, isLast)
 	case *node.Paragraph:
@@ -58,6 +60,11 @@ func (p *Printer) printBlock(block node.Block, isLast bool) {
 	default:
 		panic(fmt.Sprintf("printer.printBlock: unsupported block type %T", block))
 	}
+}
+
+func (p *Printer) printListItem(li *node.ListItem, isLast bool) {
+	defer p.open("ListItem", len(li.Children) == 0, isLast)()
+	p.printBlocks(li.Children)
 }
 
 func (p *Printer) printBlockquote(bq *node.Blockquote, isLast bool) {

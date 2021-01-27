@@ -19,3 +19,9 @@ func (p *Paragraph) block() {}
 type Lines []string
 
 func (p Lines) block() {}
+
+type ListItem struct {
+	Children []Block
+}
+
+func (li ListItem) block() {}

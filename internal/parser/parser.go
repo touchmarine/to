@@ -16,11 +16,17 @@ const trace = false
 type Parser struct {
 	scanner scanner.Scanner
 
-	tok        token.Token   // current token
-	lit        string        // current literal
-	openBlocks []token.Token // current open block tokens
+	tok        token.Token // current token
+	lit        string      // current literal
+	openBlocks []tl        // current open block tokens and literals
 
 	indent uint // tracing indentation
+}
+
+// tl is a token-literal pair.
+type tl struct {
+	tok token.Token
+	lit string
 }
 
 // New returns a new Parser and prepares it for parsing by setting the initial
@@ -50,12 +56,19 @@ func (p *Parser) Parse() []node.Block {
 func (p *Parser) parseBlock() (node.Block, bool) {
 	blocks := p.openBlocks // save
 
+skip:
 	var block node.Block
 	switch {
+	case p.tok == token.INDENT:
+		p.openBlocks = append(p.openBlocks, tl{p.tok, p.lit})
+		p.next()
+		goto skip
 	case p.tok == token.VLINE:
 		block = p.parseParagraph()
 	case p.tok == token.GT:
 		block = p.parseBlockquote()
+	case p.tok == token.HYPEN:
+		block = p.parseListItem()
 	case p.tok == token.TEXT:
 		block = p.parseLines()
 	default:
@@ -86,12 +99,54 @@ func (p *Parser) parseBlock() (node.Block, bool) {
 	return block, cont
 }
 
+func (p *Parser) parseListItem() *node.ListItem {
+	var top *tl
+	if len(p.openBlocks) > 0 {
+		top = &p.openBlocks[len(p.openBlocks)-1]
+	}
+	if top == nil || top.tok != token.INDENT {
+		p.openBlocks = append(p.openBlocks, tl{token.INDENT, ""})
+	}
+
+	if trace {
+		defer p.trace("parseListItem")()
+		p.dumpOpenBlocks()
+	}
+
+	p.next() // consume "-"
+
+	var children []node.Block
+	for {
+		if p.tok == token.EOF {
+			break
+		}
+
+		if p.tok == token.LINEFEED && !p.continues() {
+			break
+		}
+
+		block, cont := p.parseBlock()
+		children = append(children, block)
+		if !cont {
+			break
+		}
+	}
+
+	if trace {
+		p.dump("return\n", children)
+	}
+
+	return &node.ListItem{
+		Children: children,
+	}
+}
+
 func (p *Parser) parseBlockquote() *node.Blockquote {
-	p.openBlocks = append(p.openBlocks, p.tok)
+	p.openBlocks = append(p.openBlocks, tl{p.tok, p.lit})
 
 	if trace {
 		defer p.trace("parseBlockquote")()
-		p.printf("openBlocks %s", p.openBlocks)
+		p.dumpOpenBlocks()
 	}
 
 	p.next() // consume ">"
@@ -123,11 +178,11 @@ func (p *Parser) parseBlockquote() *node.Blockquote {
 }
 
 func (p *Parser) parseParagraph() *node.Paragraph {
-	p.openBlocks = append(p.openBlocks, p.tok)
+	p.openBlocks = append(p.openBlocks, tl{p.tok, p.lit})
 
 	if trace {
 		defer p.trace("parseParagraph")()
-		p.printf("openBlocks %s", p.openBlocks)
+		p.dumpOpenBlocks()
 	}
 
 	p.next() // consume "|"
@@ -161,6 +216,15 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 func (p *Parser) parseLines() node.Lines {
 	if trace {
 		defer p.trace("parseLines")()
+		p.dumpOpenBlocks()
+	}
+
+	if len(p.openBlocks) > 1 {
+		top1 := p.openBlocks[len(p.openBlocks)-1]
+		top2 := p.openBlocks[len(p.openBlocks)-2]
+		if top1.tok == token.INDENT && top2.tok == token.INDENT {
+			p.openBlocks = p.openBlocks[:len(p.openBlocks)-1]
+		}
 	}
 
 	var lines node.Lines
@@ -215,9 +279,18 @@ func (p *Parser) continues() bool {
 
 	for i := 0; len(blocks) > 0; i++ {
 		bot := blocks[0]
-		if p.tok != bot {
+		if bot.tok != p.tok {
 			p.openBlocks = p.openBlocks[:i]
 			return false
+		}
+
+		if bot.tok == token.INDENT {
+			botIndent := countIndent(bot.lit)
+			curIndent := countIndent(p.lit)
+			if curIndent <= botIndent {
+				p.openBlocks = p.openBlocks[:i]
+				return false
+			}
 		}
 
 		blocks = blocks[1:]
@@ -227,6 +300,21 @@ func (p *Parser) continues() bool {
 	return true
 }
 
+func countIndent(s string) uint {
+	var indent uint
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '\t':
+			indent += 8
+		case ' ':
+			indent++
+		default:
+			panic("parser.countIndent: unexpected char in indent")
+		}
+	}
+	return indent
+}
+
 func (p *Parser) parseLine() string {
 	var line string
 	for p.tok == token.TEXT {
@@ -234,6 +322,19 @@ func (p *Parser) parseLine() string {
 		p.next()
 	}
 	return line
+}
+
+func (p *Parser) dumpOpenBlocks() {
+	var b strings.Builder
+	b.WriteString("[")
+	for i, ob := range p.openBlocks {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(ob.tok.String() + " " + strconv.Quote(ob.lit))
+	}
+	b.WriteString("]")
+	p.print(b.String())
 }
 
 func (p *Parser) next() {

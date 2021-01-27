@@ -594,6 +594,262 @@ func TestBlockquote(t *testing.T) {
 	}
 }
 
+func TestListItem(t *testing.T) {
+	cases := []struct {
+		tokens []tl
+		blocks []node.Block
+	}{
+		{
+			[]tl{{token.HYPEN, "-"}},
+			[]node.Block{
+				&node.ListItem{},
+			},
+		},
+		{
+			[]tl{
+				{token.HYPEN, "-"},
+				{token.TEXT, "a"},
+			},
+			[]node.Block{
+				&node.ListItem{
+					[]node.Block{
+						node.Lines{
+							"a",
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.HYPEN, "-"},
+				{token.HYPEN, "-"},
+				{token.TEXT, "a"},
+			},
+			[]node.Block{
+				&node.ListItem{
+					[]node.Block{
+						&node.ListItem{
+							[]node.Block{
+								node.Lines{
+									"a",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.HYPEN, "-"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.HYPEN, "-"},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.ListItem{
+					[]node.Block{
+						node.Lines{
+							"a",
+						},
+					},
+				},
+				&node.ListItem{
+					[]node.Block{
+						node.Lines{
+							"b",
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.HYPEN, "-"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.ListItem{
+					[]node.Block{
+						node.Lines{
+							"a",
+						},
+					},
+				},
+				node.Lines{"b"},
+			},
+		},
+		{
+			[]tl{
+				{token.INDENT, " "},
+				{token.HYPEN, "-"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.INDENT, " "},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.ListItem{
+					[]node.Block{
+						node.Lines{
+							"a",
+						},
+					},
+				},
+				node.Lines{"b"},
+			},
+		},
+		{
+			[]tl{
+				{token.HYPEN, "-"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.INDENT, " "},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.ListItem{
+					[]node.Block{
+						node.Lines{
+							"a",
+							"b",
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.HYPEN, "-"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.INDENT, "  "},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.ListItem{
+					[]node.Block{
+						node.Lines{
+							"a",
+							"b",
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.INDENT, " "},
+				{token.HYPEN, "-"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.INDENT, "  "},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.ListItem{
+					[]node.Block{
+						node.Lines{
+							"a",
+							"b",
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.HYPEN, "-"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.INDENT, " "},
+				{token.HYPEN, "-"},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.ListItem{
+					[]node.Block{
+						node.Lines{
+							"a",
+						},
+						&node.ListItem{
+							[]node.Block{
+								node.Lines{"b"},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.VLINE, "|"},
+				{token.INDENT, " "},
+				{token.HYPEN, "-"},
+				{token.INDENT, " "},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.VLINE, "|"},
+				{token.INDENT, "  "},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						&node.ListItem{
+							[]node.Block{
+								node.Lines{
+									"a",
+									"b",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.HYPEN, "-"},
+				{token.INDENT, " "},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.INDENT, " "},
+				{token.VLINE, "|"},
+				{token.INDENT, " "},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.ListItem{
+					[]node.Block{
+						node.Lines{"a"},
+						&node.Paragraph{
+							[]node.Block{
+								node.Lines{"b"},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		var name string
+		for _, pair := range c.tokens {
+			name += pair.lit
+		}
+
+		t.Run(literal(name), func(t *testing.T) {
+			test(t, c.tokens, c.blocks)
+		})
+	}
+}
+
 // token-literal pair struct
 type tl struct {
 	tok token.Token
