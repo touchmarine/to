@@ -165,9 +165,12 @@ skip:
 	case s.ch == '>':
 		tok = token.GT
 		lit = string(s.ch)
-	case s.ch == '`':
-		tok = token.GRAVEACCENTS
-		lit = s.scanGraveAccents()
+	case s.ch == '`' && s.peek() == '`':
+		return token.GRAVEACCENTS, s.scanGraveAccents()
+	case s.ch == '_' && s.peek() == '_':
+		tok = token.UNDERSCORES
+		lit = s.src[s.offs : s.offs+2]
+		s.next() // consume first _
 	default:
 		return token.TEXT, s.scanText()
 	}
@@ -209,8 +212,14 @@ func (s *scanner) scanGraveAccents() string {
 // scanText scans until an inline element delimiter, line feed, or EOF.
 func (s *scanner) scanText() string {
 	offs := s.offs
-	for s.ch != '\n' && s.ch > 0 {
-		s.next()
+Loop:
+	for {
+		switch {
+		case s.ch == 0, s.ch == '\n', s.ch == '_' && s.peek() == '_':
+			break Loop
+		default:
+			s.next()
+		}
 	}
 	return s.src[offs:s.offs]
 }

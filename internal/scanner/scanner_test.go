@@ -38,6 +38,7 @@ func TestScanner_Scan(t *testing.T) {
 
 		{"|", token.VLINE, "|"},
 		{">", token.GT, ">"},
+		{"a", token.TEXT, "a"},
 	}
 
 	for _, c := range cases {
@@ -456,6 +457,153 @@ func TestNoDedent(t *testing.T) {
 			test(t, c.src, c.tokenPairs)
 		})
 	}
+}
+
+func TestGreaterThan(t *testing.T) {
+	cases := []struct {
+		src           string
+		tokenLiterals []tl
+	}{
+		{">", []tl{{token.GT, ">"}}},
+		{
+			">>",
+			[]tl{
+				{token.GT, ">"},
+				{token.GT, ">"},
+			},
+		},
+		{
+			"> >",
+			[]tl{
+				{token.GT, ">"},
+				{token.INDENT, " "},
+				{token.GT, ">"},
+			},
+		},
+		{
+			">a>",
+			[]tl{
+				{token.GT, ">"},
+				{token.TEXT, "a>"},
+			},
+		},
+		{
+			"> a >",
+			[]tl{
+				{token.GT, ">"},
+				{token.INDENT, " "},
+				{token.TEXT, "a >"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenLiterals)
+		})
+	}
+
+}
+
+func TestGraveAccents(t *testing.T) {
+	cases := []struct {
+		src           string
+		tokenLiterals []tl
+	}{
+		{"``", []tl{{token.GRAVEACCENTS, "``"}}},
+		{"```", []tl{{token.GRAVEACCENTS, "```"}}},
+		{"``````````", []tl{{token.GRAVEACCENTS, "``````````"}}},
+		{
+			"`` ``",
+			[]tl{
+				{token.GRAVEACCENTS, "``"},
+				{token.INDENT, " "},
+				{token.GRAVEACCENTS, "``"},
+			},
+		},
+		{
+			"``\n``",
+			[]tl{
+				{token.GRAVEACCENTS, "``"},
+				{token.LINEFEED, "\n"},
+				{token.GRAVEACCENTS, "``"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenLiterals)
+		})
+	}
+
+}
+
+func TestNoGraveAccents(t *testing.T) {
+	cases := []struct {
+		src           string
+		tokenLiterals []tl
+	}{
+		{"`", []tl{{token.TEXT, "`"}}},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenLiterals)
+		})
+	}
+
+}
+
+func TestUnderscores(t *testing.T) {
+	cases := []struct {
+		src           string
+		tokenLiterals []tl
+	}{
+		{"__", []tl{{token.UNDERSCORES, "__"}}},
+		{
+			"__a",
+			[]tl{
+				{token.UNDERSCORES, "__"},
+				{token.TEXT, "a"},
+			},
+		},
+		{
+			"a__",
+			[]tl{
+				{token.TEXT, "a"},
+				{token.UNDERSCORES, "__"},
+			},
+		},
+		{
+			"_a_",
+			[]tl{
+				{token.TEXT, "_a_"},
+			},
+		},
+		{
+			"|__",
+			[]tl{
+				{token.VLINE, "|"},
+				{token.UNDERSCORES, "__"},
+			},
+		},
+		{
+			"|a__",
+			[]tl{
+				{token.VLINE, "|"},
+				{token.TEXT, "a"},
+				{token.UNDERSCORES, "__"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenLiterals)
+		})
+	}
+
 }
 
 // token-literal pair struct

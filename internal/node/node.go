@@ -32,3 +32,13 @@ type CodeBlock struct {
 }
 
 func (cb *CodeBlock) block() {}
+
+type Inline interface {
+	inline()
+}
+
+type Emphasis struct {
+	Children []Inline
+}
+
+func (e *Emphasis) inline() {}
