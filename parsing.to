@@ -64,7 +64,7 @@ TEXT      "b"
 EOF       ""
 ''
 
-+ example parsing steps
++ parsing
 ''
 open blocks=[]
 token=VLINE literal="|" -> parse paragraph (
@@ -102,6 +102,7 @@ token=VLINE literal="|" -> parse paragraph (
 )
 ''
 
++ paragraph in list item
 ''
 - a
  | b
@@ -115,4 +116,137 @@ VLINE     "|"
 INDENT    " "
 TEXT      "b"
 EOF       ""
+''
+
+### Fenced Block Elements
+
++ code block
+``to
+= Title
+``
+
+``abnf
+fenced = DELIM [head] LINEFEED [body] DELIM
+head   = TEXT
+body   = TEXT
+``
+
+Fenced element starts and ends with the same delimiter; number of characters in the delimiters must be the same. The head spans from the opening delimiter until a LINE FEED. The body spans from after the head's LINE FEED until the closing delimiter. The head and the body contain only raw content.
+
++ code block in paragraph
+``to
+|a
+|``metadata
+|b
+|``c
+``
+
++ code block in paragraph tokens
+''
+VLINE         "|"
+TEXT          "a"
+LINEFEED      "\n"
+VLINE         "|"
+GRAVEACCENTS  "``"
+TEXT          "metadata"
+LINEFEED      "\n"
+VLINE         "|"
+TEXT          "b"
+LINEFEED      "\n"
+VLINE         "|"
+GRAVEACCENTS  "``"
+TEXT          "c"
+EOF           ""
+''
+
++ parsing
+''
+open blocks=[]
+token=VLINE literal="|" -> parse paragraph (
+	open blocks=[VLINE "|"]
+	token=TEXT literal="a" -> parse lines (
+		open blocks=[VLINE "|"]
+		token=TEXT literal="a" -> parse line (
+			return "a"
+		)
+		token=LINEFEED literal="\n" -> continues (
+			copy=[VLINE "|"]
+			bottom=VLINE "|"
+			token=VLINE literal="|" -> equals bottom, continue
+			copy=[] -> empty, return true
+		)
+		token=GRAVEACCENTS literal="``" -> not TEXT, return ["a"]
+	)
+	token=GRAVEACCENTS literal="``" -> parse code block (
+		literals=[]
+		token=TEXT literal="metadata" -> push to literals
+		token=LINEFEED literal="\n" -> continues (
+			copy=[VLINE "|"]
+			bottom=VLINE "|"
+			token=VLINE literal="|" -> equals bottom, continue
+			copy=[] -> empty, return true
+		)
+		token=TEXT literal="b" -> push to literals
+		token=LINEFEED literal="\n" -> continues (same)
+		token=GRAVEACCENTS literal="``" -> token matchs the opening delimiter (
+			head consists of elements in literals until the first "\n"
+			body consists of elements in literals after the first "\n"
+		)
+		return head and body
+	)
+	token=TEXT literal="c" -> parse lines (
+		token=TEXT literal="c" -> parse line (
+			return "c"
+		)
+		token=EOF -> return ["c"]
+	)
+	return paragraph
+)
+''
+
++ code block represented in code block
+```a
+``b
+c
+``
+```
+
++ code block represented in code block tokens
+''
+GRAVEACCENTS  "```"
+TEXT          "a"
+LINEFEED      "\n"
+GRAVEACCENTS  "``"
+TEXT          "b"
+LINEFEED      "\n"
+TEXT          "c"
+LINEFEED      "\n"
+GRAVEACCENTS  "``"
+LINEFEED      "\n"
+GRAVEACCENTS  "```"
+EOF           ""
+''
+
++ parsing
+''
+open blocks=[] // stays empty until end
+token=GRAVEACCENTS literal="```" -> parse code block (
+	literals=[]
+	token=TEXT literal="a" -> push to literals
+	token=LINEFEED literal="\n" -> continues (
+		open blocks=[] -> return true	
+	)
+	token=GRAVEACCENTS literal="``" -> push to literals
+	token=TEXT literal="b" -> push to literals
+	token=LINEFEED literal="\n" -> continues (same)
+	token=TEXT literal="c" -> push to literals
+	token=LINEFEED literal="\n" -> continues (same)
+	token=GRAVEACCENTS literal="``" -> push to literals
+	token=LINEFEED literal="\n" -> continues (same)
+	token=GRAVEACCENTS literal="```" -> token matchs the opening delimiter (
+		head consists of elements in literals until the first "\n"
+		body consists of elements in literals after the first "\n"
+	)
+	return head and body
+)
 ''

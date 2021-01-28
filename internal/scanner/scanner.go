@@ -165,6 +165,9 @@ skip:
 	case s.ch == '>':
 		tok = token.GT
 		lit = string(s.ch)
+	case s.ch == '`':
+		tok = token.GRAVEACCENTS
+		lit = s.scanGraveAccents()
 	default:
 		return token.TEXT, s.scanText()
 	}
@@ -192,6 +195,14 @@ func (s *scanner) scanComment() string {
 		s.next()
 	}
 
+	return s.src[offs:s.offs]
+}
+
+func (s *scanner) scanGraveAccents() string {
+	offs := s.offs
+	for s.ch == '`' {
+		s.next()
+	}
 	return s.src[offs:s.offs]
 }
 

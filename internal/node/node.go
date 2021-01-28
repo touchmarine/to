@@ -25,3 +25,10 @@ type ListItem struct {
 }
 
 func (li ListItem) block() {}
+
+type CodeBlock struct {
+	Head string
+	Body string
+}
+
+func (cb *CodeBlock) block() {}

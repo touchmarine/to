@@ -63,6 +63,8 @@ skip:
 		p.openBlocks = append(p.openBlocks, tl{p.tok, p.lit})
 		p.next()
 		goto skip
+	case p.tok == token.GRAVEACCENTS:
+		block = p.parseCodeBlock()
 	case p.tok == token.VLINE:
 		block = p.parseParagraph()
 	case p.tok == token.GT:
@@ -82,7 +84,7 @@ skip:
 			break
 		}
 
-		if b != p.openBlocks[i] {
+		if b.tok != p.openBlocks[i].tok {
 			cont = false
 			break
 		}
@@ -113,7 +115,7 @@ func (p *Parser) parseListItem() *node.ListItem {
 		p.dumpOpenBlocks()
 	}
 
-	p.next() // consume "-"
+	p.next() // consume HYPEN
 
 	var children []node.Block
 	for {
@@ -121,7 +123,7 @@ func (p *Parser) parseListItem() *node.ListItem {
 			break
 		}
 
-		if p.tok == token.LINEFEED && !p.continues() {
+		if p.tok == token.LINEFEED && !p.continues(false) {
 			break
 		}
 
@@ -149,7 +151,7 @@ func (p *Parser) parseBlockquote() *node.Blockquote {
 		p.dumpOpenBlocks()
 	}
 
-	p.next() // consume ">"
+	p.next() // consume GT
 
 	var children []node.Block
 	for {
@@ -157,7 +159,7 @@ func (p *Parser) parseBlockquote() *node.Blockquote {
 			break
 		}
 
-		if p.tok == token.LINEFEED && !p.continues() {
+		if p.tok == token.LINEFEED && !p.continues(false) {
 			break
 		}
 
@@ -185,7 +187,7 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 		p.dumpOpenBlocks()
 	}
 
-	p.next() // consume "|"
+	p.next() // consume VLINE
 
 	var children []node.Block
 	for {
@@ -193,7 +195,7 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 			break
 		}
 
-		if p.tok == token.LINEFEED && !p.continues() {
+		if p.tok == token.LINEFEED && !p.continues(false) {
 			break
 		}
 
@@ -210,6 +212,70 @@ func (p *Parser) parseParagraph() *node.Paragraph {
 
 	return &node.Paragraph{
 		Children: children,
+	}
+}
+
+func (p *Parser) parseCodeBlock() *node.CodeBlock {
+	if trace {
+		defer p.trace("parseCodeBlock")()
+	}
+
+	tok, lit := p.tok, p.lit // save delimiter
+	p.next()                 // consume GRAVEACCENTS
+
+	var literals []string
+	for {
+		if p.tok == token.EOF {
+			break
+		}
+
+		if p.tok == tok && p.lit == lit {
+			p.next() // consume closing delimiter
+			break
+		}
+
+		literals = append(literals, p.lit)
+
+		if p.tok == token.LINEFEED {
+			if !p.continues(true) {
+				break
+			}
+			continue
+		}
+
+		p.next()
+	}
+
+	// add to head until the first "\n"
+	inHead := true
+	var hb, bb strings.Builder
+	for _, l := range literals {
+		if inHead {
+			if l == "\n" {
+				inHead = false
+				continue
+			}
+			hb.WriteString(l)
+			continue
+		}
+
+		bb.WriteString(l)
+	}
+
+	head := hb.String()
+	body := bb.String()
+
+	if trace {
+		p.print("return")
+		p.indent++
+		p.print("Head: " + strconv.Quote(head))
+		p.print("Body: " + strconv.Quote(body))
+		p.indent--
+	}
+
+	return &node.CodeBlock{
+		Head: head,
+		Body: body,
 	}
 }
 
@@ -234,7 +300,7 @@ func (p *Parser) parseLines() node.Lines {
 		}
 
 		if p.tok == token.LINEFEED {
-			if !p.continues() {
+			if !p.continues(false) {
 				break
 			}
 
@@ -257,27 +323,38 @@ func (p *Parser) parseLines() node.Lines {
 
 // continues determines whether the current block continues.
 //
-// If there are no open blocks, only text returns true as only the Lines block
-// does not have a delimiter. Otherwise, compare the current token to the bottom
-// of the open blocks:
+// The raw argument tells continues that it is parsing raw content and as such
+// only parent delimiters must be at the start of the line for the block to
+// continue. Any following delimiters are then already part of the raw content.
+//
+// If no blocks are open, we are parsing lines and only inline delimiters return
+// true. Otherwise, compare the current token to the bottom  of the open blocks:
 //	If equal, compare the next token. Return true if there are no more open
 //	blocks left.
 //	If not equal, pop the current and following blocks from the open blocks,
 //	and return false.
-func (p *Parser) continues() bool {
+func (p *Parser) continues(raw bool) bool {
 	if p.tok != token.LINEFEED {
 		panic(fmt.Sprintf("parser.continues: token %s is not LINEFEED", p.tok))
 	}
 
 	p.next() // consume LINEFEED
 
-	// only text can continue the lines block
+	// only inline delims can continue lines
 	blocks := p.openBlocks
 	if len(blocks) == 0 {
+		if raw {
+			return true
+		}
 		return p.tok == token.TEXT
 	}
 
-	for i := 0; len(blocks) > 0; i++ {
+	var i int
+	for {
+		if len(blocks) == 0 {
+			return true
+		}
+
 		bot := blocks[0]
 		if bot.tok != p.tok {
 			p.openBlocks = p.openBlocks[:i]
@@ -294,10 +371,10 @@ func (p *Parser) continues() bool {
 		}
 
 		blocks = blocks[1:]
+
+		i++
 		p.next()
 	}
-
-	return true
 }
 
 func countIndent(s string) uint {
@@ -316,12 +393,12 @@ func countIndent(s string) uint {
 }
 
 func (p *Parser) parseLine() string {
-	var line string
+	var b strings.Builder
 	for p.tok == token.TEXT {
-		line += p.lit
+		b.WriteString(p.lit)
 		p.next()
 	}
-	return line
+	return b.String()
 }
 
 func (p *Parser) dumpOpenBlocks() {

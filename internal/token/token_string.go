@@ -15,12 +15,13 @@ func _() {
 	_ = x[VLINE-4]
 	_ = x[GT-5]
 	_ = x[HYPEN-6]
-	_ = x[TEXT-7]
+	_ = x[GRAVEACCENTS-7]
+	_ = x[TEXT-8]
 }
 
-const _Token_name = "EOFLINEFEEDINDENTCOMMENTVLINEGTHYPENTEXT"
+const _Token_name = "EOFLINEFEEDINDENTCOMMENTVLINEGTHYPENGRAVEACCENTSTEXT"
 
-var _Token_index = [...]uint8{0, 3, 11, 17, 24, 29, 31, 36, 40}
+var _Token_index = [...]uint8{0, 3, 11, 17, 24, 29, 31, 36, 48, 52}
 
 func (i Token) String() string {
 	if i >= Token(len(_Token_index)-1) {

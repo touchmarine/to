@@ -10,8 +10,9 @@ const (
 	INDENT         // tab or space
 	COMMENT        // //-comment
 
-	VLINE // vertical line "|"
-	GT    // greater-than sign ">"
-	HYPEN // hypen-minus "-"
-	TEXT  // text
+	VLINE        // vertical line "|"
+	GT           // greater-than sign ">"
+	HYPEN        // hypen-minus "-"
+	GRAVEACCENTS // "`"
+	TEXT         // text
 )
