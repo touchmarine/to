@@ -71,8 +71,8 @@ skip:
 		block = p.parseBlockquote()
 	case p.tok == token.HYPEN:
 		block = p.parseListItem()
-	case p.tok == token.TEXT:
-		block = p.parseLines()
+	case p.tok == token.UNDERSCORES, p.tok == token.TEXT:
+		block = p.parseLine()
 	default:
 		panic("parser.parseBlock: unsupported token " + p.tok.String())
 	}
@@ -279,48 +279,6 @@ func (p *Parser) parseCodeBlock() *node.CodeBlock {
 	}
 }
 
-func (p *Parser) parseLines() node.Lines {
-	if trace {
-		defer p.trace("parseLines")()
-		p.dumpOpenBlocks()
-	}
-
-	if len(p.openBlocks) > 1 {
-		top1 := p.openBlocks[len(p.openBlocks)-1]
-		top2 := p.openBlocks[len(p.openBlocks)-2]
-		if top1.tok == token.INDENT && top2.tok == token.INDENT {
-			p.openBlocks = p.openBlocks[:len(p.openBlocks)-1]
-		}
-	}
-
-	var lines node.Lines
-	for {
-		if p.tok == token.EOF {
-			break
-		}
-
-		if p.tok == token.LINEFEED {
-			if !p.continues(false) {
-				break
-			}
-
-			// only text can continue lines
-			if p.tok != token.TEXT {
-				break
-			}
-		}
-
-		line := p.parseLine()
-		lines = append(lines, line)
-	}
-
-	if trace {
-		p.dump("return\n", []node.Block{lines})
-	}
-
-	return lines
-}
-
 // continues determines whether the current block continues.
 //
 // The raw argument tells continues that it is parsing raw content and as such
@@ -340,13 +298,13 @@ func (p *Parser) continues(raw bool) bool {
 
 	p.next() // consume LINEFEED
 
-	// only inline delims can continue lines
 	blocks := p.openBlocks
 	if len(blocks) == 0 {
 		if raw {
 			return true
 		}
-		return p.tok == token.TEXT
+		// only inline delims can continue lines
+		return p.tok == token.UNDERSCORES || p.tok == token.TEXT
 	}
 
 	var i int
@@ -377,6 +335,44 @@ func (p *Parser) continues(raw bool) bool {
 	}
 }
 
+func (p *Parser) parseLine() *node.Line {
+	if trace {
+		defer p.trace("parseLine")()
+		p.dumpOpenBlocks()
+	}
+
+	if len(p.openBlocks) > 1 {
+		top1 := p.openBlocks[len(p.openBlocks)-1]
+		top2 := p.openBlocks[len(p.openBlocks)-2]
+		if top1.tok == token.INDENT && top2.tok == token.INDENT {
+			p.openBlocks = p.openBlocks[:len(p.openBlocks)-1]
+		}
+	}
+
+	var children []node.Inline
+	for {
+		if p.tok == token.EOF {
+			break
+		}
+
+		if p.tok == token.LINEFEED {
+			p.continues(false) // handle open blocks
+			break
+		}
+
+		inline := p.parseInline()
+		if inline == nil {
+			panic("parse.parseLine: nil inline")
+		}
+
+		children = append(children, inline)
+	}
+
+	return &node.Line{
+		Children: children,
+	}
+}
+
 func countIndent(s string) uint {
 	var indent uint
 	for i := 0; i < len(s); i++ {
@@ -392,13 +388,47 @@ func countIndent(s string) uint {
 	return indent
 }
 
-func (p *Parser) parseLine() string {
-	var b strings.Builder
-	for p.tok == token.TEXT {
-		b.WriteString(p.lit)
+func (p *Parser) parseInline() node.Inline {
+	if trace {
+		p.trace("parseInline")()
+	}
+
+	var inline node.Inline
+	switch p.tok {
+	case token.UNDERSCORES:
+		p.parseEmphasis()
+	case token.TEXT:
+		inline = node.Text(p.lit)
+		p.next()
+	default:
+		panic("parser.parseLine: unsupported token " + p.tok.String())
+	}
+
+	return inline
+}
+
+func (p *Parser) parseEmphasis() *node.Emphasis {
+	if trace {
+		p.trace("parseEmphasis")()
+	}
+
+	var children []node.Inline
+	for {
+		if p.tok == token.LINEFEED || p.tok == token.EOF {
+			break
+		}
+
+		if p.tok == token.UNDERSCORES {
+			break
+		}
+
+		children = append(children, p.parseInline())
 		p.next()
 	}
-	return b.String()
+
+	return &node.Emphasis{
+		Children: children,
+	}
 }
 
 func (p *Parser) dumpOpenBlocks() {

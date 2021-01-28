@@ -10,16 +10,6 @@ type Blockquote struct {
 
 func (bq *Blockquote) block() {}
 
-type Paragraph struct {
-	Children []Block
-}
-
-func (p *Paragraph) block() {}
-
-type Lines []string
-
-func (p Lines) block() {}
-
 type ListItem struct {
 	Children []Block
 }
@@ -33,6 +23,18 @@ type CodeBlock struct {
 
 func (cb *CodeBlock) block() {}
 
+type Paragraph struct {
+	Children []Block
+}
+
+func (p *Paragraph) block() {}
+
+type Line struct {
+	Children []Inline
+}
+
+func (p Line) block() {}
+
 type Inline interface {
 	inline()
 }
@@ -42,3 +44,7 @@ type Emphasis struct {
 }
 
 func (e *Emphasis) inline() {}
+
+type Text string
+
+func (t Text) inline() {}

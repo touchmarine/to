@@ -57,10 +57,10 @@ func (p *Printer) printBlock(block node.Block, isLast bool) {
 		p.printBlockquote(n, isLast)
 	case *node.Paragraph:
 		p.printParagraph(n, isLast)
-	case node.Lines:
-		p.printLines(n, isLast)
+	case *node.Line:
+		p.printLine(n, isLast)
 	default:
-		panic(fmt.Sprintf("printer.printBlock: unsupported block type %T", block))
+		panic(fmt.Sprintf("printer.printBlock: unsupported block type %T", n))
 	}
 }
 
@@ -85,13 +85,37 @@ func (p *Printer) printParagraph(para *node.Paragraph, isLast bool) {
 	p.printBlocks(para.Children)
 }
 
-func (p *Printer) printLines(lines node.Lines, isLast bool) {
-	defer p.open("Lines", len(lines) == 0, isLast)()
-	for i, line := range lines {
-		if i > 0 {
-			p.print("\n")
-		}
-		p.printf("%s", strconv.Quote(line))
+func (p *Printer) printLine(line *node.Line, isLast bool) {
+	defer p.open("Line", len(line.Children) == 0, isLast)()
+	p.printInlines(line.Children)
+}
+
+func (p *Printer) printInlines(inlines []node.Inline) {
+	for _, inline := range inlines {
+		p.printInline(inline)
+	}
+}
+
+func (p *Printer) printInline(inline node.Inline) {
+	switch n := inline.(type) {
+	case *node.Emphasis:
+		p.printEmphasis(n)
+	case node.Text:
+		p.print(strconv.Quote(string(n)))
+	default:
+		panic(fmt.Sprintf("printer.printInline: unsupported inline type %T", n))
+	}
+}
+
+func (p *Printer) printEmphasis(em *node.Emphasis) {
+	defer p.openInline("Emphasis")()
+	p.printInlines(em.Children)
+}
+
+func (p *Printer) openInline(name string) func() {
+	p.print(name + "(")
+	return func() {
+		p.print(")")
 	}
 }
 

@@ -33,8 +33,10 @@ func TestParse_Parse(t *testing.T) {
 							[]node.Block{
 								&node.Blockquote{
 									[]node.Block{
-										node.Lines{
-											"a",
+										&node.Line{
+											[]node.Inline{
+												node.Text("a"),
+											},
 										},
 									},
 								},
@@ -42,13 +44,17 @@ func TestParse_Parse(t *testing.T) {
 						},
 					},
 				},
-				node.Lines{
-					"b",
+				&node.Line{
+					[]node.Inline{
+						node.Text("b"),
+					},
 				},
 				&node.Paragraph{
 					[]node.Block{
-						node.Lines{
-							"c",
+						&node.Line{
+							[]node.Inline{
+								node.Text("c"),
+							},
 						},
 					},
 				},
@@ -71,18 +77,24 @@ func TestParse_Parse(t *testing.T) {
 			[]node.Block{
 				&node.Paragraph{
 					[]node.Block{
-						node.Lines{
-							"a",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
 						},
 						&node.Blockquote{
 							[]node.Block{
-								node.Lines{
-									"b",
+								&node.Line{
+									[]node.Inline{
+										node.Text("b"),
+									},
 								},
 								&node.Paragraph{
 									[]node.Block{
-										node.Lines{
-											"c",
+										&node.Line{
+											[]node.Inline{
+												node.Text("c"),
+											},
 										},
 									},
 								},
@@ -110,15 +122,19 @@ func TestParse_Parse(t *testing.T) {
 			[]node.Block{
 				&node.Paragraph{
 					[]node.Block{
-						node.Lines{
-							"a",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
 						},
 						&node.Blockquote{
 							[]node.Block{
 								&node.Paragraph{
 									[]node.Block{
-										node.Lines{
-											"c",
+										&node.Line{
+											[]node.Inline{
+												node.Text("c"),
+											},
 										},
 									},
 								},
@@ -126,8 +142,10 @@ func TestParse_Parse(t *testing.T) {
 						},
 					},
 				},
-				node.Lines{
-					"d",
+				&node.Line{
+					[]node.Inline{
+						node.Text("d"),
+					},
 				},
 			},
 		},
@@ -179,8 +197,10 @@ func TestParse_Parse(t *testing.T) {
 									[]node.Block{
 										&node.Paragraph{
 											[]node.Block{
-												node.Lines{
-													"a",
+												&node.Line{
+													[]node.Inline{
+														node.Text("a"),
+													},
 												},
 												&node.Blockquote{},
 											},
@@ -189,8 +209,10 @@ func TestParse_Parse(t *testing.T) {
 								},
 							},
 						},
-						node.Lines{
-							"b",
+						&node.Line{
+							[]node.Inline{
+								node.Text("b"),
+							},
 						},
 					},
 				},
@@ -230,25 +252,25 @@ func TestParse_Parse(t *testing.T) {
 				{token.TEXT, "g"},
 			},
 			[]node.Block{
-				node.Lines{"a"},
+				&node.Line{[]node.Inline{node.Text("a")}},
 				&node.Paragraph{
 					[]node.Block{
-						node.Lines{"b"},
+						&node.Line{[]node.Inline{node.Text("b")}},
 						&node.Blockquote{
 							[]node.Block{
-								node.Lines{"c"},
+								&node.Line{[]node.Inline{node.Text("c")}},
 								&node.Paragraph{
 									[]node.Block{
-										node.Lines{"d"},
+										&node.Line{[]node.Inline{node.Text("d")}},
 									},
 								},
-								node.Lines{"e"},
+								&node.Line{[]node.Inline{node.Text("e")}},
 							},
 						},
-						node.Lines{"f"},
+						&node.Line{[]node.Inline{node.Text("f")}},
 					},
 				},
-				node.Lines{"g"},
+				&node.Line{[]node.Inline{node.Text("g")}},
 			},
 		},
 	}
@@ -297,8 +319,10 @@ func TestParagraph(t *testing.T) {
 					[]node.Block{
 						&node.Paragraph{
 							[]node.Block{
-								node.Lines{
-									"a",
+								&node.Line{
+									[]node.Inline{
+										node.Text("a"),
+									},
 								},
 							},
 						},
@@ -316,8 +340,10 @@ func TestParagraph(t *testing.T) {
 			[]node.Block{
 				&node.Paragraph{
 					[]node.Block{
-						node.Lines{
-							"a",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
 						},
 					},
 				},
@@ -334,9 +360,15 @@ func TestParagraph(t *testing.T) {
 			[]node.Block{
 				&node.Paragraph{
 					[]node.Block{
-						node.Lines{
-							"a",
-							"b",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
+						},
+						&node.Line{
+							[]node.Inline{
+								node.Text("b"),
+							},
 						},
 					},
 				},
@@ -354,13 +386,17 @@ func TestParagraph(t *testing.T) {
 			[]node.Block{
 				&node.Paragraph{
 					[]node.Block{
-						node.Lines{
-							"a",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
 						},
 						&node.Paragraph{
 							[]node.Block{
-								node.Lines{
-									"b",
+								&node.Line{
+									[]node.Inline{
+										node.Text("b"),
+									},
 								},
 							},
 						},
@@ -385,18 +421,24 @@ func TestParagraph(t *testing.T) {
 			[]node.Block{
 				&node.Paragraph{
 					[]node.Block{
-						node.Lines{
-							"a",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
 						},
 						&node.Paragraph{
 							[]node.Block{
-								node.Lines{
-									"b",
+								&node.Line{
+									[]node.Inline{
+										node.Text("b"),
+									},
 								},
 								&node.Paragraph{
 									[]node.Block{
-										node.Lines{
-											"c",
+										&node.Line{
+											[]node.Inline{
+												node.Text("c"),
+											},
 										},
 									},
 								},
@@ -416,13 +458,17 @@ func TestParagraph(t *testing.T) {
 			[]node.Block{
 				&node.Paragraph{
 					[]node.Block{
-						node.Lines{
-							"a",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
 						},
 					},
 				},
-				node.Lines{
-					"b",
+				&node.Line{
+					[]node.Inline{
+						node.Text("b"),
+					},
 				},
 			},
 		},
@@ -439,15 +485,19 @@ func TestParagraph(t *testing.T) {
 					[]node.Block{
 						&node.Paragraph{
 							[]node.Block{
-								node.Lines{
-									"a",
+								&node.Line{
+									[]node.Inline{
+										node.Text("a"),
+									},
 								},
 							},
 						},
 					},
 				},
-				node.Lines{
-					"b",
+				&node.Line{
+					[]node.Inline{
+						node.Text("b"),
+					},
 				},
 			},
 		},
@@ -465,13 +515,17 @@ func TestParagraph(t *testing.T) {
 					[]node.Block{
 						&node.Paragraph{
 							[]node.Block{
-								node.Lines{
-									"a",
+								&node.Line{
+									[]node.Inline{
+										node.Text("a"),
+									},
 								},
 							},
 						},
-						node.Lines{
-							"b",
+						&node.Line{
+							[]node.Inline{
+								node.Text("b"),
+							},
 						},
 					},
 				},
@@ -498,18 +552,24 @@ func TestParagraph(t *testing.T) {
 							[]node.Block{
 								&node.Paragraph{
 									[]node.Block{
-										node.Lines{
-											"a",
+										&node.Line{
+											[]node.Inline{
+												node.Text("a"),
+											},
 										},
 									},
 								},
-								node.Lines{
-									"b",
+								&node.Line{
+									[]node.Inline{
+										node.Text("b"),
+									},
 								},
 							},
 						},
-						node.Lines{
-							"c",
+						&node.Line{
+							[]node.Inline{
+								node.Text("c"),
+							},
 						},
 					},
 				},
@@ -561,8 +621,10 @@ func TestBlockquote(t *testing.T) {
 					[]node.Block{
 						&node.Blockquote{
 							[]node.Block{
-								node.Lines{
-									"a",
+								&node.Line{
+									[]node.Inline{
+										node.Text("a"),
+									},
 								},
 							},
 						},
@@ -613,8 +675,10 @@ func TestListItem(t *testing.T) {
 			[]node.Block{
 				&node.ListItem{
 					[]node.Block{
-						node.Lines{
-							"a",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
 						},
 					},
 				},
@@ -631,8 +695,10 @@ func TestListItem(t *testing.T) {
 					[]node.Block{
 						&node.ListItem{
 							[]node.Block{
-								node.Lines{
-									"a",
+								&node.Line{
+									[]node.Inline{
+										node.Text("a"),
+									},
 								},
 							},
 						},
@@ -651,15 +717,19 @@ func TestListItem(t *testing.T) {
 			[]node.Block{
 				&node.ListItem{
 					[]node.Block{
-						node.Lines{
-							"a",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
 						},
 					},
 				},
 				&node.ListItem{
 					[]node.Block{
-						node.Lines{
-							"b",
+						&node.Line{
+							[]node.Inline{
+								node.Text("b"),
+							},
 						},
 					},
 				},
@@ -675,12 +745,14 @@ func TestListItem(t *testing.T) {
 			[]node.Block{
 				&node.ListItem{
 					[]node.Block{
-						node.Lines{
-							"a",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
 						},
 					},
 				},
-				node.Lines{"b"},
+				&node.Line{[]node.Inline{node.Text("b")}},
 			},
 		},
 		{
@@ -695,12 +767,14 @@ func TestListItem(t *testing.T) {
 			[]node.Block{
 				&node.ListItem{
 					[]node.Block{
-						node.Lines{
-							"a",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
 						},
 					},
 				},
-				node.Lines{"b"},
+				&node.Line{[]node.Inline{node.Text("b")}},
 			},
 		},
 		{
@@ -714,9 +788,15 @@ func TestListItem(t *testing.T) {
 			[]node.Block{
 				&node.ListItem{
 					[]node.Block{
-						node.Lines{
-							"a",
-							"b",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
+						},
+						&node.Line{
+							[]node.Inline{
+								node.Text("b"),
+							},
 						},
 					},
 				},
@@ -733,9 +813,15 @@ func TestListItem(t *testing.T) {
 			[]node.Block{
 				&node.ListItem{
 					[]node.Block{
-						node.Lines{
-							"a",
-							"b",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
+						},
+						&node.Line{
+							[]node.Inline{
+								node.Text("b"),
+							},
 						},
 					},
 				},
@@ -753,9 +839,15 @@ func TestListItem(t *testing.T) {
 			[]node.Block{
 				&node.ListItem{
 					[]node.Block{
-						node.Lines{
-							"a",
-							"b",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
+						},
+						&node.Line{
+							[]node.Inline{
+								node.Text("b"),
+							},
 						},
 					},
 				},
@@ -773,12 +865,14 @@ func TestListItem(t *testing.T) {
 			[]node.Block{
 				&node.ListItem{
 					[]node.Block{
-						node.Lines{
-							"a",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
 						},
 						&node.ListItem{
 							[]node.Block{
-								node.Lines{"b"},
+								&node.Line{[]node.Inline{node.Text("b")}},
 							},
 						},
 					},
@@ -802,9 +896,15 @@ func TestListItem(t *testing.T) {
 					[]node.Block{
 						&node.ListItem{
 							[]node.Block{
-								node.Lines{
-									"a",
-									"b",
+								&node.Line{
+									[]node.Inline{
+										node.Text("a"),
+									},
+								},
+								&node.Line{
+									[]node.Inline{
+										node.Text("b"),
+									},
 								},
 							},
 						},
@@ -826,10 +926,10 @@ func TestListItem(t *testing.T) {
 			[]node.Block{
 				&node.ListItem{
 					[]node.Block{
-						node.Lines{"a"},
+						&node.Line{[]node.Inline{node.Text("a")}},
 						&node.Paragraph{
 							[]node.Block{
-								node.Lines{"b"},
+								&node.Line{[]node.Inline{node.Text("b")}},
 							},
 						},
 					},
@@ -1062,17 +1162,63 @@ func TestCodeBlock(t *testing.T) {
 			[]node.Block{
 				&node.Paragraph{
 					[]node.Block{
-						node.Lines{
-							"a",
+						&node.Line{
+							[]node.Inline{
+								node.Text("a"),
+							},
 						},
 						&node.CodeBlock{
 							Head: "metadata",
 							Body: "b\n",
 						},
-						node.Lines{
-							"c",
+						&node.Line{
+							[]node.Inline{
+								node.Text("c"),
+							},
 						},
 					},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		var name string
+		for _, pair := range c.tokens {
+			name += pair.lit
+		}
+
+		t.Run(literal(name), func(t *testing.T) {
+			test(t, c.tokens, c.blocks)
+		})
+	}
+}
+
+func TestLine(t *testing.T) {
+	cases := []struct {
+		tokens []tl
+		blocks []node.Block
+	}{
+		{
+			[]tl{{token.TEXT, "a"}},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{node.Text("a")},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+				{token.TEXT, "b"},
+			},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{node.Text("a")},
+				},
+				&node.Line{
+					[]node.Inline{node.Text("b")},
 				},
 			},
 		},
