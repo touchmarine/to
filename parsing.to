@@ -1,8 +1,6 @@
 = Parsing
 
-## Scanning
-
-### Identation
+## Identation
 
 Leading spacing (CHARACTER TABULATION and SPACE) generates INDENT tokens:
 
@@ -21,9 +19,7 @@ TEXT      "b"
 EOF       ""
 ``
 
-## Parsing
-
-### Offside Block Elements
+## Offside Block Elements
 
 + list item
 ``to
@@ -118,7 +114,7 @@ TEXT      "b"
 EOF       ""
 ''
 
-### Fenced Block Elements
+## Fenced Block Elements
 
 + code block
 ``to
@@ -250,3 +246,68 @@ token=GRAVEACCENTS literal="```" -> parse code block (
 	return head and body
 )
 ''
+
+## Escaped Inline Elements
+
+Escaped element delimiters consists of two US-ASCII punctuation characters; a delimiter and an escape character. The delimiter character determines the element. The escape character is used to escape characters in element's content, which is raw.
+
+An opening delimiter is of form ``<delimiter character><escape character>`` and closing delimiter of form ``<escape character><delimiter character>``. The opening and closing delimiters of an element must have the same characters. If a character in the opneing delimiter is a left/right character and has a left/right counterpart, the left/right counterpart character must be used in the closing delimiter.
+
+```to
+`(left/right parentheses)` // code
+<<lefit/right brackets>>   // link
+```
+
+By allowing the escape character to be any punctuation character we get some conflicts which hopefully should not be too common; if we place an escaped element delimiter before or after a puncutation character, the first two characters might denote another element rather than the one we wanted:
+
+``to
+`__ // code delimiter with content "_", not "`" followed by emphasis
+__` // emphasis folowed by "`", not "_" followed by code closing delimiter
+``
+
+In such cases, we can use escape sequences to alter the behaviour.
+
+An easy way to parse escaped elements would be to parse them in the scanner, like comments. The following example:
+
+```to
+``code``
+```
+
+would produce the following tokens:
+
+''
+CODE  "``code``"
+''
+
+But the above example actually represents a code block as the delimiter is at the start of a line/block and blocks take precedence over inlines. A simple solution would be to have some kind of a block escape implemented in the scanner, for example ``\``:
+
+``to
+\``code``
+``
+
+The problem with this approach is that we do not know whether we are at the start of a line/block in the scanner. Let us leave this job for the parser as it is actually parsing and keeps track of context.
+
++ code elements
+``to
+\``code`` // some kind of block escape
+`*code*`
+``
+
++ code element tokens
+''
+BLOCKESCAPE   "\"
+GRAVEACCENTS  "``"
+TEXT          "code"
+GRAVEACCENTS  "``"
+LINEFEED      "\n"
+// GA=grave accent, PUNCT=punctuation
+GAPUNCT       "`*"
+TEXT          "code"
+PUNCTGA       "*`"
+''
+
+If a GAPUNCT token or a GRAVEACCENTS token inside inline, parse until a matching closing delimiter (with reversed position of the delimiter and escape characters), LINE FEED, or EOF. Concatenate the literal values of the tokens in between the delimiters.
+
+## Composite Inline Elements
+
+Composite elements are very similar to escaped elements but can contain multiple parts separated by a separator which consists of the opening delimiter's escape character followed by the closing delimiter's escape character. Parts can contain other elements or be raw. Each part should be available as raw and normal content. Parsing is basically the same as for escaped elements but save the encountered tokens and literals whenever a separator is encountered not just at the end.

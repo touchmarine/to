@@ -606,6 +606,54 @@ func TestUnderscores(t *testing.T) {
 
 }
 
+func TestGraveAccentPunctuation(t *testing.T) {
+	cases := []struct {
+		src           string
+		tokenLiterals []tl
+	}{
+		{"`*", []tl{{token.GAPUNCT, "`*"}}},
+		{"`_", []tl{{token.GAPUNCT, "`_"}}},
+		{
+			"a`{",
+			[]tl{
+				{token.TEXT, "a"},
+				{token.GAPUNCT, "`{"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenLiterals)
+		})
+	}
+
+}
+
+func TestPuncutationGraveAccent(t *testing.T) {
+	cases := []struct {
+		src           string
+		tokenLiterals []tl
+	}{
+		{"*`", []tl{{token.PUNCTGA, "*`"}}},
+		{"_`", []tl{{token.PUNCTGA, "_`"}}},
+		{
+			"a}`",
+			[]tl{
+				{token.TEXT, "a"},
+				{token.PUNCTGA, "}`"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenLiterals)
+		})
+	}
+
+}
+
 // token-literal pair struct
 type tl struct {
 	tok token.Token

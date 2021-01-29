@@ -167,6 +167,14 @@ skip:
 		lit = string(s.ch)
 	case s.ch == '`' && s.peek() == '`':
 		return token.GRAVEACCENTS, s.scanGraveAccents()
+	case s.ch == '`' && isPunct(s.peek()):
+		tok = token.GAPUNCT
+		lit = s.src[s.offs : s.offs+2]
+		s.next() // consume first character
+	case isPunct(s.ch) && s.peek() == '`':
+		tok = token.PUNCTGA
+		lit = s.src[s.offs : s.offs+2]
+		s.next() // consume first character
 	case s.ch == '_' && s.peek() == '_':
 		tok = token.UNDERSCORES
 		lit = s.src[s.offs : s.offs+2]
@@ -212,14 +220,25 @@ func (s *scanner) scanGraveAccents() string {
 // scanText scans until an inline element delimiter, line feed, or EOF.
 func (s *scanner) scanText() string {
 	offs := s.offs
-Loop:
 	for {
-		switch {
-		case s.ch == 0, s.ch == '\n', s.ch == '_' && s.peek() == '_':
-			break Loop
-		default:
-			s.next()
+		if s.ch == '\n' || s.ch == 0 {
+			break
 		}
+
+		if s.ch == '_' && s.peek() == '_' ||
+			s.ch == '`' && isPunct(s.peek()) ||
+			isPunct(s.ch) && s.peek() == '`' {
+			break
+		}
+
+		s.next()
 	}
 	return s.src[offs:s.offs]
+}
+
+func isPunct(ch byte) bool {
+	return ch >= 0x20 && ch <= 0x2F ||
+		ch >= 0x3A && ch <= 0x40 ||
+		ch >= 0x5B && ch <= 0x60 ||
+		ch >= 0x7B && ch <= 0x7E
 }

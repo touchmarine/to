@@ -19,5 +19,7 @@ const (
 
 	// inline
 	UNDERSCORES // "_"
+	GAPUNCT     // grave accent "`" + punctuation
+	PUNCTGA     // punctuation + grave accent "`"
 	TEXT        // text
 )
