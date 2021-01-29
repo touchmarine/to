@@ -1236,6 +1236,115 @@ func TestLine(t *testing.T) {
 	}
 }
 
+func TestEmphasis(t *testing.T) {
+	cases := []struct {
+		tokens []tl
+		blocks []node.Block
+	}{
+		{
+			[]tl{{token.UNDERSCORES, "__"}},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{&node.Emphasis{}},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.UNDERSCORES, "__"},
+				{token.TEXT, "a"},
+			},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{
+						&node.Emphasis{
+							[]node.Inline{
+								node.Text("a"),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.UNDERSCORES, "__"},
+				{token.TEXT, "a"},
+				{token.UNDERSCORES, "__"},
+			},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{
+						&node.Emphasis{
+							[]node.Inline{
+								node.Text("a"),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.UNDERSCORES, "__"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+			},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{
+						&node.Emphasis{
+							[]node.Inline{
+								node.Text("a"),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.TEXT, "a"},
+				{token.UNDERSCORES, "__"},
+			},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{
+						node.Text("a"),
+						&node.Emphasis{},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.VLINE, "|"},
+				{token.UNDERSCORES, "__"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						&node.Line{
+							[]node.Inline{&node.Emphasis{}},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		var name string
+		for _, pair := range c.tokens {
+			name += pair.lit
+		}
+
+		t.Run(literal(name), func(t *testing.T) {
+			test(t, c.tokens, c.blocks)
+		})
+	}
+}
+
 // token-literal pair struct
 type tl struct {
 	tok token.Token

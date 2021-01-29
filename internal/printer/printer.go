@@ -24,6 +24,13 @@ func PrintIndented(blocks []node.Block, indent uint) string {
 	return b.String()
 }
 
+// PrintInlines returns a pretty string representation of inlines.
+func PrintInlines(inlines []node.Inline) string {
+	var b strings.Builder
+	New(&b).PrintInlines(inlines)
+	return b.String()
+}
+
 // Printer holds the printing state.
 type Printer struct {
 	w      io.StringWriter
@@ -38,6 +45,12 @@ func New(w io.StringWriter) *Printer {
 // Print writes a pretty string representation of blocks to the printer writer.
 func (p *Printer) Print(blocks []node.Block) {
 	p.printBlocks(blocks)
+}
+
+// PrintInlines writes a pretty string representation of inlines to the printer
+// writer.
+func (p *Printer) PrintInlines(inlines []node.Inline) {
+	p.printInlines(inlines)
 }
 
 func (p *Printer) printBlocks(blocks []node.Block) {
@@ -65,33 +78,36 @@ func (p *Printer) printBlock(block node.Block, isLast bool) {
 }
 
 func (p *Printer) printCodeBlock(cb *node.CodeBlock, isLast bool) {
-	defer p.open("CodeBlock", false, isLast)()
+	defer p.openi("CodeBlock", false, isLast)()
 	p.println("Head: " + strconv.Quote(cb.Head))
-	p.print("Body: " + strconv.Quote(cb.Body))
+	p.printi("Body: " + strconv.Quote(cb.Body))
 }
 
 func (p *Printer) printListItem(li *node.ListItem, isLast bool) {
-	defer p.open("ListItem", len(li.Children) == 0, isLast)()
+	defer p.openi("ListItem", len(li.Children) == 0, isLast)()
 	p.printBlocks(li.Children)
 }
 
 func (p *Printer) printBlockquote(bq *node.Blockquote, isLast bool) {
-	defer p.open("Blockquote", len(bq.Children) == 0, isLast)()
+	defer p.openi("Blockquote", len(bq.Children) == 0, isLast)()
 	p.printBlocks(bq.Children)
 }
 
 func (p *Printer) printParagraph(para *node.Paragraph, isLast bool) {
-	defer p.open("Paragraph", len(para.Children) == 0, isLast)()
+	defer p.openi("Paragraph", len(para.Children) == 0, isLast)()
 	p.printBlocks(para.Children)
 }
 
 func (p *Printer) printLine(line *node.Line, isLast bool) {
-	defer p.open("Line", len(line.Children) == 0, isLast)()
+	defer p.open("Line")()
 	p.printInlines(line.Children)
 }
 
 func (p *Printer) printInlines(inlines []node.Inline) {
-	for _, inline := range inlines {
+	for i, inline := range inlines {
+		if i > 0 {
+			p.print(" ")
+		}
 		p.printInline(inline)
 	}
 }
@@ -108,20 +124,14 @@ func (p *Printer) printInline(inline node.Inline) {
 }
 
 func (p *Printer) printEmphasis(em *node.Emphasis) {
-	defer p.openInline("Emphasis")()
+	defer p.open("Emphasis")()
 	p.printInlines(em.Children)
 }
 
-func (p *Printer) openInline(name string) func() {
-	p.print(name + "(")
-	return func() {
-		p.print(")")
-	}
-}
-
-func (p *Printer) open(name string, isEmpty, isLast bool) func() {
+// openi is is like open but indented.
+func (p *Printer) openi(name string, isEmpty, isLast bool) func() {
 	if isEmpty {
-		p.print(name + "()")
+		p.printi(name + "()")
 		return func() {}
 	}
 
@@ -130,22 +140,30 @@ func (p *Printer) open(name string, isEmpty, isLast bool) func() {
 
 	return func() {
 		p.indent--
-		p.print("\n") // printed separately because of indentation
-		p.print(")")
+		p.printi("\n") // printed separately because of indentation
+		p.printi(")")
 		if !isLast {
-			p.print("\n")
+			p.printi("\n")
 		}
 	}
 }
 
-func (p *Printer) printf(format string, a interface{}) {
-	p.print(fmt.Sprintf(format, a))
+func (p *Printer) open(name string) func() {
+	p.printi(name + "(")
+	return func() {
+		p.print(")")
+	}
+}
+
+// printi is like print but indented.
+func (p *Printer) printi(s string) {
+	p.print(strings.Repeat("\t", int(p.indent)) + s)
 }
 
 func (p *Printer) println(s string) {
-	p.print(s + "\n")
+	p.printi(s + "\n")
 }
 
 func (p *Printer) print(s string) {
-	p.w.WriteString(strings.Repeat("\t", int(p.indent)) + s)
+	p.w.WriteString(s)
 }

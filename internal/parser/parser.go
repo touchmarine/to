@@ -335,6 +335,21 @@ func (p *Parser) continues(raw bool) bool {
 	}
 }
 
+func countIndent(s string) uint {
+	var indent uint
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '\t':
+			indent += 8
+		case ' ':
+			indent++
+		default:
+			panic("parser.countIndent: unexpected char in indent")
+		}
+	}
+	return indent
+}
+
 func (p *Parser) parseLine() *node.Line {
 	if trace {
 		defer p.trace("parseLine")()
@@ -368,35 +383,24 @@ func (p *Parser) parseLine() *node.Line {
 		children = append(children, inline)
 	}
 
+	if trace {
+		p.dumpInlines("return ", children)
+	}
+
 	return &node.Line{
 		Children: children,
 	}
 }
 
-func countIndent(s string) uint {
-	var indent uint
-	for i := 0; i < len(s); i++ {
-		switch s[i] {
-		case '\t':
-			indent += 8
-		case ' ':
-			indent++
-		default:
-			panic("parser.countIndent: unexpected char in indent")
-		}
-	}
-	return indent
-}
-
 func (p *Parser) parseInline() node.Inline {
 	if trace {
-		p.trace("parseInline")()
+		defer p.trace("parseInline")()
 	}
 
 	var inline node.Inline
 	switch p.tok {
 	case token.UNDERSCORES:
-		p.parseEmphasis()
+		inline = p.parseEmphasis()
 	case token.TEXT:
 		inline = node.Text(p.lit)
 		p.next()
@@ -404,13 +408,19 @@ func (p *Parser) parseInline() node.Inline {
 		panic("parser.parseLine: unsupported token " + p.tok.String())
 	}
 
+	if trace {
+		p.dumpInlines("return ", []node.Inline{inline})
+	}
+
 	return inline
 }
 
 func (p *Parser) parseEmphasis() *node.Emphasis {
 	if trace {
-		p.trace("parseEmphasis")()
+		defer p.trace("parseEmphasis")()
 	}
+
+	p.next() // consume opening
 
 	var children []node.Inline
 	for {
@@ -419,11 +429,15 @@ func (p *Parser) parseEmphasis() *node.Emphasis {
 		}
 
 		if p.tok == token.UNDERSCORES {
+			p.next() // consume closing
 			break
 		}
 
 		children = append(children, p.parseInline())
-		p.next()
+	}
+
+	if trace {
+		p.dumpInlines("return ", children)
 	}
 
 	return &node.Emphasis{
@@ -460,6 +474,10 @@ func (p *Parser) trace(msg string) func() {
 
 func (p *Parser) dump(msg string, blocks []node.Block) {
 	p.print(msg + printer.PrintIndented(blocks, p.indent+1))
+}
+
+func (p *Parser) dumpInlines(msg string, inlines []node.Inline) {
+	p.print(msg + printer.PrintInlines(inlines))
 }
 
 func (p *Parser) printf(format string, a ...interface{}) {
