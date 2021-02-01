@@ -168,11 +168,11 @@ skip:
 	case s.ch == '`' && s.peek() == '`':
 		return token.GRAVEACCENTS, s.scanGraveAccents()
 	case s.ch == '`' && isPunct(s.peek()):
-		tok = token.GAPUNCT
+		tok = token.GAP
 		lit = s.src[s.offs : s.offs+2]
 		s.next() // consume first character
 	case isPunct(s.ch) && s.peek() == '`':
-		tok = token.PUNCTGA
+		tok = token.PAG
 		lit = s.src[s.offs : s.offs+2]
 		s.next() // consume first character
 	case s.ch == '_' && s.peek() == '_':

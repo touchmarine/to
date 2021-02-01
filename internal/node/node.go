@@ -39,6 +39,12 @@ type Inline interface {
 	inline()
 }
 
+type Code struct {
+	Content string
+}
+
+func (c *Code) inline() {}
+
 type Emphasis struct {
 	Children []Inline
 }

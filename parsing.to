@@ -300,13 +300,12 @@ GRAVEACCENTS  "``"
 TEXT          "code"
 GRAVEACCENTS  "``"
 LINEFEED      "\n"
-// GA=grave accent, PUNCT=punctuation
-GAPUNCT       "`*"
+GAP           "`*"    // grave accent + punct char
 TEXT          "code"
-PUNCTGA       "*`"
+PAG           "*`"    // punct char + grave accent
 ''
 
-If a GAPUNCT token or a GRAVEACCENTS token inside inline, parse until a matching closing delimiter (with reversed position of the delimiter and escape characters), LINE FEED, or EOF. Concatenate the literal values of the tokens in between the delimiters.
+If a GAP token or a GRAVEACCENTS token inside inline, parse until a matching closing delimiter (with reversed position of the delimiter and escape characters), LINE FEED, or EOF. Concatenate the literal values of the tokens in between the delimiters.
 
 ## Composite Inline Elements
 

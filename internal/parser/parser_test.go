@@ -1345,6 +1345,156 @@ func TestEmphasis(t *testing.T) {
 	}
 }
 
+func TestCode(t *testing.T) {
+	cases := []struct {
+		tokens []tl
+		blocks []node.Block
+	}{
+		{
+			[]tl{{token.GAP, "`*"}},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{&node.Code{}},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.GAP, "`*"},
+				{token.TEXT, "a"},
+			},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{
+						&node.Code{"a"},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.GAP, "`*"},
+				{token.TEXT, "a"},
+				{token.PAG, "*`"},
+			},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{
+						&node.Code{"a"},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.GAP, "`("},
+				{token.TEXT, "a"},
+				{token.PAG, ")`"},
+			},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{
+						&node.Code{"a"},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.GAP, "`*"},
+				{token.TEXT, "a"},
+				{token.LINEFEED, "\n"},
+			},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{
+						&node.Code{"a"},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.TEXT, "a"},
+				{token.GAP, "`*"},
+			},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{
+						node.Text("a"),
+						&node.Code{},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.TEXT, "a"},
+				{token.GRAVEACCENTS, "``"},
+			},
+			[]node.Block{
+				&node.Line{
+					[]node.Inline{
+						node.Text("a"),
+						&node.Code{},
+					},
+				},
+			},
+		},
+		{
+			[]tl{
+				{token.VLINE, "|"},
+				{token.GAP, "`*"},
+			},
+			[]node.Block{
+				&node.Paragraph{
+					[]node.Block{
+						&node.Line{
+							[]node.Inline{&node.Code{}},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		var name string
+		for _, pair := range c.tokens {
+			name += pair.lit
+		}
+
+		t.Run(literal(name), func(t *testing.T) {
+			test(t, c.tokens, c.blocks)
+		})
+	}
+}
+
+func TestNoCode(t *testing.T) {
+	cases := []struct {
+		tokens []tl
+		blocks []node.Block
+	}{
+		{
+			[]tl{{token.GRAVEACCENTS, "``"}},
+			[]node.Block{
+				&node.CodeBlock{},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		var name string
+		for _, pair := range c.tokens {
+			name += pair.lit
+		}
+
+		t.Run(literal(name), func(t *testing.T) {
+			test(t, c.tokens, c.blocks)
+		})
+	}
+}
+
 // token-literal pair struct
 type tl struct {
 	tok token.Token

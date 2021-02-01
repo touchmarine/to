@@ -17,14 +17,14 @@ func _() {
 	_ = x[HYPEN-6]
 	_ = x[GRAVEACCENTS-7]
 	_ = x[UNDERSCORES-8]
-	_ = x[GAPUNCT-9]
-	_ = x[PUNCTGA-10]
+	_ = x[GAP-9]
+	_ = x[PAG-10]
 	_ = x[TEXT-11]
 }
 
-const _Token_name = "EOFLINEFEEDINDENTCOMMENTVLINEGTHYPENGRAVEACCENTSUNDERSCORESGAPUNCTPUNCTGATEXT"
+const _Token_name = "EOFLINEFEEDINDENTCOMMENTVLINEGTHYPENGRAVEACCENTSUNDERSCORESGAPPAGTEXT"
 
-var _Token_index = [...]uint8{0, 3, 11, 17, 24, 29, 31, 36, 48, 59, 66, 73, 77}
+var _Token_index = [...]uint8{0, 3, 11, 17, 24, 29, 31, 36, 48, 59, 62, 65, 69}
 
 func (i Token) String() string {
 	if i >= Token(len(_Token_index)-1) {

@@ -611,13 +611,13 @@ func TestGraveAccentPunctuation(t *testing.T) {
 		src           string
 		tokenLiterals []tl
 	}{
-		{"`*", []tl{{token.GAPUNCT, "`*"}}},
-		{"`_", []tl{{token.GAPUNCT, "`_"}}},
+		{"`*", []tl{{token.GAP, "`*"}}},
+		{"`_", []tl{{token.GAP, "`_"}}},
 		{
 			"a`{",
 			[]tl{
 				{token.TEXT, "a"},
-				{token.GAPUNCT, "`{"},
+				{token.GAP, "`{"},
 			},
 		},
 	}
@@ -635,13 +635,13 @@ func TestPuncutationGraveAccent(t *testing.T) {
 		src           string
 		tokenLiterals []tl
 	}{
-		{"*`", []tl{{token.PUNCTGA, "*`"}}},
-		{"_`", []tl{{token.PUNCTGA, "_`"}}},
+		{"*`", []tl{{token.PAG, "*`"}}},
+		{"_`", []tl{{token.PAG, "_`"}}},
 		{
 			"a}`",
 			[]tl{
 				{token.TEXT, "a"},
-				{token.PUNCTGA, "}`"},
+				{token.PAG, "}`"},
 			},
 		},
 	}

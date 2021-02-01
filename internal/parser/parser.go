@@ -71,7 +71,7 @@ skip:
 		block = p.parseBlockquote()
 	case p.tok == token.HYPEN:
 		block = p.parseListItem()
-	case p.tok == token.UNDERSCORES, p.tok == token.TEXT:
+	case isInlineDelim(p.tok):
 		block = p.parseLine()
 	default:
 		panic("parser.parseBlock: unsupported token " + p.tok.String())
@@ -304,7 +304,7 @@ func (p *Parser) continues(raw bool) bool {
 			return true
 		}
 		// only inline delims can continue lines
-		return p.tok == token.UNDERSCORES || p.tok == token.TEXT
+		return isInlineDelim(p.tok)
 	}
 
 	var i int
@@ -333,6 +333,10 @@ func (p *Parser) continues(raw bool) bool {
 		i++
 		p.next()
 	}
+}
+
+func isInlineDelim(tok token.Token) bool {
+	return tok == token.GAP || tok == token.UNDERSCORES || tok == token.TEXT
 }
 
 func countIndent(s string) uint {
@@ -399,6 +403,8 @@ func (p *Parser) parseInline() node.Inline {
 
 	var inline node.Inline
 	switch p.tok {
+	case token.GAP, token.GRAVEACCENTS:
+		inline = p.parseCode()
 	case token.UNDERSCORES:
 		inline = p.parseEmphasis()
 	case token.TEXT:
@@ -413,6 +419,68 @@ func (p *Parser) parseInline() node.Inline {
 	}
 
 	return inline
+}
+
+func (p *Parser) parseCode() *node.Code {
+	if trace {
+		defer p.trace("parseCode")()
+	}
+
+	var tok token.Token
+	switch p.tok {
+	case token.GRAVEACCENTS:
+		tok = p.tok
+	case token.GAP:
+		tok = token.PAG
+	default:
+		panic("parser.parseCode: unexpected token " + p.tok.String())
+	}
+
+	if len(p.lit) != 2 {
+		panic("parser.parseCode: literal " + p.lit + " is not 2 characters long")
+	}
+
+	delimCh := string(p.lit[0])
+	var escapeCh string
+	switch p.lit[1] {
+	case '(':
+		escapeCh = ")"
+	case '<':
+		escapeCh = ">"
+	case '[':
+		escapeCh = "]"
+	case '{':
+		escapeCh = "}"
+	default:
+		escapeCh = string(p.lit[1])
+	}
+
+	lit := escapeCh + delimCh
+
+	p.next() // consume opening
+
+	var b strings.Builder
+	for {
+		if p.tok == token.LINEFEED || p.tok == token.EOF {
+			break
+		}
+
+		if p.tok == tok && p.lit == lit {
+			p.next() // consume closing
+			break
+		}
+
+		b.WriteString(p.lit)
+		p.next()
+	}
+
+	if trace {
+		p.print("return " + b.String())
+	}
+
+	return &node.Code{
+		Content: b.String(),
+	}
 }
 
 func (p *Parser) parseEmphasis() *node.Emphasis {

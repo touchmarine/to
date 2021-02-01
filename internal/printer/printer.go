@@ -114,6 +114,8 @@ func (p *Printer) printInlines(inlines []node.Inline) {
 
 func (p *Printer) printInline(inline node.Inline) {
 	switch n := inline.(type) {
+	case *node.Code:
+		p.printCode(n)
 	case *node.Emphasis:
 		p.printEmphasis(n)
 	case node.Text:
@@ -121,6 +123,11 @@ func (p *Printer) printInline(inline node.Inline) {
 	default:
 		panic(fmt.Sprintf("printer.printInline: unsupported inline type %T", n))
 	}
+}
+
+func (p *Printer) printCode(code *node.Code) {
+	defer p.open("Code")()
+	p.print(strconv.Quote(code.Content))
 }
 
 func (p *Printer) printEmphasis(em *node.Emphasis) {
