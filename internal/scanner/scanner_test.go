@@ -560,11 +560,11 @@ func TestUnderscores(t *testing.T) {
 		src           string
 		tokenLiterals []tl
 	}{
-		{"__", []tl{{token.UNDERSCORES, "__"}}},
+		{"__", []tl{{token.LOWLINES, "__"}}},
 		{
 			"__a",
 			[]tl{
-				{token.UNDERSCORES, "__"},
+				{token.LOWLINES, "__"},
 				{token.TEXT, "a"},
 			},
 		},
@@ -572,7 +572,7 @@ func TestUnderscores(t *testing.T) {
 			"a__",
 			[]tl{
 				{token.TEXT, "a"},
-				{token.UNDERSCORES, "__"},
+				{token.LOWLINES, "__"},
 			},
 		},
 		{
@@ -585,7 +585,7 @@ func TestUnderscores(t *testing.T) {
 			"|__",
 			[]tl{
 				{token.VLINE, "|"},
-				{token.UNDERSCORES, "__"},
+				{token.LOWLINES, "__"},
 			},
 		},
 		{
@@ -593,7 +593,7 @@ func TestUnderscores(t *testing.T) {
 			[]tl{
 				{token.VLINE, "|"},
 				{token.TEXT, "a"},
-				{token.UNDERSCORES, "__"},
+				{token.LOWLINES, "__"},
 			},
 		},
 	}
@@ -642,6 +642,114 @@ func TestPuncutationGraveAccent(t *testing.T) {
 			[]tl{
 				{token.TEXT, "a"},
 				{token.PAG, "}`"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenLiterals)
+		})
+	}
+
+}
+
+func TestLessThanSignPuncutation(t *testing.T) {
+	cases := []struct {
+		src           string
+		tokenLiterals []tl
+	}{
+		{"<<", []tl{{token.LTP, "<<"}}},
+		{"<*", []tl{{token.LTP, "<*"}}},
+		{"<_", []tl{{token.LTP, "<_"}}},
+		{
+			"a<{",
+			[]tl{
+				{token.TEXT, "a"},
+				{token.LTP, "<{"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenLiterals)
+		})
+	}
+
+}
+
+func TestPuncutationLessThanSign(t *testing.T) {
+	cases := []struct {
+		src           string
+		tokenLiterals []tl
+	}{
+		{"*>", []tl{{token.PTL, "*>"}}},
+		{"_>", []tl{{token.PTL, "_>"}}},
+		{
+			"a}>",
+			[]tl{
+				{token.TEXT, "a"},
+				{token.PTL, "}>"},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenLiterals)
+		})
+	}
+
+}
+
+func TestNoPuncutationLessThanSign(t *testing.T) {
+	cases := []struct {
+		src           string
+		tokenLiterals []tl
+	}{
+		{">>", []tl{
+			{token.GT, ">"},
+			{token.GT, ">"},
+		}},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenLiterals)
+		})
+	}
+
+}
+
+func TestDoublePuncutation(t *testing.T) {
+	cases := []struct {
+		src           string
+		tokenLiterals []tl
+	}{
+		{"**", []tl{{token.DPUNCT, "**"}}},
+	}
+
+	for _, c := range cases {
+		t.Run(literal(c.src), func(t *testing.T) {
+			test(t, c.src, c.tokenLiterals)
+		})
+	}
+
+}
+
+func TestNoDoublePuncutation(t *testing.T) {
+	cases := []struct {
+		src           string
+		tokenLiterals []tl
+	}{
+		{"<>", []tl{{token.LTP, "<>"}}},
+		{"__", []tl{{token.LOWLINES, "__"}}},
+		{
+			"a}>",
+			[]tl{
+				{token.TEXT, "a"},
+				{token.PTL, "}>"},
 			},
 		},
 	}

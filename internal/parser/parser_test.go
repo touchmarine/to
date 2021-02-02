@@ -1242,7 +1242,7 @@ func TestEmphasis(t *testing.T) {
 		blocks []node.Block
 	}{
 		{
-			[]tl{{token.UNDERSCORES, "__"}},
+			[]tl{{token.LOWLINES, "__"}},
 			[]node.Block{
 				&node.Line{
 					[]node.Inline{&node.Emphasis{}},
@@ -1251,7 +1251,7 @@ func TestEmphasis(t *testing.T) {
 		},
 		{
 			[]tl{
-				{token.UNDERSCORES, "__"},
+				{token.LOWLINES, "__"},
 				{token.TEXT, "a"},
 			},
 			[]node.Block{
@@ -1268,9 +1268,9 @@ func TestEmphasis(t *testing.T) {
 		},
 		{
 			[]tl{
-				{token.UNDERSCORES, "__"},
+				{token.LOWLINES, "__"},
 				{token.TEXT, "a"},
-				{token.UNDERSCORES, "__"},
+				{token.LOWLINES, "__"},
 			},
 			[]node.Block{
 				&node.Line{
@@ -1286,7 +1286,7 @@ func TestEmphasis(t *testing.T) {
 		},
 		{
 			[]tl{
-				{token.UNDERSCORES, "__"},
+				{token.LOWLINES, "__"},
 				{token.TEXT, "a"},
 				{token.LINEFEED, "\n"},
 			},
@@ -1305,7 +1305,7 @@ func TestEmphasis(t *testing.T) {
 		{
 			[]tl{
 				{token.TEXT, "a"},
-				{token.UNDERSCORES, "__"},
+				{token.LOWLINES, "__"},
 			},
 			[]node.Block{
 				&node.Line{
@@ -1319,7 +1319,7 @@ func TestEmphasis(t *testing.T) {
 		{
 			[]tl{
 				{token.VLINE, "|"},
-				{token.UNDERSCORES, "__"},
+				{token.LOWLINES, "__"},
 			},
 			[]node.Block{
 				&node.Paragraph{

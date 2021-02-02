@@ -18,8 +18,11 @@ const (
 	GRAVEACCENTS // "`"
 
 	// inline
-	UNDERSCORES // "_"
-	GAP         // grave accent "`" + punctuation
-	PAG         // punctuation + grave accent "`"
-	TEXT        // text
+	LOWLINES // "_"
+	GAP      // grave accent "`" + punctuation
+	PAG      // punctuation + grave accent "`"
+	LTP      // less-than sign "<" + puncutation
+	PTL      // punctuation + less-than sign "<"
+	DPUNCT   // double punctuation "**", "<>", ...
+	TEXT     // text
 )

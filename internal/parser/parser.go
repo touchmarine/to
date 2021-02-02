@@ -336,7 +336,7 @@ func (p *Parser) continues(raw bool) bool {
 }
 
 func isInlineDelim(tok token.Token) bool {
-	return tok == token.GAP || tok == token.UNDERSCORES || tok == token.TEXT
+	return tok == token.GAP || tok == token.LOWLINES || tok == token.TEXT
 }
 
 func countIndent(s string) uint {
@@ -405,7 +405,7 @@ func (p *Parser) parseInline() node.Inline {
 	switch p.tok {
 	case token.GAP, token.GRAVEACCENTS:
 		inline = p.parseCode()
-	case token.UNDERSCORES:
+	case token.LOWLINES:
 		inline = p.parseEmphasis()
 	case token.TEXT:
 		inline = node.Text(p.lit)
@@ -441,21 +441,14 @@ func (p *Parser) parseCode() *node.Code {
 	}
 
 	delimCh := string(p.lit[0])
-	var escapeCh string
-	switch p.lit[1] {
-	case '(':
-		escapeCh = ")"
-	case '<':
-		escapeCh = ">"
-	case '[':
-		escapeCh = "]"
-	case '{':
-		escapeCh = "}"
-	default:
-		escapeCh = string(p.lit[1])
+	var cEscapeCh string // closing escape character
+	if cp, ok := scanner.CounterpartPunct[p.lit[1]]; ok {
+		cEscapeCh = string(cp)
+	} else {
+		cEscapeCh = string(p.lit[1])
 	}
 
-	lit := escapeCh + delimCh
+	lit := cEscapeCh + delimCh
 
 	p.next() // consume opening
 
@@ -496,7 +489,7 @@ func (p *Parser) parseEmphasis() *node.Emphasis {
 			break
 		}
 
-		if p.tok == token.UNDERSCORES {
+		if p.tok == token.LOWLINES {
 			p.next() // consume closing
 			break
 		}

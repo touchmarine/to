@@ -170,21 +170,50 @@ skip:
 	case s.ch == '`' && isPunct(s.peek()):
 		tok = token.GAP
 		lit = s.src[s.offs : s.offs+2]
-		s.next() // consume first character
+		s.next()
 	case isPunct(s.ch) && s.peek() == '`':
 		tok = token.PAG
 		lit = s.src[s.offs : s.offs+2]
-		s.next() // consume first character
-	case s.ch == '_' && s.peek() == '_':
-		tok = token.UNDERSCORES
+		s.next()
+	case s.ch == '<' && isPunct(s.peek()):
+		tok = token.LTP
 		lit = s.src[s.offs : s.offs+2]
-		s.next() // consume first _
+		s.next()
+	case isPunct(s.ch) && s.peek() == '>':
+		tok = token.PTL
+		lit = s.src[s.offs : s.offs+2]
+		s.next()
+	case s.ch == '_' && s.peek() == '_':
+		tok = token.LOWLINES
+		lit = s.src[s.offs : s.offs+2]
+		s.next()
 	default:
+		if isPunct(s.ch) && isPunct(s.peek()) {
+			if cp, ok := CounterpartPunct[s.ch]; !ok || ok && s.peek() == cp {
+				tok = token.DPUNCT
+				lit = s.src[s.offs : s.offs+2]
+				s.next()
+				s.next()
+				return tok, lit
+			}
+		}
+
 		return token.TEXT, s.scanText()
 	}
 
 	s.next()
 	return tok, lit
+}
+
+var CounterpartPunct = map[byte]byte{
+	'(': ')',
+	')': '(',
+	'<': '>',
+	'>': '<',
+	'[': ']',
+	']': '[',
+	'{': '}',
+	'}': '{',
 }
 
 // scanIndent scans spacing.
@@ -227,7 +256,9 @@ func (s *scanner) scanText() string {
 
 		if s.ch == '_' && s.peek() == '_' ||
 			s.ch == '`' && isPunct(s.peek()) ||
-			isPunct(s.ch) && s.peek() == '`' {
+			isPunct(s.ch) && s.peek() == '`' ||
+			s.ch == '<' && isPunct(s.peek()) ||
+			isPunct(s.ch) && s.peek() == '>' {
 			break
 		}
 
@@ -237,7 +268,8 @@ func (s *scanner) scanText() string {
 }
 
 func isPunct(ch byte) bool {
-	return ch >= 0x20 && ch <= 0x2F ||
+	// no space
+	return ch >= 0x21 && ch <= 0x2F ||
 		ch >= 0x3A && ch <= 0x40 ||
 		ch >= 0x5B && ch <= 0x60 ||
 		ch >= 0x7B && ch <= 0x7E
