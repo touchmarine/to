@@ -1,56 +1,62 @@
 package node
 
-type Block interface {
-	block()
+//go:generate stringer -type=Type
+type Type uint
+
+// Types of nodes
+const (
+	// blocks
+	TypeWalled Type = iota
+
+	// inlines
+	TypeText
+)
+
+type Node interface {
+	Node() (string, Type)
 }
 
-type Blockquote struct {
-	Children []Block
+type NodeChildren interface {
+	Node
+	Children() []Node
 }
 
-func (bq *Blockquote) block() {}
-
-type ListItem struct {
-	Children []Block
+type block struct {
+	name     string
+	typ      Type
+	children []Node
 }
 
-func (li ListItem) block() {}
-
-type CodeBlock struct {
-	Head string
-	Body string
+func NewBlock(name string, typ Type, children []Node) Node {
+	return &block{name, typ, children}
 }
 
-func (cb *CodeBlock) block() {}
-
-type Paragraph struct {
-	Children []Block
+func (b block) Node() (string, Type) {
+	return b.name, b.typ
 }
 
-func (p *Paragraph) block() {}
-
-type Line struct {
-	Children []Inline
+func (b *block) Children() []Node {
+	return b.children
 }
 
-func (p Line) block() {}
+type Text []byte
 
-type Inline interface {
-	inline()
+func (t Text) Node() (string, Type) {
+	return "Text", TypeText
 }
 
-type Code struct {
-	Content string
+//go:generate stringer -type=Category
+type Category uint
+
+// Categories of nodes
+const (
+	CategoryBlock Category = iota
+	CategoryInline
+)
+
+func TypeCategory(typ Type) Category {
+	if typ > 0 {
+		return CategoryInline
+	}
+	return CategoryBlock
 }
-
-func (c *Code) inline() {}
-
-type Emphasis struct {
-	Children []Inline
-}
-
-func (e *Emphasis) inline() {}
-
-type Text string
-
-func (t Text) inline() {}

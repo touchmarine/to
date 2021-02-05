@@ -1,0 +1,32 @@
+% Title Refactor2
+% Date  February 2, 2021
+
+= Refactor2
+_ Abstract parser and remove scanner
+
+.tableOfContents
+
+== Abstract
+
+Abstract parser by parsing type of elements, not directly parsing each element. Remove scanner as tokens are pretty useless in our case and increase complexity. The problem is that for almost every token we would need context which is not something a scanner should keep track of.
+
+Extend elements described in refactor1.
+
+## Block Elements
+
+### Line
+
+Line elements span from a delimiter until a LINE FEED or EOF.
+
+Line elements are denoted by a delimiter at the start of a line or another block. They cannot span more than a single line. Content after the delimiter should be discarded.
+
++ Thematic Break
+``to
+--
+``
+
+## Escapes
+
+Backslash "\" escapes the character placed after it.
+
+Paragraph, a walled block element denoted by a vertical line "|", can contain only lines and acts as a block escape.
