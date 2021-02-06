@@ -39,8 +39,9 @@ type parser struct {
 	scnr   *bufio.Scanner // line scanner
 
 	// parsing
-	ln []byte // current line excluding EOL
-	ch rune   // current character
+	ln      []byte // current line excluding EOL
+	ch      rune   // current character
+	isFirst bool   // is first character
 
 	blockElems map[rune]Element // map of block elements by delimiter
 
@@ -64,6 +65,7 @@ func (p *parser) register(elems []Element) {
 			}
 
 			p.blockElems[el.Delimiter] = el
+
 		default:
 			panic("parser.register: unexpected node category " + categ.String())
 		}
@@ -125,6 +127,7 @@ func (p *parser) parseLine() node.Text {
 
 func (p *parser) init(r io.Reader) {
 	p.scnr = bufio.NewScanner(r)
+	p.isFirst = true
 }
 
 func (p *parser) nextln() bool {
@@ -141,19 +144,48 @@ func (p *parser) nextln() bool {
 	return cont
 }
 
-var ErrInvalidUTF8Encoding = errors.New("invalid UTF-8 encoding")
+// Encoding errors
+var (
+	ErrInvalidUTF8Encoding = errors.New("invalid UTF-8 encoding")
+	ErrIllegalNULL         = errors.New("illegal character NULL")
+	ErrIllegalBOM          = errors.New("illegal byte order mark")
+)
 
 func (p *parser) nextch() bool {
+skip:
 	r, w := utf8.DecodeRune(p.ln)
-	if r == utf8.RuneError {
+
+	var ch rune
+	switch r {
+	case utf8.RuneError: // encoding error
 		if w == 0 {
-			// empty p.ln
+			// p.ln is empty if r == utf8.RuneError && w == 0
 			return false
 		} else if w == 1 {
 			p.error(ErrInvalidUTF8Encoding)
+			ch = utf8.RuneError
 		}
+	case '\u0000': // NULL
+		p.error(ErrIllegalNULL)
+		ch = utf8.RuneError
+	case '\uFEFF': // BOM
+		if p.isFirst {
+			// skip BOM if first character
+			p.ln = p.ln[w:]
+			goto skip
+		} else {
+			p.error(ErrIllegalBOM)
+			ch = utf8.RuneError
+		}
+	default:
+		ch = r
 	}
-	p.ch = r
+
+	if p.isFirst {
+		p.isFirst = false
+	}
+
+	p.ch = ch
 	p.ln = p.ln[w:]
 	return true
 }
