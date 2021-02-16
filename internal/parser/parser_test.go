@@ -16,7 +16,64 @@ func TestLine(t *testing.T) {
 	}{
 		{
 			"a",
-			[]node.Node{node.Text("a")},
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text("a")}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
+func TestWalled(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"|",
+			[]node.Node{&node.Walled{"Paragraph", nil}},
+		},
+		{
+			"||",
+			[]node.Node{
+				&node.Walled{"Paragraph", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("|")}},
+				}},
+			},
+		},
+		{
+			"|a",
+			[]node.Node{
+				&node.Walled{"Paragraph", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
+
+		{
+			">",
+			[]node.Node{&node.Walled{"Blockquote", nil}},
+		},
+		{
+			">>",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			">a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+			},
 		},
 	}
 
@@ -38,17 +95,29 @@ func TestInvalidUTF8Encoding(t *testing.T) {
 		{
 			"at the beginning",
 			fcb + "a",
-			[]node.Node{node.Text(string(unicode.ReplacementChar) + "a")},
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text(string(unicode.ReplacementChar) + "a"),
+				},
+				}},
 		},
 		{
 			"in the middle",
 			"a" + fcb + "b",
-			[]node.Node{node.Text("a" + string(unicode.ReplacementChar) + "b")},
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a" + string(unicode.ReplacementChar) + "b"),
+				},
+				}},
 		},
 		{
 			"in the end",
 			"a" + fcb,
-			[]node.Node{node.Text("a" + string(unicode.ReplacementChar))},
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a" + string(unicode.ReplacementChar)),
+				},
+				}},
 		},
 	}
 
@@ -70,17 +139,29 @@ func TestNULL(t *testing.T) {
 		{
 			"at the beginning",
 			null + "a",
-			[]node.Node{node.Text(string(unicode.ReplacementChar) + "a")},
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text(string(unicode.ReplacementChar) + "a"),
+				},
+				}},
 		},
 		{
 			"in the middle",
 			"a" + null + "b",
-			[]node.Node{node.Text("a" + string(unicode.ReplacementChar) + "b")},
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a" + string(unicode.ReplacementChar) + "b"),
+				},
+				}},
 		},
 		{
 			"in the end",
 			"a" + null,
-			[]node.Node{node.Text("a" + string(unicode.ReplacementChar))},
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a" + string(unicode.ReplacementChar)),
+				},
+				}},
 		},
 	}
 
@@ -98,7 +179,11 @@ func TestBOM(t *testing.T) {
 		test(
 			t,
 			bom+"a",
-			[]node.Node{node.Text("a")},
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+				},
+				}},
 			nil,
 		)
 	})
@@ -111,12 +196,20 @@ func TestBOM(t *testing.T) {
 		{
 			"in the middle",
 			"a" + bom + "b",
-			[]node.Node{node.Text("a" + string(unicode.ReplacementChar) + "b")},
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a" + string(unicode.ReplacementChar) + "b"),
+				},
+				}},
 		},
 		{
 			"in the end",
 			"a" + bom,
-			[]node.Node{node.Text("a" + string(unicode.ReplacementChar))},
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a" + string(unicode.ReplacementChar)),
+				},
+				}},
 		},
 	}
 
@@ -156,7 +249,7 @@ func test(t *testing.T, in string, out []node.Node, expectedErrors []error) {
 		}
 	}
 
-	got, want := stringifier.Stringify(nodes...), stringifier.Stringify(out...)
+	got, want := stringifier.Stringify(node.BlocksToNodes(nodes)...), stringifier.Stringify(out...)
 	if got != want {
 		t.Errorf("\ngot\n%s\nwant\n%s", got, want)
 	}

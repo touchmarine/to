@@ -15,10 +15,10 @@ import (
 const trace = false
 
 type Element struct {
-	Name                  string
-	Type                  node.Type
-	Delimiter             rune
-	DisallowBlockChildren bool
+	Name             string
+	Type             node.Type
+	Delimiter        rune
+	OnlyLineChildren bool
 }
 
 var DefaultElements = []Element{
@@ -26,11 +26,11 @@ var DefaultElements = []Element{
 	{"Blockquote", node.TypeWalled, '>', false},
 }
 
-func Parse(r io.Reader) ([]node.Node, []error) {
+func Parse(r io.Reader) ([]node.Block, []error) {
 	var p parser
 	p.register(DefaultElements)
 	p.init(r)
-	return p.parse(), p.errors
+	return p.parse(false), p.errors
 }
 
 // parser holds the parsing state.
@@ -46,7 +46,7 @@ type parser struct {
 	blockElems map[rune]Element // map of block elements by delimiter
 
 	// tracing
-	tindent uint // trace indentation
+	tindent int // trace indentation
 }
 
 func (p *parser) register(elems []Element) {
@@ -55,7 +55,7 @@ func (p *parser) register(elems []Element) {
 	}
 
 	for _, el := range elems {
-		switch categ := node.Category(el.Type); categ {
+		switch categ := node.TypeCategory(el.Type); categ {
 		case node.CategoryBlock:
 			if _, ok := p.blockElems[el.Delimiter]; ok {
 				log.Fatalf(
@@ -67,52 +67,77 @@ func (p *parser) register(elems []Element) {
 			p.blockElems[el.Delimiter] = el
 
 		default:
-			panic("parser.register: unexpected node category " + categ.String())
+			panic(fmt.Sprintf(
+				"parser.register: unexpected node category %s (element=%q, delimiter=%q)",
+				categ.String(),
+				el.Name,
+				el.Delimiter,
+			))
 		}
 	}
 }
 
-func (p *parser) parse() []node.Node {
-	var nodes []node.Node
-
+func (p *parser) parse(l bool) []node.Block {
+	var blocks []node.Block
 	for p.nextln() {
-		if el, ok := p.blockElems[p.ch]; ok {
-			var n node.Node
+		blocks = append(blocks, p.parse0(l)...)
+	}
+	return blocks
+}
+
+// The argument l is whether only line children are allowed.
+func (p *parser) parse0(l bool) []node.Block {
+	var blocks []node.Block
+
+	for p.nextch() {
+		var block node.Block
+		if el, ok := p.blockElems[p.ch]; ok && !l {
 			switch el.Type {
 			case node.TypeWalled:
-				n = p.parseWalled(el.Name)
+				block = p.parseWalled(el.Name, el.OnlyLineChildren)
 			default:
 				panic("parser.parse: unexpected node type " + el.Type.String())
 			}
-			nodes = append(nodes, n)
-			continue
+		} else {
+			block = p.parseLine()
 		}
 
-		line := p.parseLine()
-		nodes = append(nodes, line)
+		blocks = append(blocks, block)
 	}
 
-	return nodes
+	return blocks
 }
 
-func (p *parser) parseWalled(name string) node.Node {
+func (p *parser) parseContinues(l bool) []node.Block {
+	var blocks []node.Block
+
+	blocks = append(blocks, p.parse0(l)...)
+
+	// if continues
+
+	for p.nextln() {
+		blocks = append(blocks, p.parse0(l)...)
+	}
+
+	return blocks
+}
+
+func (p *parser) parseWalled(name string, l bool) node.Block {
 	if trace {
-		defer p.trace("parse" + name + " (Walled)")()
+		defer p.tracef("parseWalled (%s)", name)()
 	}
 
-	p.nextch() // consume delimiter
-
-	var children []node.Node
-	children = append(children, p.parse()...)
-	return node.NewBlock(name, node.TypeWalled, children)
+	children := p.parseContinues(l)
+	return &node.Walled{name, children}
 }
 
-func (p *parser) parseLine() node.Text {
+func (p *parser) parseLine() node.Block {
 	if trace {
 		defer p.trace("parseLine")()
 	}
 
 	var b bytes.Buffer
+	b.WriteRune(p.ch)
 	for p.nextch() {
 		b.WriteRune(p.ch)
 	}
@@ -122,7 +147,10 @@ func (p *parser) parseLine() node.Text {
 		p.printf("return %q", txt)
 	}
 
-	return node.Text(txt)
+	var children []node.Inline
+	children = append(children, node.Text(txt))
+
+	return &node.Line{"Line", children}
 }
 
 func (p *parser) init(r io.Reader) {
@@ -133,6 +161,7 @@ func (p *parser) init(r io.Reader) {
 func (p *parser) nextln() bool {
 	cont := p.scnr.Scan()
 	p.ln = p.scnr.Bytes()
+
 	if err := p.scnr.Err(); err != nil {
 		switch err {
 		case bufio.ErrTooLong:
@@ -141,6 +170,7 @@ func (p *parser) nextln() bool {
 			panic(err)
 		}
 	}
+
 	return cont
 }
 
@@ -194,6 +224,10 @@ func (p *parser) error(err error) {
 	p.errors = append(p.errors, err)
 }
 
+func (p *parser) tracef(format string, v ...interface{}) func() {
+	return p.trace(fmt.Sprintf(format, v...))
+}
+
 func (p *parser) trace(msg string) func() {
 	p.printf("%q -> %s (", p.ch, msg)
 	p.tindent++
@@ -204,10 +238,10 @@ func (p *parser) trace(msg string) func() {
 	}
 }
 
-func (p *parser) printf(format string, a ...interface{}) {
-	p.print(fmt.Sprintf(format, a...))
+func (p *parser) printf(format string, v ...interface{}) {
+	p.print(fmt.Sprintf(format, v...))
 }
 
 func (p *parser) print(msg string) {
-	fmt.Println(strings.Repeat("\t", int(p.tindent)) + msg)
+	fmt.Println(strings.Repeat("\t", p.tindent) + msg)
 }
