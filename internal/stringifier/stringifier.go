@@ -23,7 +23,7 @@ func StringifyTo(w io.Writer, nodes ...node.Node) {
 
 type stringifier struct {
 	w      io.Writer
-	indent uint
+	indent int
 }
 
 func (s *stringifier) stringify(nodes []node.Node) {
@@ -50,10 +50,14 @@ func (s *stringifier) stringify(nodes []node.Node) {
 
 func (s *stringifier) enter(n node.Node) {
 	switch n.(type) {
-	case node.BlockChildren:
-		s.writei([]byte(n.Node() + "(\n"))
-		s.indent++
-	case node.InlineChildren, node.Inline:
+	case node.Block:
+		if _, ok := n.(node.InlineChildren); ok {
+			s.writei([]byte(n.Node() + "("))
+		} else {
+			s.writei([]byte(n.Node() + "(\n"))
+			s.indent++
+		}
+	case node.Inline:
 		s.write([]byte(n.Node() + "("))
 	default:
 		panic(fmt.Sprintf("stringifier.enter: unexpected type %T", n))
@@ -62,11 +66,15 @@ func (s *stringifier) enter(n node.Node) {
 
 func (s *stringifier) leave(n node.Node) {
 	switch n.(type) {
-	case node.BlockChildren:
-		s.write([]byte("\n"))
-		s.indent--
-		s.writei([]byte(")\n"))
-	case node.InlineChildren, node.Inline:
+	case node.Block:
+		if _, ok := n.(node.InlineChildren); ok {
+			s.write([]byte(")"))
+		} else {
+			s.write([]byte("\n"))
+			s.indent--
+			s.writei([]byte(")\n"))
+		}
+	case node.Inline:
 		s.write([]byte(")"))
 	default:
 		panic(fmt.Sprintf("stringifier.leave: unexpected type %T", n))
@@ -74,7 +82,7 @@ func (s *stringifier) leave(n node.Node) {
 }
 
 func (s *stringifier) writei(p []byte) {
-	s.write(append(bytes.Repeat([]byte("\t"), int(s.indent)), p...))
+	s.write(append(bytes.Repeat([]byte("\t"), s.indent), p...))
 }
 
 func (s *stringifier) write(p []byte) {

@@ -42,6 +42,9 @@ type parser struct {
 	ln      []byte // current line excluding EOL
 	ch      rune   // current character
 	isFirst bool   // is first character
+	atEOL   bool   // at end of line
+	atEOF   bool   // at end of file
+	blocks  []rune // open blocks
 
 	blockElems map[rune]Element // map of block elements by delimiter
 
@@ -77,58 +80,124 @@ func (p *parser) register(elems []Element) {
 	}
 }
 
-func (p *parser) parse(l bool) []node.Block {
-	var blocks []node.Block
-	for p.nextln() {
-		blocks = append(blocks, p.parse0(l)...)
-	}
-	return blocks
-}
-
 // The argument l is whether only line children are allowed.
-func (p *parser) parse0(l bool) []node.Block {
-	var blocks []node.Block
+func (p *parser) parse(l bool) []node.Block {
+	if trace {
+		defer p.trace("parse")()
+	}
 
-	for p.nextch() {
-		var block node.Block
-		if el, ok := p.blockElems[p.ch]; ok && !l {
-			switch el.Type {
-			case node.TypeWalled:
-				block = p.parseWalled(el.Name, el.OnlyLineChildren)
-			default:
-				panic("parser.parse: unexpected node type " + el.Type.String())
-			}
-		} else {
-			block = p.parseLine()
+	var blocks []node.Block
+	for {
+		if p.atEOF {
+			break
+		}
+
+		block := p.parseBlock(l)
+		if block == nil {
+			panic("parser.parse: nil block")
 		}
 
 		blocks = append(blocks, block)
 	}
-
 	return blocks
 }
 
-func (p *parser) parseContinues(l bool) []node.Block {
-	var blocks []node.Block
-
-	blocks = append(blocks, p.parse0(l)...)
-
-	// if continues
-
-	for p.nextln() {
-		blocks = append(blocks, p.parse0(l)...)
+func (p *parser) parseBlock(l bool) node.Block {
+	if trace {
+		defer p.trace("parseBlock")()
 	}
 
-	return blocks
+	el, ok := p.blockElems[p.ch]
+	if ok && !l {
+		switch el.Type {
+		case node.TypeWalled:
+			return p.parseWalled(el.Name, el.OnlyLineChildren)
+		default:
+			panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
+		}
+	}
+
+	line := p.parseLine()
+	p.nextln()
+	return line
 }
 
 func (p *parser) parseWalled(name string, l bool) node.Block {
 	if trace {
-		defer p.tracef("parseWalled (%s)", name)()
+		defer p.tracef("parseWalled (%s, onlyLineChildren=%t)", name, l)()
 	}
 
-	children := p.parseContinues(l)
+	p.open(p.ch)
+	defer p.close(p.ch)
+
+	children := p.parseChildren(l)
 	return &node.Walled{name, children}
+}
+
+func (p *parser) parseChildren(l bool) []node.Block {
+	if trace {
+		defer p.trace("parseChildren")()
+	}
+
+	var blocks []node.Block
+
+	if p.nextch() { // consume delimiter
+		blocks = append(blocks, p.parseBlock(l))
+	} else {
+		// at end of line, go to next line
+		if !p.nextln() {
+			return blocks
+		}
+	}
+
+	for {
+		if !p.continues() {
+			break
+		}
+
+		if !p.atEOL {
+			blocks = append(blocks, p.parseBlock(l))
+		}
+
+		if !p.nextln() {
+			break
+		}
+	}
+
+	return blocks
+}
+
+func (p *parser) continues() bool {
+	if trace {
+		defer p.trace("continues")()
+		p.dumpBlocks()
+	}
+
+	for i := 0; i < len(p.blocks); i++ {
+		if p.ch != p.blocks[i] {
+			if trace {
+				p.print("return false")
+			}
+			return false
+		}
+
+		if !p.nextch() {
+			if i < len(p.blocks)-1 {
+				// not last block
+				if trace {
+					p.print("return false (atEOL)")
+				}
+				return false
+			}
+			break
+		}
+	}
+
+	if trace {
+		p.print("return true")
+	}
+
+	return true
 }
 
 func (p *parser) parseLine() node.Block {
@@ -144,23 +213,39 @@ func (p *parser) parseLine() node.Block {
 	txt := b.Bytes()
 
 	if trace {
-		p.printf("return %q", txt)
+		defer p.printf("return %q", txt)
 	}
 
 	var children []node.Inline
 	children = append(children, node.Text(txt))
-
 	return &node.Line{"Line", children}
 }
 
 func (p *parser) init(r io.Reader) {
 	p.scnr = bufio.NewScanner(r)
+	// TODO: skip possible BOM at beginning here, remove p.isFirst
 	p.isFirst = true
+	p.nextln()
 }
 
 func (p *parser) nextln() bool {
+	contln := p.nextln0()
+	contch := p.nextch()
+	if !contln && !contch {
+		p.atEOF = true
+		return false
+	}
+	return true
+}
+
+func (p *parser) nextln0() bool {
+	if trace {
+		defer p.trace("nextln0")()
+	}
+
 	cont := p.scnr.Scan()
 	p.ln = p.scnr.Bytes()
+	p.atEOL = false
 
 	if err := p.scnr.Err(); err != nil {
 		switch err {
@@ -168,6 +253,14 @@ func (p *parser) nextln() bool {
 			log.Fatal("line too long")
 		default:
 			panic(err)
+		}
+	}
+
+	if trace {
+		if cont {
+			p.printf("p.ln=%q", p.ln)
+		} else {
+			p.print("EOF")
 		}
 	}
 
@@ -182,6 +275,10 @@ var (
 )
 
 func (p *parser) nextch() bool {
+	if trace {
+		defer p.trace("nextch")()
+	}
+
 skip:
 	r, w := utf8.DecodeRune(p.ln)
 
@@ -189,7 +286,12 @@ skip:
 	switch r {
 	case utf8.RuneError: // encoding error
 		if w == 0 {
-			// p.ln is empty if r == utf8.RuneError && w == 0
+			if trace {
+				p.printf("EOL")
+			}
+
+			// empty p.ln
+			p.atEOL = true
 			return false
 		} else if w == 1 {
 			p.error(ErrInvalidUTF8Encoding)
@@ -217,11 +319,43 @@ skip:
 
 	p.ch = ch
 	p.ln = p.ln[w:]
+
+	if trace {
+		p.printf("p.ch=%q ", p.ch)
+	}
+
 	return true
+}
+
+func (p *parser) open(ch rune) {
+	p.blocks = append(p.blocks, ch)
+}
+
+func (p *parser) close(ch rune) {
+	for i := len(p.blocks) - 1; i > -1; i++ {
+		if ch == p.blocks[i] {
+			p.blocks = p.blocks[:i]
+			break
+		}
+	}
 }
 
 func (p *parser) error(err error) {
 	p.errors = append(p.errors, err)
+}
+
+func (p *parser) dumpBlocks() {
+	var b strings.Builder
+	b.WriteString("[")
+	for i, bl := range p.blocks {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(fmt.Sprintf("%q", bl))
+	}
+	b.WriteString("]")
+
+	p.print("p.blocks=" + b.String())
 }
 
 func (p *parser) tracef(format string, v ...interface{}) func() {

@@ -35,29 +35,15 @@ func TestWalled(t *testing.T) {
 		out []node.Node
 	}{
 		{
-			"|",
-			[]node.Node{&node.Walled{"Paragraph", nil}},
-		},
-		{
-			"||",
-			[]node.Node{
-				&node.Walled{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("|")}},
-				}},
-			},
-		},
-		{
-			"|a",
-			[]node.Node{
-				&node.Walled{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-				}},
-			},
-		},
-
-		{
 			">",
 			[]node.Node{&node.Walled{"Blockquote", nil}},
+		},
+		{
+			">\na",
+			[]node.Node{
+				&node.Walled{"Blockquote", nil},
+				&node.Line{"Line", []node.Inline{node.Text("a")}},
+			},
 		},
 		{
 			">>",
@@ -72,6 +58,141 @@ func TestWalled(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
 					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
+		{
+			">\n>",
+			[]node.Node{
+				&node.Walled{"Blockquote", nil},
+			},
+		},
+		{
+			">a\n>b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
+			">\n>>",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			">a\n>>b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Walled{"Blockquote", []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					}},
+				}},
+			},
+		},
+		{
+			">>\n>>",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			">>a\n>>b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					}},
+				}},
+			},
+		},
+		{
+			">>\n>",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			">>a\n>b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+					}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
+func TestWalledOnlyLineChildren(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"|",
+			[]node.Node{&node.Walled{"Paragraph", nil}},
+		},
+		{
+			"||",
+			[]node.Node{
+				&node.Walled{"Paragraph", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("|")}},
+				}},
+			},
+		},
+		{
+			"|>",
+			[]node.Node{
+				&node.Walled{"Paragraph", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text(">")}},
+				}},
+			},
+		},
+		{
+			"|a",
+			[]node.Node{
+				&node.Walled{"Paragraph", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
+		{
+			"|\n|",
+			[]node.Node{&node.Walled{"Paragraph", nil}},
+		},
+		{
+			"|a\n|b",
+			[]node.Node{
+				&node.Walled{"Paragraph", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
+			"|\n||",
+			[]node.Node{
+				&node.Walled{"Paragraph", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("|")}},
 				}},
 			},
 		},
