@@ -17,6 +17,7 @@ const (
 	// blocks
 	TypeLine Type = iota
 	TypeWalled
+	TypeHanging
 
 	// inlines
 	TypeText
@@ -24,7 +25,7 @@ const (
 
 // TypeCategory is used by parser to determine node category based on type.
 func TypeCategory(typ Type) Category {
-	if typ > 1 {
+	if typ > 2 {
 		return CategoryInline
 	}
 	return CategoryBlock
@@ -103,6 +104,21 @@ func (w Walled) Block() {}
 
 func (w *Walled) BlockChildren() []Block {
 	return w.Children
+}
+
+type Hanging struct {
+	Name     string
+	Children []Block
+}
+
+func (h Hanging) Node() string {
+	return h.Name
+}
+
+func (h Hanging) Block() {}
+
+func (h *Hanging) BlockChildren() []Block {
+	return h.Children
 }
 
 // Text represents text—an atomic, inline node.

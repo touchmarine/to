@@ -236,6 +236,293 @@ func TestWalledOnlyLineChildren(t *testing.T) {
 	}
 }
 
+func TestHanging(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"*",
+			[]node.Node{&node.Walled{"DescriptionList", nil}},
+		},
+		{
+			"*\na",
+			[]node.Node{
+				&node.Walled{"DescriptionList", nil},
+				&node.Line{"Line", []node.Inline{node.Text("a")}},
+			},
+		},
+		{
+			"**",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", nil},
+				}},
+			},
+		},
+		{
+			"*a",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
+		{
+			"*\n*",
+			[]node.Node{
+				&node.Walled{"DescriptionList", nil},
+				&node.Walled{"DescriptionList", nil},
+			},
+		},
+		{
+			"*\n        ",
+			[]node.Node{
+				&node.Walled{"DescriptionList", nil},
+			},
+		},
+		{
+			"*a\n        b",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
+			"*\n        *",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", nil},
+				}},
+			},
+		},
+		{
+			"*a\n        *b",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Walled{"DescriptionList", []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					}},
+				}},
+			},
+		},
+		{
+			"**\n                ",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", nil},
+				}},
+			},
+		},
+		{
+			"**a\n                b",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					}},
+				}},
+			},
+		},
+		{
+			"**a\n                 b",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					}},
+				}},
+			},
+		},
+		{
+			"**a\n\t        b",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					}},
+				}},
+			},
+		},
+		{
+			"**a\n        \tb",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					}},
+				}},
+			},
+		},
+		{
+			"**\n        ",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", nil},
+				}},
+			},
+		},
+		{
+			"**a\n        b",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+					}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
+			"*\n\n*",
+			[]node.Node{
+				&node.Walled{"DescriptionList", nil},
+				&node.Walled{"DescriptionList", nil},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
+func TestHangingSpaces(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"*",
+			[]node.Node{&node.Walled{"DescriptionList", nil}},
+		},
+		{
+			"*\na",
+			[]node.Node{
+				&node.Walled{"DescriptionList", nil},
+				&node.Line{"Line", []node.Inline{node.Text("a")}},
+			},
+		},
+		{
+			"**",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", nil},
+				}},
+			},
+		},
+		{
+			"*a",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
+		{
+			"*\n*",
+			[]node.Node{
+				&node.Walled{"DescriptionList", nil},
+				&node.Walled{"DescriptionList", nil},
+			},
+		},
+		{
+			"*\n        ",
+			[]node.Node{
+				&node.Walled{"DescriptionList", nil},
+			},
+		},
+		{
+			"*a\n        b",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
+			"*\n        *",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", nil},
+				}},
+			},
+		},
+		{
+			"*a\n        *b",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Walled{"DescriptionList", []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					}},
+				}},
+			},
+		},
+		{
+			"**\n                ",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", nil},
+				}},
+			},
+		},
+		{
+			"**a\n                b",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					}},
+				}},
+			},
+		},
+		{
+			"**\n        ",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", nil},
+				}},
+			},
+		},
+		{
+			"**a\n        b",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Walled{"DescriptionList", []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+					}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
+			"*\n\n*",
+			[]node.Node{
+				&node.Walled{"DescriptionList", nil},
+				&node.Walled{"DescriptionList", nil},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
 func TestInvalidUTF8Encoding(t *testing.T) {
 	const fcb = "\x80" // first continuation byte
 

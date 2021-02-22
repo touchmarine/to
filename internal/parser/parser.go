@@ -24,6 +24,7 @@ type Element struct {
 var DefaultElements = []Element{
 	{"Paragraph", node.TypeWalled, '|', true},
 	{"Blockquote", node.TypeWalled, '>', false},
+	{"DescriptionList", node.TypeHanging, '*', false},
 }
 
 func Parse(r io.Reader) ([]node.Block, []error) {
@@ -118,6 +119,8 @@ func (p *parser) parseBlock(l bool) node.Block {
 		switch el.Type {
 		case node.TypeWalled:
 			return p.parseWalled(el.Name, el.OnlyLineChildren)
+		case node.TypeHanging:
+			return p.parseHanging(el.Name)
 		default:
 			panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
 		}
@@ -141,6 +144,21 @@ func (p *parser) parseWalled(name string, l bool) node.Block {
 	children := p.parseChildren(l, reqBlocks)
 
 	return &node.Walled{name, children}
+}
+
+func (p *parser) parseHanging(name string) node.Block {
+	if trace {
+		defer p.tracef("parseHanging (%s)", name)()
+	}
+
+	p.open('\t')
+	defer p.close('\t')
+
+	p.nextch() // consume delimiter
+	reqBlocks := p.blocks
+	children := p.parseChildren(false, reqBlocks)
+
+	return &node.Hanging{name, children}
 }
 
 func (p *parser) parseChildren(l bool, reqBlocks []rune) []node.Block {
@@ -257,6 +275,28 @@ func (p *parser) parseContinuations() {
 	}
 
 	for i := 0; i < len(p.blocks); i++ {
+		if p.blocks[i] == '\t' && p.ch == ' ' {
+			// 8 spaces equals one tab
+			var i int
+			for p.ch == ' ' {
+				i++
+
+				if i%8 == 0 {
+					p.addLnBlock('\t')
+				}
+
+				if !p.nextch() {
+					break
+				}
+			}
+
+			if i >= 8 {
+				continue
+			}
+
+			break
+		}
+
 		if p.ch != p.blocks[i] {
 			break
 		}
