@@ -133,6 +133,13 @@ func TestWalled(t *testing.T) {
 				}},
 			},
 		},
+		{
+			">\n\n>",
+			[]node.Node{
+				&node.Walled{"Blockquote", nil},
+				&node.Walled{"Blockquote", nil},
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -150,6 +157,13 @@ func TestWalledOnlyLineChildren(t *testing.T) {
 		{
 			"|",
 			[]node.Node{&node.Walled{"Paragraph", nil}},
+		},
+		{
+			"|\na",
+			[]node.Node{
+				&node.Walled{"Paragraph", nil},
+				&node.Line{"Line", []node.Inline{node.Text("a")}},
+			},
 		},
 		{
 			"||",
@@ -190,6 +204,23 @@ func TestWalledOnlyLineChildren(t *testing.T) {
 		},
 		{
 			"|\n||",
+			[]node.Node{
+				&node.Walled{"Paragraph", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("|")}},
+				}},
+			},
+		},
+		{
+			"||\n||",
+			[]node.Node{
+				&node.Walled{"Paragraph", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("|")}},
+					&node.Line{"Line", []node.Inline{node.Text("|")}},
+				}},
+			},
+		},
+		{
+			"||\n|",
 			[]node.Node{
 				&node.Walled{"Paragraph", []node.Block{
 					&node.Line{"Line", []node.Inline{node.Text("|")}},
