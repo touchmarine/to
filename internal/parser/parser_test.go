@@ -523,6 +523,135 @@ func TestHangingSpaces(t *testing.T) {
 	}
 }
 
+func TestFenced(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"``",
+			[]node.Node{&node.Fenced{"CodeBlock", nil}},
+		},
+		{
+			"``a",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", [][]byte{[]byte("a")}},
+			},
+		},
+		{
+			"``\na",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}},
+			},
+		},
+		{
+			"``\n\na",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", [][]byte{
+					nil,
+					nil,
+					[]byte("a")},
+				},
+			},
+		},
+		{
+			"````",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", nil},
+			},
+		},
+		{
+			"``\n``",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", nil},
+			},
+		},
+		{
+			"```\n```",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", nil},
+			},
+		},
+		{
+			"```\n``\n```",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", [][]byte{nil, []byte("``")}},
+			},
+		},
+		{
+			"```\n`````",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", nil},
+				&node.Fenced{"CodeBlock", nil},
+			},
+		},
+		{
+			"``\n``a",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", nil},
+				&node.Line{"Line", []node.Inline{node.Text("a")}},
+			},
+		},
+
+		// nesting
+		{
+			"``\n>",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", [][]byte{nil, []byte(">")}},
+			},
+		},
+		{
+			">``\na",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", nil},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("a")}},
+			},
+		},
+		{
+			">``\n>a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}},
+				}},
+			},
+		},
+		{
+			">``\n>a\n>``",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}},
+				}},
+			},
+		},
+		{
+			">``\n>a\n>``b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
+			">``\n>a\n>``\nb",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
 func TestInvalidUTF8Encoding(t *testing.T) {
 	const fcb = "\x80" // first continuation byte
 

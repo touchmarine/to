@@ -1,5 +1,7 @@
 package node
 
+import "bytes"
+
 //go:generate stringer -type=Category
 type Category uint
 
@@ -18,6 +20,7 @@ const (
 	TypeLine Type = iota
 	TypeWalled
 	TypeHanging
+	TypeFenced
 
 	// inlines
 	TypeText
@@ -25,7 +28,7 @@ const (
 
 // TypeCategory is used by parser to determine node category based on type.
 func TypeCategory(typ Type) Category {
-	if typ > 2 {
+	if typ > 3 {
 		return CategoryInline
 	}
 	return CategoryBlock
@@ -48,6 +51,11 @@ type Inline interface {
 
 type Content interface {
 	Content() []byte
+}
+
+type HeadBody interface {
+	Head() []byte
+	Body() []byte
 }
 
 type BlockChildren interface {
@@ -119,6 +127,31 @@ func (h Hanging) Block() {}
 
 func (h *Hanging) BlockChildren() []Block {
 	return h.Children
+}
+
+type Fenced struct {
+	Name  string
+	Lines [][]byte
+}
+
+func (f Fenced) Node() string {
+	return f.Name
+}
+
+func (f Fenced) Block() {}
+
+func (f Fenced) Head() []byte {
+	if len(f.Lines) == 0 {
+		return nil
+	}
+	return f.Lines[0]
+}
+
+func (f Fenced) Body() []byte {
+	if len(f.Lines) == 0 {
+		return nil
+	}
+	return bytes.Join(f.Lines[1:], []byte("\n"))
 }
 
 // Text represents text—an atomic, inline node.

@@ -31,6 +31,10 @@ func (s *stringifier) stringify(nodes []node.Node) {
 		s.enter(n)
 
 		switch m := n.(type) {
+		case node.HeadBody:
+			s.writei([]byte("Head: " + strconv.Quote(string(m.Head())) + ",\n"))
+			s.writei([]byte("Body: " + strconv.Quote(string(m.Body())) + ","))
+
 		case node.BlockChildren:
 			s.stringify(node.BlocksToNodes(m.BlockChildren()))
 

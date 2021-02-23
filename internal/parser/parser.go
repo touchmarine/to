@@ -25,6 +25,7 @@ var DefaultElements = []Element{
 	{"Paragraph", node.TypeWalled, '|', true},
 	{"Blockquote", node.TypeWalled, '>', false},
 	{"DescriptionList", node.TypeHanging, '*', false},
+	{"CodeBlock", node.TypeFenced, '`', false},
 }
 
 func Parse(r io.Reader) ([]node.Block, []error) {
@@ -121,6 +122,10 @@ func (p *parser) parseBlock(l bool) node.Block {
 			return p.parseWalled(el.Name, el.OnlyLineChildren)
 		case node.TypeHanging:
 			return p.parseHanging(el.Name)
+		case node.TypeFenced:
+			if p.peek() == p.ch {
+				return p.parseFenced(el.Name)
+			}
 		default:
 			panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
 		}
@@ -217,6 +222,69 @@ func (p *parser) continues(blocks []rune) bool {
 	}
 
 	return true
+}
+
+func (p *parser) parseFenced(name string) node.Block {
+	if trace {
+		defer p.tracef("parseFenced (%s)", name)()
+	}
+
+	reqBlocks := p.blocks
+	delim := p.ch
+
+	var i int
+	for p.ch == delim {
+		i++
+
+		if !p.nextch() {
+			break
+		}
+	}
+
+	var lines [][]byte
+
+	var b strings.Builder
+OuterLoop:
+	for {
+		for p.atEOL {
+			lines = append(lines, []byte(b.String()))
+			b.Reset()
+
+			if !p.nextln() {
+				break OuterLoop
+			}
+		}
+
+		if !p.continues(reqBlocks) {
+			break
+		}
+
+		var j int
+		for {
+			if p.ch == delim {
+				j++
+			} else if j != 0 {
+				j = 0
+			}
+
+			if j == i {
+				if p.atEOL {
+					p.nextln()
+				} else {
+					p.nextch()
+				}
+				break OuterLoop
+			}
+
+			b.WriteRune(p.ch)
+
+			if !p.nextch() {
+				break
+			}
+		}
+	}
+
+	return &node.Fenced{name, lines}
 }
 
 func (p *parser) parseLine() node.Block {
@@ -395,6 +463,39 @@ skip:
 	}
 
 	return true
+}
+
+func (p *parser) peek() rune {
+	if trace {
+		defer p.trace("peek")()
+	}
+
+	r, w := utf8.DecodeRune(p.ln)
+
+	var ch rune
+	switch r {
+	case utf8.RuneError: // encoding error
+		if w == 0 {
+			if trace {
+				p.printf("EOL")
+			}
+
+			// empty p.ln
+			return 0
+		} else if w == 1 {
+			ch = utf8.RuneError
+		}
+	case '\u0000', '\uFEFF': // NULL or BOM
+		ch = utf8.RuneError
+	default:
+		ch = r
+	}
+
+	if trace {
+		p.printf("return %q ", ch)
+	}
+
+	return ch
 }
 
 func (p *parser) open(ch rune) {
