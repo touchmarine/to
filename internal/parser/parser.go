@@ -22,10 +22,15 @@ type Element struct {
 }
 
 var DefaultElements = []Element{
+	// block
 	{"Paragraph", node.TypeWalled, '|', true},
 	{"Blockquote", node.TypeWalled, '>', false},
 	{"DescriptionList", node.TypeHanging, '*', false},
 	{"CodeBlock", node.TypeFenced, '`', false},
+
+	// inline
+	{"Emphasis", node.TypeUniform, '_', false},
+	{"Strong", node.TypeUniform, '*', false},
 }
 
 func Parse(r io.Reader) ([]node.Block, []error) {
@@ -37,8 +42,10 @@ func Parse(r io.Reader) ([]node.Block, []error) {
 
 // parser holds the parsing state.
 type parser struct {
-	errors []error
-	scnr   *bufio.Scanner // line scanner
+	errors      []error
+	scnr        *bufio.Scanner   // line scanner
+	blockElems  map[rune]Element // map of block elements by delimiter
+	inlineElems map[rune]Element // map of inline elements by delimiter
 
 	// parsing
 	ln       []byte // current line excluding EOL
@@ -50,8 +57,6 @@ type parser struct {
 	lnBlocks []rune // blocks on current line
 	spacing  int    // current spacing
 
-	blockElems map[rune]Element // map of block elements by delimiter
-
 	// tracing
 	tindent int // trace indentation
 }
@@ -60,18 +65,31 @@ func (p *parser) register(elems []Element) {
 	if p.blockElems == nil {
 		p.blockElems = make(map[rune]Element)
 	}
+	if p.inlineElems == nil {
+		p.inlineElems = make(map[rune]Element)
+	}
 
 	for _, el := range elems {
 		switch categ := node.TypeCategory(el.Type); categ {
 		case node.CategoryBlock:
 			if _, ok := p.blockElems[el.Delimiter]; ok {
 				log.Fatalf(
-					"parser.register: delimiter %q is already registered once",
+					"parser.register: block delimiter %q is already registered",
 					el.Delimiter,
 				)
 			}
 
 			p.blockElems[el.Delimiter] = el
+
+		case node.CategoryInline:
+			if _, ok := p.inlineElems[el.Delimiter]; ok {
+				log.Fatalf(
+					"parser.register: inline delimiter %q is already registered",
+					el.Delimiter,
+				)
+			}
+
+			p.inlineElems[el.Delimiter] = el
 
 		default:
 			panic(fmt.Sprintf(
@@ -341,6 +359,9 @@ func (p *parser) parseLine() node.Block {
 		defer p.trace("parseLine")()
 	}
 
+	children := p.parseInlines()
+	return &node.Line{"Line", children}
+
 	var b bytes.Buffer
 	b.WriteRune(p.ch)
 	for p.nextch() {
@@ -352,9 +373,139 @@ func (p *parser) parseLine() node.Block {
 		defer p.printf("return %q", txt)
 	}
 
-	var children []node.Inline
-	children = append(children, node.Text(txt))
+	//var children []node.Inline
+	//children = append(children, node.Text(txt))
+
 	return &node.Line{"Line", children}
+}
+
+func quoteRunes(a []rune) string {
+	var b strings.Builder
+	for i, v := range a {
+		if i > 0 {
+			b.WriteString(" ")
+		}
+		b.WriteString(fmt.Sprintf("%q", v))
+	}
+	return b.String()
+}
+
+func (p *parser) parseInlines(to ...rune) []node.Inline {
+	if trace {
+		defer p.tracef("parseInlines (%s)", quoteRunes(to))()
+	}
+
+	var inlines []node.Inline
+	var b bytes.Buffer
+
+OuterLoop:
+	for {
+		if p.atEOL {
+			break
+		}
+
+		if len(to) > 0 {
+			var i, offs int
+			var peek bool
+			for {
+				if i > len(to)-1 {
+					break
+				}
+
+				if peek {
+					r, w := utf8.DecodeRune(p.ln[offs:])
+					offs += w
+
+					if r != to[i] {
+						break
+					}
+				} else {
+					if p.ch != to[i] {
+						break
+					}
+					peek = true
+				}
+
+				if i == len(to)-1 {
+					break OuterLoop
+				}
+
+				i++
+			}
+		}
+
+		inline := p.parseInline()
+		if inline == nil {
+			b.WriteRune(p.ch)
+			p.nextch()
+			continue
+		}
+
+		if b.Len() > 0 {
+			if trace {
+				p.printf("parsed text %q", b.Bytes())
+			}
+
+			inlines = append(inlines, node.Text(b.Bytes()))
+			b.Reset()
+		}
+
+		inlines = append(inlines, inline)
+	}
+
+	if b.Len() > 0 {
+		if trace {
+			p.printf("parsed text %q", b.Bytes())
+		}
+
+		inlines = append(inlines, node.Text(b.Bytes()))
+	}
+
+	return inlines
+}
+
+func (p *parser) parseInline() node.Inline {
+	if trace {
+		defer p.trace("parseInline")()
+	}
+
+	el, ok := p.inlineElems[p.ch]
+	if ok {
+		switch el.Type {
+		case node.TypeUniform:
+			if peek, _ := utf8.DecodeRune(p.ln); peek == p.ch {
+				return p.parseUniform(el.Name)
+			}
+		default:
+			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
+		}
+	}
+
+	if trace {
+		p.print("return nil (text)")
+	}
+
+	return nil
+}
+
+func (p *parser) parseUniform(name string) node.Inline {
+	if trace {
+		defer p.tracef("parseUniform (%s)", name)()
+	}
+
+	delim := p.ch
+
+	// consume opening delimiters
+	p.nextch()
+	p.nextch()
+
+	children := p.parseInlines(delim, delim)
+
+	// consume closing delimiters
+	p.nextch()
+	p.nextch()
+
+	return &node.Uniform{name, children}
 }
 
 func (p *parser) init(r io.Reader) {

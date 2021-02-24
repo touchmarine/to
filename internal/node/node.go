@@ -23,6 +23,7 @@ const (
 	TypeFenced
 
 	// inlines
+	TypeUniform
 	TypeText
 )
 
@@ -152,6 +153,21 @@ func (f Fenced) Body() []byte {
 		return nil
 	}
 	return bytes.Join(f.Lines[1:], []byte("\n"))
+}
+
+type Uniform struct {
+	Name     string
+	Children []Inline
+}
+
+func (u Uniform) Node() string {
+	return u.Name
+}
+
+func (u Uniform) Inline() {}
+
+func (u *Uniform) InlineChildren() []Inline {
+	return u.Children
 }
 
 // Text represents text—an atomic, inline node.

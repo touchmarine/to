@@ -754,6 +754,119 @@ func TestSpacing(t *testing.T) {
 	}
 }
 
+func TestUniform(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"__",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Emphasis", nil},
+				}},
+			},
+		},
+		{
+			"__a",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Emphasis", []node.Inline{
+						node.Text("a"),
+					}},
+				}},
+			},
+		},
+		{
+			"__a__",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Emphasis", []node.Inline{
+						node.Text("a"),
+					}},
+				}},
+			},
+		},
+		{
+			"__a__b",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Emphasis", []node.Inline{
+						node.Text("a"),
+					}},
+					node.Text("b"),
+				}},
+			},
+		},
+
+		// nested
+		{
+			"__**",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Emphasis", []node.Inline{
+						&node.Uniform{"Strong", nil},
+					}},
+				}},
+			},
+		},
+		{
+			"__**a",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Emphasis", []node.Inline{
+						&node.Uniform{"Strong", []node.Inline{
+							node.Text("a"),
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			"__**a**",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Emphasis", []node.Inline{
+						&node.Uniform{"Strong", []node.Inline{
+							node.Text("a"),
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			"__**a**__",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Emphasis", []node.Inline{
+						&node.Uniform{"Strong", []node.Inline{
+							node.Text("a"),
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			"__**a__",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Emphasis", []node.Inline{
+						&node.Uniform{"Strong", []node.Inline{
+							node.Text("a"),
+						}},
+					}},
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
 func TestInvalidUTF8Encoding(t *testing.T) {
 	const fcb = "\x80" // first continuation byte
 
