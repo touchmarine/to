@@ -150,7 +150,7 @@ func (p *parser) parseBlock(l bool) node.Block {
 		case node.TypeHanging:
 			return p.parseHanging(el.Name)
 		case node.TypeFenced:
-			if p.peek() == p.ch {
+			if peek, _ := utf8.DecodeRune(p.ln); peek == p.ch {
 				return p.parseFenced(el.Name)
 			}
 		default:
@@ -512,39 +512,6 @@ skip:
 	}
 
 	return true
-}
-
-func (p *parser) peek() rune {
-	if trace {
-		defer p.trace("peek")()
-	}
-
-	r, w := utf8.DecodeRune(p.ln)
-
-	var ch rune
-	switch r {
-	case utf8.RuneError: // encoding error
-		if w == 0 {
-			if trace {
-				p.printf("EOL")
-			}
-
-			// empty p.ln
-			return 0
-		} else if w == 1 {
-			ch = utf8.RuneError
-		}
-	case '\u0000', '\uFEFF': // NULL or BOM
-		ch = utf8.RuneError
-	default:
-		ch = r
-	}
-
-	if trace {
-		p.printf("return %q ", ch)
-	}
-
-	return ch
 }
 
 func (p *parser) open(ch rune) {
