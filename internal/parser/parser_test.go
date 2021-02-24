@@ -652,6 +652,102 @@ func TestFenced(t *testing.T) {
 	}
 }
 
+func TestSpacing(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"\n>",
+			[]node.Node{&node.Walled{"Blockquote", nil}},
+		},
+		{
+			" >",
+			[]node.Node{&node.Walled{"Blockquote", nil}},
+		},
+		{
+			"\t>",
+			[]node.Node{&node.Walled{"Blockquote", nil}},
+		},
+		{
+			"> >",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			">  >",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			">\t>",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			"> ",
+			[]node.Node{
+				&node.Walled{"Blockquote", nil},
+			},
+		},
+		{
+			"> a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
+		{
+			"> a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
+		{
+			"> ``\n> a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}},
+				}},
+			},
+		},
+		{
+			"> ``\n>  a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte(" a")}},
+				}},
+			},
+		},
+		{
+			">\t``\n>        a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}},
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
 func TestInvalidUTF8Encoding(t *testing.T) {
 	const fcb = "\x80" // first continuation byte
 

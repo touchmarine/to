@@ -115,6 +115,26 @@ func (p *parser) parseBlock(l bool) node.Block {
 		defer p.trace("parseBlock")()
 	}
 
+	var i int
+Loop:
+	for {
+		switch p.ch {
+		case '\t':
+			i += 8
+		case ' ':
+			i++
+		default:
+			break Loop
+		}
+
+		if !p.nextch() {
+			if !p.nextln() {
+				break
+			}
+			i = 0
+		}
+	}
+
 	el, ok := p.blockElems[p.ch]
 	if ok && !l {
 		switch el.Type {
@@ -124,7 +144,7 @@ func (p *parser) parseBlock(l bool) node.Block {
 			return p.parseHanging(el.Name)
 		case node.TypeFenced:
 			if p.peek() == p.ch {
-				return p.parseFenced(el.Name)
+				return p.parseFenced(el.Name, i)
 			}
 		default:
 			panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
@@ -224,9 +244,9 @@ func (p *parser) continues(blocks []rune) bool {
 	return true
 }
 
-func (p *parser) parseFenced(name string) node.Block {
+func (p *parser) parseFenced(name string, n int) node.Block {
 	if trace {
-		defer p.tracef("parseFenced (%s)", name)()
+		defer p.tracef("parseFenced (%s %d)", name, n)()
 	}
 
 	reqBlocks := p.blocks
@@ -252,6 +272,22 @@ OuterLoop:
 
 			if !p.nextln() {
 				break OuterLoop
+			}
+
+			m := n
+			for m > 0 {
+				switch p.ch {
+				case '\t':
+					m -= 8
+				case ' ':
+					m--
+				default:
+					break
+				}
+
+				if !p.nextch() {
+					break
+				}
 			}
 		}
 
