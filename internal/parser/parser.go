@@ -48,6 +48,7 @@ type parser struct {
 	atEOF    bool   // at end of file
 	blocks   []rune // open blocks
 	lnBlocks []rune // blocks on current line
+	spacing  int    // current spacing
 
 	blockElems map[rune]Element // map of block elements by delimiter
 
@@ -96,6 +97,8 @@ func (p *parser) parse(l bool) []node.Block {
 			p.nextln()
 		}
 
+		p.parseSpacing()
+
 		if p.atEOF {
 			break
 		}
@@ -110,11 +113,7 @@ func (p *parser) parse(l bool) []node.Block {
 	return blocks
 }
 
-func (p *parser) parseBlock(l bool) node.Block {
-	if trace {
-		defer p.trace("parseBlock")()
-	}
-
+func (p *parser) parseSpacing() {
 	var i int
 Loop:
 	for {
@@ -135,6 +134,14 @@ Loop:
 		}
 	}
 
+	p.spacing = i
+}
+
+func (p *parser) parseBlock(l bool) node.Block {
+	if trace {
+		defer p.trace("parseBlock")()
+	}
+
 	el, ok := p.blockElems[p.ch]
 	if ok && !l {
 		switch el.Type {
@@ -144,7 +151,7 @@ Loop:
 			return p.parseHanging(el.Name)
 		case node.TypeFenced:
 			if p.peek() == p.ch {
-				return p.parseFenced(el.Name, i)
+				return p.parseFenced(el.Name)
 			}
 		default:
 			panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
@@ -204,6 +211,12 @@ func (p *parser) parseChildren(l bool, reqBlocks []rune) []node.Block {
 			}
 		}
 
+		p.parseSpacing()
+
+		if p.atEOF {
+			break
+		}
+
 		if !p.continues(reqBlocks) {
 			break
 		}
@@ -244,9 +257,9 @@ func (p *parser) continues(blocks []rune) bool {
 	return true
 }
 
-func (p *parser) parseFenced(name string, n int) node.Block {
+func (p *parser) parseFenced(name string) node.Block {
 	if trace {
-		defer p.tracef("parseFenced (%s %d)", name, n)()
+		defer p.tracef("parseFenced (%s)", name)()
 	}
 
 	reqBlocks := p.blocks
@@ -274,13 +287,13 @@ OuterLoop:
 				break OuterLoop
 			}
 
-			m := n
-			for m > 0 {
+			n := p.spacing
+			for n > 0 {
 				switch p.ch {
 				case '\t':
-					m -= 8
+					n -= 8
 				case ' ':
-					m--
+					n--
 				default:
 					break
 				}

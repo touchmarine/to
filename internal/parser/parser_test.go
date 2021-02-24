@@ -700,6 +700,12 @@ func TestSpacing(t *testing.T) {
 			},
 		},
 		{
+			"> \n> ",
+			[]node.Node{
+				&node.Walled{"Blockquote", nil},
+			},
+		},
+		{
 			"> a",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
