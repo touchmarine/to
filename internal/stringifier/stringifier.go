@@ -41,8 +41,8 @@ func (s *stringifier) stringify(nodes []node.Node) {
 		case node.InlineChildren:
 			s.stringify(node.InlinesToNodes(m.InlineChildren()))
 
-		case node.Text:
-			s.write([]byte(strconv.Quote(string(m))))
+		case node.Content:
+			s.write([]byte(strconv.Quote(string(m.Content()))))
 
 		default:
 			panic(fmt.Sprintf("stringifier.stringify: unexpected type %T", n))

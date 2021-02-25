@@ -31,6 +31,7 @@ var DefaultElements = []Element{
 	// inline
 	{"Emphasis", node.TypeUniform, '_', false},
 	{"Strong", node.TypeUniform, '*', false},
+	{"Code", node.TypeEscaped, '`', false},
 }
 
 func Parse(r io.Reader) ([]node.Block, []error) {
@@ -408,6 +409,10 @@ func (p *parser) parseInline() node.Inline {
 			if peek, _ := utf8.DecodeRune(p.ln); peek == p.ch {
 				return p.parseUniform(el.Name)
 			}
+		case node.TypeEscaped:
+			if peek, _ := utf8.DecodeRune(p.ln); isPunct(peek) {
+				return p.parseEscaped(el.Name)
+			}
 		default:
 			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
 		}
@@ -415,6 +420,14 @@ func (p *parser) parseInline() node.Inline {
 
 	text := p.parseText()
 	return text
+}
+
+func isPunct(ch rune) bool {
+	// no space
+	return ch >= 0x21 && ch <= 0x2F ||
+		ch >= 0x3A && ch <= 0x40 ||
+		ch >= 0x5B && ch <= 0x60 ||
+		ch >= 0x7B && ch <= 0x7E
 }
 
 func (p *parser) parseUniform(name string) node.Inline {
@@ -434,6 +447,42 @@ func (p *parser) parseUniform(name string) node.Inline {
 	return &node.Uniform{name, children}
 }
 
+func (p *parser) parseEscaped(name string) node.Inline {
+	if trace {
+		defer p.tracef("parseEscaped (%s)", name)()
+	}
+
+	delim := p.ch
+	p.nextch()
+	escape := p.ch
+	p.nextch()
+
+	var content []byte
+
+	if !p.atEOL {
+		var b bytes.Buffer
+		b.WriteRune(p.ch)
+		for p.nextch() {
+			peek, _ := utf8.DecodeRune(p.ln)
+			if p.ch == escape && peek == delim {
+				p.nextch()
+				p.nextch()
+				break
+			}
+
+			b.WriteRune(p.ch)
+		}
+
+		content = b.Bytes()
+	}
+
+	if trace {
+		defer p.printf("return %q", content)
+	}
+
+	return &node.Escaped{name, content}
+}
+
 func (p *parser) parseText() node.Inline {
 	if trace {
 		defer p.trace("parseText")()
@@ -441,9 +490,21 @@ func (p *parser) parseText() node.Inline {
 
 	var b bytes.Buffer
 	b.WriteRune(p.ch)
+OuterLoop:
 	for p.nextch() {
-		if _, ok := p.inlineElems[p.ch]; ok {
-			break
+		if el, ok := p.inlineElems[p.ch]; ok {
+			switch el.Type {
+			case node.TypeUniform:
+				if peek, _ := utf8.DecodeRune(p.ln); peek == p.ch {
+					break OuterLoop
+				}
+			case node.TypeEscaped:
+				if peek, _ := utf8.DecodeRune(p.ln); isPunct(peek) {
+					break OuterLoop
+				}
+			default:
+				panic(fmt.Sprintf("parser.parseText: unexpected node type %s (%s)", el.Type, el.Name))
+			}
 		}
 
 		if n := p.closingDelims(); n > 0 {

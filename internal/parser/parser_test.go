@@ -20,6 +20,12 @@ func TestLine(t *testing.T) {
 				&node.Line{"Line", []node.Inline{node.Text("a")}},
 			},
 		},
+		{
+			"a_*",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text("a_*")}},
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -854,6 +860,78 @@ func TestUniform(t *testing.T) {
 						&node.Uniform{"Strong", []node.Inline{
 							node.Text("a"),
 						}},
+					}},
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
+func TestEscaped(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"a``",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", nil},
+				}},
+			},
+		},
+		{
+			"a``b",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte("b")},
+				}},
+			},
+		},
+		{
+			"a``b``",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte("b")},
+				}},
+			},
+		},
+		{
+			"a`*",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", nil},
+				}},
+			},
+		},
+
+		// nested elements are not allowed
+		{
+			"a``__``",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte("__")},
+				}},
+			},
+		},
+		{
+			"a__``__a``",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Uniform{"Emphasis", []node.Inline{
+						&node.Escaped{"Code", []byte("__a")},
 					}},
 				}},
 			},

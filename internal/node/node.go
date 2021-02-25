@@ -23,8 +23,9 @@ const (
 	TypeFenced
 
 	// inlines
-	TypeUniform
 	TypeText
+	TypeUniform
+	TypeEscaped
 )
 
 // TypeCategory is used by parser to determine node category based on type.
@@ -168,6 +169,21 @@ func (u Uniform) Inline() {}
 
 func (u *Uniform) InlineChildren() []Inline {
 	return u.Children
+}
+
+type Escaped struct {
+	Name     string
+	Content0 []byte
+}
+
+func (e Escaped) Node() string {
+	return e.Name
+}
+
+func (e Escaped) Inline() {}
+
+func (e *Escaped) Content() []byte {
+	return e.Content0
 }
 
 // Text represents text—an atomic, inline node.
