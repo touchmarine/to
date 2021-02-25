@@ -835,7 +835,7 @@ func TestUniform(t *testing.T) {
 			},
 		},
 		{
-			"__**a**__",
+			"__**a__",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					&node.Uniform{"Emphasis", []node.Inline{
@@ -847,7 +847,7 @@ func TestUniform(t *testing.T) {
 			},
 		},
 		{
-			"__**a__",
+			"__**a**__",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					&node.Uniform{"Emphasis", []node.Inline{

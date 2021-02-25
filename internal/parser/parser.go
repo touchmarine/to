@@ -48,14 +48,15 @@ type parser struct {
 	inlineElems map[rune]Element // map of inline elements by delimiter
 
 	// parsing
-	ln       []byte // current line excluding EOL
-	ch       rune   // current character
-	isFirst  bool   // is first character
-	atEOL    bool   // at end of line
-	atEOF    bool   // at end of file
-	blocks   []rune // open blocks
-	lnBlocks []rune // blocks on current line
-	spacing  int    // current spacing
+	ln       []byte    // current line excluding EOL
+	ch       rune      // current character
+	isFirst  bool      // is first character
+	atEOL    bool      // at end of line
+	atEOF    bool      // at end of file
+	blocks   []rune    // open blocks
+	lnBlocks []rune    // blocks on current line
+	spacing  int       // current spacing
+	inlines  [][2]rune // current inline closing delimiters
 
 	// tracing
 	tindent int // trace indentation
@@ -361,106 +362,37 @@ func (p *parser) parseLine() node.Block {
 
 	children := p.parseInlines()
 	return &node.Line{"Line", children}
-
-	var b bytes.Buffer
-	b.WriteRune(p.ch)
-	for p.nextch() {
-		b.WriteRune(p.ch)
-	}
-	txt := b.Bytes()
-
-	if trace {
-		defer p.printf("return %q", txt)
-	}
-
-	//var children []node.Inline
-	//children = append(children, node.Text(txt))
-
-	return &node.Line{"Line", children}
 }
 
-func quoteRunes(a []rune) string {
-	var b strings.Builder
-	for i, v := range a {
-		if i > 0 {
-			b.WriteString(" ")
-		}
-		b.WriteString(fmt.Sprintf("%q", v))
-	}
-	return b.String()
-}
-
-func (p *parser) parseInlines(to ...rune) []node.Inline {
+func (p *parser) parseInlines() []node.Inline {
 	if trace {
-		defer p.tracef("parseInlines (%s)", quoteRunes(to))()
+		defer p.trace("parseInlines")()
 	}
 
 	var inlines []node.Inline
-	var b bytes.Buffer
-
-OuterLoop:
 	for {
 		if p.atEOL {
 			break
 		}
 
-		if len(to) > 0 {
-			var i, offs int
-			var peek bool
-			for {
-				if i > len(to)-1 {
-					break
-				}
-
-				if peek {
-					r, w := utf8.DecodeRune(p.ln[offs:])
-					offs += w
-
-					if r != to[i] {
-						break
-					}
-				} else {
-					if p.ch != to[i] {
-						break
-					}
-					peek = true
-				}
-
-				if i == len(to)-1 {
-					break OuterLoop
-				}
-
-				i++
+		if n := p.closingDelims(); n > 0 {
+			for i := 0; i < n; i++ {
+				p.nextch()
 			}
+			break
+		}
+
+		if trace {
+			p.dumpInlines()
 		}
 
 		inline := p.parseInline()
 		if inline == nil {
-			b.WriteRune(p.ch)
-			p.nextch()
-			continue
-		}
-
-		if b.Len() > 0 {
-			if trace {
-				p.printf("parsed text %q", b.Bytes())
-			}
-
-			inlines = append(inlines, node.Text(b.Bytes()))
-			b.Reset()
+			panic("parser.parseInlines: nil inline")
 		}
 
 		inlines = append(inlines, inline)
 	}
-
-	if b.Len() > 0 {
-		if trace {
-			p.printf("parsed text %q", b.Bytes())
-		}
-
-		inlines = append(inlines, node.Text(b.Bytes()))
-	}
-
 	return inlines
 }
 
@@ -481,11 +413,8 @@ func (p *parser) parseInline() node.Inline {
 		}
 	}
 
-	if trace {
-		p.print("return nil (text)")
-	}
-
-	return nil
+	text := p.parseText()
+	return text
 }
 
 func (p *parser) parseUniform(name string) node.Inline {
@@ -494,18 +423,56 @@ func (p *parser) parseUniform(name string) node.Inline {
 	}
 
 	delim := p.ch
-
-	// consume opening delimiters
 	p.nextch()
-	p.nextch()
-
-	children := p.parseInlines(delim, delim)
-
-	// consume closing delimiters
-	p.nextch()
+	escape := p.ch
 	p.nextch()
 
+	p.openInline(delim, escape)
+	defer p.closeInline(delim, escape)
+
+	children := p.parseInlines()
 	return &node.Uniform{name, children}
+}
+
+func (p *parser) parseText() node.Inline {
+	if trace {
+		defer p.trace("parseText")()
+	}
+
+	var b bytes.Buffer
+	b.WriteRune(p.ch)
+	for p.nextch() {
+		if _, ok := p.inlineElems[p.ch]; ok {
+			break
+		}
+
+		if n := p.closingDelims(); n > 0 {
+			for i := 0; i < n; i++ {
+				p.nextch()
+			}
+			break
+		}
+
+		b.WriteRune(p.ch)
+	}
+
+	txt := b.Bytes()
+
+	if trace {
+		defer p.printf("return %q", txt)
+	}
+
+	return node.Text(txt)
+}
+
+func (p *parser) closingDelims() int {
+	for _, pair := range p.inlines {
+		peek, _ := utf8.DecodeRune(p.ln)
+		if p.ch == pair[1] && peek == pair[0] {
+			return 2
+		}
+	}
+	return 0
 }
 
 func (p *parser) init(r io.Reader) {
@@ -675,9 +642,22 @@ func (p *parser) addLnBlock(ch rune) {
 }
 
 func (p *parser) close(ch rune) {
-	for i := len(p.blocks) - 1; i > -1; i++ {
+	for i := len(p.blocks) - 1; i > -1; i-- {
 		if ch == p.blocks[i] {
 			p.blocks = p.blocks[:i]
+			break
+		}
+	}
+}
+
+func (p *parser) openInline(delim rune, escape rune) {
+	p.inlines = append(p.inlines, [2]rune{delim, escape})
+}
+
+func (p *parser) closeInline(delim rune, escape rune) {
+	for i := len(p.inlines) - 1; i > -1; i-- {
+		if delim == p.inlines[i][0] && escape == p.inlines[i][1] {
+			p.inlines = p.inlines[:i]
 			break
 		}
 	}
@@ -710,6 +690,19 @@ func joinBlocks(blocks []rune) string {
 	}
 	b.WriteString("]")
 	return b.String()
+}
+
+func (p *parser) dumpInlines() {
+	var b strings.Builder
+	b.WriteString("[")
+	for i, v := range p.inlines {
+		if i > 0 {
+			b.WriteString(", ")
+		}
+		b.WriteString(fmt.Sprintf("%q %q", v[0], v[1]))
+	}
+	b.WriteString("]")
+	p.print("p.inlines=" + b.String())
 }
 
 func (p *parser) tracef(format string, v ...interface{}) func() {
