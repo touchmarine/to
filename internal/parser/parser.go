@@ -23,6 +23,7 @@ type Element struct {
 
 var DefaultElements = []Element{
 	// block
+	{"Line", node.TypeLine, 0, false},
 	{"Paragraph", node.TypeWalled, '|', true},
 	{"Blockquote", node.TypeWalled, '>', false},
 	{"DescriptionList", node.TypeHanging, '*', false},
@@ -167,6 +168,8 @@ func (p *parser) parseBlock(l bool) node.Block {
 	el, ok := p.blockElems[p.ch]
 	if ok && !l {
 		switch el.Type {
+		case node.TypeLine:
+			return p.parseLine(el.Name)
 		case node.TypeWalled:
 			return p.parseWalled(el.Name, el.OnlyLineChildren)
 		case node.TypeHanging:
@@ -180,9 +183,12 @@ func (p *parser) parseBlock(l bool) node.Block {
 		}
 	}
 
-	line := p.parseLine()
-	p.nextln()
-	return line
+	lnEl, ok := p.blockElems[0]
+	if !ok {
+		panic("parser.parseBlock: no registered line element")
+	}
+
+	return p.parseLine(lnEl.Name)
 }
 
 func (p *parser) parseWalled(name string, l bool) node.Block {
@@ -358,13 +364,14 @@ OuterLoop:
 	return &node.Fenced{name, lines}
 }
 
-func (p *parser) parseLine() node.Block {
+func (p *parser) parseLine(name string) node.Block {
 	if trace {
-		defer p.trace("parseLine")()
+		defer p.tracef("parseLine (%s)", name)()
 	}
 
 	children := p.parseInlines()
-	return &node.Line{"Line", children}
+	p.nextln()
+	return &node.Line{name, children}
 }
 
 func (p *parser) parseInlines() []node.Inline {

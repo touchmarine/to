@@ -288,6 +288,15 @@ func TestHanging(t *testing.T) {
 			},
 		},
 		{
+			"*a\n b",
+			[]node.Node{
+				&node.Walled{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
 			"*a\n        b",
 			[]node.Node{
 				&node.Walled{"DescriptionList", []node.Block{
