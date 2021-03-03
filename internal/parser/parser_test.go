@@ -945,6 +945,107 @@ func TestEscaped(t *testing.T) {
 	}
 }
 
+func TestForward(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"<a",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("a"), nil},
+				}},
+			},
+		},
+		{
+			"<a>",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("a"), nil},
+				}},
+			},
+		},
+		{
+			"<**",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("**"), nil},
+				}},
+			},
+		},
+		{
+			"<a><b",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("b"), []node.Inline{
+						node.Text("a"),
+					}},
+				}},
+			},
+		},
+		{
+			"<**><b",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("b"), []node.Inline{
+						&node.Uniform{"Strong", nil},
+					}},
+				}},
+			},
+		},
+		{
+			"<**a**><b",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("b"), []node.Inline{
+						&node.Uniform{"Strong", []node.Inline{
+							node.Text("a"),
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			"<a><**",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("**"), []node.Inline{
+						node.Text("a"),
+					}},
+				}},
+			},
+		},
+		{
+			"<a><b>",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("b"), []node.Inline{
+						node.Text("a"),
+					}},
+				}},
+			},
+		},
+		{
+			"<a><b><c>",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("b"), []node.Inline{
+						node.Text("a"),
+					}},
+					&node.Forward{"Link", []byte("c"), nil},
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
 func TestInvalidUTF8Encoding(t *testing.T) {
 	const fcb = "\x80" // first continuation byte
 

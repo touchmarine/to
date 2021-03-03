@@ -32,6 +32,7 @@ var DefaultElements = []Element{
 	{"Emphasis", node.TypeUniform, '_', false},
 	{"Strong", node.TypeUniform, '*', false},
 	{"Code", node.TypeEscaped, '`', false},
+	{"Link", node.TypeForward, '<', false},
 }
 
 func Parse(r io.Reader) ([]node.Block, []error) {
@@ -49,15 +50,16 @@ type parser struct {
 	inlineElems map[rune]Element // map of inline elements by delimiter
 
 	// parsing
-	ln       []byte    // current line excluding EOL
-	ch       rune      // current character
-	isFirst  bool      // is first character
-	atEOL    bool      // at end of line
-	atEOF    bool      // at end of file
-	blocks   []rune    // open blocks
-	lnBlocks []rune    // blocks on current line
-	spacing  int       // current spacing
-	inlines  [][2]rune // current inline closing delimiters
+	ln           []byte    // current line excluding EOL
+	ch           rune      // current character
+	isFirst      bool      // is first character
+	atEOL        bool      // at end of line
+	atEOF        bool      // at end of file
+	blocks       []rune    // open blocks
+	lnBlocks     []rune    // blocks on current line
+	spacing      int       // current spacing
+	inlines      [][2]rune // current inline closing delimiters
+	closeInlines bool
 
 	// tracing
 	tindent int // trace indentation
@@ -376,10 +378,12 @@ func (p *parser) parseInlines() []node.Inline {
 			break
 		}
 
-		if n := p.closingDelims(); n > 0 {
-			for i := 0; i < n; i++ {
-				p.nextch()
-			}
+		if p.tryCloseInline() {
+			break
+		}
+
+		if p.closeInlines {
+			p.closeInlines = false
 			break
 		}
 
@@ -413,6 +417,8 @@ func (p *parser) parseInline() node.Inline {
 			if peek, _ := utf8.DecodeRune(p.ln); isPunct(peek) {
 				return p.parseEscaped(el.Name)
 			}
+		case node.TypeForward:
+			return p.parseForward(el.Name)
 		default:
 			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
 		}
@@ -442,8 +448,8 @@ func (p *parser) parseUniform(name string) node.Inline {
 
 	p.openInline(delim, escape)
 	defer p.closeInline(delim, escape)
-
 	children := p.parseInlines()
+
 	return &node.Uniform{name, children}
 }
 
@@ -483,6 +489,94 @@ func (p *parser) parseEscaped(name string) node.Inline {
 	return &node.Escaped{name, content}
 }
 
+func (p *parser) parseForward(name string) node.Inline {
+	if trace {
+		defer p.tracef("parseForward (%s)", name)()
+	}
+
+	delim := p.ch
+	p.nextch()
+
+	var isTwoPart bool
+	var offs int
+	for {
+		if offs > len(p.ln)-1 {
+			break
+		}
+
+		r1, w := utf8.DecodeRune(p.ln[offs:])
+
+		if offs == 0 && p.ch == counterpart(delim) {
+			if r1 == delim {
+				isTwoPart = true
+			}
+			break
+		}
+
+		r2, _ := utf8.DecodeRune(p.ln[offs+w:])
+		if r1 == counterpart(delim) {
+			if r2 == delim {
+				isTwoPart = true
+			}
+			break
+		}
+
+		offs += w
+	}
+
+	if trace {
+		p.printf("isTwoPart=%t", isTwoPart)
+	}
+
+	var content []byte
+	var children []node.Inline
+
+	if isTwoPart {
+		p.openInline(counterpart(delim), 0)
+		children = p.parseInlines()
+		p.closeInline(counterpart(delim), 0)
+
+		p.nextch()
+	}
+
+	if !p.atEOL {
+		var b bytes.Buffer
+		b.WriteRune(p.ch)
+
+		for p.nextch() {
+			if p.ch == counterpart(delim) {
+				p.nextch()
+				break
+			}
+
+			b.WriteRune(p.ch)
+		}
+
+		content = b.Bytes()
+	}
+
+	return &node.Forward{name, content, children}
+}
+
+func counterpart(ch rune) rune {
+	c, ok := counterpartPunct[ch]
+	if ok {
+		return c
+	}
+	return ch
+}
+
+var counterpartPunct = map[rune]rune{
+	'(': ')',
+	')': '(',
+	'<': '>',
+	'>': '<',
+	'[': ']',
+	']': '[',
+	'{': '}',
+	'}': '{',
+}
+
 func (p *parser) parseText() node.Inline {
 	if trace {
 		defer p.trace("parseText")()
@@ -502,15 +596,14 @@ OuterLoop:
 				if peek, _ := utf8.DecodeRune(p.ln); isPunct(peek) {
 					break OuterLoop
 				}
+			case node.TypeForward:
+				break OuterLoop
 			default:
 				panic(fmt.Sprintf("parser.parseText: unexpected node type %s (%s)", el.Type, el.Name))
 			}
 		}
 
-		if n := p.closingDelims(); n > 0 {
-			for i := 0; i < n; i++ {
-				p.nextch()
-			}
+		if p.tryCloseInline() {
 			break
 		}
 
@@ -526,14 +619,27 @@ OuterLoop:
 	return node.Text(txt)
 }
 
-func (p *parser) closingDelims() int {
+func (p *parser) tryCloseInline() bool {
 	for _, pair := range p.inlines {
+		delim, escape := pair[0], pair[1]
+
+		if escape == 0 {
+			if p.ch == delim {
+				p.nextch()
+				p.closeInlines = true
+				return true
+			}
+			continue
+		}
+
 		peek, _ := utf8.DecodeRune(p.ln)
-		if p.ch == pair[1] && peek == pair[0] {
-			return 2
+		if p.ch == escape && peek == delim {
+			p.nextch()
+			p.nextch()
+			return true
 		}
 	}
-	return 0
+	return false
 }
 
 func (p *parser) init(r io.Reader) {
@@ -717,6 +823,15 @@ func (p *parser) openInline(delim rune, escape rune) {
 
 func (p *parser) closeInline(delim rune, escape rune) {
 	for i := len(p.inlines) - 1; i > -1; i-- {
+		if escape == 0 {
+			if delim == p.inlines[i][0] {
+				p.inlines = p.inlines[:i]
+				break
+			}
+
+			continue
+		}
+
 		if delim == p.inlines[i][0] && escape == p.inlines[i][1] {
 			p.inlines = p.inlines[:i]
 			break

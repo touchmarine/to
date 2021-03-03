@@ -26,6 +26,7 @@ const (
 	TypeText
 	TypeUniform
 	TypeEscaped
+	TypeForward
 )
 
 // TypeCategory is used by parser to determine node category based on type.
@@ -49,6 +50,11 @@ type Block interface {
 type Inline interface {
 	Node
 	Inline()
+}
+
+type ContentInlineChildren interface {
+	Content
+	InlineChildren
 }
 
 type Content interface {
@@ -184,6 +190,26 @@ func (e Escaped) Inline() {}
 
 func (e *Escaped) Content() []byte {
 	return e.Content0
+}
+
+type Forward struct {
+	Name      string
+	Content0  []byte
+	Children0 []Inline
+}
+
+func (f Forward) Node() string {
+	return f.Name
+}
+
+func (f Forward) Inline() {}
+
+func (f *Forward) Content() []byte {
+	return f.Content0
+}
+
+func (f *Forward) InlineChildren() []Inline {
+	return f.Children0
 }
 
 // Text represents text—an atomic, inline node.

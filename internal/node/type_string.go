@@ -15,11 +15,12 @@ func _() {
 	_ = x[TypeText-4]
 	_ = x[TypeUniform-5]
 	_ = x[TypeEscaped-6]
+	_ = x[TypeForward-7]
 }
 
-const _Type_name = "TypeLineTypeWalledTypeHangingTypeFencedTypeTextTypeUniformTypeEscaped"
+const _Type_name = "TypeLineTypeWalledTypeHangingTypeFencedTypeTextTypeUniformTypeEscapedTypeForward"
 
-var _Type_index = [...]uint8{0, 8, 18, 29, 39, 47, 58, 69}
+var _Type_index = [...]uint8{0, 8, 18, 29, 39, 47, 58, 69, 80}
 
 func (i Type) String() string {
 	if i >= Type(len(_Type_index)-1) {
