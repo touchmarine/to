@@ -51,14 +51,15 @@ type parser struct {
 	inlineElems map[rune]Element // map of inline elements by delimiter
 
 	// parsing
-	ln           []byte    // current line excluding EOL
-	ch           rune      // current character
-	isFirst      bool      // is first character
-	atEOL        bool      // at end of line
-	atEOF        bool      // at end of file
-	blocks       []rune    // open blocks
-	lnBlocks     []rune    // blocks on current line
-	spacing      int       // current spacing
+	ln      []byte // current line excluding EOL
+	ch      rune   // current character
+	isFirst bool   // is first character
+	atEOL   bool   // at end of line
+	atEOF   bool   // at end of file
+
+	blocks []rune // open blocks
+	lead   []rune // blocks on current line
+
 	inlines      [][2]rune // current inline closing delimiters
 	closeInlines bool
 
@@ -115,12 +116,19 @@ func (p *parser) parse(l bool) []node.Block {
 
 	var blocks []node.Block
 	for {
-		for p.atEOL {
-			// blank line
-			p.nextln()
-		}
+		if p.atEOL {
+			for p.atEOL && !p.atEOF {
+				// skip empty lines
+				p.nextln()
+				p.nextch()
+			}
 
-		p.parseSpacing()
+			if p.atEOF {
+				break
+			}
+
+			p.parseLead()
+		}
 
 		if p.atEOF {
 			break
@@ -133,31 +141,8 @@ func (p *parser) parse(l bool) []node.Block {
 
 		blocks = append(blocks, block)
 	}
+
 	return blocks
-}
-
-func (p *parser) parseSpacing() {
-	var i int
-Loop:
-	for {
-		switch p.ch {
-		case '\t':
-			i += 8
-		case ' ':
-			i++
-		default:
-			break Loop
-		}
-
-		if !p.nextch() {
-			if !p.nextln() {
-				break
-			}
-			i = 0
-		}
-	}
-
-	p.spacing = i
 }
 
 func (p *parser) parseBlock(l bool) node.Block {
@@ -196,12 +181,13 @@ func (p *parser) parseWalled(name string, l bool) node.Block {
 		defer p.tracef("parseWalled (%s, onlyLineChildren=%t)", name, l)()
 	}
 
-	p.open(p.ch)
-	defer p.close(p.ch)
+	p.addLead(p.ch)
+	defer p.open(p.ch)()
 
 	p.nextch() // consume delimiter
-	reqBlocks := p.blocks
-	children := p.parseChildren(l, reqBlocks)
+
+	reqdBlocks := p.blocks
+	children := p.parseChildren(l, reqdBlocks)
 
 	return &node.Walled{name, children}
 }
@@ -211,41 +197,42 @@ func (p *parser) parseHanging(name string) node.Block {
 		defer p.tracef("parseHanging (%s)", name)()
 	}
 
-	p.open('\t')
-	defer p.close('\t')
+	p.addLead(' ')
+	newBlocks := p.diff(p.blocks, p.lead)
+	defer p.open(newBlocks...)()
 
 	p.nextch() // consume delimiter
-	reqBlocks := p.blocks
-	children := p.parseChildren(false, reqBlocks)
+
+	reqdBlocks := p.blocks
+	children := p.parseChildren(false, reqdBlocks)
 
 	return &node.Hanging{name, children}
 }
 
-func (p *parser) parseChildren(l bool, reqBlocks []rune) []node.Block {
+func (p *parser) parseChildren(l bool, reqdBlocks []rune) []node.Block {
 	if trace {
 		defer p.trace("parseChildren")()
 	}
 
 	var blocks []node.Block
-
 	for {
 		if p.atEOL {
-			if !p.nextln() {
+			p.nextln()
+			if !p.nextch() {
+				// empty line
 				break
 			}
-			if p.atEOL {
-				// blank line
-				break
-			}
+
+			p.parseLead()
+
+			continue
 		}
 
-		p.parseSpacing()
-
-		if p.atEOF {
-			break
+		if p.ch == ' ' {
+			p.parseLead()
 		}
 
-		if !p.continues(reqBlocks) {
+		if !p.continues(reqdBlocks) {
 			break
 		}
 
@@ -258,31 +245,35 @@ func (p *parser) parseChildren(l bool, reqBlocks []rune) []node.Block {
 func (p *parser) continues(blocks []rune) bool {
 	if trace {
 		defer p.trace("continues")()
-		p.printBlocks("reqBlocks", blocks)
-		p.dumpLnBlocks()
+		p.printBlocks("reqd", p.blocks)
+		p.printBlocks("lead", p.lead)
 	}
 
-	for i := 0; i < len(blocks); i++ {
-		if i > len(p.lnBlocks)-1 {
+	var i int
+	for {
+		if i > len(blocks)-1 {
 			if trace {
-				p.print("return false, more required blocks")
+				p.printf("return true")
+			}
+			return true
+		}
+
+		if i > len(p.lead)-1 {
+			if trace {
+				p.print("return false (not enough blocks)")
 			}
 			return false
 		}
 
-		if blocks[i] != p.lnBlocks[i] {
+		if blocks[i] != p.lead[i] {
 			if trace {
-				p.print("return false, not matching")
+				p.printf("return false (%q != %q, i=%d)", blocks[i], p.lead[i], i)
 			}
 			return false
 		}
-	}
 
-	if trace {
-		p.print("return true")
+		i++
 	}
-
-	return true
 }
 
 func (p *parser) parseFenced(name string) node.Block {
@@ -290,7 +281,8 @@ func (p *parser) parseFenced(name string) node.Block {
 		defer p.tracef("parseFenced (%s)", name)()
 	}
 
-	reqBlocks := p.blocks
+	openSpacing := p.spacing()
+	reqdBlocks := p.blocks
 	delim := p.ch
 
 	var i int
@@ -305,34 +297,26 @@ func (p *parser) parseFenced(name string) node.Block {
 	var lines [][]byte
 
 	var b strings.Builder
-OuterLoop:
+outer:
 	for {
 		for p.atEOL {
 			lines = append(lines, []byte(b.String()))
 			b.Reset()
 
 			if !p.nextln() {
-				break OuterLoop
+				break outer
 			}
 
-			n := p.spacing
-			for n > 0 {
-				switch p.ch {
-				case '\t':
-					n -= 8
-				case ' ':
-					n--
-				default:
-					break
-				}
+			p.nextch()
+			p.parseLead()
 
-				if !p.nextch() {
-					break
-				}
+			newSpacing := p.diff(openSpacing, p.spacing())
+			for _, ch := range newSpacing {
+				b.WriteRune(ch)
 			}
 		}
 
-		if !p.continues(reqBlocks) {
+		if !p.continues(reqdBlocks) {
 			break
 		}
 
@@ -347,10 +331,12 @@ OuterLoop:
 			if j == i {
 				if p.atEOL {
 					p.nextln()
+					p.nextch()
+					p.parseLead()
 				} else {
 					p.nextch()
 				}
-				break OuterLoop
+				break outer
 			}
 
 			b.WriteRune(p.ch)
@@ -364,13 +350,37 @@ OuterLoop:
 	return &node.Fenced{name, lines}
 }
 
+func (p *parser) spacing() []rune {
+	if trace {
+		defer p.trace("spacing")()
+	}
+
+	var a []rune
+	for i := len(p.lead) - 1; i >= 0; i-- {
+		if p.lead[i] != ' ' {
+			a = p.lead[i+1:]
+			break
+		}
+	}
+
+	if trace {
+		p.printBlocks("spacing", a)
+	}
+
+	return a
+}
+
 func (p *parser) parseLine(name string) node.Block {
 	if trace {
 		defer p.tracef("parseLine (%s)", name)()
 	}
 
 	children := p.parseInlines()
+
 	p.nextln()
+	p.nextch()
+	p.parseLead()
+
 	return &node.Line{name, children}
 }
 
@@ -455,6 +465,7 @@ func (p *parser) parseUniform(name string) node.Inline {
 
 	p.openInline(delim, escape)
 	defer p.closeInline(delim, escape)
+
 	children := p.parseInlines()
 
 	return &node.Uniform{name, children}
@@ -653,56 +664,24 @@ func (p *parser) init(r io.Reader) {
 	p.scnr = bufio.NewScanner(r)
 	p.isFirst = true
 	p.nextln()
+	p.nextch()
+	p.parseLead()
 }
 
-// nextln returns false if no lines left
-func (p *parser) nextln() bool {
+func (p *parser) parseLead() {
 	if trace {
-		defer p.trace("nextln")()
+		defer p.trace("parseLead")()
+		p.printBlocks("reqd", p.blocks)
 	}
 
-	p.atEOL = false
-	p.lnBlocks = nil
+	var lead []rune
+	var i int
+	for {
+		if p.ch == ' ' {
+			goto parseSpacing
+		}
 
-	if !p.nextln0() {
-		p.atEOF = true
-		return false
-	}
-	if !p.nextch() {
-		return true
-	}
-
-	p.parseContinuations()
-	return true
-}
-
-func (p *parser) parseContinuations() {
-	if trace {
-		defer p.trace("parseContinuations")()
-		p.dumpBlocks()
-		defer p.dumpLnBlocks()
-	}
-
-	for i := 0; i < len(p.blocks); i++ {
-		if p.blocks[i] == '\t' && p.ch == ' ' {
-			// 8 spaces equals one tab
-			var i int
-			for p.ch == ' ' {
-				i++
-
-				if i%8 == 0 {
-					p.addLnBlock('\t')
-				}
-
-				if !p.nextch() {
-					break
-				}
-			}
-
-			if i >= 8 {
-				continue
-			}
-
+		if i > len(p.blocks)-1 {
 			break
 		}
 
@@ -710,17 +689,25 @@ func (p *parser) parseContinuations() {
 			break
 		}
 
-		p.addLnBlock(p.ch)
+	parseSpacing:
+		lead = append(lead, p.ch)
 
 		if !p.nextch() {
 			break
 		}
+		i++
+	}
+
+	p.addLead(lead...)
+
+	if trace {
+		p.printBlocks("lead", p.lead)
 	}
 }
 
-func (p *parser) nextln0() bool {
+func (p *parser) nextln() bool {
 	if trace {
-		defer p.trace("nextln0")()
+		defer p.trace("nextln")()
 	}
 
 	cont := p.scnr.Scan()
@@ -734,6 +721,11 @@ func (p *parser) nextln0() bool {
 			panic(err)
 		}
 	}
+
+	if !cont {
+		p.atEOF = true
+	}
+	p.lead = nil
 
 	if trace {
 		if cont {
@@ -795,6 +787,9 @@ skip:
 	if p.isFirst {
 		p.isFirst = false
 	}
+	if p.atEOL {
+		p.atEOL = false
+	}
 
 	p.ch = ch
 	p.ln = p.ln[w:]
@@ -806,22 +801,27 @@ skip:
 	return true
 }
 
-func (p *parser) open(ch rune) {
-	p.blocks = append(p.blocks, ch)
-	p.addLnBlock(ch)
+func (p *parser) open(blocks ...rune) func() {
+	size := len(p.blocks)
+	p.blocks = append(p.blocks, blocks...)
+
+	return func() {
+		p.blocks = p.blocks[:size]
+	}
 }
 
-func (p *parser) addLnBlock(ch rune) {
-	p.lnBlocks = append(p.lnBlocks, ch)
+func (p *parser) addLead(blocks ...rune) {
+	p.lead = append(p.lead, blocks...)
 }
 
-func (p *parser) close(ch rune) {
-	for i := len(p.blocks) - 1; i > -1; i-- {
-		if ch == p.blocks[i] {
-			p.blocks = p.blocks[:i]
+func (p *parser) diff(old, new []rune) []rune {
+	var i int
+	for i = len(new) - 1; i >= 0; i-- {
+		if i < len(old) {
 			break
 		}
 	}
+	return new[i+1:]
 }
 
 func (p *parser) openInline(delim rune, escape rune) {
@@ -850,27 +850,36 @@ func (p *parser) error(err error) {
 	p.errors = append(p.errors, err)
 }
 
-func (p *parser) dumpBlocks() {
-	p.printBlocks("p.blocks", p.blocks)
-}
-
-func (p *parser) dumpLnBlocks() {
-	p.printBlocks("p.lnBlocks", p.lnBlocks)
-}
-
 func (p *parser) printBlocks(name string, blocks []rune) {
-	p.print(name + "=" + joinBlocks(blocks))
+	p.print(name + "=" + fmtBlocks(blocks))
 }
 
-func joinBlocks(blocks []rune) string {
+func fmtBlocks(blocks []rune) string {
 	var b strings.Builder
 	b.WriteString("[")
-	for i, v := range blocks {
+
+	for i := 0; i < len(blocks); i++ {
 		if i > 0 {
 			b.WriteString(", ")
 		}
-		b.WriteString(fmt.Sprintf("%q", v))
+
+		j := 1
+		for i+j < len(blocks) && blocks[i+j-1] == blocks[i+j] {
+			j++
+		}
+
+		if j > 2 {
+			b.WriteString(fmt.Sprintf("%dx", j))
+			i += j - 1
+		}
+
+		b.WriteString(fmt.Sprintf("%q", blocks[i]))
+
+		if blocks[i] == '\t' {
+			b.WriteString(" (hanging)")
+		}
 	}
+
 	b.WriteString("]")
 	return b.String()
 }
