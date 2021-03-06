@@ -458,44 +458,88 @@ func TestHanging(t *testing.T) {
 		},
 
 		// tab (equals 8 spaces in this regard)
-		/*
-			{
-				"*a\n\tb",
-				[]node.Node{
-					&node.Hanging{"DescriptionList", []node.Block{
-						&node.Line{"Line", []node.Inline{node.Text("a")}},
-						&node.Line{"Line", []node.Inline{node.Text("b")}},
-					}},
-				},
-			},
-			{
-				"\t*a\n\tb",
-				[]node.Node{
-					&node.Hanging{"DescriptionList", []node.Block{
-						&node.Line{"Line", []node.Inline{node.Text("a")}},
-					}},
+		{
+			"*a\n\tb",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
 					&node.Line{"Line", []node.Inline{node.Text("b")}},
-				},
+				}},
 			},
-			{
-				"\t*a\n\t b",
-				[]node.Node{
-					&node.Hanging{"DescriptionList", []node.Block{
-						&node.Line{"Line", []node.Inline{node.Text("a")}},
-						&node.Line{"Line", []node.Inline{node.Text("b")}},
-					}},
-				},
+		},
+		{
+			"\t*a\n\tb",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
 			},
-			{
-				"\t*a\n \tb",
-				[]node.Node{
-					&node.Hanging{"DescriptionList", []node.Block{
-						&node.Line{"Line", []node.Inline{node.Text("a")}},
-						&node.Line{"Line", []node.Inline{node.Text("b")}},
-					}},
-				},
+		},
+		{
+			"\t*a\n\t b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
 			},
-		*/
+		},
+		{
+			"\t*a\n \tb",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
+			"\t*a\n  \tb",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+
+		{
+			"\t\t*a\n                b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+		{
+			"\t\t*a\n                 b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
+			"                *a\n\t\tb",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+		{
+			"               *a\n\t\tb",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -628,6 +672,14 @@ func TestFenced(t *testing.T) {
 
 		// nesting+spacing
 		{
+			"> ``\n>a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}},
+				}},
+			},
+		},
+		{
 			"> ``\n> a",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
@@ -651,9 +703,50 @@ func TestFenced(t *testing.T) {
 				}},
 			},
 		},
-		// TODO: Fix
+
+		// tab
+		{
+			">\t``\n>a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}},
+				}},
+			},
+		},
 		{
 			">\t``\n>        a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}},
+				}},
+			},
+		},
+		{
+			">\t``\n>         a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte(" a")}},
+				}},
+			},
+		},
+		{
+			">\t``\n>            a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("    a")}},
+				}},
+			},
+		},
+		{
+			"> ``\n>\ta",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("       a")}},
+				}},
+			},
+		},
+		{
+			"> \t``\n>\t a",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
 					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}},
@@ -675,11 +768,13 @@ func TestSpacing(t *testing.T) {
 		out []node.Node
 	}{
 		{
-			" >",
+			"\n>",
 			[]node.Node{&node.Walled{"Blockquote", nil}},
 		},
+
+		// space
 		{
-			"\n>",
+			" >",
 			[]node.Node{&node.Walled{"Blockquote", nil}},
 		},
 		{
@@ -714,7 +809,82 @@ func TestSpacing(t *testing.T) {
 				}},
 			},
 		},
-		// TODO: tab
+
+		// tab
+		{
+			"\t>",
+			[]node.Node{&node.Walled{"Blockquote", nil}},
+		},
+		{
+			">\t>",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			">\t\t>",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			">\t",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", nil},
+				}},
+			},
+		},
+		{
+			">\ta",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
+
+		// space+tab
+		{
+			" \t>",
+			[]node.Node{&node.Walled{"Blockquote", nil}},
+		},
+		{
+			"> \t>",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			">  \t>",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			"> \t",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", nil},
+				}},
+			},
+		},
+		{
+			"> \ta",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
 	}
 
 	for _, c := range cases {

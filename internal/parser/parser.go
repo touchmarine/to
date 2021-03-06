@@ -14,6 +14,8 @@ import (
 
 const trace = false
 
+const tabWidth = 8
+
 type Element struct {
 	Name             string
 	Type             node.Type
@@ -198,7 +200,7 @@ func (p *parser) parseHanging(name string) node.Block {
 	}
 
 	p.addLead(' ')
-	newBlocks := p.diff(p.blocks, p.lead)
+	newBlocks := diff(p.blocks, p.lead)
 	defer p.open(newBlocks...)()
 
 	p.nextch() // consume delimiter
@@ -228,7 +230,7 @@ func (p *parser) parseChildren(l bool, reqdBlocks []rune) []node.Block {
 			continue
 		}
 
-		if p.ch == ' ' {
+		if p.ch == ' ' || p.ch == '\t' {
 			p.parseLead()
 		}
 
@@ -249,7 +251,7 @@ func (p *parser) continues(blocks []rune) bool {
 		p.printBlocks("lead", p.lead)
 	}
 
-	var i int
+	var i, j int
 	for {
 		if i > len(blocks)-1 {
 			if trace {
@@ -258,21 +260,49 @@ func (p *parser) continues(blocks []rune) bool {
 			return true
 		}
 
-		if i > len(p.lead)-1 {
+		if j > len(p.lead)-1 {
 			if trace {
 				p.print("return false (not enough blocks)")
 			}
 			return false
 		}
 
-		if blocks[i] != p.lead[i] {
+		if blocks[i] == ' ' || blocks[i] == '\t' || p.lead[j] == ' ' || p.lead[j] == '\t' {
+			n, m := i, j
+			for ; i < len(p.blocks); i++ {
+				if p.blocks[i] == ' ' || p.blocks[i] == '\t' {
+					continue
+				}
+			}
+
+			for ; j < len(p.lead); j++ {
+				if p.lead[j] == ' ' || p.lead[j] == '\t' {
+					continue
+				}
+			}
+
+			x := countSpacing(p.blocks[n:i])
+			y := countSpacing(p.lead[m:j])
+
+			if y < x {
+				if trace {
+					p.printf("return false (lesser ident)")
+				}
+				return false
+			}
+
+			continue
+		}
+
+		if blocks[i] != p.lead[j] {
 			if trace {
-				p.printf("return false (%q != %q, i=%d)", blocks[i], p.lead[i], i)
+				p.printf("return false (%q != %q, i=%d, j=%d)", blocks[i], p.lead[j], i, j)
 			}
 			return false
 		}
 
 		i++
+		j++
 	}
 }
 
@@ -310,7 +340,7 @@ outer:
 			p.nextch()
 			p.parseLead()
 
-			newSpacing := p.diff(openSpacing, p.spacing())
+			newSpacing := diffSpacing(openSpacing, p.spacing())
 			for _, ch := range newSpacing {
 				b.WriteRune(ch)
 			}
@@ -350,6 +380,55 @@ outer:
 	return &node.Fenced{name, lines}
 }
 
+// a=old spacing
+// b=new spacing
+func diffSpacing(a, b []rune) []rune {
+	x := countSpacing(a)
+	y := countSpacing(b)
+
+	if y == x {
+		return nil
+	} else if y > x {
+		var c []rune
+
+		n := y - x
+		for i := len(b) - 1; i >= 0; i-- {
+			if n <= 0 {
+				break
+			}
+
+			w := countSpacing([]rune{b[i]})
+			if w > n {
+				for j := 0; j < n; j++ {
+					c = append(c, ' ')
+				}
+				break
+			}
+			c = append(c, b[i])
+			n -= w
+		}
+
+		return c
+	}
+
+	return nil
+}
+
+func countSpacing(s []rune) int {
+	var i int
+	for _, ch := range s {
+		switch ch {
+		case ' ':
+			i++
+		case '\t':
+			i += tabWidth
+		default:
+			panic(fmt.Sprintf("countSpacing: got %q, want ' ' or '\t'", ch))
+		}
+	}
+	return i
+}
+
 func (p *parser) spacing() []rune {
 	if trace {
 		defer p.trace("spacing")()
@@ -357,7 +436,7 @@ func (p *parser) spacing() []rune {
 
 	var a []rune
 	for i := len(p.lead) - 1; i >= 0; i-- {
-		if p.lead[i] != ' ' {
+		if p.lead[i] != ' ' && p.lead[i] != '\t' {
 			a = p.lead[i+1:]
 			break
 		}
@@ -677,8 +756,8 @@ func (p *parser) parseLead() {
 	var lead []rune
 	var i int
 	for {
-		if p.ch == ' ' {
-			goto parseSpacing
+		if p.ch == ' ' || p.ch == '\t' {
+			goto cont
 		}
 
 		if i > len(p.blocks)-1 {
@@ -689,7 +768,7 @@ func (p *parser) parseLead() {
 			break
 		}
 
-	parseSpacing:
+	cont:
 		lead = append(lead, p.ch)
 
 		if !p.nextch() {
@@ -814,7 +893,7 @@ func (p *parser) addLead(blocks ...rune) {
 	p.lead = append(p.lead, blocks...)
 }
 
-func (p *parser) diff(old, new []rune) []rune {
+func diff(old, new []rune) []rune {
 	var i int
 	for i = len(new) - 1; i >= 0; i-- {
 		if i < len(old) {
