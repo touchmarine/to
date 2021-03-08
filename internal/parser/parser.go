@@ -53,7 +53,6 @@ type parser struct {
 	// parsing
 	ln    []byte // current line excluding EOL
 	ch    rune   // current character
-	atEOL bool   // at end of line
 	atEOF bool   // at end of file
 
 	blocks []rune // open blocks
@@ -115,8 +114,8 @@ func (p *parser) parse() []node.Block {
 
 	var blocks []node.Block
 	for {
-		if p.atEOL {
-			for p.atEOL && !p.atEOF {
+		if p.atEOL() {
+			for p.atEOL() && !p.atEOF {
 				// skip empty lines
 				p.nextln()
 				p.nextch()
@@ -220,7 +219,7 @@ func (p *parser) parseChildren(reqdBlocks []rune) []node.Block {
 
 	var blocks []node.Block
 	for {
-		if p.atEOL {
+		if p.atEOL() {
 			p.nextln()
 			if !p.nextch() {
 				// empty line
@@ -331,7 +330,7 @@ func (p *parser) parseFenced(name string) node.Block {
 	var b strings.Builder
 outer:
 	for {
-		for p.atEOL {
+		for p.atEOL() {
 			lines = append(lines, []byte(b.String()))
 			b.Reset()
 
@@ -361,7 +360,7 @@ outer:
 			}
 
 			if j == i {
-				if p.atEOL {
+				if p.atEOL() {
 					p.nextln()
 					p.nextch()
 					p.parseLead()
@@ -472,7 +471,7 @@ func (p *parser) parseInlines() []node.Inline {
 
 	var inlines []node.Inline
 	for {
-		if p.atEOL {
+		if p.atEOL() {
 			break
 		}
 
@@ -585,7 +584,7 @@ func (p *parser) parseEscaped(name string) node.Inline {
 
 	var content []byte
 
-	if !p.atEOL {
+	if !p.atEOL() {
 		var b bytes.Buffer
 		b.WriteRune(p.ch)
 		for p.nextch() {
@@ -659,7 +658,7 @@ func (p *parser) parseForward(name string) node.Inline {
 		p.nextch()
 	}
 
-	if !p.atEOL {
+	if !p.atEOL() {
 		var b bytes.Buffer
 		b.WriteRune(p.ch)
 
@@ -872,7 +871,7 @@ func (p *parser) nextch() bool {
 			}
 
 			// empty p.ln
-			p.atEOL = true
+			p.ch = 0
 			return false
 		} else if w == 1 {
 			p.error(ErrInvalidUTF8Encoding)
@@ -888,10 +887,6 @@ func (p *parser) nextch() bool {
 		ch = r
 	}
 
-	if p.atEOL {
-		p.atEOL = false
-	}
-
 	p.ch = ch
 	p.ln = p.ln[w:]
 
@@ -900,6 +895,10 @@ func (p *parser) nextch() bool {
 	}
 
 	return true
+}
+
+func (p *parser) atEOL() bool {
+	return p.ch == 0
 }
 
 func (p *parser) open(blocks ...rune) func() {
