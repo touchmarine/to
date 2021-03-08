@@ -51,11 +51,10 @@ type parser struct {
 	inlineElems map[rune]Element // map of inline elements by delimiter
 
 	// parsing
-	ln      []byte // current line excluding EOL
-	ch      rune   // current character
-	isFirst bool   // is first character
-	atEOL   bool   // at end of line
-	atEOF   bool   // at end of file
+	ln    []byte // current line excluding EOL
+	ch    rune   // current character
+	atEOL bool   // at end of line
+	atEOF bool   // at end of file
 
 	blocks []rune // open blocks
 	lead   []rune // blocks on current line
@@ -770,8 +769,12 @@ func (p *parser) tryCloseInline() bool {
 
 func (p *parser) init(r io.Reader) {
 	p.scnr = bufio.NewScanner(r)
-	p.isFirst = true
 	p.nextln()
+	ch, w := utf8.DecodeRune(p.ln)
+	if ch == '\uFEFF' {
+		// skip BOM if first character
+		p.ln = p.ln[w:]
+	}
 	p.nextch()
 	p.parseLead()
 }
@@ -858,7 +861,6 @@ func (p *parser) nextch() bool {
 		defer p.trace("nextch")()
 	}
 
-skip:
 	r, w := utf8.DecodeRune(p.ln)
 
 	var ch rune
@@ -880,21 +882,12 @@ skip:
 		p.error(ErrIllegalNULL)
 		ch = utf8.RuneError
 	case '\uFEFF': // BOM
-		if p.isFirst {
-			// skip BOM if first character
-			p.ln = p.ln[w:]
-			goto skip
-		} else {
-			p.error(ErrIllegalBOM)
-			ch = utf8.RuneError
-		}
+		p.error(ErrIllegalBOM)
+		ch = utf8.RuneError
 	default:
 		ch = r
 	}
 
-	if p.isFirst {
-		p.isFirst = false
-	}
 	if p.atEOL {
 		p.atEOL = false
 	}
