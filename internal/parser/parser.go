@@ -162,7 +162,7 @@ func (p *parser) parseBlock() node.Block {
 			case node.TypeHanging:
 				return p.parseHanging(el.Name)
 			case node.TypeFenced:
-				if peek, _ := utf8.DecodeRune(p.ln); peek == p.ch {
+				if p.peekEquals(p.ch) {
 					return p.parseFenced(el.Name)
 				}
 			default:
@@ -510,11 +510,11 @@ func (p *parser) parseInline() node.Inline {
 		if ok {
 			switch el.Type {
 			case node.TypeUniform:
-				if peek, _ := utf8.DecodeRune(p.ln); peek == p.ch {
+				if p.peekEquals(p.ch) {
 					return p.parseUniform(el.Name)
 				}
 			case node.TypeEscaped:
-				if peek, _ := utf8.DecodeRune(p.ln); isPunct(peek) {
+				if peek, _ := utf8.DecodeRune(p.ln); peek != utf8.RuneError && isPunct(peek) {
 					return p.parseEscaped(el.Name)
 				}
 			case node.TypeForward:
@@ -588,8 +588,7 @@ func (p *parser) parseEscaped(name string) node.Inline {
 		var b bytes.Buffer
 		b.WriteRune(p.ch)
 		for p.nextch() {
-			peek, _ := utf8.DecodeRune(p.ln)
-			if p.ch == escape && peek == delim {
+			if p.ch == escape && p.peekEquals(delim) {
 				p.nextch()
 				p.nextch()
 				break
@@ -624,6 +623,10 @@ func (p *parser) parseForward(name string) node.Inline {
 		}
 
 		r1, w := utf8.DecodeRune(p.ln[offs:])
+		if r1 == utf8.RuneError {
+			offs += w
+			continue
+		}
 
 		if offs == 0 && p.ch == counterpart(delim) {
 			if r1 == delim {
@@ -633,7 +636,7 @@ func (p *parser) parseForward(name string) node.Inline {
 		}
 
 		r2, _ := utf8.DecodeRune(p.ln[offs+w:])
-		if r1 == counterpart(delim) {
+		if r2 != utf8.RuneError && r1 == counterpart(delim) {
 			if r2 == delim {
 				isTwoPart = true
 			}
@@ -713,11 +716,11 @@ OuterLoop:
 		if el, ok := p.inlineElems[p.ch]; ok {
 			switch el.Type {
 			case node.TypeUniform:
-				if peek, _ := utf8.DecodeRune(p.ln); peek == p.ch {
+				if p.peekEquals(p.ch) {
 					break OuterLoop
 				}
 			case node.TypeEscaped:
-				if peek, _ := utf8.DecodeRune(p.ln); isPunct(peek) {
+				if peek, _ := utf8.DecodeRune(p.ln); peek != utf8.RuneError && isPunct(peek) {
 					break OuterLoop
 				}
 			case node.TypeForward:
@@ -756,8 +759,7 @@ func (p *parser) tryCloseInline() bool {
 			continue
 		}
 
-		peek, _ := utf8.DecodeRune(p.ln)
-		if p.ch == escape && peek == delim {
+		if p.ch == escape && p.peekEquals(delim) {
 			p.nextch()
 			p.nextch()
 			return true
@@ -899,6 +901,15 @@ func (p *parser) nextch() bool {
 
 func (p *parser) atEOL() bool {
 	return p.ch == 0
+}
+
+func (p *parser) peekEquals(ch rune) bool {
+	r, _ := utf8.DecodeRune(p.ln)
+	if r == utf8.RuneError {
+		return false
+	}
+
+	return r == ch
 }
 
 func (p *parser) open(blocks ...rune) func() {
