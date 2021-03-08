@@ -155,93 +155,6 @@ func TestWalled(t *testing.T) {
 	}
 }
 
-func TestWalledOnlyLineChildren(t *testing.T) {
-	cases := []struct {
-		in  string
-		out []node.Node
-	}{
-		{
-			"|",
-			[]node.Node{&node.Walled{"Paragraph", nil}},
-		},
-		{
-			"|\na",
-			[]node.Node{
-				&node.Walled{"Paragraph", nil},
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-			},
-		},
-		{
-			"||",
-			[]node.Node{
-				&node.Walled{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("|")}},
-				}},
-			},
-		},
-		{
-			"|>",
-			[]node.Node{
-				&node.Walled{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text(">")}},
-				}},
-			},
-		},
-		{
-			"|a",
-			[]node.Node{
-				&node.Walled{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-				}},
-			},
-		},
-		{
-			"|\n|",
-			[]node.Node{&node.Walled{"Paragraph", nil}},
-		},
-		{
-			"|a\n|b",
-			[]node.Node{
-				&node.Walled{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-					&node.Line{"Line", []node.Inline{node.Text("b")}},
-				}},
-			},
-		},
-		{
-			"|\n||",
-			[]node.Node{
-				&node.Walled{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("|")}},
-				}},
-			},
-		},
-		{
-			"||\n||",
-			[]node.Node{
-				&node.Walled{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("|")}},
-					&node.Line{"Line", []node.Inline{node.Text("|")}},
-				}},
-			},
-		},
-		{
-			"||\n|",
-			[]node.Node{
-				&node.Walled{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("|")}},
-				}},
-			},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil)
-		})
-	}
-}
-
 func TestHanging(t *testing.T) {
 	cases := []struct {
 		in  string
@@ -1168,6 +1081,156 @@ func TestForward(t *testing.T) {
 						node.Text("a"),
 					}},
 					&node.Forward{"Link", []byte("c"), nil},
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
+func TestBlockEscape(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"|",
+			[]node.Node{
+				&node.Line{"Line", nil},
+			},
+		},
+		{
+			"||",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text("|")}},
+			},
+		},
+		{
+			"|a",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text("a")}},
+			},
+		},
+		{
+			"|>",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text(">")}},
+			},
+		},
+		{
+			"||>",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text("|>")}},
+			},
+		},
+		{
+			"|\n|",
+			[]node.Node{
+				&node.Line{"Line", nil},
+				&node.Line{"Line", nil},
+			},
+		},
+		{
+			"|a\n|b",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text("a")}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+		{
+			"|``",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{&node.Escaped{"Code", nil}}},
+			},
+		},
+		{
+			"||``",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("|"),
+					&node.Escaped{"Code", nil},
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
+func TestInlineEscape(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			`\`,
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text(`\`)}},
+			},
+		},
+		{
+			`\\`,
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text(`\`)}},
+			},
+		},
+		{
+			`\a`,
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text(`\a`)}},
+			},
+		},
+		{
+			`|\**`,
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text(`**`)}},
+			},
+		},
+		{
+			`|\\**`,
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text(`\`),
+					&node.Uniform{"Strong", nil},
+				}},
+			},
+		},
+		{
+			"|\\`(",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text("`(")}},
+			},
+		},
+		{
+			"|\\\\`(",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text(`\`),
+					&node.Escaped{"Code", nil},
+				}},
+			},
+		},
+		{
+			`|\<`,
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text("<")}},
+			},
+		},
+		{
+			`|\\<`,
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text(`\`),
+					&node.Forward{"Link", nil, nil},
 				}},
 			},
 		},

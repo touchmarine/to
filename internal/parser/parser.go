@@ -17,32 +17,30 @@ const trace = false
 const tabWidth = 8
 
 type Element struct {
-	Name             string
-	Type             node.Type
-	Delimiter        rune
-	OnlyLineChildren bool
+	Name      string
+	Type      node.Type
+	Delimiter rune
 }
 
 var DefaultElements = []Element{
 	// block
-	{"Line", node.TypeLine, 0, false},
-	{"Paragraph", node.TypeWalled, '|', true},
-	{"Blockquote", node.TypeWalled, '>', false},
-	{"DescriptionList", node.TypeHanging, '*', false},
-	{"CodeBlock", node.TypeFenced, '`', false},
+	{"Line", node.TypeLine, 0},
+	{"Blockquote", node.TypeWalled, '>'},
+	{"DescriptionList", node.TypeHanging, '*'},
+	{"CodeBlock", node.TypeFenced, '`'},
 
 	// inline
-	{"Emphasis", node.TypeUniform, '_', false},
-	{"Strong", node.TypeUniform, '*', false},
-	{"Code", node.TypeEscaped, '`', false},
-	{"Link", node.TypeForward, '<', false},
+	{"Emphasis", node.TypeUniform, '_'},
+	{"Strong", node.TypeUniform, '*'},
+	{"Code", node.TypeEscaped, '`'},
+	{"Link", node.TypeForward, '<'},
 }
 
 func Parse(r io.Reader) ([]node.Block, []error) {
 	var p parser
 	p.register(DefaultElements)
 	p.init(r)
-	return p.parse(false), p.errors
+	return p.parse(), p.errors
 }
 
 // parser holds the parsing state.
@@ -111,7 +109,7 @@ func (p *parser) register(elems []Element) {
 }
 
 // The argument l is whether only line children are allowed.
-func (p *parser) parse(l bool) []node.Block {
+func (p *parser) parse() []node.Block {
 	if trace {
 		defer p.trace("parse")()
 	}
@@ -136,7 +134,7 @@ func (p *parser) parse(l bool) []node.Block {
 			break
 		}
 
-		block := p.parseBlock(l)
+		block := p.parseBlock()
 		if block == nil {
 			panic("parser.parse: nil block")
 		}
@@ -147,26 +145,31 @@ func (p *parser) parse(l bool) []node.Block {
 	return blocks
 }
 
-func (p *parser) parseBlock(l bool) node.Block {
+func (p *parser) parseBlock() node.Block {
 	if trace {
 		defer p.trace("parseBlock")()
 	}
 
-	el, ok := p.blockElems[p.ch]
-	if ok && !l {
-		switch el.Type {
-		case node.TypeLine:
-			return p.parseLine(el.Name)
-		case node.TypeWalled:
-			return p.parseWalled(el.Name, el.OnlyLineChildren)
-		case node.TypeHanging:
-			return p.parseHanging(el.Name)
-		case node.TypeFenced:
-			if peek, _ := utf8.DecodeRune(p.ln); peek == p.ch {
-				return p.parseFenced(el.Name)
+	if p.ch == '|' {
+		// escape block
+		p.nextch()
+	} else {
+		el, ok := p.blockElems[p.ch]
+		if ok {
+			switch el.Type {
+			case node.TypeLine:
+				return p.parseLine(el.Name)
+			case node.TypeWalled:
+				return p.parseWalled(el.Name)
+			case node.TypeHanging:
+				return p.parseHanging(el.Name)
+			case node.TypeFenced:
+				if peek, _ := utf8.DecodeRune(p.ln); peek == p.ch {
+					return p.parseFenced(el.Name)
+				}
+			default:
+				panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
 			}
-		default:
-			panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
 		}
 	}
 
@@ -178,9 +181,9 @@ func (p *parser) parseBlock(l bool) node.Block {
 	return p.parseLine(lnEl.Name)
 }
 
-func (p *parser) parseWalled(name string, l bool) node.Block {
+func (p *parser) parseWalled(name string) node.Block {
 	if trace {
-		defer p.tracef("parseWalled (%s, onlyLineChildren=%t)", name, l)()
+		defer p.tracef("parseWalled (%s)", name)()
 	}
 
 	p.addLead(p.ch)
@@ -189,7 +192,7 @@ func (p *parser) parseWalled(name string, l bool) node.Block {
 	p.nextch() // consume delimiter
 
 	reqdBlocks := p.blocks
-	children := p.parseChildren(l, reqdBlocks)
+	children := p.parseChildren(reqdBlocks)
 
 	return &node.Walled{name, children}
 }
@@ -206,12 +209,12 @@ func (p *parser) parseHanging(name string) node.Block {
 	p.nextch() // consume delimiter
 
 	reqdBlocks := p.blocks
-	children := p.parseChildren(false, reqdBlocks)
+	children := p.parseChildren(reqdBlocks)
 
 	return &node.Hanging{name, children}
 }
 
-func (p *parser) parseChildren(l bool, reqdBlocks []rune) []node.Block {
+func (p *parser) parseChildren(reqdBlocks []rune) []node.Block {
 	if trace {
 		defer p.trace("parseChildren")()
 	}
@@ -238,7 +241,7 @@ func (p *parser) parseChildren(l bool, reqdBlocks []rune) []node.Block {
 			break
 		}
 
-		blocks = append(blocks, p.parseBlock(l))
+		blocks = append(blocks, p.parseBlock())
 	}
 
 	return blocks
@@ -474,12 +477,12 @@ func (p *parser) parseInlines() []node.Inline {
 			break
 		}
 
-		if p.tryCloseInline() {
+		if p.closeInlines {
+			p.closeInlines = false
 			break
 		}
 
-		if p.closeInlines {
-			p.closeInlines = false
+		if p.tryCloseInline() {
 			break
 		}
 
@@ -502,26 +505,47 @@ func (p *parser) parseInline() node.Inline {
 		defer p.trace("parseInline")()
 	}
 
-	el, ok := p.inlineElems[p.ch]
-	if ok {
-		switch el.Type {
-		case node.TypeUniform:
-			if peek, _ := utf8.DecodeRune(p.ln); peek == p.ch {
-				return p.parseUniform(el.Name)
+	if p.isInlineEscape() {
+		p.nextch()
+	} else {
+		el, ok := p.inlineElems[p.ch]
+		if ok {
+			switch el.Type {
+			case node.TypeUniform:
+				if peek, _ := utf8.DecodeRune(p.ln); peek == p.ch {
+					return p.parseUniform(el.Name)
+				}
+			case node.TypeEscaped:
+				if peek, _ := utf8.DecodeRune(p.ln); isPunct(peek) {
+					return p.parseEscaped(el.Name)
+				}
+			case node.TypeForward:
+				return p.parseForward(el.Name)
+			default:
+				panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
 			}
-		case node.TypeEscaped:
-			if peek, _ := utf8.DecodeRune(p.ln); isPunct(peek) {
-				return p.parseEscaped(el.Name)
-			}
-		case node.TypeForward:
-			return p.parseForward(el.Name)
-		default:
-			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
 		}
 	}
 
-	text := p.parseText()
-	return text
+	return p.parseText()
+}
+
+func (p *parser) isInlineEscape() bool {
+	if p.ch != '\\' {
+		return false
+	}
+
+	peek, _ := utf8.DecodeRune(p.ln)
+	if peek == utf8.RuneError {
+		return false
+	}
+
+	if peek == '\\' {
+		return true
+	}
+
+	_, ok := p.inlineElems[peek]
+	return ok
 }
 
 func isPunct(ch rune) bool {
@@ -683,6 +707,11 @@ func (p *parser) parseText() node.Inline {
 	b.WriteRune(p.ch)
 OuterLoop:
 	for p.nextch() {
+		if p.isInlineEscape() {
+			p.nextch()
+			continue
+		}
+
 		if el, ok := p.inlineElems[p.ch]; ok {
 			switch el.Type {
 			case node.TypeUniform:
