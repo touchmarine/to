@@ -514,7 +514,7 @@ func (p *parser) parseInline() node.Inline {
 					return p.parseUniform(el.Name)
 				}
 			case node.TypeEscaped:
-				if peek, _ := utf8.DecodeRune(p.ln); peek != utf8.RuneError && isPunct(peek) {
+				if p.isEscaped() {
 					return p.parseEscaped(el.Name)
 				}
 			case node.TypeForward:
@@ -526,6 +526,19 @@ func (p *parser) parseInline() node.Inline {
 	}
 
 	return p.parseText()
+}
+
+func (p *parser) isEscaped() bool {
+	if p.peekEquals(p.ch) {
+		return true
+	}
+
+	peek, _ := utf8.DecodeRune(p.ln)
+	if peek != utf8.RuneError {
+		_, ok := leftRightChars[peek]
+		return ok
+	}
+	return false
 }
 
 func (p *parser) isInlineEscape() bool {
@@ -544,14 +557,6 @@ func (p *parser) isInlineEscape() bool {
 
 	_, ok := p.inlineElems[peek]
 	return ok
-}
-
-func isPunct(ch rune) bool {
-	// no space
-	return ch >= 0x21 && ch <= 0x2F ||
-		ch >= 0x3A && ch <= 0x40 ||
-		ch >= 0x5B && ch <= 0x60 ||
-		ch >= 0x7B && ch <= 0x7E
 }
 
 func (p *parser) parseUniform(name string) node.Inline {
@@ -586,15 +591,18 @@ func (p *parser) parseEscaped(name string) node.Inline {
 
 	if !p.atEOL() {
 		var b bytes.Buffer
-		b.WriteRune(p.ch)
-		for p.nextch() {
-			if p.ch == escape && p.peekEquals(delim) {
+		for {
+			if p.ch == counterpart(escape) && p.peekEquals(delim) {
 				p.nextch()
 				p.nextch()
 				break
 			}
 
 			b.WriteRune(p.ch)
+
+			if !p.nextch() {
+				break
+			}
 		}
 
 		content = b.Bytes()
@@ -658,20 +666,22 @@ func (p *parser) parseForward(name string) node.Inline {
 		children = p.parseInlines()
 		p.closeInline(counterpart(delim), 0)
 
-		p.nextch()
+		p.nextch() // consume closing delimiter of first part
 	}
 
 	if !p.atEOL() {
 		var b bytes.Buffer
-		b.WriteRune(p.ch)
-
-		for p.nextch() {
+		for {
 			if p.ch == counterpart(delim) {
 				p.nextch()
 				break
 			}
 
 			b.WriteRune(p.ch)
+
+			if !p.nextch() {
+				break
+			}
 		}
 
 		content = b.Bytes()
@@ -681,14 +691,14 @@ func (p *parser) parseForward(name string) node.Inline {
 }
 
 func counterpart(ch rune) rune {
-	c, ok := counterpartPunct[ch]
+	c, ok := leftRightChars[ch]
 	if ok {
 		return c
 	}
 	return ch
 }
 
-var counterpartPunct = map[rune]rune{
+var leftRightChars = map[rune]rune{
 	'(': ')',
 	')': '(',
 	'<': '>',
@@ -706,7 +716,7 @@ func (p *parser) parseText() node.Inline {
 
 	var b bytes.Buffer
 	b.WriteRune(p.ch)
-OuterLoop:
+loop:
 	for p.nextch() {
 		if p.isInlineEscape() {
 			p.nextch()
@@ -717,14 +727,14 @@ OuterLoop:
 			switch el.Type {
 			case node.TypeUniform:
 				if p.peekEquals(p.ch) {
-					break OuterLoop
+					break loop
 				}
 			case node.TypeEscaped:
-				if peek, _ := utf8.DecodeRune(p.ln); peek != utf8.RuneError && isPunct(peek) {
-					break OuterLoop
+				if p.isEscaped() {
+					break loop
 				}
 			case node.TypeForward:
-				break OuterLoop
+				break loop
 			default:
 				panic(fmt.Sprintf("parser.parseText: unexpected node type %s (%s)", el.Type, el.Name))
 			}

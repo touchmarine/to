@@ -821,6 +821,14 @@ func TestUniform(t *testing.T) {
 			},
 		},
 		{
+			"____",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Emphasis", nil},
+				}},
+			},
+		},
+		{
 			"__a",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
@@ -935,6 +943,24 @@ func TestEscaped(t *testing.T) {
 			},
 		},
 		{
+			"a````",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", nil},
+				}},
+			},
+		},
+		{
+			"a`()`",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", nil},
+				}},
+			},
+		},
+		{
 			"a``b",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
@@ -952,8 +978,54 @@ func TestEscaped(t *testing.T) {
 				}},
 			},
 		},
+
 		{
-			"a`*",
+			"a`(",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", nil},
+				}},
+			},
+		},
+		{
+			"a`(b)`",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte("b")},
+				}},
+			},
+		},
+		{
+			"a`)",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", nil},
+				}},
+			},
+		},
+		{
+			"a`)b(`",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte("b")},
+				}},
+			},
+		},
+		{
+			"a`<",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", nil},
+				}},
+			},
+		},
+		{
+			"a`[",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text("a"),
@@ -963,6 +1035,15 @@ func TestEscaped(t *testing.T) {
 		},
 
 		// nested elements are not allowed
+		{
+			"a`(``)`",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte("``")},
+				}},
+			},
+		},
 		{
 			"a``__``",
 			[]node.Node{
@@ -997,6 +1078,39 @@ func TestForward(t *testing.T) {
 		in  string
 		out []node.Node
 	}{
+		{
+			"<",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", nil, nil},
+				}},
+			},
+		},
+		{
+			"<>",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", nil, nil},
+				}},
+			},
+		},
+		{
+			"<><",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", nil, nil},
+				}},
+			},
+		},
+		{
+			"<><>",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", nil, nil},
+				}},
+			},
+		},
+
 		{
 			"<a",
 			[]node.Node{
