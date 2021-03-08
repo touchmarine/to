@@ -9,15 +9,15 @@ import (
 )
 
 var ElementTagNames = map[string][]string{
-	"Line": nil,
-	"Paragraph": []string{"p"},
-	"Blockquote": []string{"blockquote"},
+	"Line":            nil,
+	"Paragraph":       []string{"p"},
+	"Blockquote":      []string{"blockquote"},
 	"DescriptionList": []string{"dl", "dt", "dd"},
-	"CodeBlock": []string{"pre><code"},
-	"Emphasis": []string{"em"},
-	"Strong": []string{"strong"},
-	"Code": []string{"code"},
-	"Link": []string{"a"},
+	"CodeBlock":       []string{"pre><code"},
+	"Emphasis":        []string{"em"},
+	"Strong":          []string{"strong"},
+	"Code":            []string{"code"},
+	"Link":            []string{"a"},
 }
 
 func Render(nodes ...node.Node) string {
@@ -32,14 +32,14 @@ func RenderTo(w io.Writer, nodes ...node.Node) {
 }
 
 type renderer struct {
-	w      io.Writer
-	nodes  []node.Node
-	pos int
+	w     io.Writer
+	nodes []node.Node
+	pos   int
 
-	n node.Node
+	n        node.Node
 	tagNames []string
-	isLast bool
-	indent int
+	isLast   bool
+	indent   int
 }
 
 func (r *renderer) render() {
