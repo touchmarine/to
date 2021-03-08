@@ -1304,13 +1304,13 @@ func TestInlineEscape(t *testing.T) {
 			},
 		},
 		{
-			`|\**`,
+			`\**`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{node.Text(`**`)}},
 			},
 		},
 		{
-			`|\\**`,
+			`\\**`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text(`\`),
@@ -1319,13 +1319,13 @@ func TestInlineEscape(t *testing.T) {
 			},
 		},
 		{
-			"|\\`(",
+			"\\`(",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{node.Text("`(")}},
 			},
 		},
 		{
-			"|\\\\`(",
+			"\\\\`(",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text(`\`),
@@ -1334,13 +1334,13 @@ func TestInlineEscape(t *testing.T) {
 			},
 		},
 		{
-			`|\<`,
+			`\<`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{node.Text("<")}},
 			},
 		},
 		{
-			`|\\<`,
+			`\\<`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text(`\`),
