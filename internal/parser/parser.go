@@ -58,8 +58,7 @@ type parser struct {
 	blocks []rune // open blocks
 	lead   []rune // blocks on current line
 
-	inlines      [][2]rune // current inline closing delimiters
-	closeInlines bool
+	inlines [][2]rune // open inlines
 
 	// tracing
 	tindent int // trace indentation
@@ -475,17 +474,8 @@ func (p *parser) parseInlines() []node.Inline {
 			break
 		}
 
-		if p.closeInlines {
-			p.closeInlines = false
+		if p.isClosingDelimiter() {
 			break
-		}
-
-		if p.tryCloseInline() {
-			break
-		}
-
-		if trace {
-			p.dumpInlines()
 		}
 
 		inline := p.parseInline()
@@ -496,6 +486,14 @@ func (p *parser) parseInlines() []node.Inline {
 		inlines = append(inlines, inline)
 	}
 	return inlines
+}
+
+func inlineEquals(opening, closing [2]rune) bool {
+	if opening[1] == 0 {
+		// no escape character
+		return opening[0] == counterpart(closing[1])
+	}
+	return opening[0] == closing[1] && opening[1] == counterpart(closing[0])
 }
 
 func (p *parser) parseInline() node.Inline {
@@ -562,17 +560,20 @@ func (p *parser) isInlineEscape() bool {
 func (p *parser) parseUniform(name string) node.Inline {
 	if trace {
 		defer p.tracef("parseUniform (%s)", name)()
+		p.printInlines("inlines", p.inlines)
 	}
 
 	delim := p.ch
 	p.nextch()
-	escape := p.ch
 	p.nextch()
 
-	p.openInline(delim, escape)
-	defer p.closeInline(delim, escape)
+	defer p.openInline(delim, delim)()
 
 	children := p.parseInlines()
+	if inlineEquals([2]rune{delim, delim}, p.closingDelimiter()) {
+		p.nextch()
+		p.nextch()
+	}
 
 	return &node.Uniform{name, children}
 }
@@ -618,6 +619,7 @@ func (p *parser) parseEscaped(name string) node.Inline {
 func (p *parser) parseForward(name string) node.Inline {
 	if trace {
 		defer p.tracef("parseForward (%s)", name)()
+		p.printInlines("inlines", p.inlines)
 	}
 
 	delim := p.ch
@@ -662,11 +664,16 @@ func (p *parser) parseForward(name string) node.Inline {
 	var children []node.Inline
 
 	if isTwoPart {
-		p.openInline(counterpart(delim), 0)
+		defer p.openInline(delim, 0)()
 		children = p.parseInlines()
-		p.closeInline(counterpart(delim), 0)
 
-		p.nextch() // consume closing delimiter of first part
+		if inlineEquals([2]rune{delim, 0}, p.closingDelimiter()) {
+			p.nextch()
+		} else {
+			return &node.Forward{name, content, children}
+		}
+
+		p.nextch() // consume opening delimiter of second part
 	}
 
 	if !p.atEOL() {
@@ -716,32 +723,18 @@ func (p *parser) parseText() node.Inline {
 
 	var b bytes.Buffer
 	b.WriteRune(p.ch)
-loop:
 	for p.nextch() {
+		if p.isClosingDelimiter() {
+			break
+		}
+
+		if p.isInlineDelimiter() {
+			break
+		}
+
 		if p.isInlineEscape() {
 			p.nextch()
 			continue
-		}
-
-		if el, ok := p.inlineElems[p.ch]; ok {
-			switch el.Type {
-			case node.TypeUniform:
-				if p.peekEquals(p.ch) {
-					break loop
-				}
-			case node.TypeEscaped:
-				if p.isEscaped() {
-					break loop
-				}
-			case node.TypeForward:
-				break loop
-			default:
-				panic(fmt.Sprintf("parser.parseText: unexpected node type %s (%s)", el.Type, el.Name))
-			}
-		}
-
-		if p.tryCloseInline() {
-			break
 		}
 
 		b.WriteRune(p.ch)
@@ -756,25 +749,67 @@ loop:
 	return node.Text(txt)
 }
 
-func (p *parser) tryCloseInline() bool {
-	for _, pair := range p.inlines {
-		delim, escape := pair[0], pair[1]
+func (p *parser) isClosingDelimiter() bool {
+	if trace {
+		defer p.trace("isClosingDelimiter")()
+	}
 
-		if escape == 0 {
-			if p.ch == delim {
-				p.nextch()
-				p.closeInlines = true
-				return true
-			}
-			continue
-		}
-
-		if p.ch == escape && p.peekEquals(delim) {
-			p.nextch()
-			p.nextch()
+	var ok bool
+	for i := len(p.inlines) - 1; i >= 0; i-- {
+		delim, escape := p.inlines[i][0], p.inlines[i][1]
+		if escape == 0 && p.ch == counterpart(delim) {
+			ok = true
+			break
 			return true
 		}
+
+		if p.ch == counterpart(escape) && p.peekEquals(delim) {
+			ok = true
+			break
+		}
 	}
+
+	if trace {
+		p.printf("return %t", ok)
+	}
+
+	return ok
+}
+
+func (p *parser) closingDelimiter() [2]rune {
+	for i := len(p.inlines) - 1; i >= 0; i-- {
+		delim, escape := p.inlines[i][0], p.inlines[i][1]
+		if escape == 0 && p.ch == counterpart(delim) {
+			return [2]rune{0, p.ch}
+		}
+
+		if p.ch == counterpart(escape) && p.peekEquals(delim) {
+			return [2]rune{p.ch, delim}
+		}
+	}
+
+	return [2]rune{0, 0}
+}
+
+func (p *parser) isInlineDelimiter() bool {
+	el, ok := p.inlineElems[p.ch]
+	if ok {
+		switch el.Type {
+		case node.TypeUniform:
+			if p.peekEquals(p.ch) {
+				return true
+			}
+		case node.TypeEscaped:
+			if p.isEscaped() {
+				return true
+			}
+		case node.TypeForward:
+			return true
+		default:
+			panic(fmt.Sprintf("parser.parseText: unexpected node type %s (%s)", el.Type, el.Name))
+		}
+	}
+
 	return false
 }
 
@@ -945,25 +980,12 @@ func diff(old, new []rune) []rune {
 	return new[i+1:]
 }
 
-func (p *parser) openInline(delim rune, escape rune) {
+func (p *parser) openInline(delim rune, escape rune) func() {
+	size := len(p.inlines)
 	p.inlines = append(p.inlines, [2]rune{delim, escape})
-}
 
-func (p *parser) closeInline(delim rune, escape rune) {
-	for i := len(p.inlines) - 1; i > -1; i-- {
-		if escape == 0 {
-			if delim == p.inlines[i][0] {
-				p.inlines = p.inlines[:i]
-				break
-			}
-
-			continue
-		}
-
-		if delim == p.inlines[i][0] && escape == p.inlines[i][1] {
-			p.inlines = p.inlines[:i]
-			break
-		}
+	return func() {
+		p.inlines = p.inlines[:size]
 	}
 }
 
@@ -1005,17 +1027,27 @@ func fmtBlocks(blocks []rune) string {
 	return b.String()
 }
 
-func (p *parser) dumpInlines() {
+func (p *parser) printInlines(name string, inlines [][2]rune) {
+	p.print(name + "=" + fmtInlines(inlines))
+}
+
+func fmtInlines(inlines [][2]rune) string {
 	var b strings.Builder
 	b.WriteString("[")
-	for i, v := range p.inlines {
+	for i, v := range inlines {
 		if i > 0 {
 			b.WriteString(", ")
 		}
-		b.WriteString(fmt.Sprintf("%q %q", v[0], v[1]))
+
+		b.WriteString(fmt.Sprintf("[del=%q esc=%q]", v[0], v[1]))
 	}
+
 	b.WriteString("]")
-	p.print("p.inlines=" + b.String())
+	return b.String()
+}
+
+func reverseInline(i [2]rune) [2]rune {
+	return [2]rune{i[1], i[0]}
 }
 
 func (p *parser) tracef(format string, v ...interface{}) func() {

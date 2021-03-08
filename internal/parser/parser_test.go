@@ -884,19 +884,20 @@ func TestUniform(t *testing.T) {
 			},
 		},
 		{
-			"__**a**",
+			"__**a**b",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					&node.Uniform{"Emphasis", []node.Inline{
 						&node.Uniform{"Strong", []node.Inline{
 							node.Text("a"),
 						}},
+						node.Text("b"),
 					}},
 				}},
 			},
 		},
 		{
-			"__**a__",
+			"__**a__b",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					&node.Uniform{"Emphasis", []node.Inline{
@@ -904,18 +905,21 @@ func TestUniform(t *testing.T) {
 							node.Text("a"),
 						}},
 					}},
+					node.Text("b"),
 				}},
 			},
 		},
 		{
-			"__**a**__",
+			"__**a**b__c",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					&node.Uniform{"Emphasis", []node.Inline{
 						&node.Uniform{"Strong", []node.Inline{
 							node.Text("a"),
 						}},
+						node.Text("b"),
 					}},
+					node.Text("c"),
 				}},
 			},
 		},
@@ -1054,12 +1058,13 @@ func TestEscaped(t *testing.T) {
 			},
 		},
 		{
-			"a__``__a``",
+			"a__``__b``c",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text("a"),
 					&node.Uniform{"Emphasis", []node.Inline{
-						&node.Escaped{"Code", []byte("__a")},
+						&node.Escaped{"Code", []byte("__b")},
+						node.Text("c"),
 					}},
 				}},
 			},
@@ -1128,50 +1133,10 @@ func TestForward(t *testing.T) {
 			},
 		},
 		{
-			"<**",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{
-					&node.Forward{"Link", []byte("**"), nil},
-				}},
-			},
-		},
-		{
 			"<a><b",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					&node.Forward{"Link", []byte("b"), []node.Inline{
-						node.Text("a"),
-					}},
-				}},
-			},
-		},
-		{
-			"<**><b",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{
-					&node.Forward{"Link", []byte("b"), []node.Inline{
-						&node.Uniform{"Strong", nil},
-					}},
-				}},
-			},
-		},
-		{
-			"<**a**><b",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{
-					&node.Forward{"Link", []byte("b"), []node.Inline{
-						&node.Uniform{"Strong", []node.Inline{
-							node.Text("a"),
-						}},
-					}},
-				}},
-			},
-		},
-		{
-			"<a><**",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{
-					&node.Forward{"Link", []byte("**"), []node.Inline{
 						node.Text("a"),
 					}},
 				}},
@@ -1195,6 +1160,113 @@ func TestForward(t *testing.T) {
 						node.Text("a"),
 					}},
 					&node.Forward{"Link", []byte("c"), nil},
+				}},
+			},
+		},
+
+		// nested
+		{
+			"<**",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("**"), nil},
+				}},
+			},
+		},
+		{
+			"<**>",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("**"), nil},
+				}},
+			},
+		},
+		{
+			"<a><**",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("**"), []node.Inline{
+						node.Text("a"),
+					}},
+				}},
+			},
+		},
+		{
+			"<a><**>",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("**"), []node.Inline{
+						node.Text("a"),
+					}},
+				}},
+			},
+		},
+
+		{
+			"<**><a",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("a"), []node.Inline{
+						&node.Uniform{"Strong", nil},
+					}},
+				}},
+			},
+		},
+		{
+			"<**><a>",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("a"), []node.Inline{
+						&node.Uniform{"Strong", nil},
+					}},
+				}},
+			},
+		},
+		{
+			"<**a**><b",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("b"), []node.Inline{
+						&node.Uniform{"Strong", []node.Inline{
+							node.Text("a"),
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			"<**a**><b>",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("b"), []node.Inline{
+						&node.Uniform{"Strong", []node.Inline{
+							node.Text("a"),
+						}},
+					}},
+				}},
+			},
+		},
+
+		{
+			"<**<a>><b",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Forward{"Link", []byte("**<a"), nil},
+					node.Text(">"),
+					&node.Forward{"Link", []byte("b"), nil},
+				}},
+			},
+		},
+
+		{
+			"|**<**><a>",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Strong", []node.Inline{
+						&node.Forward{"Link", nil, nil},
+					}},
+					node.Text(">"),
+					&node.Forward{"Link", []byte("a"), nil},
 				}},
 			},
 		},
