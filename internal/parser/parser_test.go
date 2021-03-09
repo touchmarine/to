@@ -1343,6 +1343,13 @@ func TestBlockEscape(t *testing.T) {
 				}},
 			},
 		},
+
+		{
+			"``|**\n|**",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", [][]byte{[]byte("|**"), []byte("|**")}},
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -1378,7 +1385,7 @@ func TestInlineEscape(t *testing.T) {
 		{
 			`\**`,
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text(`**`)}},
+				&node.Line{"Line", []node.Inline{node.Text("**")}},
 			},
 		},
 		{
@@ -1417,6 +1424,99 @@ func TestInlineEscape(t *testing.T) {
 				&node.Line{"Line", []node.Inline{
 					node.Text(`\`),
 					&node.Forward{"Link", nil, nil},
+				}},
+			},
+		},
+
+		{
+			`a\**`,
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text("a**")}},
+			},
+		},
+		{
+			`|**\**`,
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Strong", []node.Inline{
+						node.Text("**"),
+					}},
+				}},
+			},
+		},
+		{
+			"|``\\``",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Escaped{"Code", []byte(`\`)},
+				}},
+			},
+		},
+		{
+			"``\\**\n\\**",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", [][]byte{[]byte(`\**`), []byte(`\**`)}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
+func TestComment(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"//",
+			[]node.Node{
+				node.Comment(""),
+			},
+		},
+		{
+			"//a",
+			[]node.Node{
+				node.Comment("a"),
+			},
+		},
+		{
+			"//\n//",
+			[]node.Node{
+				node.Comment(""),
+				node.Comment(""),
+			},
+		},
+
+		// after inline
+		{
+			"a//",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+				}},
+				node.Comment(""),
+			},
+		},
+
+		// escape
+		{
+			`\//`,
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("//"),
+				}},
+			},
+		},
+		{
+			`a\//`,
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a//"),
 				}},
 			},
 		},

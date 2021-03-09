@@ -226,3 +226,18 @@ func (t Text) Inline() {}
 func (t Text) Content() []byte {
 	return t
 }
+
+// Comment represents text—an atomic, inline node.
+type Comment []byte
+
+// Node returns the node's name.
+func (c Comment) Node() string {
+	return "Comment"
+}
+
+func (c Comment) Block() {}
+
+// Content returns the comment's text.
+func (c Comment) Content() []byte {
+	return c
+}

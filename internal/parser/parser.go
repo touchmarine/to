@@ -147,6 +147,10 @@ func (p *parser) parseBlock() node.Block {
 		defer p.trace("parseBlock")()
 	}
 
+	if p.isComment() {
+		return p.parseComment()
+	}
+
 	if p.ch == '|' {
 		// escape block
 		p.nextch()
@@ -176,6 +180,46 @@ func (p *parser) parseBlock() node.Block {
 	}
 
 	return p.parseLine(lnEl.Name)
+}
+
+func (p *parser) isComment() bool {
+	if trace {
+		defer p.trace("isComment")()
+	}
+
+	t := p.ch == '/' && p.peekEquals('/')
+
+	if trace {
+		p.printf("return %t", t)
+	}
+	return t
+}
+
+func (p *parser) parseComment() node.Block {
+	if trace {
+		defer p.trace("parseComment")()
+	}
+
+	p.nextch()
+	p.nextch()
+
+	var b bytes.Buffer
+	for {
+		if p.atEOL() {
+			break
+		}
+
+		b.WriteRune(p.ch)
+		p.nextch()
+	}
+
+	txt := b.Bytes()
+
+	if trace {
+		p.printf("return %q", txt)
+	}
+
+	return node.Comment(txt)
 }
 
 func (p *parser) parseWalled(name string) node.Block {
@@ -456,9 +500,11 @@ func (p *parser) parseLine(name string) node.Block {
 
 	children := p.parseInlines()
 
-	p.nextln()
-	p.nextch()
-	p.parseLead()
+	if p.atEOL() {
+		p.nextln()
+		p.nextch()
+		p.parseLead()
+	}
 
 	return &node.Line{name, children}
 }
@@ -471,6 +517,10 @@ func (p *parser) parseInlines() []node.Inline {
 	var inlines []node.Inline
 	for {
 		if p.atEOL() {
+			break
+		}
+
+		if p.isComment() {
 			break
 		}
 
@@ -501,25 +551,21 @@ func (p *parser) parseInline() node.Inline {
 		defer p.trace("parseInline")()
 	}
 
-	if p.isInlineEscape() {
-		p.nextch()
-	} else {
-		el, ok := p.inlineElems[p.ch]
-		if ok {
-			switch el.Type {
-			case node.TypeUniform:
-				if p.peekEquals(p.ch) {
-					return p.parseUniform(el.Name)
-				}
-			case node.TypeEscaped:
-				if p.isEscaped() {
-					return p.parseEscaped(el.Name)
-				}
-			case node.TypeForward:
-				return p.parseForward(el.Name)
-			default:
-				panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
+	el, ok := p.inlineElems[p.ch]
+	if ok {
+		switch el.Type {
+		case node.TypeUniform:
+			if p.peekEquals(p.ch) {
+				return p.parseUniform(el.Name)
 			}
+		case node.TypeEscaped:
+			if p.isEscaped() {
+				return p.parseEscaped(el.Name)
+			}
+		case node.TypeForward:
+			return p.parseForward(el.Name)
+		default:
+			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
 		}
 	}
 
@@ -540,20 +586,36 @@ func (p *parser) isEscaped() bool {
 }
 
 func (p *parser) isInlineEscape() bool {
+	if trace {
+		defer p.trace("isInlineEscape")()
+	}
+
 	if p.ch != '\\' {
+		if trace {
+			p.print("return false")
+		}
 		return false
 	}
 
 	peek, _ := utf8.DecodeRune(p.ln)
 	if peek == utf8.RuneError {
+		if trace {
+			p.print("return false")
+		}
 		return false
 	}
 
-	if peek == '\\' {
+	if peek == '\\' || peek == '/' {
+		if trace {
+			p.print("return true")
+		}
 		return true
 	}
 
 	_, ok := p.inlineElems[peek]
+	if trace {
+		p.printf("return %t", ok)
+	}
 	return ok
 }
 
@@ -722,8 +784,16 @@ func (p *parser) parseText() node.Inline {
 	}
 
 	var b bytes.Buffer
-	b.WriteRune(p.ch)
-	for p.nextch() {
+	for {
+		if p.isInlineEscape() {
+			p.nextch()
+			goto next
+		}
+
+		if p.isComment() {
+			break
+		}
+
 		if p.isClosingDelimiter() {
 			break
 		}
@@ -732,12 +802,12 @@ func (p *parser) parseText() node.Inline {
 			break
 		}
 
-		if p.isInlineEscape() {
-			p.nextch()
-			continue
-		}
-
+	next:
 		b.WriteRune(p.ch)
+
+		if !p.nextch() {
+			break
+		}
 	}
 
 	txt := b.Bytes()
