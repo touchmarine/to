@@ -24,7 +24,6 @@ type Element struct {
 
 var DefaultElements = []Element{
 	// block
-	{"Line", node.TypeLine, 0},
 	{"Blockquote", node.TypeWalled, '>'},
 	{"DescriptionList", node.TypeHanging, '*'},
 	{"CodeBlock", node.TypeFenced, '`'},
@@ -170,12 +169,7 @@ func (p *parser) parseBlock() node.Block {
 		}
 	}
 
-	lnEl, ok := p.blockElems[0]
-	if !ok {
-		panic("parser.parseBlock: no registered line element")
-	}
-
-	return p.parseLine(lnEl.Name)
+	return p.parseLine("Line")
 }
 
 func (p *parser) isLineComment() bool {
