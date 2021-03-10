@@ -227,17 +227,17 @@ func (t Text) Content() []byte {
 	return t
 }
 
-// Comment represents text—an atomic, inline node.
-type Comment []byte
+// LineComment represents text—an atomic, inline node.
+type LineComment []byte
 
 // Node returns the node's name.
-func (c Comment) Node() string {
-	return "Comment"
+func (c LineComment) Node() string {
+	return "LineComment"
 }
 
-func (c Comment) Block() {}
+func (c LineComment) Inline() {}
 
-// Content returns the comment's text.
-func (c Comment) Content() []byte {
+// Content returns the LineComment's text.
+func (c LineComment) Content() []byte {
 	return c
 }

@@ -44,6 +44,11 @@ type renderer struct {
 
 func (r *renderer) render() {
 	for r.next() {
+		switch r.n.(type) {
+		case node.LineComment:
+			continue
+		}
+
 		if r.tagName() != "" {
 			r.enter()
 		}

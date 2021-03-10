@@ -1467,7 +1467,7 @@ func TestInlineEscape(t *testing.T) {
 	}
 }
 
-func TestComment(t *testing.T) {
+func TestLineComment(t *testing.T) {
 	cases := []struct {
 		in  string
 		out []node.Node
@@ -1475,20 +1475,28 @@ func TestComment(t *testing.T) {
 		{
 			"//",
 			[]node.Node{
-				node.Comment(""),
+				&node.Line{"Line", []node.Inline{
+					node.LineComment(""),
+				}},
 			},
 		},
 		{
 			"//a",
 			[]node.Node{
-				node.Comment("a"),
+				&node.Line{"Line", []node.Inline{
+					node.LineComment("a"),
+				}},
 			},
 		},
 		{
 			"//\n//",
 			[]node.Node{
-				node.Comment(""),
-				node.Comment(""),
+				&node.Line{"Line", []node.Inline{
+					node.LineComment(""),
+				}},
+				&node.Line{"Line", []node.Inline{
+					node.LineComment(""),
+				}},
 			},
 		},
 
@@ -1498,8 +1506,8 @@ func TestComment(t *testing.T) {
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text("a"),
+					node.LineComment(""),
 				}},
-				node.Comment(""),
 			},
 		},
 

@@ -147,10 +147,6 @@ func (p *parser) parseBlock() node.Block {
 		defer p.trace("parseBlock")()
 	}
 
-	if p.isComment() {
-		return p.parseComment()
-	}
-
 	if p.ch == '|' {
 		// escape block
 		p.nextch()
@@ -182,9 +178,9 @@ func (p *parser) parseBlock() node.Block {
 	return p.parseLine(lnEl.Name)
 }
 
-func (p *parser) isComment() bool {
+func (p *parser) isLineComment() bool {
 	if trace {
-		defer p.trace("isComment")()
+		defer p.trace("isLineComment")()
 	}
 
 	t := p.ch == '/' && p.peekEquals('/')
@@ -195,9 +191,9 @@ func (p *parser) isComment() bool {
 	return t
 }
 
-func (p *parser) parseComment() node.Block {
+func (p *parser) parseLineComment() node.Inline {
 	if trace {
-		defer p.trace("parseComment")()
+		defer p.trace("parseLineComment")()
 	}
 
 	p.nextch()
@@ -219,7 +215,7 @@ func (p *parser) parseComment() node.Block {
 		p.printf("return %q", txt)
 	}
 
-	return node.Comment(txt)
+	return node.LineComment(txt)
 }
 
 func (p *parser) parseWalled(name string) node.Block {
@@ -371,14 +367,14 @@ func (p *parser) parseFenced(name string) node.Block {
 	var lines [][]byte
 
 	var b strings.Builder
-outer:
+OuterLoop:
 	for {
 		for p.atEOL() {
 			lines = append(lines, []byte(b.String()))
 			b.Reset()
 
 			if !p.nextln() {
-				break outer
+				break OuterLoop
 			}
 
 			p.nextch()
@@ -410,7 +406,7 @@ outer:
 				} else {
 					p.nextch()
 				}
-				break outer
+				break OuterLoop
 			}
 
 			b.WriteRune(p.ch)
@@ -520,10 +516,6 @@ func (p *parser) parseInlines() []node.Inline {
 			break
 		}
 
-		if p.isComment() {
-			break
-		}
-
 		if p.isClosingDelimiter() {
 			break
 		}
@@ -549,6 +541,10 @@ func inlineEquals(opening, closing [2]rune) bool {
 func (p *parser) parseInline() node.Inline {
 	if trace {
 		defer p.trace("parseInline")()
+	}
+
+	if p.isLineComment() {
+		return p.parseLineComment()
 	}
 
 	el, ok := p.inlineElems[p.ch]
@@ -790,7 +786,7 @@ func (p *parser) parseText() node.Inline {
 			goto next
 		}
 
-		if p.isComment() {
+		if p.isLineComment() {
 			break
 		}
 
