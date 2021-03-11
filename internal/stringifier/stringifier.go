@@ -61,11 +61,20 @@ func (s *stringifier) stringify(nodes []node.Node) {
 func (s *stringifier) enter(n node.Node) {
 	switch n.(type) {
 	case node.Block:
-		if _, ok := n.(node.InlineChildren); ok {
-			s.writei([]byte(n.Node() + "("))
-		} else {
-			s.writei([]byte(n.Node() + "(\n"))
+		s.writei([]byte(n.Node()))
+
+		if ranked, ok := n.(node.Ranked); ok && ranked.Rank() > 0 {
+			s.write([]byte(strconv.FormatUint(uint64(ranked.Rank()), 10)))
+		}
+
+		switch n.(type) {
+		case node.InlineChildren:
+			s.write([]byte("("))
+		case node.BlockChildren, node.HeadBody:
+			s.write([]byte("(\n"))
 			s.indent++
+		default:
+			panic(fmt.Sprintf("stringifier.enter: unexpected block type %T", n))
 		}
 	case node.Inline:
 		s.write([]byte(n.Node() + "("))
@@ -77,12 +86,15 @@ func (s *stringifier) enter(n node.Node) {
 func (s *stringifier) leave(n node.Node) {
 	switch n.(type) {
 	case node.Block:
-		if _, ok := n.(node.InlineChildren); ok {
+		switch n.(type) {
+		case node.InlineChildren:
 			s.write([]byte(")"))
-		} else {
+		case node.BlockChildren, node.HeadBody:
 			s.write([]byte("\n"))
 			s.indent--
 			s.writei([]byte(")\n"))
+		default:
+			panic(fmt.Sprintf("stringifier.leave: unexpected block type %T", n))
 		}
 	case node.Inline:
 		s.write([]byte(")"))

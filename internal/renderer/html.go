@@ -4,20 +4,21 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"to/internal/node"
 )
 
 var ElementTagNames = map[string][]string{
-	"Line":            nil,
-	"Paragraph":       []string{"p"},
 	"Blockquote":      []string{"blockquote"},
 	"DescriptionList": []string{"dl", "dt", "dd"},
 	"CodeBlock":       []string{"pre><code"},
-	"Emphasis":        []string{"em"},
-	"Strong":          []string{"strong"},
-	"Code":            []string{"code"},
-	"Link":            []string{"a"},
+	"Heading":         []string{"h"},
+
+	"Emphasis": []string{"em"},
+	"Strong":   []string{"strong"},
+	"Code":     []string{"code"},
+	"Link":     []string{"a"},
 }
 
 func Render(nodes ...node.Node) string {
@@ -44,9 +45,11 @@ type renderer struct {
 
 func (r *renderer) render() {
 	for r.next() {
-		switch r.n.(type) {
-		case node.LineComment:
-			continue
+		switch m := r.n.(type) {
+		case *node.Line:
+			if onlyLineComments(m.InlineChildren()) {
+				continue
+			}
 		}
 
 		if r.tagName() != "" {
@@ -80,15 +83,22 @@ func (r *renderer) next() bool {
 func (r *renderer) enter() {
 	switch r.n.(type) {
 	case node.Block:
-		if _, ok := r.n.(node.InlineChildren); ok {
-			r.writei([]byte("<" + r.tagName()))
-			r.attrs()
-			r.write([]byte(">"))
-		} else {
-			r.writei([]byte("<" + r.tagName()))
-			r.attrs()
-			r.write([]byte(">\n"))
+		r.writei([]byte("<" + r.tagName()))
+
+		if r.isRanked() {
+			r.write([]byte(uintToStr(r.rank())))
+		}
+
+		r.attrs()
+		r.write([]byte(">"))
+
+		switch r.n.(type) {
+		case node.InlineChildren:
+		case node.BlockChildren, node.HeadBody:
+			r.write([]byte("\n"))
 			r.indent++
+		default:
+			panic(fmt.Sprintf("renderer.enter: unexpected block type %T", r.n))
 		}
 	case node.Inline:
 		r.write([]byte("<" + r.tagName()))
@@ -151,18 +161,38 @@ func (r *renderer) inside() {
 func (r *renderer) leave() {
 	switch r.n.(type) {
 	case node.Block:
-		if _, ok := r.n.(node.InlineChildren); ok {
-			r.write([]byte("</" + r.tagName() + ">"))
-		} else {
+		switch r.n.(type) {
+		case node.InlineChildren:
+		case node.BlockChildren, node.HeadBody:
 			r.write([]byte("\n"))
 			r.indent--
-			r.writei([]byte("</" + r.tagName() + ">\n"))
+		default:
+			panic(fmt.Sprintf("renderer.leave: unexpected block type %T", r.n))
 		}
+
 	case node.Inline:
-		r.write([]byte("</" + r.tagName() + ">"))
 	default:
 		panic(fmt.Sprintf("renderer.leave: unexpected type %T", r.n))
 	}
+
+	r.write([]byte("</" + r.tagName()))
+	if r.isRanked() {
+		r.write([]byte(uintToStr(r.rank())))
+	}
+	r.write([]byte(">"))
+}
+
+func (r *renderer) isRanked() bool {
+	ranked, ok := r.n.(node.Ranked)
+	return ok && ranked.Rank() > 0
+}
+
+func (r *renderer) rank() uint {
+	ranked, ok := r.n.(node.Ranked)
+	if !ok {
+		panic(fmt.Sprintf("renderer.rank: node %T does not implement node.Ranked", r.n))
+	}
+	return ranked.Rank()
 }
 
 func (r *renderer) tagName() string {
@@ -179,4 +209,17 @@ func (r *renderer) writei(p []byte) {
 
 func (r *renderer) write(p []byte) {
 	r.w.Write(p)
+}
+
+func onlyLineComments(inlines []node.Inline) bool {
+	for _, n := range inlines {
+		if _, ok := n.(node.LineComment); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func uintToStr(u uint) string {
+	return strconv.FormatUint(uint64(u), 10)
 }

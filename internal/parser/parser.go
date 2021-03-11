@@ -20,19 +20,21 @@ type Element struct {
 	Name      string
 	Type      node.Type
 	Delimiter rune
+	Ranked    bool
 }
 
 var DefaultElements = []Element{
 	// block
-	{"Blockquote", node.TypeWalled, '>'},
-	{"DescriptionList", node.TypeHanging, '*'},
-	{"CodeBlock", node.TypeFenced, '`'},
+	{Name: "Blockquote", Type: node.TypeWalled, Delimiter: '>'},
+	{Name: "DescriptionList", Type: node.TypeHanging, Delimiter: '*'},
+	{Name: "CodeBlock", Type: node.TypeFenced, Delimiter: '`'},
+	{Name: "Heading", Type: node.TypeHanging, Delimiter: '=', Ranked: true},
 
 	// inline
-	{"Emphasis", node.TypeUniform, '_'},
-	{"Strong", node.TypeUniform, '*'},
-	{"Code", node.TypeEscaped, '`'},
-	{"Link", node.TypeForward, '<'},
+	{Name: "Emphasis", Type: node.TypeUniform, Delimiter: '_'},
+	{Name: "Strong", Type: node.TypeUniform, Delimiter: '*'},
+	{Name: "Code", Type: node.TypeEscaped, Delimiter: '`'},
+	{Name: "Link", Type: node.TypeForward, Delimiter: '<'},
 }
 
 func Parse(r io.Reader) ([]node.Block, []error) {
@@ -158,7 +160,7 @@ func (p *parser) parseBlock() node.Block {
 			case node.TypeWalled:
 				return p.parseWalled(el.Name)
 			case node.TypeHanging:
-				return p.parseHanging(el.Name)
+				return p.parseHanging(el.Name, el.Ranked)
 			case node.TypeFenced:
 				if p.peekEquals(p.ch) {
 					return p.parseFenced(el.Name)
@@ -228,21 +230,31 @@ func (p *parser) parseWalled(name string) node.Block {
 	return &node.Walled{name, children}
 }
 
-func (p *parser) parseHanging(name string) node.Block {
+func (p *parser) parseHanging(name string, ranked bool) node.Block {
 	if trace {
-		defer p.tracef("parseHanging (%s)", name)()
+		defer p.tracef("parseHanging (%s, ranked=%t)", name, ranked)()
 	}
 
-	p.addLead(' ')
+	var rank uint
+	if ranked {
+		delim := p.ch
+		for p.ch == delim {
+			rank++
+			p.addLead(' ')
+			p.nextch()
+		}
+	} else {
+		p.addLead(' ')
+		p.nextch() // consume delimiter
+	}
+
 	newBlocks := diff(p.blocks, p.lead)
 	defer p.open(newBlocks...)()
-
-	p.nextch() // consume delimiter
 
 	reqdBlocks := p.blocks
 	children := p.parseChildren(reqdBlocks)
 
-	return &node.Hanging{name, children}
+	return &node.Hanging{name, rank, children}
 }
 
 func (p *parser) parseChildren(reqdBlocks []rune) []node.Block {
@@ -315,8 +327,8 @@ func (p *parser) continues(blocks []rune) bool {
 				}
 			}
 
-			x := countSpacing(p.blocks[n:i])
-			y := countSpacing(p.lead[m:j])
+			x := countSpacing(spacingSeq(p.blocks[n:i]))
+			y := countSpacing(spacingSeq(p.lead[m:j]))
 
 			if y < x {
 				if trace {
@@ -338,6 +350,16 @@ func (p *parser) continues(blocks []rune) bool {
 		i++
 		j++
 	}
+}
+
+func spacingSeq(a []rune) []rune {
+	for i, v := range a {
+		if v == ' ' || v == '\t' {
+			continue
+		}
+		return a[:i]
+	}
+	return a
 }
 
 func (p *parser) parseFenced(name string) node.Block {

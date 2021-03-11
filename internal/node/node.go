@@ -74,6 +74,10 @@ type InlineChildren interface {
 	InlineChildren() []Inline
 }
 
+type Ranked interface {
+	Rank() uint
+}
+
 // BlocksToNodes converts blocks to nodes.
 func BlocksToNodes(blocks []Block) []Node {
 	nodes := make([]Node, len(blocks))
@@ -124,6 +128,7 @@ func (w *Walled) BlockChildren() []Block {
 
 type Hanging struct {
 	Name     string
+	Rank0    uint
 	Children []Block
 }
 
@@ -132,6 +137,10 @@ func (h Hanging) Node() string {
 }
 
 func (h Hanging) Block() {}
+
+func (h *Hanging) Rank() uint {
+	return h.Rank0
+}
 
 func (h *Hanging) BlockChildren() []Block {
 	return h.Children
