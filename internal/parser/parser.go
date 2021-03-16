@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"strings"
+	"to/internal/config"
 	"to/internal/node"
 	"unicode/utf8"
 )
@@ -16,30 +17,13 @@ const trace = false
 
 const tabWidth = 8
 
-type Element struct {
-	Name      string
-	Type      node.Type
-	Delimiter rune
-	Ranked    bool
-}
-
-var DefaultElements = []Element{
-	// block
-	{Name: "Blockquote", Type: node.TypeWalled, Delimiter: '>'},
-	{Name: "DescriptionList", Type: node.TypeHanging, Delimiter: '*'},
-	{Name: "CodeBlock", Type: node.TypeFenced, Delimiter: '`'},
-	{Name: "Heading", Type: node.TypeHanging, Delimiter: '=', Ranked: true},
-
-	// inline
-	{Name: "Emphasis", Type: node.TypeUniform, Delimiter: '_'},
-	{Name: "Strong", Type: node.TypeUniform, Delimiter: '*'},
-	{Name: "Code", Type: node.TypeEscaped, Delimiter: '`'},
-	{Name: "Link", Type: node.TypeForward, Delimiter: '<'},
-}
-
 func Parse(r io.Reader) ([]node.Block, []error) {
+	return ParseCustom(r, config.Default.Elements)
+}
+
+func ParseCustom(r io.Reader, elements []config.Element) ([]node.Block, []error) {
 	var p parser
-	p.register(DefaultElements)
+	p.register(elements)
 	p.init(r)
 	return p.parse(), p.errors
 }
@@ -47,9 +31,9 @@ func Parse(r io.Reader) ([]node.Block, []error) {
 // parser holds the parsing state.
 type parser struct {
 	errors      []error
-	scnr        *bufio.Scanner   // line scanner
-	blockElems  map[rune]Element // map of block elements by delimiter
-	inlineElems map[rune]Element // map of inline elements by delimiter
+	scnr        *bufio.Scanner          // line scanner
+	blockElems  map[rune]config.Element // map of block elements by delimiter
+	inlineElems map[rune]config.Element // map of inline elements by delimiter
 
 	// parsing
 	ln    []byte // current line excluding EOL
@@ -65,12 +49,12 @@ type parser struct {
 	tindent int // trace indentation
 }
 
-func (p *parser) register(elems []Element) {
+func (p *parser) register(elems []config.Element) {
 	if p.blockElems == nil {
-		p.blockElems = make(map[rune]Element)
+		p.blockElems = make(map[rune]config.Element)
 	}
 	if p.inlineElems == nil {
-		p.inlineElems = make(map[rune]Element)
+		p.inlineElems = make(map[rune]config.Element)
 	}
 
 	for _, el := range elems {

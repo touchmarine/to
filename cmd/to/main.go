@@ -1,30 +1,45 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
+	"flag"
 	"log"
 	"os"
+	"to/internal/config"
 	"to/internal/node"
 	"to/internal/parser"
 	"to/internal/renderer"
-	"flag"
 )
 
-var tmpl = flag.Bool("tmpl", false, "use HTML templates")
+var confPath = flag.String("conf", "", "custom config")
 
 func main() {
 	flag.Parse()
 
-	nodes, err := parser.Parse(os.Stdin)
-	if err != nil {
-		log.Fatal(err)
+	var nodes []node.Block
+	var perr []error
+
+	if *confPath == "" {
+		nodes, perr = parser.Parse(os.Stdin)
+		if perr != nil {
+			log.Fatal(perr)
+		}
+	} else {
+		f, err := os.Open(*confPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var conf config.Config
+		if err := json.NewDecoder(f).Decode(&conf); err != nil {
+			log.Fatal(err)
+		}
+
+		nodes, perr = parser.ParseCustom(os.Stdin, conf.Elements)
+		if perr != nil {
+			log.Fatal(perr)
+		}
 	}
 
-	if *tmpl {
-		renderer.HTML(os.Stdout, node.BlocksToNodes(nodes))
-		return
-	}
-
-	html := renderer.Render(node.BlocksToNodes(nodes)...)
-	fmt.Print(html)
+	renderer.HTML(os.Stdout, node.BlocksToNodes(nodes))
 }

@@ -35,9 +35,9 @@ var ElementTemplates = map[string]string{
 </h{{.Rank}}>`,
 
 	"Emphasis": "<em>{{range .InlineChildren}}{{render .}}{{end}}</em>",
-	"Strong": "<strong>{{range .InlineChildren}}{{render .}}{{end}}</strong>",
-	"Code": "<code>{{.Content}}</code>",
-	"Link": `<a href="{{.Content}}">{{range .InlineChildren}}{{render .}}{{else}}{{.Content}}{{end}}</a>`,
+	"Strong":   "<strong>{{range .InlineChildren}}{{render .}}{{end}}</strong>",
+	"Code":     "<code>{{.Content}}</code>",
+	"Link":     `<a href="{{.Content}}">{{range .InlineChildren}}{{render .}}{{else}}{{.Content}}{{end}}</a>`,
 }
 
 var tmpls *template.Template

@@ -1,0 +1,46 @@
+{
+	"elements": [
+		{
+			"name": "Blockquote",
+			"type": "walled",
+			"delimiter": ">"
+		},
+		{
+			"name": "DescriptionList",
+			"type": "hanging",
+			"delimiter": "*"
+		},
+		{
+			"name": "CodeBlock",
+			"type": "fenced",
+			"delimiter": "`"
+		},
+		{
+			"name": "Heading",
+			"type": "hanging",
+			"delimiter": "=",
+			"ranked": true
+		},
+
+		{
+			"name": "Emphasis",
+			"type": "uniform",
+			"delimiter": "_"
+		},
+		{
+			"name": "Strong",
+			"type": "uniform",
+			"delimiter": "*"
+		},
+		{
+			"name": "Code",
+			"type": "escaped",
+			"delimiter": "`"
+		},
+		{
+			"name": "Link",
+			"type": "forward",
+			"delimiter": "<"
+		}
+	]
+}

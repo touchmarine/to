@@ -1,6 +1,10 @@
 package node
 
-import "bytes"
+import (
+	"bytes"
+	"fmt"
+	"strings"
+)
 
 //go:generate stringer -type=Category
 type Category uint
@@ -28,6 +32,30 @@ const (
 	TypeEscaped
 	TypeForward
 )
+
+func (t *Type) UnmarshalText(text []byte) error {
+	switch strings.ToLower(string(text)) {
+	case "line":
+		*t = TypeLine
+	case "walled":
+		*t = TypeWalled
+	case "hanging":
+		*t = TypeHanging
+	case "fenced":
+		*t = TypeFenced
+	case "text":
+		*t = TypeText
+	case "uniform":
+		*t = TypeUniform
+	case "escaped":
+		*t = TypeEscaped
+	case "forward":
+		*t = TypeForward
+	default:
+		return fmt.Errorf("unexpected node.Type value: %s", text)
+	}
+	return nil
+}
 
 // TypeCategory is used by parser to determine node category based on type.
 func TypeCategory(typ Type) Category {
