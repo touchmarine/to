@@ -53,6 +53,15 @@
 				"html": "<h{{.Rank}}>\n\t<div style=\"float:left\">{{.SeqNum}}&nbsp;</div>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</h{{.Rank}}>"
 			}
 		},
+		{
+			"name": "Replaced",
+			"type": "hanging",
+			"delimiter": ".",
+			"leaf": true,
+			"templates": {
+				"html": "<img />{{range .BlockChildren}}{{render .}}{{end}}"
+			}
+		},
 
 		{
 			"name": "Emphasis",

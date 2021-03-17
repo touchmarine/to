@@ -116,7 +116,7 @@ func (p *parser) parse() []node.Block {
 			break
 		}
 
-		block := p.parseBlock()
+		block := p.parseBlock(false)
 		if block == nil {
 			panic("parser.parse: nil block")
 		}
@@ -127,32 +127,34 @@ func (p *parser) parse() []node.Block {
 	return blocks
 }
 
-func (p *parser) parseBlock() node.Block {
+func (p *parser) parseBlock(leaf bool) node.Block {
 	if trace {
 		defer p.trace("parseBlock")()
 	}
 
-	if p.ch == '|' {
-		// escape block
-		p.nextch()
-	} else {
-		el, ok := p.blockElems[p.ch]
-		if ok {
-			switch el.Type {
-			case node.TypeLine:
-				return p.parseLine(el.Name)
-			case node.TypeWalled:
-				return p.parseWalled(el.Name)
-			case node.TypeHanging:
-				if el.MinRank <= 1 || p.consecutive() >= el.MinRank {
-					return p.parseHanging(el.Name, el.Ranked)
+	if !leaf {
+		if p.ch == '|' {
+			// escape block
+			p.nextch()
+		} else {
+			el, ok := p.blockElems[p.ch]
+			if ok {
+				switch el.Type {
+				case node.TypeLine:
+					return p.parseLine(el.Name)
+				case node.TypeWalled:
+					return p.parseWalled(el.Name)
+				case node.TypeHanging:
+					if el.MinRank <= 1 || p.consecutive() >= el.MinRank {
+						return p.parseHanging(el.Name, el.Ranked, el.Leaf)
+					}
+				case node.TypeFenced:
+					if p.peekEquals(p.ch) {
+						return p.parseFenced(el.Name)
+					}
+				default:
+					panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
 				}
-			case node.TypeFenced:
-				if p.peekEquals(p.ch) {
-					return p.parseFenced(el.Name)
-				}
-			default:
-				panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
 			}
 		}
 	}
@@ -241,14 +243,14 @@ func (p *parser) parseWalled(name string) node.Block {
 	p.nextch() // consume delimiter
 
 	reqdBlocks := p.blocks
-	children := p.parseChildren(reqdBlocks)
+	children := p.parseChildren(reqdBlocks, false)
 
 	return &node.Walled{name, children}
 }
 
-func (p *parser) parseHanging(name string, ranked bool) node.Block {
+func (p *parser) parseHanging(name string, ranked, leaf bool) node.Block {
 	if trace {
-		defer p.tracef("parseHanging (%s, ranked=%t)", name, ranked)()
+		defer p.tracef("parseHanging (%s, ranked=%t, leaf=%t)", name, ranked, leaf)()
 	}
 
 	var rank uint
@@ -268,12 +270,12 @@ func (p *parser) parseHanging(name string, ranked bool) node.Block {
 	defer p.open(newBlocks...)()
 
 	reqdBlocks := p.blocks
-	children := p.parseChildren(reqdBlocks)
+	children := p.parseChildren(reqdBlocks, leaf)
 
 	return &node.Hanging{name, rank, children}
 }
 
-func (p *parser) parseChildren(reqdBlocks []rune) []node.Block {
+func (p *parser) parseChildren(reqdBlocks []rune, leaf bool) []node.Block {
 	if trace {
 		defer p.trace("parseChildren")()
 	}
@@ -300,7 +302,7 @@ func (p *parser) parseChildren(reqdBlocks []rune) []node.Block {
 			break
 		}
 
-		blocks = append(blocks, p.parseBlock())
+		blocks = append(blocks, p.parseBlock(leaf))
 	}
 
 	return blocks

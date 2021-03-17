@@ -885,6 +885,205 @@ func TestHangingMinRank(t *testing.T) {
 	}
 }
 
+func TestHangingLeaf(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			".",
+			[]node.Node{&node.Hanging{"Replaced", 0, nil}},
+		},
+		{
+			"..",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{
+						node.Text("."),
+					}},
+				}},
+			},
+		},
+		{
+			".a",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
+		{
+			".\n.",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, nil},
+				&node.Hanging{"Replaced", 0, nil},
+			},
+		},
+		{
+			".\n\n.",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, nil},
+				&node.Hanging{"Replaced", 0, nil},
+			},
+		},
+		{
+			".a\nb",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+		{
+			".a\n b",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
+			".a\n  b",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+
+		// spacing
+		{
+			" .a\n b",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+
+		// nested
+		{
+			".\n .",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{
+						node.Text("."),
+					}},
+				}},
+			},
+		},
+		{
+			".a\n .b",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text(".b")}},
+				}},
+			},
+		},
+
+		{
+			">.",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"Replaced", 0, nil},
+				}},
+			},
+		},
+		{
+			">.\n.",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"Replaced", 0, nil},
+				}},
+				&node.Hanging{"Replaced", 0, nil},
+			},
+		},
+		{
+			">.\n>.",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"Replaced", 0, nil},
+					&node.Hanging{"Replaced", 0, nil},
+				}},
+			},
+		},
+		{
+			">.\n> .",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"Replaced", 0, []node.Block{
+						&node.Line{"Line", []node.Inline{
+							node.Text("."),
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			">.\n> a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"Replaced", 0, []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+					}},
+				}},
+			},
+		},
+		{
+			"> .\n>  a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"Replaced", 0, []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+					}},
+				}},
+			},
+		},
+
+		// nested+spacing
+		{
+			" .\n .",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, nil},
+				&node.Hanging{"Replaced", 0, nil},
+			},
+		},
+		{
+			" .\n  .",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{
+						node.Text("."),
+					}},
+				}},
+			},
+		},
+
+		// regression
+		{
+			".\n >b",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{
+						node.Text(">b"),
+					}},
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
 func TestFenced(t *testing.T) {
 	cases := []struct {
 		in  string
@@ -1771,6 +1970,22 @@ func TestBlockEscape(t *testing.T) {
 			"``|**\n|**",
 			[]node.Node{
 				&node.Fenced{"CodeBlock", [][]byte{[]byte("|**"), []byte("|**")}},
+			},
+		},
+
+		// leaf elements
+		{
+			"|.",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text(".")}},
+			},
+		},
+		{
+			".|.",
+			[]node.Node{
+				&node.Hanging{"Replaced", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("|.")}},
+				}},
 			},
 		},
 	}
