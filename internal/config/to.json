@@ -1,46 +1,80 @@
 {
+	"text": {
+		"templates": {
+			"html": "{{.Content}}"
+		}
+	},
+	"line": {
+		"templates": {
+			"html": "{{if not (onlyLineComment .InlineChildren)}}<div>{{range .InlineChildren}}{{render .}}{{end}}</div>{{end}}"
+		}
+	},
 	"elements": [
 		{
 			"name": "Blockquote",
 			"type": "walled",
-			"delimiter": ">"
+			"delimiter": ">",
+			"templates": {
+				"html": "<blockquote>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</blockquote>"
+			}
 		},
 		{
 			"name": "DescriptionList",
 			"type": "hanging",
-			"delimiter": "*"
+			"delimiter": "*",
+			"templates": {
+				"html": "<dl>\n{{- range $index, $element := .BlockChildren}}\n\t{{- if eq $index 0}}\n\t<dt>{{render $element}}</dt>\n\t{{- else}}\n\t<dd>{{render $element}}</dd>\n\t{{- end}}\n{{end -}}\n</dl>"
+			}
 		},
 		{
 			"name": "CodeBlock",
 			"type": "fenced",
-			"delimiter": "`"
+			"delimiter": "`",
+			"templates": {
+				"html": "<pre><code>{{.Body}}</code></pre>"
+			}
 		},
 		{
 			"name": "Heading",
 			"type": "hanging",
 			"delimiter": "=",
-			"ranked": true
+			"ranked": true,
+			"templates": {
+				"html": "<h{{.Rank}}>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</h{{.Rank}}>"
+			}
 		},
 
 		{
 			"name": "Emphasis",
 			"type": "uniform",
-			"delimiter": "_"
+			"delimiter": "_",
+			"templates": {
+				"html": "<em>{{range .InlineChildren}}{{render .}}{{end}}</em>"
+			}
 		},
 		{
 			"name": "Strong",
 			"type": "uniform",
-			"delimiter": "*"
+			"delimiter": "*",
+			"templates": {
+				"html": "<strong>{{range .InlineChildren}}{{render .}}{{end}}</strong>"
+			}
 		},
 		{
 			"name": "Code",
 			"type": "escaped",
-			"delimiter": "`"
+			"delimiter": "`",
+			"templates": {
+				"html": "<code>{{.Content}}</code>"
+			}
 		},
 		{
 			"name": "Link",
 			"type": "forward",
-			"delimiter": "<"
+			"delimiter": "<",
+			"templates": {
+				"html": "<a href=\"{{.Content}}\">{{range .InlineChildren}}{{render .}}{{else}}{{.Content}}{{end}}</a>"
+			}
 		}
 	]
 }
