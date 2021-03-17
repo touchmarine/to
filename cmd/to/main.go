@@ -50,7 +50,7 @@ func main() {
 	//rndr.Render(os.Stdout, "html", node.BlocksToNodes(nodes))
 
 	tmpl := template.New("html")
-	rndr := renderer.New(tmpl)
+	rndr := renderer.New(conf, tmpl)
 
 	tmpl.Funcs(renderer.FuncMap)
 	tmpl.Funcs(rndr.FuncMap())

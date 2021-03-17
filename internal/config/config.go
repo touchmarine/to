@@ -33,6 +33,15 @@ type Config struct {
 	Elements []Element `json:"elements"`
 }
 
+func (c *Config) Element(name string) (Element, bool) {
+	for _, el := range c.Elements {
+		if el.Name == name {
+			return el, true
+		}
+	}
+	return Element{}, false
+}
+
 func (c *Config) ParseTemplates(target *template.Template, name string) (*template.Template, error) {
 	textTmpl, ok := c.Text.Templates[name]
 	if !ok {

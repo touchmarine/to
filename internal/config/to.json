@@ -50,7 +50,7 @@
 			"ranked": true,
 			"minRank": 2,
 			"templates": {
-				"html": "<h{{.Rank}}>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</h{{.Rank}}>"
+				"html": "<h{{.Rank}}>\n\t<div style=\"float:left\">{{.SeqNum}}&nbsp;</div>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</h{{.Rank}}>"
 			}
 		},
 
