@@ -69,6 +69,7 @@ type Element struct {
 	Type      node.Type         `json:"type"`
 	Delimiter rune              `json:"delimiter"`
 	Ranked    bool              `json:"ranked"`
+	MinRank   uint              `json:"minRank"`
 	Templates map[string]string `json:"templates"`
 }
 
@@ -78,6 +79,7 @@ func (e *Element) UnmarshalJSON(text []byte) error {
 		Type      node.Type         `json:"type"`
 		Delimiter string            `json:"delimiter"`
 		Ranked    bool              `json:"ranked"`
+		MinRank   uint              `json:"minRank"`
 		Templates map[string]string `json:"templates"`
 	}
 	if err := json.Unmarshal(text, &el); err != nil {
@@ -93,6 +95,6 @@ func (e *Element) UnmarshalJSON(text []byte) error {
 		return errors.New("invalid delimiter")
 	}
 
-	*e = Element{el.Name, el.Type, r, el.Ranked, el.Templates}
+	*e = Element{el.Name, el.Type, r, el.Ranked, el.MinRank, el.Templates}
 	return nil
 }

@@ -812,6 +812,79 @@ func TestHangingRanked(t *testing.T) {
 	}
 }
 
+func TestHangingMinRank(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"#",
+			[]node.Node{&node.Line{"Line", []node.Inline{
+				node.Text("#"),
+			}}},
+		},
+		{
+			"##",
+			[]node.Node{&node.Hanging{"NumberedHeading", 2, nil}},
+		},
+		{
+			"# #",
+			[]node.Node{&node.Line{"Line", []node.Inline{
+				node.Text("# #"),
+			}}},
+		},
+		{
+			"## ##",
+			[]node.Node{
+				&node.Hanging{"NumberedHeading", 2, []node.Block{
+					&node.Hanging{"NumberedHeading", 2, nil},
+				}},
+			},
+		},
+		{
+			"##a",
+			[]node.Node{&node.Hanging{"NumberedHeading", 2, []node.Block{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+				}},
+			}}},
+		},
+		{
+			"##\n##",
+			[]node.Node{
+				&node.Hanging{"NumberedHeading", 2, nil},
+				&node.Hanging{"NumberedHeading", 2, nil},
+			},
+		},
+
+		{
+			"##a\nb",
+			[]node.Node{
+				&node.Hanging{"NumberedHeading", 2, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+
+		// nested
+		{
+			"##\n  ##",
+			[]node.Node{
+				&node.Hanging{"NumberedHeading", 2, []node.Block{
+					&node.Hanging{"NumberedHeading", 2, nil},
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
 func TestFenced(t *testing.T) {
 	cases := []struct {
 		in  string

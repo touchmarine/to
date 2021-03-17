@@ -43,6 +43,16 @@
 				"html": "<h{{.Rank}}>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</h{{.Rank}}>"
 			}
 		},
+		{
+			"name": "NumberedHeading",
+			"type": "hanging",
+			"delimiter": "#",
+			"ranked": true,
+			"minRank": 2,
+			"templates": {
+				"html": "<h{{.Rank}}>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</h{{.Rank}}>"
+			}
+		},
 
 		{
 			"name": "Emphasis",

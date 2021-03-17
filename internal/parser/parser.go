@@ -144,7 +144,9 @@ func (p *parser) parseBlock() node.Block {
 			case node.TypeWalled:
 				return p.parseWalled(el.Name)
 			case node.TypeHanging:
-				return p.parseHanging(el.Name, el.Ranked)
+				if el.MinRank <= 1 || p.consecutive() >= el.MinRank {
+					return p.parseHanging(el.Name, el.Ranked)
+				}
 			case node.TypeFenced:
 				if p.peekEquals(p.ch) {
 					return p.parseFenced(el.Name)
@@ -156,6 +158,36 @@ func (p *parser) parseBlock() node.Block {
 	}
 
 	return p.parseLine("Line")
+}
+
+func (p *parser) consecutive() uint {
+	if trace {
+		defer p.trace("consecutive")()
+	}
+
+	ch := p.ch
+
+	var i uint = 1
+	var offs int
+	for {
+		peek, w := utf8.DecodeRune(p.ln[offs:])
+		if peek == utf8.RuneError {
+			break
+		}
+
+		if peek != ch {
+			break
+		}
+
+		i++
+		offs += w
+	}
+
+	if trace {
+		p.printf("return %d", i)
+	}
+
+	return i
 }
 
 func (p *parser) isLineComment() bool {
