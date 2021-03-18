@@ -1084,6 +1084,203 @@ func TestHangingLeaf(t *testing.T) {
 	}
 }
 
+func TestHangingMulti(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"1",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("1"),
+				}},
+			},
+		},
+		{
+			"1.",
+			[]node.Node{&node.Hanging{"NumberedListDot", 0, nil}},
+		},
+		{
+			"1.1.",
+			[]node.Node{
+				&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Hanging{"NumberedListDot", 0, nil},
+				}},
+			},
+		},
+		{
+			"1.a",
+			[]node.Node{
+				&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
+		{
+			"1.\n1.",
+			[]node.Node{
+				&node.Hanging{"NumberedListDot", 0, nil},
+				&node.Hanging{"NumberedListDot", 0, nil},
+			},
+		},
+		{
+			"1.a\nb",
+			[]node.Node{
+				&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+		{
+			"1.a\n b",
+			[]node.Node{
+				&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+		{
+			"1.a\n  b",
+			[]node.Node{
+				&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+
+		// spacing
+		{
+			" 1.a\n b",
+			[]node.Node{
+				&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+		{
+			" 1.a\n  b",
+			[]node.Node{
+				&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+		{
+			" 1.a\n   b",
+			[]node.Node{
+				&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+
+		// nested
+		{
+			"1.\n  1.",
+			[]node.Node{
+				&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Hanging{"NumberedListDot", 0, nil},
+				}},
+			},
+		},
+		{
+			"1.a\n  1.b",
+			[]node.Node{
+				&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Hanging{"NumberedListDot", 0, []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					}},
+				}},
+			},
+		},
+
+		{
+			">1.",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"NumberedListDot", 0, nil},
+				}},
+			},
+		},
+		{
+			">1.\n1.",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"NumberedListDot", 0, nil},
+				}},
+				&node.Hanging{"NumberedListDot", 0, nil},
+			},
+		},
+		{
+			">1.\n>1.",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"NumberedListDot", 0, nil},
+					&node.Hanging{"NumberedListDot", 0, nil},
+				}},
+			},
+		},
+		{
+			">1.\n>  1.",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"NumberedListDot", 0, []node.Block{
+						&node.Hanging{"NumberedListDot", 0, nil},
+					}},
+				}},
+			},
+		},
+		{
+			">1.\n>  a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"NumberedListDot", 0, []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+					}},
+				}},
+			},
+		},
+		{
+			"> 1.\n>   a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"NumberedListDot", 0, []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+					}},
+				}},
+			},
+		},
+
+		// regression
+		{
+			"1.\n  >b",
+			[]node.Node{
+				&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Walled{"Blockquote", []node.Block{
+						&node.Line{"Line", []node.Inline{
+							node.Text("b"),
+						}},
+					}},
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
 func TestFenced(t *testing.T) {
 	cases := []struct {
 		in  string

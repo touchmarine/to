@@ -62,6 +62,22 @@
 				"html": "<img />{{range .BlockChildren}}{{render .}}{{end}}"
 			}
 		},
+		{
+			"name": "NumberedListDot",
+			"type": "hanging",
+			"delimiter": "1.",
+			"templates": {
+				"html": "<ol>\n{{- range .BlockChildren}}\n\t<li>{{render .}}</li>\n{{end -}}\n</ol>"
+			}
+		},
+		{
+			"name": "NumberedListParen",
+			"type": "hanging",
+			"delimiter": "1)",
+			"templates": {
+				"html": "<ol class=\"paren\">\n{{- range .BlockChildren}}\n\t<li>{{render .}}</li>\n{{end -}}\n</ol>"
+			}
+		},
 
 		{
 			"name": "Emphasis",

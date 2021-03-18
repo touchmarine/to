@@ -4,11 +4,9 @@ import (
 	"bytes"
 	_ "embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"html/template"
 	"to/internal/node"
-	"unicode/utf8"
 )
 
 //go:embed to.json
@@ -76,36 +74,9 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 type Element struct {
 	Name      string            `json:"name"`
 	Type      node.Type         `json:"type"`
-	Delimiter rune              `json:"delimiter"`
+	Delimiter string            `json:"delimiter"`
 	Ranked    bool              `json:"ranked"`
 	MinRank   uint              `json:"minRank"`
 	Leaf      bool              `json:"leaf"`
 	Templates map[string]string `json:"templates"`
-}
-
-func (e *Element) UnmarshalJSON(text []byte) error {
-	var el struct {
-		Name      string            `json:"name"`
-		Type      node.Type         `json:"type"`
-		Delimiter string            `json:"delimiter"`
-		Ranked    bool              `json:"ranked"`
-		MinRank   uint              `json:"minRank"`
-		Leaf      bool              `json:"leaf"`
-		Templates map[string]string `json:"templates"`
-	}
-	if err := json.Unmarshal(text, &el); err != nil {
-		return err
-	}
-
-	r, w := utf8.DecodeRuneInString(el.Delimiter)
-	if r == utf8.RuneError {
-		return errors.New("invalid delimiter")
-	}
-
-	if len(el.Delimiter[w:]) > 0 {
-		return errors.New("invalid delimiter")
-	}
-
-	*e = Element{el.Name, el.Type, r, el.Ranked, el.MinRank, el.Leaf, el.Templates}
-	return nil
 }

@@ -31,9 +31,9 @@ func ParseCustom(r io.Reader, elements []config.Element) ([]node.Block, []error)
 // parser holds the parsing state.
 type parser struct {
 	errors      []error
-	scnr        *bufio.Scanner          // line scanner
-	blockElems  map[rune]config.Element // map of block elements by delimiter
-	inlineElems map[rune]config.Element // map of inline elements by delimiter
+	scnr        *bufio.Scanner            // line scanner
+	blockElems  map[string]config.Element // map of block elements by delimiter
+	inlineElems map[rune]config.Element   // map of inline elements by delimiter
 
 	// parsing
 	ln    []byte // current line excluding EOL
@@ -51,7 +51,7 @@ type parser struct {
 
 func (p *parser) register(elems []config.Element) {
 	if p.blockElems == nil {
-		p.blockElems = make(map[rune]config.Element)
+		p.blockElems = make(map[string]config.Element)
 	}
 	if p.inlineElems == nil {
 		p.inlineElems = make(map[rune]config.Element)
@@ -62,7 +62,7 @@ func (p *parser) register(elems []config.Element) {
 		case node.CategoryBlock:
 			if _, ok := p.blockElems[el.Delimiter]; ok {
 				log.Fatalf(
-					"parser.register: block delimiter %q is already registered",
+					"parser: block delimiter %q is already registered",
 					el.Delimiter,
 				)
 			}
@@ -70,18 +70,23 @@ func (p *parser) register(elems []config.Element) {
 			p.blockElems[el.Delimiter] = el
 
 		case node.CategoryInline:
-			if _, ok := p.inlineElems[el.Delimiter]; ok {
+			delim, _ := utf8.DecodeRuneInString(el.Delimiter)
+			if delim == utf8.RuneError {
+				log.Fatal("parser: invalid UTF-8 encoding in delimiter")
+			}
+
+			if _, ok := p.inlineElems[delim]; ok {
 				log.Fatalf(
-					"parser.register: inline delimiter %q is already registered",
-					el.Delimiter,
+					"parser: inline delimiter %q is already registered",
+					delim,
 				)
 			}
 
-			p.inlineElems[el.Delimiter] = el
+			p.inlineElems[delim] = el
 
 		default:
 			panic(fmt.Sprintf(
-				"parser.register: unexpected node category %s (element=%q, delimiter=%q)",
+				"parser: unexpected node category %s (element=%q, delimiter=%q)",
 				categ.String(),
 				el.Name,
 				el.Delimiter,
@@ -137,7 +142,7 @@ func (p *parser) parseBlock(leaf bool) node.Block {
 			// escape block
 			p.nextch()
 		} else {
-			el, ok := p.blockElems[p.ch]
+			el, ok := p.matchBlock()
 			if ok {
 				switch el.Type {
 				case node.TypeLine:
@@ -146,7 +151,12 @@ func (p *parser) parseBlock(leaf bool) node.Block {
 					return p.parseWalled(el.Name)
 				case node.TypeHanging:
 					if el.MinRank <= 1 || p.consecutive() >= el.MinRank {
-						return p.parseHanging(el.Name, el.Ranked, el.Leaf)
+						return p.parseHanging(
+							el.Name,
+							el.Delimiter,
+							el.Ranked,
+							el.Leaf,
+						)
 					}
 				case node.TypeFenced:
 					if p.peekEquals(p.ch) {
@@ -160,6 +170,35 @@ func (p *parser) parseBlock(leaf bool) node.Block {
 	}
 
 	return p.parseLine("Line")
+}
+
+func (p *parser) matchBlock() (config.Element, bool) {
+OuterLoop:
+	for name, el := range p.blockElems {
+		var offs int
+		for i, r := range name {
+			if i == 0 {
+				if p.ch != r {
+					// skip
+					continue OuterLoop
+				}
+			} else {
+				if offs > len(p.ln)-1 {
+					// skip
+					continue OuterLoop
+				}
+
+				rr, w := utf8.DecodeRune(p.ln[offs:])
+				if rr != r {
+					// skip
+					continue OuterLoop
+				}
+				offs += w
+			}
+		}
+		return el, true
+	}
+	return config.Element{}, false
 }
 
 func (p *parser) consecutive() uint {
@@ -248,9 +287,12 @@ func (p *parser) parseWalled(name string) node.Block {
 	return &node.Walled{name, children}
 }
 
-func (p *parser) parseHanging(name string, ranked, leaf bool) node.Block {
+func (p *parser) parseHanging(name string, delim string, ranked, leaf bool) node.Block {
 	if trace {
-		defer p.tracef("parseHanging (%s, ranked=%t, leaf=%t)", name, ranked, leaf)()
+		defer p.tracef(
+			"parseHanging (%s, delim=%q, ranked=%t, leaf=%t)",
+			name, delim, ranked, leaf,
+		)()
 	}
 
 	var rank uint
@@ -262,8 +304,10 @@ func (p *parser) parseHanging(name string, ranked, leaf bool) node.Block {
 			p.nextch()
 		}
 	} else {
-		p.addLead(' ')
-		p.nextch() // consume delimiter
+		for i := 0; i < utf8.RuneCountInString(delim); i++ {
+			p.addLead(' ')
+			p.nextch() // consume delimiter
+		}
 	}
 
 	newBlocks := diff(p.blocks, p.lead)
