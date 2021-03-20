@@ -63,19 +63,19 @@
 			}
 		},
 		{
-			"name": "NumberedListDot",
+			"name": "NumberedListItemDot",
 			"type": "hanging",
 			"delimiter": "1.",
 			"templates": {
-				"html": "<ol>\n{{- range .BlockChildren}}\n\t<li>{{render .}}</li>\n{{end -}}\n</ol>"
+				"html": "{{- range .BlockChildren}}\n\t<li>{{render .}}</li>\n{{end -}}"
 			}
 		},
 		{
-			"name": "NumberedListParen",
+			"name": "NumberedListItemParen",
 			"type": "hanging",
 			"delimiter": "1)",
 			"templates": {
-				"html": "<ol class=\"paren\">\n{{- range .BlockChildren}}\n\t<li>{{render .}}</li>\n{{end -}}\n</ol>"
+				"html": "{{- range .BlockChildren}}\n\t<li>{{render .}}</li>\n{{end -}}"
 			}
 		},
 

@@ -173,6 +173,10 @@ func (p *parser) parseBlock(leaf bool) node.Block {
 }
 
 func (p *parser) matchBlock() (config.Element, bool) {
+	if trace {
+		defer p.trace("matchBlock")()
+	}
+
 OuterLoop:
 	for name, el := range p.blockElems {
 		var offs int
@@ -196,7 +200,15 @@ OuterLoop:
 				offs += w
 			}
 		}
+
+		if trace {
+			p.printf("return true (%s)", el.Name)
+		}
 		return el, true
+	}
+
+	if trace {
+		p.print("return false")
 	}
 	return config.Element{}, false
 }

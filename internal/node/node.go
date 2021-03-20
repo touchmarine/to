@@ -106,6 +106,19 @@ type Ranked interface {
 	Rank() uint
 }
 
+// NodesToBlocks converts nodes to blocks.
+func NodesToBlocks(nodes []Node) []Block {
+	blocks := make([]Block, len(nodes))
+	for i, n := range nodes {
+		block, ok := n.(Block)
+		if !ok {
+			panic(fmt.Sprintf("node: node %s does not implement node.Block", n.Node()))
+		}
+		blocks[i] = block
+	}
+	return blocks
+}
+
 // BlocksToNodes converts blocks to nodes.
 func BlocksToNodes(blocks []Block) []Node {
 	nodes := make([]Node, len(blocks))
@@ -277,4 +290,19 @@ func (c LineComment) Inline() {}
 // Content returns the LineComment's text.
 func (c LineComment) Content() []byte {
 	return c
+}
+
+type Group struct {
+	Name     string
+	Children []Block
+}
+
+func (g Group) Node() string {
+	return g.Name
+}
+
+func (g Group) Block() {}
+
+func (g *Group) BlockChildren() []Block {
+	return g.Children
 }

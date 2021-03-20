@@ -57,6 +57,9 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 		return nil, err
 	}
 
+	target.New("NumberedListDot").Parse("<ol class=\"dot\">\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>")
+	target.New("NumberedListParen").Parse("<ol class=\"paren\">\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>")
+
 	for _, el := range c.Elements {
 		elTmpl, ok := el.Templates[name]
 		if !ok {

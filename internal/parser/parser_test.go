@@ -1099,20 +1099,20 @@ func TestHangingMulti(t *testing.T) {
 		},
 		{
 			"1.",
-			[]node.Node{&node.Hanging{"NumberedListDot", 0, nil}},
+			[]node.Node{&node.Hanging{"NumberedListItemDot", 0, nil}},
 		},
 		{
 			"1.1.",
 			[]node.Node{
-				&node.Hanging{"NumberedListDot", 0, []node.Block{
-					&node.Hanging{"NumberedListDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
 			},
 		},
 		{
 			"1.a",
 			[]node.Node{
-				&node.Hanging{"NumberedListDot", 0, []node.Block{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Line{"Line", []node.Inline{node.Text("a")}},
 				}},
 			},
@@ -1120,14 +1120,14 @@ func TestHangingMulti(t *testing.T) {
 		{
 			"1.\n1.",
 			[]node.Node{
-				&node.Hanging{"NumberedListDot", 0, nil},
-				&node.Hanging{"NumberedListDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", 0, nil},
 			},
 		},
 		{
 			"1.a\nb",
 			[]node.Node{
-				&node.Hanging{"NumberedListDot", 0, []node.Block{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Line{"Line", []node.Inline{node.Text("a")}},
 				}},
 				&node.Line{"Line", []node.Inline{node.Text("b")}},
@@ -1136,7 +1136,7 @@ func TestHangingMulti(t *testing.T) {
 		{
 			"1.a\n b",
 			[]node.Node{
-				&node.Hanging{"NumberedListDot", 0, []node.Block{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Line{"Line", []node.Inline{node.Text("a")}},
 				}},
 				&node.Line{"Line", []node.Inline{node.Text("b")}},
@@ -1145,7 +1145,7 @@ func TestHangingMulti(t *testing.T) {
 		{
 			"1.a\n  b",
 			[]node.Node{
-				&node.Hanging{"NumberedListDot", 0, []node.Block{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Line{"Line", []node.Inline{node.Text("a")}},
 					&node.Line{"Line", []node.Inline{node.Text("b")}},
 				}},
@@ -1156,7 +1156,7 @@ func TestHangingMulti(t *testing.T) {
 		{
 			" 1.a\n b",
 			[]node.Node{
-				&node.Hanging{"NumberedListDot", 0, []node.Block{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Line{"Line", []node.Inline{node.Text("a")}},
 				}},
 				&node.Line{"Line", []node.Inline{node.Text("b")}},
@@ -1165,7 +1165,7 @@ func TestHangingMulti(t *testing.T) {
 		{
 			" 1.a\n  b",
 			[]node.Node{
-				&node.Hanging{"NumberedListDot", 0, []node.Block{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Line{"Line", []node.Inline{node.Text("a")}},
 				}},
 				&node.Line{"Line", []node.Inline{node.Text("b")}},
@@ -1174,7 +1174,7 @@ func TestHangingMulti(t *testing.T) {
 		{
 			" 1.a\n   b",
 			[]node.Node{
-				&node.Hanging{"NumberedListDot", 0, []node.Block{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Line{"Line", []node.Inline{node.Text("a")}},
 					&node.Line{"Line", []node.Inline{node.Text("b")}},
 				}},
@@ -1185,17 +1185,17 @@ func TestHangingMulti(t *testing.T) {
 		{
 			"1.\n  1.",
 			[]node.Node{
-				&node.Hanging{"NumberedListDot", 0, []node.Block{
-					&node.Hanging{"NumberedListDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
 			},
 		},
 		{
 			"1.a\n  1.b",
 			[]node.Node{
-				&node.Hanging{"NumberedListDot", 0, []node.Block{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Line{"Line", []node.Inline{node.Text("a")}},
-					&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 						&node.Line{"Line", []node.Inline{node.Text("b")}},
 					}},
 				}},
@@ -1206,7 +1206,7 @@ func TestHangingMulti(t *testing.T) {
 			">1.",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Hanging{"NumberedListDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
 			},
 		},
@@ -1214,17 +1214,17 @@ func TestHangingMulti(t *testing.T) {
 			">1.\n1.",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Hanging{"NumberedListDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
-				&node.Hanging{"NumberedListDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", 0, nil},
 			},
 		},
 		{
 			">1.\n>1.",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Hanging{"NumberedListDot", 0, nil},
-					&node.Hanging{"NumberedListDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
 			},
 		},
@@ -1232,8 +1232,8 @@ func TestHangingMulti(t *testing.T) {
 			">1.\n>  1.",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Hanging{"NumberedListDot", 0, []node.Block{
-						&node.Hanging{"NumberedListDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+						&node.Hanging{"NumberedListItemDot", 0, nil},
 					}},
 				}},
 			},
@@ -1242,7 +1242,7 @@ func TestHangingMulti(t *testing.T) {
 			">1.\n>  a",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 						&node.Line{"Line", []node.Inline{node.Text("a")}},
 					}},
 				}},
@@ -1252,7 +1252,7 @@ func TestHangingMulti(t *testing.T) {
 			"> 1.\n>   a",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Hanging{"NumberedListDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 						&node.Line{"Line", []node.Inline{node.Text("a")}},
 					}},
 				}},
@@ -1263,7 +1263,7 @@ func TestHangingMulti(t *testing.T) {
 		{
 			"1.\n  >b",
 			[]node.Node{
-				&node.Hanging{"NumberedListDot", 0, []node.Block{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Walled{"Blockquote", []node.Block{
 						&node.Line{"Line", []node.Inline{
 							node.Text("b"),
