@@ -111,5 +111,21 @@
 				"html": "<a href=\"{{.Content}}\">{{range .InlineChildren}}{{render .}}{{else}}{{.Content}}{{end}}</a>"
 			}
 		}
+	],
+	"groups": [
+		{
+			"name": "NumberedListDot",
+			"element": "NumberedListItemDot",
+			"templates": {
+				"html": "<ol class=\"dot\">\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>"
+			}
+		},
+		{
+			"name": "NumberedListParen",
+			"element": "NumberedListItemParen",
+			"templates": {
+				"html": "<ol class=\"paren\">\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>"
+			}
+		}
 	]
 }

@@ -29,6 +29,7 @@ type Config struct {
 		Templates map[string]string `json:"templates"`
 	} `json:"line"`
 	Elements []Element `json:"elements"`
+	Groups   []Group   `json:"groups"`
 }
 
 func (c *Config) Element(name string) (Element, bool) {
@@ -57,15 +58,22 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 		return nil, err
 	}
 
-	target.New("NumberedListDot").Parse("<ol class=\"dot\">\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>")
-	target.New("NumberedListParen").Parse("<ol class=\"paren\">\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>")
-
 	for _, el := range c.Elements {
 		elTmpl, ok := el.Templates[name]
 		if !ok {
-			return nil, fmt.Errorf("template %s for %s not found", name, el.Name)
+			return nil, fmt.Errorf("template %s for element %s not found", name, el.Name)
 		}
 		if _, err := target.New(el.Name).Parse(elTmpl); err != nil {
+			return nil, err
+		}
+	}
+
+	for _, group := range c.Groups {
+		gTmpl, ok := group.Templates[name]
+		if !ok {
+			return nil, fmt.Errorf("template %s for group %s not found", name, group.Name)
+		}
+		if _, err := target.New(group.Name).Parse(gTmpl); err != nil {
 			return nil, err
 		}
 	}
@@ -81,5 +89,11 @@ type Element struct {
 	Ranked    bool              `json:"ranked"`
 	MinRank   uint              `json:"minRank"`
 	Leaf      bool              `json:"leaf"`
+	Templates map[string]string `json:"templates"`
+}
+
+type Group struct {
+	Name      string            `json:"name"`
+	Element   string            `json:"element"`
 	Templates map[string]string `json:"templates"`
 }

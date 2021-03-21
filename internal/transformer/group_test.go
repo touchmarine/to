@@ -2,6 +2,7 @@ package transformer_test
 
 import (
 	"testing"
+	"to/internal/config"
 	"to/internal/node"
 	"to/internal/stringifier"
 	"to/internal/transformer"
@@ -213,7 +214,7 @@ func TestGroup(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			groupedNodes := make([]node.Node, len(c.in))
 			copy(groupedNodes, c.in)
-			groupedNodes = transformer.Group(groupedNodes)
+			groupedNodes = transformer.Group(config.Default.Groups, groupedNodes)
 
 			got := stringifier.Stringify(groupedNodes...)
 			want := stringifier.Stringify(c.out...)

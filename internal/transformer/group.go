@@ -2,17 +2,13 @@ package transformer
 
 import (
 	"fmt"
+	"to/internal/config"
 	"to/internal/node"
 )
 
 const trace = false
 
-var groupMap = map[string]string{
-	"NumberedListDot":   "NumberedListItemDot",
-	"NumberedListParen": "NumberedListItemParen",
-}
-
-func Group(nodes []node.Node) []node.Node {
+func Group(groups []config.Group, nodes []node.Node) []node.Node {
 	var open string
 	var pos int
 
@@ -21,16 +17,16 @@ func Group(nodes []node.Node) []node.Node {
 		name := n.Node()
 
 		if open == "" {
-			if isGrouped(name) {
+			if isGrouped(groups, name) {
 				if trace {
-					printf("open  %s for %s (i=%d) [1]", groupName(name), name, i)
+					printf("open  %s for %s (i=%d) [1]", groupName(groups, name), name, i)
 				}
 
 				open = name
 				pos = i
 			}
 		} else if name != open {
-			gname := groupName(open)
+			gname := groupName(groups, open)
 			end := i - 1
 
 			if trace {
@@ -50,9 +46,9 @@ func Group(nodes []node.Node) []node.Node {
 				i -= end - pos
 			}
 
-			if isGrouped(name) {
+			if isGrouped(groups, name) {
 				if trace {
-					printf("open  %s for %s (i=%d) [2]", groupName(name), name, i)
+					printf("open  %s for %s (i=%d) [2]", groupName(groups, name), name, i)
 				}
 
 				open = name
@@ -64,13 +60,13 @@ func Group(nodes []node.Node) []node.Node {
 		}
 
 		if m, ok := n.(node.SettableBlockChildren); ok {
-			grouped := Group(node.BlocksToNodes(m.BlockChildren()))
+			grouped := Group(groups, node.BlocksToNodes(m.BlockChildren()))
 			m.SetBlockChildren(node.NodesToBlocks(grouped))
 		}
 	}
 
 	if open != "" {
-		gname := groupName(open)
+		gname := groupName(groups, open)
 		l := len(nodes)
 		end := l - 1
 
@@ -108,19 +104,19 @@ func cut(a []node.Node, i, j int) []node.Node {
 	return a
 }
 
-func isGrouped(s string) bool {
-	for _, node := range groupMap {
-		if node == s {
+func isGrouped(groups []config.Group, s string) bool {
+	for _, group := range groups {
+		if group.Element == s {
 			return true
 		}
 	}
 	return false
 }
 
-func groupName(s string) string {
-	for group, node := range groupMap {
-		if node == s {
-			return group
+func groupName(groups []config.Group, s string) string {
+	for _, group := range groups {
+		if group.Element == s {
+			return group.Name
 		}
 	}
 	panic(fmt.Sprintf("node %s group name not found", s))

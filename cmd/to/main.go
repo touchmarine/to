@@ -19,18 +19,20 @@ func main() {
 	flag.Parse()
 
 	var (
-		conf   *config.Config
-		blocks []node.Block
-		perr   []error
+		conf  *config.Config
+		nodes []node.Node
 	)
 
 	if *confPath == "" {
 		conf = config.Default
 
-		blocks, perr = parser.Parse(os.Stdin)
+		blocks, perr := parser.Parse(os.Stdin)
 		if perr != nil {
 			log.Fatal(perr)
 		}
+
+		nodes = node.BlocksToNodes(blocks)
+		nodes = transformer.Group(conf.Groups, nodes)
 	} else {
 		f, err := os.Open(*confPath)
 		if err != nil {
@@ -41,17 +43,17 @@ func main() {
 			log.Fatal(err)
 		}
 
-		blocks, perr = parser.ParseCustom(os.Stdin, conf.Elements)
+		blocks, perr := parser.ParseCustom(os.Stdin, conf.Elements)
 		if perr != nil {
 			log.Fatal(perr)
 		}
+
+		nodes = node.BlocksToNodes(blocks)
+		nodes = transformer.Group(conf.Groups, nodes)
 	}
 
 	//rndr := renderer.New(conf)
 	//rndr.Render(os.Stdout, "html", node.BlocksToNodes(blocks))
-
-	nodes := node.BlocksToNodes(blocks)
-	nodes = transformer.Group(nodes)
 
 	tmpl := template.New("html")
 	rndr := renderer.New(conf, tmpl)
