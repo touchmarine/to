@@ -98,6 +98,11 @@ type BlockChildren interface {
 	BlockChildren() []Block
 }
 
+type SettableBlockChildren interface {
+	BlockChildren
+	SetBlockChildren(children []Block)
+}
+
 type InlineChildren interface {
 	InlineChildren() []Inline
 }
@@ -185,6 +190,10 @@ func (h *Hanging) Rank() uint {
 
 func (h *Hanging) BlockChildren() []Block {
 	return h.Children
+}
+
+func (h *Hanging) SetBlockChildren(children []Block) {
+	h.Children = children
 }
 
 type Fenced struct {

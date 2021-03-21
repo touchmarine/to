@@ -1,9 +1,9 @@
 package transformer_test
 
 import (
-	"encoding/json"
 	"testing"
 	"to/internal/node"
+	"to/internal/stringifier"
 	"to/internal/transformer"
 )
 
@@ -134,6 +134,79 @@ func TestGroup(t *testing.T) {
 				&node.Line{"Line", nil},
 			},
 		},
+
+		// nested
+		{
+			"nested single item",
+			[]node.Node{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+				}},
+			},
+			[]node.Node{
+				&node.Group{"NumberedListDot", []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+						&node.Group{"NumberedListDot", []node.Block{
+							&node.Hanging{"NumberedListItemDot", 0, nil},
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			"nested two items",
+			[]node.Node{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+				}},
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+				}},
+			},
+			[]node.Node{
+				&node.Group{"NumberedListDot", []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+						&node.Group{"NumberedListDot", []node.Block{
+							&node.Hanging{"NumberedListItemDot", 0, nil},
+						}},
+					}},
+					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+						&node.Group{"NumberedListDot", []node.Block{
+							&node.Hanging{"NumberedListItemDot", 0, nil},
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			"nested two single groups",
+			[]node.Node{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+				}},
+				&node.Line{"Line", nil},
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+				}},
+			},
+			[]node.Node{
+				&node.Group{"NumberedListDot", []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+						&node.Group{"NumberedListDot", []node.Block{
+							&node.Hanging{"NumberedListItemDot", 0, nil},
+						}},
+					}},
+				}},
+				&node.Line{"Line", nil},
+				&node.Group{"NumberedListDot", []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+						&node.Group{"NumberedListDot", []node.Block{
+							&node.Hanging{"NumberedListItemDot", 0, nil},
+						}},
+					}},
+				}},
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -142,17 +215,10 @@ func TestGroup(t *testing.T) {
 			copy(groupedNodes, c.in)
 			groupedNodes = transformer.Group(groupedNodes)
 
-			groupedJSON, err := json.MarshalIndent(groupedNodes, "", "\t")
-			if err != nil {
-				t.Fatal(err)
-			}
+			got := stringifier.Stringify(groupedNodes...)
+			want := stringifier.Stringify(c.out...)
 
-			outJSON, err := json.MarshalIndent(c.out, "", "\t")
-			if err != nil {
-				t.Fatal(err)
-			}
-
-			if got, want := string(groupedJSON), string(outJSON); got != want {
+			if got != want {
 				t.Errorf("\ngot\n%s\nwant\n%s", got, want)
 			}
 		})

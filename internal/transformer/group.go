@@ -40,13 +40,13 @@ func Group(nodes []node.Node) []node.Node {
 			children := node.NodesToBlocks(nodes[pos : end+1])
 			group := &node.Group{gname, children}
 
-			nodes[end] = group
+			nodes[pos] = group
 			if end-pos > 0 {
 				if trace {
-					printf("cut nodes %d-%d [1]", pos, end)
+					printf("cut nodes %d-%d [1]", pos+1, end+1)
 				}
 
-				nodes = cut(nodes, pos, end)
+				nodes = cut(nodes, pos+1, end+1)
 				i -= end - pos
 			}
 
@@ -61,6 +61,11 @@ func Group(nodes []node.Node) []node.Node {
 				open = ""
 				pos = 0
 			}
+		}
+
+		if m, ok := n.(node.SettableBlockChildren); ok {
+			grouped := Group(node.BlocksToNodes(m.BlockChildren()))
+			m.SetBlockChildren(node.NodesToBlocks(grouped))
 		}
 	}
 
