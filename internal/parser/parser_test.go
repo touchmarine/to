@@ -885,81 +885,79 @@ func TestHangingMinRank(t *testing.T) {
 	}
 }
 
-func TestHangingLeaf(t *testing.T) {
+func TestHangingVerbatim(t *testing.T) {
 	cases := []struct {
 		in  string
 		out []node.Node
 	}{
 		{
-			".",
-			[]node.Node{&node.Hanging{"Replaced", 0, nil}},
+			".image",
+			[]node.Node{&node.HangingVerbatim{"Image", 0, nil}},
 		},
 		{
-			"..",
+			".image.image",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, []node.Block{
-					&node.Line{"Line", []node.Inline{
-						node.Text("."),
-					}},
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					[]byte(".image"),
 				}},
 			},
 		},
 		{
-			".a",
+			".imagea",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					[]byte("a"),
 				}},
 			},
 		},
 		{
-			".\n.",
+			".image\n.image",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, nil},
-				&node.Hanging{"Replaced", 0, nil},
+				&node.HangingVerbatim{"Image", 0, nil},
+				&node.HangingVerbatim{"Image", 0, nil},
 			},
 		},
 		{
-			".\n\n.",
+			".image\n\n.image",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, nil},
-				&node.Hanging{"Replaced", 0, nil},
+				&node.HangingVerbatim{"Image", 0, nil},
+				&node.HangingVerbatim{"Image", 0, nil},
 			},
 		},
 		{
-			".a\nb",
+			".imagea\nb",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					[]byte("a"),
 				}},
 				&node.Line{"Line", []node.Inline{node.Text("b")}},
 			},
 		},
 		{
-			".a\n b",
+			".imagea\n      b",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					[]byte("a"),
+					[]byte("b"),
 				}},
 			},
 		},
 		{
-			".a\n  b",
+			".imagea\n       b",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					[]byte("a"),
+					[]byte("b"),
 				}},
 			},
 		},
 
 		// spacing
 		{
-			" .a\n b",
+			" .imagea\n b",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					[]byte("a"),
 				}},
 				&node.Line{"Line", []node.Inline{node.Text("b")}},
 			},
@@ -967,79 +965,90 @@ func TestHangingLeaf(t *testing.T) {
 
 		// nested
 		{
-			".\n .",
+			".image\n      .image",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, []node.Block{
-					&node.Line{"Line", []node.Inline{
-						node.Text("."),
-					}},
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					nil,
+					[]byte(".image"),
 				}},
 			},
 		},
 		{
-			".a\n .b",
+			".imagea\n      .imageb",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-					&node.Line{"Line", []node.Inline{node.Text(".b")}},
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					[]byte("a"),
+					[]byte(".imageb"),
 				}},
 			},
 		},
 
 		{
-			">.",
+			">.image",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Hanging{"Replaced", 0, nil},
+					&node.HangingVerbatim{"Image", 0, nil},
 				}},
 			},
 		},
 		{
-			">.\n.",
+			">.image\n.image",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Hanging{"Replaced", 0, nil},
+					&node.HangingVerbatim{"Image", 0, nil},
 				}},
-				&node.Hanging{"Replaced", 0, nil},
+				&node.HangingVerbatim{"Image", 0, nil},
 			},
 		},
 		{
-			">.\n>.",
+			">.image\n>.image",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Hanging{"Replaced", 0, nil},
-					&node.Hanging{"Replaced", 0, nil},
+					&node.HangingVerbatim{"Image", 0, nil},
+					&node.HangingVerbatim{"Image", 0, nil},
 				}},
 			},
 		},
 		{
-			">.\n> .",
+			">.image\n>      .image",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Hanging{"Replaced", 0, []node.Block{
-						&node.Line{"Line", []node.Inline{
-							node.Text("."),
-						}},
+					&node.HangingVerbatim{"Image", 0, [][]byte{
+						nil,
+						[]byte(".image"),
 					}},
 				}},
 			},
 		},
 		{
-			">.\n> a",
+			">.image\n>      a",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Hanging{"Replaced", 0, []node.Block{
-						&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.HangingVerbatim{"Image", 0, [][]byte{
+						nil,
+						[]byte("a"),
 					}},
 				}},
 			},
 		},
 		{
-			"> .\n>  a",
+			">.image\n>       a",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Hanging{"Replaced", 0, []node.Block{
-						&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.HangingVerbatim{"Image", 0, [][]byte{
+						nil,
+						[]byte("a"),
+					}},
+				}},
+			},
+		},
+		{
+			"> .image\n>       a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.HangingVerbatim{"Image", 0, [][]byte{
+						nil,
+						[]byte("a"),
 					}},
 				}},
 			},
@@ -1047,31 +1056,29 @@ func TestHangingLeaf(t *testing.T) {
 
 		// nested+spacing
 		{
-			" .\n .",
+			" .image\n .image",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, nil},
-				&node.Hanging{"Replaced", 0, nil},
+				&node.HangingVerbatim{"Image", 0, nil},
+				&node.HangingVerbatim{"Image", 0, nil},
 			},
 		},
 		{
-			" .\n  .",
+			" .image\n       .image",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, []node.Block{
-					&node.Line{"Line", []node.Inline{
-						node.Text("."),
-					}},
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					nil,
+					[]byte(".image"),
 				}},
 			},
 		},
 
 		// regression
 		{
-			".\n >b",
+			".image\n      >b",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, []node.Block{
-					&node.Line{"Line", []node.Inline{
-						node.Text(">b"),
-					}},
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					nil,
+					[]byte(">b"),
 				}},
 			},
 		},
@@ -2170,18 +2177,18 @@ func TestBlockEscape(t *testing.T) {
 			},
 		},
 
-		// leaf elements
+		// verbatim elements
 		{
-			"|.",
+			"|.image",
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text(".")}},
+				&node.Line{"Line", []node.Inline{node.Text(".image")}},
 			},
 		},
 		{
-			".|.",
+			".image|.image",
 			[]node.Node{
-				&node.Hanging{"Replaced", 0, []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("|.")}},
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					[]byte("|.image"),
 				}},
 			},
 		},

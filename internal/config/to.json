@@ -31,7 +31,7 @@
 			"type": "fenced",
 			"delimiter": "`",
 			"templates": {
-				"html": "<pre><code>{{.Body}}</code></pre>"
+				"html": "<pre><code lang=\"{{head .Lines}}\">{{body .Lines}}</code></pre>"
 			}
 		},
 		{
@@ -54,12 +54,12 @@
 			}
 		},
 		{
-			"name": "Replaced",
+			"name": "Image",
 			"type": "hanging",
-			"delimiter": ".",
-			"leaf": true,
+			"delimiter": ".image",
+			"verbatim": true,
 			"templates": {
-				"html": "<img />{{range .BlockChildren}}{{render .}}{{end}}"
+				"html": "<img{{with field .Lines 0}} src=\"{{.}}\"{{end}}{{with field .Lines 1}} alt=\"{{.}}\"{{end}}/>"
 			}
 		},
 		{

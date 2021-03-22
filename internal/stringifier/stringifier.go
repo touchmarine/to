@@ -37,9 +37,9 @@ func (s *stringifier) stringify(nodes []node.Node) {
 				s.stringify(node.InlinesToNodes(ic))
 			}
 
-		case node.HeadBody:
-			s.writei([]byte("Head: " + strconv.Quote(string(m.Head())) + ",\n"))
-			s.writei([]byte("Body: " + strconv.Quote(string(m.Body())) + ","))
+		case node.Lines:
+			verbatim := bytes.Join(m.Lines(), []byte("\n"))
+			s.writei([]byte(strconv.Quote(string(verbatim))))
 
 		case node.BlockChildren:
 			s.stringify(node.BlocksToNodes(m.BlockChildren()))
@@ -70,7 +70,7 @@ func (s *stringifier) enter(n node.Node) {
 		switch n.(type) {
 		case node.InlineChildren:
 			s.write([]byte("("))
-		case node.BlockChildren, node.HeadBody:
+		case node.BlockChildren, node.Lines:
 			s.write([]byte("(\n"))
 			s.indent++
 		default:
@@ -89,7 +89,7 @@ func (s *stringifier) leave(n node.Node) {
 		switch n.(type) {
 		case node.InlineChildren:
 			s.write([]byte(")"))
-		case node.BlockChildren, node.HeadBody:
+		case node.BlockChildren, node.Lines:
 			s.write([]byte("\n"))
 			s.indent--
 			s.writei([]byte(")\n"))

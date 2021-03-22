@@ -1,6 +1,7 @@
 package renderer
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"io"
@@ -12,6 +13,9 @@ import (
 
 var FuncMap = template.FuncMap{
 	"onlyLineComment": onlyLineComment,
+	"head":            head,
+	"body":            body,
+	"field":           field,
 }
 
 func New(conf *config.Config, tmpl *template.Template) *Renderer {
@@ -35,7 +39,7 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 		}
 
 		switch n.(type) {
-		case node.Ranked, node.BlockChildren, node.InlineChildren, node.Content, node.HeadBody:
+		case node.Ranked, node.BlockChildren, node.InlineChildren, node.Content, node.Lines:
 		default:
 			panic(fmt.Sprintf("HTML: unexpected node %T", n))
 		}
@@ -61,9 +65,8 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 			data["Content"] = string(m.Content())
 		}
 
-		if m, ok := n.(node.HeadBody); ok {
-			data["Head"] = string(m.Head())
-			data["Body"] = string(m.Body())
+		if m, ok := n.(node.Lines); ok {
+			data["Lines"] = m.Lines()
 		}
 
 		name := n.Node()
@@ -149,4 +152,26 @@ func onlyLineComment(inlines []node.Inline) bool {
 		return ok
 	}
 	return false
+}
+
+func head(lines [][]byte) string {
+	if len(lines) > 0 {
+		return string(lines[0])
+	}
+	return ""
+}
+
+func body(lines [][]byte) string {
+	if len(lines) > 1 {
+		return string(bytes.Join(lines[1:], []byte("\n")))
+	}
+	return ""
+}
+
+func field(lines [][]byte, i int) template.HTMLAttr {
+	fields := bytes.Fields(bytes.Join(lines, []byte(" ")))
+	if i < len(fields) {
+		return template.HTMLAttr(fields[i])
+	}
+	return template.HTMLAttr("")
 }

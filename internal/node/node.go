@@ -1,7 +1,6 @@
 package node
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 )
@@ -89,9 +88,8 @@ type Content interface {
 	Content() []byte
 }
 
-type HeadBody interface {
-	Head() []byte
-	Body() []byte
+type Lines interface {
+	Lines() [][]byte
 }
 
 type BlockChildren interface {
@@ -196,9 +194,29 @@ func (h *Hanging) SetBlockChildren(children []Block) {
 	h.Children = children
 }
 
+type HangingVerbatim struct {
+	Name   string
+	Rank0  uint
+	Lines0 [][]byte
+}
+
+func (hv HangingVerbatim) Node() string {
+	return hv.Name
+}
+
+func (hv HangingVerbatim) Block() {}
+
+func (hv *HangingVerbatim) Rank() uint {
+	return hv.Rank0
+}
+
+func (hv *HangingVerbatim) Lines() [][]byte {
+	return hv.Lines0
+}
+
 type Fenced struct {
-	Name  string
-	Lines [][]byte
+	Name   string
+	Lines0 [][]byte
 }
 
 func (f Fenced) Node() string {
@@ -207,18 +225,8 @@ func (f Fenced) Node() string {
 
 func (f Fenced) Block() {}
 
-func (f Fenced) Head() []byte {
-	if len(f.Lines) == 0 {
-		return nil
-	}
-	return f.Lines[0]
-}
-
-func (f Fenced) Body() []byte {
-	if len(f.Lines) == 0 {
-		return nil
-	}
-	return bytes.Join(f.Lines[1:], []byte("\n"))
+func (f Fenced) Lines() [][]byte {
+	return f.Lines0
 }
 
 type Uniform struct {
