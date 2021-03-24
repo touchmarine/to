@@ -31,7 +31,7 @@
 			"type": "fenced",
 			"delimiter": "`",
 			"templates": {
-				"html": "<pre><code lang=\"{{head .Lines}}\">{{body .Lines}}</code></pre>"
+				"html": "<pre><code{{with head .Lines}} lang=\"{{.}}\"{{end}}>{{body .Lines}}</code></pre>"
 			}
 		},
 		{
@@ -59,7 +59,7 @@
 			"delimiter": ".image",
 			"verbatim": true,
 			"templates": {
-				"html": "<img{{with field .Lines 0}} src=\"{{.}}\"{{end}}{{with field .Lines 1}} alt=\"{{.}}\"{{end}}/>"
+				"html": "<img{{with primarySecondary .Lines}}{{with .Primary}} src=\"{{.}}\"{{end}}{{with .Secondary}} alt=\"{{.}}\"{{end}}{{end}}/>"
 			}
 		},
 		{
@@ -76,6 +76,15 @@
 			"delimiter": "1)",
 			"templates": {
 				"html": "{{- range .BlockChildren}}\n\t<li>{{render .}}</li>\n{{end -}}"
+			}
+		},
+		{
+			"name": "TableOfContents",
+			"type": "hanging",
+			"delimiter": ".tableOfContents",
+			"verbatim": true,
+			"templates": {
+				"html": "TOC"
 			}
 		},
 

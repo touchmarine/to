@@ -1,7 +1,6 @@
 package renderer
 
 import (
-	"bytes"
 	"fmt"
 	"html/template"
 	"io"
@@ -12,10 +11,10 @@ import (
 )
 
 var FuncMap = template.FuncMap{
-	"onlyLineComment": onlyLineComment,
-	"head":            head,
-	"body":            body,
-	"field":           field,
+	"onlyLineComment":  onlyLineComment,
+	"head":             head,
+	"body":             body,
+	"primarySecondary": parsePrimarySecondary,
 }
 
 func New(conf *config.Config, tmpl *template.Template) *Renderer {
@@ -66,7 +65,11 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 		}
 
 		if m, ok := n.(node.Lines); ok {
-			data["Lines"] = m.Lines()
+			var lines []string
+			for _, line := range m.Lines() {
+				lines = append(lines, string(line))
+			}
+			data["Lines"] = lines
 		}
 
 		name := n.Node()
@@ -154,24 +157,99 @@ func onlyLineComment(inlines []node.Inline) bool {
 	return false
 }
 
-func head(lines [][]byte) string {
+func head(lines []string) string {
 	if len(lines) > 0 {
-		return string(lines[0])
+		return lines[0]
 	}
 	return ""
 }
 
-func body(lines [][]byte) string {
+func body(lines []string) string {
 	if len(lines) > 1 {
-		return string(bytes.Join(lines[1:], []byte("\n")))
+		return strings.Join(lines[1:], "\n")
 	}
 	return ""
 }
 
-func field(lines [][]byte, i int) template.HTMLAttr {
-	fields := bytes.Fields(bytes.Join(lines, []byte(" ")))
-	if i < len(fields) {
-		return template.HTMLAttr(fields[i])
+type primarySecondary struct {
+	Primary   template.HTMLAttr
+	Secondary template.HTMLAttr
+}
+
+func parsePrimarySecondary(lines []string) primarySecondary {
+	trimmed := make([]string, len(lines))
+	for i := 0; i < len(lines); i++ {
+		trimmed[i] = strings.Trim(lines[i], " \t")
 	}
-	return template.HTMLAttr("")
+
+	s := strings.Join(trimmed, " ")
+	i := strings.IndexAny(s, " \t")
+
+	var prim, sec string
+	if i > -1 {
+		prim = s[:i]
+		if i+1 < len(s) {
+			sec = s[i+1:]
+		}
+	} else {
+		prim = s
+	}
+
+	return primarySecondary{template.HTMLAttr(prim), template.HTMLAttr(sec)}
+}
+
+type namedUnnamed struct {
+	Unnamed []string
+	Named   map[string]string
+}
+
+func parseNamedUnnamed(lines []string) namedUnnamed {
+	s := strings.Join(lines, ";")
+	fields := strings.FieldsFunc(s, func(ch rune) bool {
+		return ch == ';'
+	})
+
+	for i := 0; i < len(fields); i++ {
+		// trim spacing
+		fields[i] = strings.Trim(fields[i], " \t")
+	}
+
+	var x int
+	for i := 0; i < len(fields); i++ {
+		// filter out empty fields
+		field := fields[i]
+		if field != "" {
+			fields[i] = field
+			x++
+		}
+	}
+	fields = fields[:x]
+
+	var u []string
+	n := map[string]string{}
+
+	for _, field := range fields {
+		i := strings.Index(field, ":")
+		if i > -1 {
+			// found
+			name := field[:i]
+			name = strings.Trim(name, " \t")
+
+			var val string
+			if i+1 < len(field) {
+				val = field[i+1:]
+			}
+			val = strings.Trim(val, " \t")
+
+			n[name] = val
+		} else {
+			ufields := strings.FieldsFunc(field, func(ch rune) bool {
+				return ch == ' ' || ch == '\t'
+			})
+
+			u = append(u, ufields...)
+		}
+	}
+
+	return namedUnnamed{u, n}
 }

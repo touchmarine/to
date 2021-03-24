@@ -146,6 +146,17 @@ func TestWalled(t *testing.T) {
 				&node.Walled{"Blockquote", nil},
 			},
 		},
+		{
+			">a\n\n>b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -192,6 +203,17 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"DescriptionList", 0, nil},
 				&node.Hanging{"DescriptionList", 0, nil},
+			},
+		},
+		{
+			"*a\n\n*b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+				}},
+				&node.Hanging{"DescriptionList", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
 			},
 		},
 		{
@@ -925,6 +947,17 @@ func TestHangingVerbatim(t *testing.T) {
 			},
 		},
 		{
+			".imagea\n\n.imageb",
+			[]node.Node{
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					[]byte("a"),
+				}},
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					[]byte("b"),
+				}},
+			},
+		},
+		{
 			".imagea\nb",
 			[]node.Node{
 				&node.HangingVerbatim{"Image", 0, [][]byte{
@@ -948,6 +981,22 @@ func TestHangingVerbatim(t *testing.T) {
 				&node.HangingVerbatim{"Image", 0, [][]byte{
 					[]byte("a"),
 					[]byte("b"),
+				}},
+			},
+		},
+		{
+			".image a",
+			[]node.Node{
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					[]byte(" a"),
+				}},
+			},
+		},
+		{
+			".imagea ",
+			[]node.Node{
+				&node.HangingVerbatim{"Image", 0, [][]byte{
+					[]byte("a "),
 				}},
 			},
 		},

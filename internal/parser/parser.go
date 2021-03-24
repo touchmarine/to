@@ -339,18 +339,20 @@ func (p *parser) parseChildren(reqdBlocks []rune) []node.Block {
 		defer p.trace("parseChildren")()
 	}
 
+	if p.atEOL() {
+		p.nextln()
+		if !p.nextch() {
+			// empty line
+			return nil
+		}
+
+		p.parseLead()
+	}
+
 	var blocks []node.Block
 	for {
 		if p.atEOL() {
-			p.nextln()
-			if !p.nextch() {
-				// empty line
-				break
-			}
-
-			p.parseLead()
-
-			continue
+			break
 		}
 
 		if p.ch == ' ' || p.ch == '\t' {
