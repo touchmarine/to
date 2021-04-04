@@ -28,8 +28,12 @@ type Config struct {
 	Line struct {
 		Templates map[string]string `json:"templates"`
 	} `json:"line"`
-	Elements []Element `json:"elements"`
-	Groups   []Group   `json:"groups"`
+	LineComment struct {
+		Templates map[string]string `json:"templates"`
+	} `json:"lineComment"`
+	Elements   []Element   `json:"elements"`
+	Groups     []Group     `json:"groups"`
+	Aggregates []Aggregate `json:"aggregates"`
 }
 
 func (c *Config) Element(name string) (Element, bool) {
@@ -55,6 +59,14 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 		return nil, fmt.Errorf("template %s for Line not found", name)
 	}
 	if _, err := target.New("Line").Parse(lineTmpl); err != nil {
+		return nil, err
+	}
+
+	lineCommentTmpl, ok := c.LineComment.Templates[name]
+	if !ok {
+		return nil, fmt.Errorf("template %s for LineComment not found", name)
+	}
+	if _, err := target.New("LineComment").Parse(lineCommentTmpl); err != nil {
 		return nil, err
 	}
 
@@ -96,4 +108,9 @@ type Group struct {
 	Name      string            `json:"name"`
 	Element   string            `json:"element"`
 	Templates map[string]string `json:"templates"`
+}
+
+type Aggregate struct {
+	Name     string   `json:"name"`
+	Elements []string `json"elements"`
 }

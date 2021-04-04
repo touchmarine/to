@@ -50,6 +50,9 @@ func (s *stringifier) stringify(nodes []node.Node) {
 		case node.Content:
 			s.write([]byte(strconv.Quote(string(m.Content()))))
 
+		case node.Boxed:
+			s.stringify([]node.Node{m.Unbox()})
+
 		default:
 			panic(fmt.Sprintf("stringifier.stringify: unexpected type %T", n))
 		}
@@ -78,6 +81,9 @@ func (s *stringifier) enter(n node.Node) {
 		}
 	case node.Inline:
 		s.write([]byte(n.Node() + "("))
+	case node.Boxed:
+		s.writei([]byte(n.Node() + "(\n"))
+		s.indent++
 	default:
 		panic(fmt.Sprintf("stringifier.enter: unexpected type %T", n))
 	}
@@ -98,6 +104,9 @@ func (s *stringifier) leave(n node.Node) {
 		}
 	case node.Inline:
 		s.write([]byte(")"))
+	case node.Boxed:
+		s.indent--
+		s.writei([]byte(")\n"))
 	default:
 		panic(fmt.Sprintf("stringifier.leave: unexpected type %T", n))
 	}

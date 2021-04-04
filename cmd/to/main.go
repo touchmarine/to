@@ -32,7 +32,6 @@ func main() {
 		}
 
 		nodes = node.BlocksToNodes(blocks)
-		nodes = transformer.Group(conf.Groups, nodes)
 	} else {
 		f, err := os.Open(*confPath)
 		if err != nil {
@@ -49,14 +48,16 @@ func main() {
 		}
 
 		nodes = node.BlocksToNodes(blocks)
-		nodes = transformer.Group(conf.Groups, nodes)
 	}
+
+	nodes = transformer.Group(conf.Groups, nodes)
+	nodes = transformer.Sequence(conf.Elements, nodes)
 
 	//rndr := renderer.New(conf)
 	//rndr.Render(os.Stdout, "html", node.BlocksToNodes(blocks))
 
 	tmpl := template.New("html")
-	rndr := renderer.New(conf, tmpl)
+	rndr := renderer.New(tmpl)
 
 	tmpl.Funcs(renderer.FuncMap)
 	tmpl.Funcs(rndr.FuncMap())

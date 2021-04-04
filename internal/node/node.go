@@ -109,6 +109,10 @@ type Ranked interface {
 	Rank() uint
 }
 
+type Boxed interface {
+	Unbox() Node
+}
+
 // NodesToBlocks converts nodes to blocks.
 func NodesToBlocks(nodes []Node) []Block {
 	blocks := make([]Block, len(nodes))
@@ -322,4 +326,17 @@ func (g Group) Block() {}
 
 func (g *Group) BlockChildren() []Block {
 	return g.Children
+}
+
+type SeqNumBox struct {
+	Nod    Node
+	SeqNum string
+}
+
+func (s SeqNumBox) Node() string {
+	return fmt.Sprintf("SeqNumBox(%s%s)", s.Nod.Node(), s.SeqNum)
+}
+
+func (s *SeqNumBox) Unbox() Node {
+	return s.Nod
 }

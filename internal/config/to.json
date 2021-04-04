@@ -9,6 +9,11 @@
 			"html": "{{if not (onlyLineComment .InlineChildren)}}<div>{{range .InlineChildren}}{{render .}}{{end}}</div>{{end}}"
 		}
 	},
+	"lineComment": {
+		"templates": {
+			"html": ""
+		}
+	},
 	"elements": [
 		{
 			"name": "Blockquote",
@@ -67,7 +72,7 @@
 			"type": "hanging",
 			"delimiter": "1.",
 			"templates": {
-				"html": "{{- range .BlockChildren}}\n\t<li>{{render .}}</li>\n{{end -}}"
+				"html": "<li>{{- range .BlockChildren}}{{render .}}{{end -}}</li>"
 			}
 		},
 		{
@@ -75,7 +80,15 @@
 			"type": "hanging",
 			"delimiter": "1)",
 			"templates": {
-				"html": "{{- range .BlockChildren}}\n\t<li>{{render .}}</li>\n{{end -}}"
+				"html": "<li>{{- range .BlockChildren}}{{render .}}{{end -}}</li>"
+			}
+		},
+		{
+			"name": "ListItemDot",
+			"type": "hanging",
+			"delimiter": "-",
+			"templates": {
+				"html": "<li>{{- range .BlockChildren}}{{render .}}{{end -}}</li>"
 			}
 		},
 		{
@@ -84,7 +97,7 @@
 			"delimiter": ".tableOfContents",
 			"verbatim": true,
 			"templates": {
-				"html": "TOC"
+				"html": "<p>Table Of Contents</p>{{.Aggregates.Headings}}"
 			}
 		},
 
@@ -135,6 +148,19 @@
 			"templates": {
 				"html": "<ol class=\"paren\">\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>"
 			}
+		},
+		{
+			"name": "ListDot",
+			"element": "ListItemDot",
+			"templates": {
+				"html": "<ul>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>"
+			}
+		}
+	],
+	"aggregates": [
+		{
+			"name": "Headings",
+			"elements": ["NumberedHeading"]
 		}
 	]
 }

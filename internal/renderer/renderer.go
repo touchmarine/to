@@ -6,7 +6,6 @@ import (
 	"io"
 	"strconv"
 	"strings"
-	"to/internal/config"
 	"to/internal/node"
 )
 
@@ -17,18 +16,12 @@ var FuncMap = template.FuncMap{
 	"primarySecondary": parsePrimarySecondary,
 }
 
-func New(conf *config.Config, tmpl *template.Template) *Renderer {
-	return &Renderer{
-		conf:   conf,
-		tmpl:   tmpl,
-		seqMap: make(map[string]map[uint]uint),
-	}
+func New(tmpl *template.Template) *Renderer {
+	return &Renderer{tmpl}
 }
 
 type Renderer struct {
-	conf   *config.Config
-	tmpl   *template.Template
-	seqMap map[string]map[uint]uint // ranked sequence elements by node
+	tmpl *template.Template
 }
 
 func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
@@ -38,18 +31,26 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 		}
 
 		switch n.(type) {
-		case node.Ranked, node.BlockChildren, node.InlineChildren, node.Content, node.Lines:
+		case *node.SeqNumBox, node.Ranked, node.BlockChildren, node.InlineChildren, node.Content, node.Lines:
 		default:
-			panic(fmt.Sprintf("HTML: unexpected node %T", n))
+			panic(fmt.Sprintf("Render: unexpected node %T", n))
 		}
 
 		data := make(map[string]interface{})
 
-		if m, ok := n.(node.Ranked); ok {
-			r.incSeqNum(n)
+		if m, ok := n.(node.Boxed); ok {
+			switch k := n.(type) {
+			case *node.SeqNumBox:
+				data["SeqNum"] = k.SeqNum
+			default:
+				panic(fmt.Sprintf("Render: unexpected Boxed node %T", n))
+			}
 
+			n = m.Unbox()
+		}
+
+		if m, ok := n.(node.Ranked); ok {
 			data["Rank"] = strconv.FormatUint(uint64(m.Rank()), 10)
-			data["SeqNum"] = r.seqNum(n)
 		}
 
 		if m, ok := n.(node.BlockChildren); ok {
@@ -93,59 +94,6 @@ func (r *Renderer) FuncMap() template.FuncMap {
 
 			return template.HTML(b.String())
 		},
-	}
-}
-
-func (r *Renderer) seqNum(n node.Node) string {
-	m, ok := r.seqMap[n.Node()]
-	if !ok {
-		panic(fmt.Sprintf("Renderer.seqNum: missing map for ranked node %s", n.Node()))
-	}
-
-	ranked, ok := n.(node.Ranked)
-	if !ok {
-		panic(fmt.Sprintf("Renderer.seqNum: node %s does not implement node.Ranked", n.Node()))
-	}
-
-	rank := ranked.Rank()
-	el, ok := r.conf.Element(n.Node())
-	if !ok {
-		panic(fmt.Sprintf("Renderer.seqNum: missing element in config for node %s", n.Node()))
-	}
-
-	minRank := el.MinRank
-
-	var seq []string
-	for i := minRank; i <= rank; i++ {
-		var seqNum uint64
-		u, ok := m[i]
-		if ok {
-			seqNum = uint64(u)
-		}
-		seq = append(seq, strconv.FormatUint(seqNum, 10))
-	}
-
-	return strings.Join(seq, ".")
-}
-
-func (r *Renderer) incSeqNum(n node.Node) {
-	if _, ok := r.seqMap[n.Node()]; !ok {
-		r.seqMap[n.Node()] = make(map[uint]uint)
-	}
-
-	ranked, ok := n.(node.Ranked)
-	if !ok {
-		panic(fmt.Sprintf("Renderer.incSeqNum: node %s does not implement node.Ranked", n.Node()))
-	}
-
-	rank := ranked.Rank()
-
-	r.seqMap[n.Node()][rank]++
-
-	for rk, _ := range r.seqMap[n.Node()] {
-		if rk > rank {
-			r.seqMap[n.Node()][rk] = 0
-		}
 	}
 }
 
