@@ -2,8 +2,6 @@ package transformer
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 	"to/internal/config"
 	"to/internal/node"
 )
@@ -31,9 +29,9 @@ func (s *sequencer) sequence(nodes []node.Node) []node.Node {
 			rank := m.Rank()
 
 			s.incSeqNum(name, rank)
-			seqNum := s.seqNum(name, rank)
+			seqNums := s.seqNums(name, rank)
 
-			nodes[i] = &node.SeqNumBox{n, seqNum}
+			nodes[i] = &node.SeqNumBox{n, seqNums}
 		}
 	}
 	return nodes
@@ -53,7 +51,7 @@ func (s *sequencer) incSeqNum(name string, rank uint) {
 	}
 }
 
-func (s *sequencer) seqNum(name string, rank uint) string {
+func (s *sequencer) seqNums(name string, rank uint) []uint {
 	m, ok := s.seqMap[name]
 	if !ok {
 		panic(fmt.Sprintf("sequencer.seqNum: missing map for ranked node %s", name))
@@ -64,19 +62,12 @@ func (s *sequencer) seqNum(name string, rank uint) string {
 		panic(fmt.Sprintf("sequencer.seqNum: missing element in config for node %s", name))
 	}
 
-	minRank := el.MinRank
-
-	var seq []string
-	for i := minRank; i <= rank; i++ {
-		var seqNum uint64
-		u, ok := m[i]
-		if ok {
-			seqNum = uint64(u)
-		}
-		seq = append(seq, strconv.FormatUint(seqNum, 10))
+	var seq []uint
+	for i := el.MinRank; i <= rank; i++ {
+		seq = append(seq, m[i])
 	}
 
-	return strings.Join(seq, ".")
+	return seq
 }
 
 func (s *sequencer) element(name string) (config.Element, bool) {

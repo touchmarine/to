@@ -22,7 +22,7 @@ func TestSequence(t *testing.T) {
 			[]node.Node{
 				&node.SeqNumBox{
 					&node.Hanging{"NumberedHeading", 0, nil},
-					"",
+					[]uint{},
 				},
 			},
 		},
@@ -34,7 +34,7 @@ func TestSequence(t *testing.T) {
 			[]node.Node{
 				&node.SeqNumBox{
 					&node.Hanging{"NumberedHeading", 1, nil},
-					"",
+					[]uint{},
 				},
 			},
 		},
@@ -46,7 +46,7 @@ func TestSequence(t *testing.T) {
 			[]node.Node{
 				&node.SeqNumBox{
 					&node.Hanging{"NumberedHeading", 2, nil},
-					"1",
+					[]uint{1},
 				},
 			},
 		},
@@ -60,11 +60,11 @@ func TestSequence(t *testing.T) {
 			[]node.Node{
 				&node.SeqNumBox{
 					&node.Hanging{"NumberedHeading", 2, nil},
-					"1",
+					[]uint{1},
 				},
 				&node.SeqNumBox{
 					&node.Hanging{"NumberedHeading", 2, nil},
-					"2",
+					[]uint{2},
 				},
 			},
 		},
@@ -77,11 +77,11 @@ func TestSequence(t *testing.T) {
 			[]node.Node{
 				&node.SeqNumBox{
 					&node.Hanging{"NumberedHeading", 2, nil},
-					"1",
+					[]uint{1},
 				},
 				&node.SeqNumBox{
 					&node.Hanging{"NumberedHeading", 3, nil},
-					"1.1",
+					[]uint{1, 1},
 				},
 			},
 		},
@@ -93,7 +93,7 @@ func TestSequence(t *testing.T) {
 			[]node.Node{
 				&node.SeqNumBox{
 					&node.Hanging{"NumberedHeading", 3, nil},
-					"0.1",
+					[]uint{0, 1},
 				},
 			},
 		},
@@ -109,19 +109,19 @@ func TestSequence(t *testing.T) {
 			[]node.Node{
 				&node.SeqNumBox{
 					&node.Hanging{"NumberedHeading", 2, nil},
-					"1",
+					[]uint{1},
 				},
 				&node.SeqNumBox{
 					&node.Hanging{"NumberedHeading", 3, nil},
-					"1.1",
+					[]uint{1, 1},
 				},
 				&node.SeqNumBox{
 					&node.Hanging{"NumberedHeading", 2, nil},
-					"2",
+					[]uint{2},
 				},
 				&node.SeqNumBox{
 					&node.Hanging{"NumberedHeading", 3, nil},
-					"2.1",
+					[]uint{2, 1},
 				},
 			},
 		},

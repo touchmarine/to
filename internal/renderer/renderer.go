@@ -6,6 +6,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"to/internal/aggregator"
 	"to/internal/node"
 )
 
@@ -14,14 +15,19 @@ var FuncMap = template.FuncMap{
 	"head":             head,
 	"body":             body,
 	"primarySecondary": parsePrimarySecondary,
+	"groupBySeqNum":    groupBySeqNum,
+	"isSeqNumGroup":    isSeqNumGroup,
+	"toSeqNumGroup":    toSeqNumGroup,
+	"toSeqNumItem":     toSeqNumItem,
 }
 
-func New(tmpl *template.Template) *Renderer {
-	return &Renderer{tmpl}
+func New(tmpl *template.Template, data map[string]interface{}) *Renderer {
+	return &Renderer{tmpl, data}
 }
 
 type Renderer struct {
 	tmpl *template.Template
+	data map[string]interface{}
 }
 
 func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
@@ -31,7 +37,7 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 		}
 
 		switch n.(type) {
-		case *node.SeqNumBox, node.Ranked, node.BlockChildren, node.InlineChildren, node.Content, node.Lines:
+		case node.Boxed, node.Ranked, node.BlockChildren, node.InlineChildren, node.Content, node.Lines:
 		default:
 			panic(fmt.Sprintf("Render: unexpected node %T", n))
 		}
@@ -41,13 +47,16 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 		if m, ok := n.(node.Boxed); ok {
 			switch k := n.(type) {
 			case *node.SeqNumBox:
-				data["SeqNum"] = k.SeqNum
+				data["SeqNums"] = k.SeqNums
+				data["SeqNum"] = k.SeqNum()
 			default:
 				panic(fmt.Sprintf("Render: unexpected Boxed node %T", n))
 			}
 
 			n = m.Unbox()
 		}
+
+		data["TextContent"] = extractText(n)
 
 		if m, ok := n.(node.Ranked); ok {
 			data["Rank"] = strconv.FormatUint(uint64(m.Rank()), 10)
@@ -71,6 +80,11 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 				lines = append(lines, string(line))
 			}
 			data["Lines"] = lines
+			data["Text"] = strings.Join(lines, "\n")
+		}
+
+		for k, v := range r.data {
+			data[k] = v
 		}
 
 		name := n.Node()
@@ -144,6 +158,160 @@ func parsePrimarySecondary(lines []string) primarySecondary {
 	}
 
 	return primarySecondary{template.HTMLAttr(prim), template.HTMLAttr(sec)}
+}
+
+type seqNumNode interface {
+	seqNumNode()
+}
+
+type seqNumGroup []seqNumNode
+
+func (g seqNumGroup) seqNumNode() {}
+
+type seqNumItem aggregator.Item
+
+func (i seqNumItem) seqNumNode() {}
+
+func isSeqNumGroup(v interface{}) bool {
+	_, ok := v.(seqNumGroup)
+	return ok
+}
+
+func toSeqNumGroup(v interface{}) seqNumGroup {
+	return v.(seqNumGroup)
+}
+
+func toSeqNumItem(v interface{}) seqNumItem {
+	return v.(seqNumItem)
+}
+
+const trace = false
+
+func groupBySeqNum(items []aggregator.Item) seqNumGroup {
+	s := seqNumGrouper{}
+	return s.groupBySeqNum(items)
+}
+
+type seqNumGrouper struct {
+	lowest int
+	indent int
+}
+
+func (s *seqNumGrouper) groupBySeqNum(items []aggregator.Item) seqNumGroup {
+	if trace {
+		defer s.trace("groupBySeqNum")()
+	}
+
+	var group seqNumGroup
+
+	var depth int
+	if len(items) > 0 {
+		depth = len(items[0].SeqNums)
+	}
+
+	if trace {
+		s.printf("depth=%d", depth)
+	}
+
+	if s.lowest == 0 || s.lowest > 0 && depth < s.lowest {
+		if trace {
+			s.printf("set lowest=%d", depth)
+		}
+		s.lowest = depth
+	}
+
+	for i := 0; i < len(items); i++ {
+		item := items[i]
+		cur := len(item.SeqNums) // current depth
+
+		if trace {
+			s.printf("item %s", item.SeqNum)
+		}
+
+		if cur > depth {
+			if trace {
+				s.printf("%d > depth:", cur)
+			}
+
+			g := s.groupBySeqNum(items[i:])
+			i += len(g) - 1
+			group = append(group, g)
+		} else if cur == depth {
+			if trace {
+				s.printf("%d == depth, add to group", cur)
+			}
+
+			group = append(group, seqNumItem(item))
+		} else if cur < depth {
+			if trace {
+				s.printf("%d < depth:", cur)
+			}
+
+			if cur < s.lowest {
+				g := s.groupBySeqNum(items[i:])
+				i += len(g) - 1
+				group = append(seqNumGroup{group}, g...)
+			}
+			break
+		}
+	}
+
+	return group
+}
+
+func (s *seqNumGrouper) trace(msg string) func() {
+	s.printf("%s (", msg)
+	s.indent++
+
+	return func() {
+		s.indent--
+		s.print(")")
+	}
+}
+
+func (s *seqNumGrouper) printf(format string, v ...interface{}) {
+	s.print(fmt.Sprintf(format, v...))
+}
+
+func (s *seqNumGrouper) print(msg string) {
+	fmt.Println(strings.Repeat("\t", s.indent) + msg)
+}
+
+func extractText(n node.Node) string {
+	var b strings.Builder
+
+	switch n.(type) {
+	case node.BlockChildren, node.InlineChildren, node.Content, node.Lines:
+	default:
+		panic(fmt.Sprintf("text: unexpected node type %T", n))
+	}
+
+	if m, ok := n.(node.BlockChildren); ok {
+		for i, c := range m.BlockChildren() {
+			if i > 0 {
+				b.WriteString("\n")
+			}
+			b.WriteString(extractText(c))
+		}
+	}
+
+	if m, ok := n.(node.InlineChildren); ok {
+		for _, c := range m.InlineChildren() {
+			b.WriteString(extractText(c))
+		}
+	}
+
+	if m, ok := n.(node.Content); ok {
+		b.Write(m.Content())
+	}
+
+	if m, ok := n.(node.Lines); ok {
+		for _, line := range m.Lines() {
+			b.Write(line)
+		}
+	}
+
+	return b.String()
 }
 
 type namedUnnamed struct {

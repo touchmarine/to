@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"log"
 	"os"
+	"to/internal/aggregator"
 	"to/internal/config"
 	"to/internal/node"
 	"to/internal/parser"
@@ -53,11 +54,17 @@ func main() {
 	nodes = transformer.Group(conf.Groups, nodes)
 	nodes = transformer.Sequence(conf.Elements, nodes)
 
+	aggregates := aggregator.Aggregate(config.Default.Aggregates, nodes)
+
+	data := map[string]interface{}{
+		"Aggregates": aggregates,
+	}
+
 	//rndr := renderer.New(conf)
 	//rndr.Render(os.Stdout, "html", node.BlocksToNodes(blocks))
 
 	tmpl := template.New("html")
-	rndr := renderer.New(tmpl)
+	rndr := renderer.New(tmpl, data)
 
 	tmpl.Funcs(renderer.FuncMap)
 	tmpl.Funcs(rndr.FuncMap())

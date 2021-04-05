@@ -55,7 +55,7 @@
 			"ranked": true,
 			"minRank": 2,
 			"templates": {
-				"html": "<h{{.Rank}}>\n\t<div style=\"float:left\">{{.SeqNum}}&nbsp;</div>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</h{{.Rank}}>"
+				"html": "<h{{.Rank}} id=\"{{.TextContent}}\">\n\t<div style=\"float:left\">{{.SeqNum}}&nbsp;</div>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</h{{.Rank}}>"
 			}
 		},
 		{
@@ -94,10 +94,10 @@
 		{
 			"name": "TableOfContents",
 			"type": "hanging",
-			"delimiter": ".tableOfContents",
+			"delimiter": ".toc",
 			"verbatim": true,
 			"templates": {
-				"html": "<p>Table Of Contents</p>{{.Aggregates.Headings}}"
+				"html": "<div>\n\t<p>{{.Text}}</p>\n\t{{block \"grouper\" groupBySeqNum .Aggregates.Headings}}\n\t<ul>\n\t\t{{range .}}\n\t\t{{if isSeqNumGroup .}}\n\t\t{{template \"grouper\" .}}\n\t\t{{else}}\n\t\t<li><a href=\"#{{.ID}}\">{{.SeqNum}} {{.Text}}</a></li>\n\t\t{{end}}\n\t\t{{end}}\n\t</ul>\n\t{{end}}\n</div>"
 			}
 		},
 

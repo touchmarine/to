@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -329,14 +330,22 @@ func (g *Group) BlockChildren() []Block {
 }
 
 type SeqNumBox struct {
-	Nod    Node
-	SeqNum string
+	Nod     Node
+	SeqNums []uint
 }
 
 func (s SeqNumBox) Node() string {
-	return fmt.Sprintf("SeqNumBox(%s%s)", s.Nod.Node(), s.SeqNum)
+	return fmt.Sprintf("SeqNumBox(%s%s)", s.Nod.Node(), s.SeqNum())
 }
 
 func (s *SeqNumBox) Unbox() Node {
 	return s.Nod
+}
+
+func (s *SeqNumBox) SeqNum() string {
+	var a []string
+	for _, n := range s.SeqNums {
+		a = append(a, strconv.FormatUint(uint64(n), 10))
+	}
+	return strings.Join(a, ".")
 }

@@ -1,9 +1,11 @@
 package renderer
 
 import (
+	"encoding/json"
 	"sort"
 	"strings"
 	"testing"
+	"to/internal/aggregator"
 	"to/internal/node"
 )
 
@@ -323,6 +325,437 @@ func TestNamedUnnamed(t *testing.T) {
 	}
 }
 
+func TestGroupBySeqNum(t *testing.T) {
+	cases := []struct {
+		name string
+		in   []aggregator.Item
+		out  seqNumGroup
+	}{
+		{
+			"1 depth",
+			[]aggregator.Item{
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{2},
+					SeqNum:  "2",
+				},
+			},
+			seqNumGroup{
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{2},
+					SeqNum:  "2",
+				},
+			},
+		},
+		{
+			"2 depths",
+			[]aggregator.Item{
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1, 1},
+					SeqNum:  "1.1",
+				},
+			},
+			seqNumGroup{
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				seqNumGroup{
+					seqNumItem{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1, 1},
+						SeqNum:  "1.1",
+					},
+				},
+			},
+		},
+		{
+			"3 depths",
+			[]aggregator.Item{
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1, 1},
+					SeqNum:  "1.1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1, 1, 1},
+					SeqNum:  "1.1.1",
+				},
+			},
+			seqNumGroup{
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				seqNumGroup{
+					seqNumItem{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1, 1},
+						SeqNum:  "1.1",
+					},
+					seqNumGroup{
+						seqNumItem{
+							Element: "NumberedHeading",
+							SeqNums: []uint{1, 1, 1},
+							SeqNum:  "1.1.1",
+						},
+					},
+				},
+			},
+		},
+		{
+			"decrease depth",
+			[]aggregator.Item{
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1, 1},
+					SeqNum:  "1.1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+			},
+			seqNumGroup{
+				seqNumGroup{
+					seqNumItem{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1, 1},
+						SeqNum:  "1.1",
+					},
+				},
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+			},
+		},
+		{
+			"decrease depth 1",
+			[]aggregator.Item{
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1, 1},
+					SeqNum:  "1.1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{2},
+					SeqNum:  "2",
+				},
+			},
+			seqNumGroup{
+				seqNumGroup{
+					seqNumItem{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1, 1},
+						SeqNum:  "1.1",
+					},
+				},
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{2},
+					SeqNum:  "2",
+				},
+			},
+		},
+		{
+			"decrease depth 2",
+			[]aggregator.Item{
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1, 1},
+					SeqNum:  "1.1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{2, 1},
+					SeqNum:  "2.1",
+				},
+			},
+			seqNumGroup{
+				seqNumGroup{
+					seqNumItem{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1, 1},
+						SeqNum:  "1.1",
+					},
+				},
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				seqNumGroup{
+					seqNumItem{
+						Element: "NumberedHeading",
+						SeqNums: []uint{2, 1},
+						SeqNum:  "2.1",
+					},
+				},
+			},
+		},
+		{
+			"decrease depth 3",
+			[]aggregator.Item{
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1, 1},
+					SeqNum:  "1.1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{2},
+					SeqNum:  "2",
+				},
+			},
+			seqNumGroup{
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				seqNumGroup{
+					seqNumItem{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1, 1},
+						SeqNum:  "1.1",
+					},
+				},
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{2},
+					SeqNum:  "2",
+				},
+			},
+		},
+		{
+			"decrease depth 4",
+			[]aggregator.Item{
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1, 1},
+					SeqNum:  "1.1",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{2},
+					SeqNum:  "2",
+				},
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{2, 1},
+					SeqNum:  "2.1",
+				},
+			},
+			seqNumGroup{
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+				seqNumGroup{
+					seqNumItem{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1, 1},
+						SeqNum:  "1.1",
+					},
+				},
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{2},
+					SeqNum:  "2",
+				},
+				seqNumGroup{
+					seqNumItem{
+						Element: "NumberedHeading",
+						SeqNums: []uint{2, 1},
+						SeqNum:  "2.1",
+					},
+				},
+			},
+		},
+
+		/*
+			{
+				"single",
+				[]aggregator.Item{
+					{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1},
+						SeqNum:  "1",
+					},
+				},
+				[][]aggregator.Item{
+					{
+						{
+							Element: "NumberedHeading",
+							SeqNums: []uint{1},
+							SeqNum:  "1",
+						},
+					},
+				},
+			},
+			{
+				"same depth",
+				[]aggregator.Item{
+					{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1},
+						SeqNum:  "1",
+					},
+					{
+						Element: "NumberedHeading",
+						SeqNums: []uint{2},
+						SeqNum:  "2",
+					},
+				},
+				[][]aggregator.Item{
+					{
+						{
+							Element: "NumberedHeading",
+							SeqNums: []uint{1},
+							SeqNum:  "1",
+						},
+						{
+							Element: "NumberedHeading",
+							SeqNums: []uint{2},
+							SeqNum:  "2",
+						},
+					},
+				},
+			},
+			{
+				"two depths",
+				[]aggregator.Item{
+					{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1},
+						SeqNum:  "1",
+					},
+					{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1, 1},
+						SeqNum:  "1.1",
+					},
+				},
+				[][]aggregator.Item{
+					{
+						{
+							Element: "NumberedHeading",
+							SeqNums: []uint{1},
+							SeqNum:  "1",
+						},
+					},
+					{
+						{
+							Element: "NumberedHeading",
+							SeqNums: []uint{1, 1},
+							SeqNum:  "1.1",
+						},
+					},
+				},
+			},
+			{
+				"returning depth",
+				[]aggregator.Item{
+					{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1, 1},
+						SeqNum:  "1.1",
+					},
+					{
+						Element: "NumberedHeading",
+						SeqNums: []uint{1},
+						SeqNum:  "1",
+					},
+				},
+				[][]aggregator.Item{
+					{
+						{
+							Element: "NumberedHeading",
+							SeqNums: []uint{1, 1},
+							SeqNum:  "1.1",
+						},
+					},
+					{
+						{
+							Element: "NumberedHeading",
+							SeqNums: []uint{1},
+							SeqNum:  "1",
+						},
+					},
+				},
+			},
+		*/
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			a := groupBySeqNum(c.in)
+
+			got := jsonMarshal(t, a)
+			want := jsonMarshal(t, c.out)
+
+			if got != want {
+				t.Errorf("\ngot\n%s\nwant\n%s", got, want)
+			}
+		})
+	}
+}
+
 func namedStr(m map[string]string) string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
@@ -342,4 +775,15 @@ func namedStr(m map[string]string) string {
 	}
 
 	return b.String()
+}
+
+func jsonMarshal(t *testing.T, v interface{}) string {
+	t.Helper()
+
+	json, err := json.MarshalIndent(v, "", "\t")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return string(json)
 }
