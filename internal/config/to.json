@@ -1,15 +1,15 @@
 {
-	"text": {
+	"Text": {
 		"templates": {
 			"html": "{{.Content}}"
 		}
 	},
-	"line": {
+	"Line": {
 		"templates": {
 			"html": "{{if not (onlyLineComment .InlineChildren)}}<div>{{range .InlineChildren}}{{render .}}{{end}}</div>{{end}}"
 		}
 	},
-	"lineComment": {
+	"LineComment": {
 		"templates": {
 			"html": ""
 		}
@@ -135,8 +135,16 @@
 	],
 	"groups": [
 		{
+			"name": "Paragraph",
+			"element": "Line",
+			"templates": {
+				"html": "<p>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</p>"
+			}
+		},
+		{
 			"name": "NumberedListDot",
 			"element": "NumberedListItemDot",
+			"groupNested": true,
 			"templates": {
 				"html": "<ol class=\"dot\">\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>"
 			}
@@ -144,6 +152,7 @@
 		{
 			"name": "NumberedListParen",
 			"element": "NumberedListItemParen",
+			"groupNested": true,
 			"templates": {
 				"html": "<ol class=\"paren\">\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>"
 			}
@@ -151,6 +160,7 @@
 		{
 			"name": "ListDot",
 			"element": "ListItemDot",
+			"groupNested": true,
 			"templates": {
 				"html": "<ul>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ul>"
 			}

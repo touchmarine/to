@@ -37,9 +37,22 @@ func (s *stringifier) stringify(nodes []node.Node) {
 				s.stringify(node.InlinesToNodes(ic))
 			}
 
+		case node.LinesTrailingText:
+			verbatim := bytes.Join(m.Lines(), []byte("\n"))
+			s.writei([]byte(strconv.Quote(string(verbatim))))
+
+			t := m.TrailingText()
+			if t != nil && len(t) > 0 {
+				s.write([]byte(", "))
+				s.write(t)
+			}
+
 		case node.Lines:
 			verbatim := bytes.Join(m.Lines(), []byte("\n"))
 			s.writei([]byte(strconv.Quote(string(verbatim))))
+
+		case node.TrailingText:
+			s.write(m.TrailingText())
 
 		case node.BlockChildren:
 			s.stringify(node.BlocksToNodes(m.BlockChildren()))

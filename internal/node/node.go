@@ -89,8 +89,17 @@ type Content interface {
 	Content() []byte
 }
 
+type LinesTrailingText interface {
+	Lines
+	TrailingText
+}
+
 type Lines interface {
 	Lines() [][]byte
+}
+
+type TrailingText interface {
+	TrailingText() []byte
 }
 
 type BlockChildren interface {
@@ -220,8 +229,9 @@ func (hv *HangingVerbatim) Lines() [][]byte {
 }
 
 type Fenced struct {
-	Name   string
-	Lines0 [][]byte
+	Name          string
+	Lines0        [][]byte
+	TrailingText0 []byte
 }
 
 func (f Fenced) Node() string {
@@ -232,6 +242,10 @@ func (f Fenced) Block() {}
 
 func (f Fenced) Lines() [][]byte {
 	return f.Lines0
+}
+
+func (f Fenced) TrailingText() []byte {
+	return f.TrailingText0
 }
 
 type Uniform struct {

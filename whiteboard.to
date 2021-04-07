@@ -374,6 +374,17 @@ _  z v
 1 x y
 2 z v
 ::
+
+// or (preferred for this table style)
+
+:tableName A B
+1          x y
+2          z v
+
+// no table name
+: A B
+1 x y
+2 z v
 ``
 
 ### Table Caption

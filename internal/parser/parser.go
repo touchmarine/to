@@ -40,8 +40,9 @@ type parser struct {
 	ch    rune   // current character
 	atEOF bool   // at end of file
 
-	blocks []rune // open blocks
-	lead   []rune // blocks on current line
+	blocks    []rune // open blocks
+	lead      []rune // blocks on current line
+	blankLine bool   // whether a false-positive blank line was encountered
 
 	inlines [][2]rune // open inlines
 
@@ -108,13 +109,14 @@ func (p *parser) parse() []node.Block {
 				// skip empty lines
 				p.nextln()
 				p.nextch()
+				p.parseLead()
 			}
 
 			if p.atEOF {
 				break
 			}
 
-			p.parseLead()
+			blocks = append(blocks, &node.Line{"BlankLine", nil})
 		}
 
 		if p.atEOF {
@@ -127,6 +129,13 @@ func (p *parser) parse() []node.Block {
 		}
 
 		blocks = append(blocks, block)
+
+		if p.blankLine {
+			// child parselet encountered a false-positive blank
+			// line that belongs here
+			p.blankLine = false
+			blocks = append(blocks, &node.Line{"BlankLine", nil})
+		}
 	}
 
 	return blocks
@@ -291,6 +300,13 @@ func (p *parser) parseWalled(name string) node.Block {
 
 	p.nextch() // consume delimiter
 
+	if p.atEOL() {
+		p.nextln()
+		if p.nextch() {
+			p.parseLead()
+		}
+	}
+
 	reqdBlocks := p.blocks
 	children := p.parseChildren(reqdBlocks)
 
@@ -330,23 +346,53 @@ func (p *parser) parseHanging(name string, delim string, ranked, verbatim bool) 
 		return &node.HangingVerbatim{name, rank, lines}
 	}
 
-	children := p.parseChildren(reqdBlocks)
+	if p.atEOL() {
+		p.nextln()
+		if p.nextch() {
+			p.parseLead()
+		}
+	}
+
+	var children []node.Block
+	for {
+		if p.atEOL() {
+			for p.atEOL() && !p.atEOF {
+				// skip empty lines
+				p.nextln()
+				p.nextch()
+				p.parseLead()
+			}
+
+			if p.atEOF {
+				break
+			}
+
+			p.blankLine = true
+		}
+
+		if p.continues(reqdBlocks) {
+			if p.blankLine {
+				p.blankLine = false
+				children = append(children, &node.Line{"BlankLine", nil})
+			}
+		} else {
+			break
+		}
+
+		c := p.parseChildren(reqdBlocks)
+		children = append(children, c...)
+
+		if p.atEOF {
+			break
+		}
+	}
+
 	return &node.Hanging{name, rank, children}
 }
 
 func (p *parser) parseChildren(reqdBlocks []rune) []node.Block {
 	if trace {
 		defer p.trace("parseChildren")()
-	}
-
-	if p.atEOL() {
-		p.nextln()
-		if !p.nextch() {
-			// empty line
-			return nil
-		}
-
-		p.parseLead()
 	}
 
 	var blocks []node.Block
@@ -377,25 +423,33 @@ func (p *parser) parseLines(reqdBlocks []rune) [][]byte {
 	var lines [][]byte
 
 	var b strings.Builder
-OuterLoop:
 	for {
-		for p.atEOL() {
-			lines = append(lines, []byte(b.String()))
-			b.Reset()
+		n := 0 // blank lines index
 
-			if !p.nextln() {
-				break OuterLoop
+		if p.atEOL() {
+			for p.atEOL() && !p.atEOF {
+				lines = append(lines, []byte(b.String()))
+				b.Reset()
+
+				// skip empty lines
+				p.nextln()
+				p.nextch()
+				p.parseLead()
+
+				n++
 			}
 
-			p.nextch()
-			p.parseLead()
-
-			if !p.continues(reqdBlocks) {
-				break OuterLoop
+			if p.atEOF {
+				break
 			}
 		}
 
 		if !p.continues(reqdBlocks) {
+			if n > 1 {
+				// blank lines that belong to parent parselet
+				p.blankLine = true
+				lines = lines[:len(lines)-n+1]
+			}
 			break
 		}
 
@@ -502,6 +556,7 @@ func (p *parser) parseFenced(name string) node.Block {
 	}
 
 	var lines [][]byte
+	var trailingText []byte
 
 	var b strings.Builder
 OuterLoop:
@@ -536,13 +591,16 @@ OuterLoop:
 			}
 
 			if j == i {
-				if p.atEOL() {
-					p.nextln()
-					p.nextch()
-					p.parseLead()
-				} else {
-					p.nextch()
+				// closing delimiter
+				b.Reset()
+				for p.nextch() {
+					b.WriteRune(p.ch)
 				}
+				trailingText = []byte(b.String())
+
+				p.nextln()
+				p.nextch()
+				p.parseLead()
 				break OuterLoop
 			}
 
@@ -554,7 +612,7 @@ OuterLoop:
 		}
 	}
 
-	return &node.Fenced{name, lines}
+	return &node.Fenced{name, lines, trailingText}
 }
 
 // a=old spacing

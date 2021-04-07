@@ -24,13 +24,13 @@ func init() {
 type Config struct {
 	Text struct {
 		Templates map[string]string `json:"templates"`
-	} `json:"text"`
+	}
 	Line struct {
 		Templates map[string]string `json:"templates"`
-	} `json:"line"`
+	}
 	LineComment struct {
 		Templates map[string]string `json:"templates"`
-	} `json:"lineComment"`
+	}
 	Elements   []Element   `json:"elements"`
 	Groups     []Group     `json:"groups"`
 	Aggregates []Aggregate `json:"aggregates"`
@@ -105,9 +105,10 @@ type Element struct {
 }
 
 type Group struct {
-	Name      string            `json:"name"`
-	Element   string            `json:"element"`
-	Templates map[string]string `json:"templates"`
+	Name        string            `json:"name"`
+	Element     string            `json:"element"`
+	GroupNested bool              `json:"groupNested"`
+	Templates   map[string]string `json:"templates"`
 }
 
 type Aggregate struct {

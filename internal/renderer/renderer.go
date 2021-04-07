@@ -32,6 +32,10 @@ type Renderer struct {
 
 func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 	for i, n := range nodes {
+		if n.Node() == "BlankLine" {
+			continue
+		}
+
 		if i > 0 {
 			out.Write([]byte("\n"))
 		}
