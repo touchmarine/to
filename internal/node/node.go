@@ -349,3 +349,42 @@ func (s *SeqNumBox) SeqNum() string {
 	}
 	return strings.Join(a, ".")
 }
+
+func ExtractText(n Node) string {
+	var b strings.Builder
+
+	switch n.(type) {
+	case BlockChildren, InlineChildren, Content, Lines:
+	default:
+		panic(fmt.Sprintf("ExtractText: unexpected node type %T", n))
+	}
+
+	if m, ok := n.(BlockChildren); ok {
+		for i, c := range m.BlockChildren() {
+			if i > 0 {
+				b.WriteString("\n")
+			}
+			b.WriteString(ExtractText(c))
+		}
+	}
+
+	if m, ok := n.(ContentInlineChildren); ok {
+		for _, c := range m.InlineChildren() {
+			b.WriteString(ExtractText(c))
+		}
+	} else if m, ok := n.(InlineChildren); ok {
+		for _, c := range m.InlineChildren() {
+			b.WriteString(ExtractText(c))
+		}
+	} else if m, ok := n.(Content); ok {
+		b.Write(m.Content())
+	}
+
+	if m, ok := n.(Lines); ok {
+		for _, line := range m.Lines() {
+			b.Write(line)
+		}
+	}
+
+	return b.String()
+}

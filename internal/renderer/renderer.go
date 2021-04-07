@@ -56,7 +56,7 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 			n = m.Unbox()
 		}
 
-		data["TextContent"] = extractText(n)
+		data["TextContent"] = node.ExtractText(n)
 
 		if m, ok := n.(node.Ranked); ok {
 			data["Rank"] = strconv.FormatUint(uint64(m.Rank()), 10)
@@ -275,43 +275,6 @@ func (s *seqNumGrouper) printf(format string, v ...interface{}) {
 
 func (s *seqNumGrouper) print(msg string) {
 	fmt.Println(strings.Repeat("\t", s.indent) + msg)
-}
-
-func extractText(n node.Node) string {
-	var b strings.Builder
-
-	switch n.(type) {
-	case node.BlockChildren, node.InlineChildren, node.Content, node.Lines:
-	default:
-		panic(fmt.Sprintf("text: unexpected node type %T", n))
-	}
-
-	if m, ok := n.(node.BlockChildren); ok {
-		for i, c := range m.BlockChildren() {
-			if i > 0 {
-				b.WriteString("\n")
-			}
-			b.WriteString(extractText(c))
-		}
-	}
-
-	if m, ok := n.(node.InlineChildren); ok {
-		for _, c := range m.InlineChildren() {
-			b.WriteString(extractText(c))
-		}
-	}
-
-	if m, ok := n.(node.Content); ok {
-		b.Write(m.Content())
-	}
-
-	if m, ok := n.(node.Lines); ok {
-		for _, line := range m.Lines() {
-			b.Write(line)
-		}
-	}
-
-	return b.String()
 }
 
 type namedUnnamed struct {

@@ -2,7 +2,7 @@
 % author @touch_marine
 % date   January 6, 2021
 
-.tableOfContents
+.toc Table Of Contents
 
 ## Introduction
 
@@ -20,7 +20,7 @@ Everything goes here, but prefer
 
 We have a limited set of ASCII characters for our notations—do not use them for representing Unicode characters. Smart quotes, ellipses, en and em dashes, emojis, etc. are all part of Unicode. By leaving them to Unicode, we keep precious characters and improve collaborativity (which is apparently not a word).
 
-**Exceptions apply to everything, including this statement.**
+|**Exceptions apply to everything, including this statement.**
 
 ## Examples
 
@@ -355,6 +355,25 @@ Concrete example:
 +-----------------+-------------------+
 | \\\-            | hypen-minus sign  |
 +-----------------+-------------------+
+
+// or
+
+00 A B
+ 1 x y
+ 2 z v
+
+// with no column and row names
+00 _ _
+_  x y
+_  z v
+
+// or
+
+::metadata
+  A B
+1 x y
+2 z v
+::
 ``
 
 ### Table Caption
@@ -1352,8 +1371,10 @@ Bibliogrpahy:
 Miscellaneous:
 - <A Call for Schoraly Markdown><https://blog.martinfenner.org/2012/12/13/a-call-for-scholarly-markdown/>
 - <Additional Markdown we need in Scholarly Texts><https://blog.martinfenner.org/2012/12/18/additional-markdown-we-need-in-scholarly-texts/>
+- <Gitiles Markdown><https://gerrit.googlesource.com/gitiles/+/master/Documentation/markdown.md#Table-of-contents>
 - <Journal Article Tag Suite - Wikipedia><https://en.wikipedia.org/wiki/Journal_Article_Tag_Suite>
 - <Journal Article Tag Suite><https://jats.nlm.nih.gov/>
+- <Markdown style guide | styleguide><https://google.github.io/styleguide/docguide/style.html>
 - <The Plain Text Project><https://plaintextproject.online/index.html>
 - <Towards a best practice for marking up quoatations in HTML+CSS - W3C><https://www.w3.org/Style/2013/quote-marks>
 

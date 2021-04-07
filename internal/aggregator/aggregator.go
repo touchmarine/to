@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"fmt"
-	"strings"
 	"to/internal/config"
 	"to/internal/node"
 )
@@ -48,7 +47,7 @@ func (a *aggregator) aggregate(nodes []node.Node) map[string][]Item {
 
 		if a.isAggregate(name) {
 			item.Element = name
-			txt := a.text(n)
+			txt := node.ExtractText(n)
 			item.ID = txt
 			item.Text = txt
 
@@ -59,37 +58,6 @@ func (a *aggregator) aggregate(nodes []node.Node) map[string][]Item {
 	}
 
 	return a.m
-}
-
-func (a *aggregator) text(n node.Node) string {
-	var b strings.Builder
-
-	switch n.(type) {
-	case node.BlockChildren, node.InlineChildren, node.Content:
-	default:
-		panic(fmt.Sprintf("text: unexpected node type %T", n))
-	}
-
-	if m, ok := n.(node.BlockChildren); ok {
-		for i, c := range m.BlockChildren() {
-			if i > 0 {
-				b.WriteString("\n")
-			}
-			b.WriteString(a.text(c))
-		}
-	}
-
-	if m, ok := n.(node.InlineChildren); ok {
-		for _, c := range m.InlineChildren() {
-			b.WriteString(a.text(c))
-		}
-	}
-
-	if m, ok := n.(node.Content); ok {
-		b.Write(m.Content())
-	}
-
-	return b.String()
 }
 
 func (a *aggregator) isAggregate(name string) bool {

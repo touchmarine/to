@@ -95,9 +95,8 @@
 			"name": "TableOfContents",
 			"type": "hanging",
 			"delimiter": ".toc",
-			"verbatim": true,
 			"templates": {
-				"html": "<div>\n\t<p>{{.Text}}</p>\n\t{{block \"grouper\" groupBySeqNum .Aggregates.Headings}}\n\t<ul>\n\t\t{{range .}}\n\t\t{{if isSeqNumGroup .}}\n\t\t{{template \"grouper\" .}}\n\t\t{{else}}\n\t\t<li><a href=\"#{{.ID}}\">{{.SeqNum}} {{.Text}}</a></li>\n\t\t{{end}}\n\t\t{{end}}\n\t</ul>\n\t{{end}}\n</div>"
+				"html": "<div>\n\t<p>{{- range .BlockChildren}}{{render .}}{{end -}}</p>\n\t{{block \"grouper\" groupBySeqNum .Aggregates.Headings}}\n\t<ul>\n\t\t{{range .}}\n\t\t{{if isSeqNumGroup .}}\n\t\t{{template \"grouper\" .}}\n\t\t{{else}}\n\t\t<li><a href=\"#{{.ID}}\">{{.SeqNum}} {{.Text}}</a></li>\n\t\t{{end}}\n\t\t{{end}}\n\t</ul>\n\t{{end}}\n</div>"
 			}
 		},
 
@@ -153,7 +152,7 @@
 			"name": "ListDot",
 			"element": "ListItemDot",
 			"templates": {
-				"html": "<ul>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>"
+				"html": "<ul>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ul>"
 			}
 		}
 	],
