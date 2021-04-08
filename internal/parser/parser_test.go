@@ -2265,7 +2265,7 @@ func TestForward(t *testing.T) {
 		},
 
 		{
-			"|**<**><a>",
+			`\**<**><a>`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					&node.Uniform{"Strong", []node.Inline{
@@ -2291,84 +2291,83 @@ func TestBlockEscape(t *testing.T) {
 		out []node.Node
 	}{
 		{
-			"|",
+			`\`,
 			[]node.Node{
 				&node.Line{"Line", nil},
 			},
 		},
 		{
-			"||",
+			`\\`,
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("|")}},
+				&node.Line{"Line", []node.Inline{node.Text(`\`)}},
 			},
 		},
 		{
-			"|a",
+			`\a`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{node.Text("a")}},
 			},
 		},
 		{
-			"|>",
+			`\>`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{node.Text(">")}},
 			},
 		},
 		{
-			"||>",
+			`\\>`,
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("|>")}},
+				&node.Line{"Line", []node.Inline{node.Text(`\>`)}},
 			},
 		},
 		{
-			"|\n|",
+			"\\\n\\",
 			[]node.Node{
 				&node.Line{"Line", nil},
 				&node.Line{"Line", nil},
 			},
 		},
 		{
-			"|a\n|b",
+			"\\a\n\\b",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{node.Text("a")}},
 				&node.Line{"Line", []node.Inline{node.Text("b")}},
 			},
 		},
 		{
-			"|``",
+			"\\``",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{&node.Escaped{"Code", nil}}},
 			},
 		},
 		{
-			"||``",
+			"\\\\``",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
-					node.Text("|"),
-					&node.Escaped{"Code", nil},
+					node.Text("``"),
 				}},
 			},
 		},
 
 		{
-			"``|**\n|**",
+			"``\\**\n\\**",
 			[]node.Node{
-				&node.Fenced{"CodeBlock", [][]byte{[]byte("|**"), []byte("|**")}, nil},
+				&node.Fenced{"CodeBlock", [][]byte{[]byte("\\**"), []byte("\\**")}, nil},
 			},
 		},
 
 		// verbatim elements
 		{
-			"|.image",
+			`\.image`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{node.Text(".image")}},
 			},
 		},
 		{
-			".image|.image",
+			`.image\.image`,
 			[]node.Node{
 				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte("|.image"),
+					[]byte(`\.image`),
 				}},
 			},
 		},
@@ -2389,7 +2388,7 @@ func TestInlineEscape(t *testing.T) {
 		{
 			`\`,
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text(`\`)}},
+				&node.Line{"Line", nil},
 			},
 		},
 		{
@@ -2399,19 +2398,19 @@ func TestInlineEscape(t *testing.T) {
 			},
 		},
 		{
-			`\a`,
+			`\\a`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{node.Text(`\a`)}},
 			},
 		},
 		{
-			`\**`,
+			`\\**`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{node.Text("**")}},
 			},
 		},
 		{
-			`\\**`,
+			`\\\**`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text(`\`),
@@ -2420,13 +2419,13 @@ func TestInlineEscape(t *testing.T) {
 			},
 		},
 		{
-			"\\`(",
+			"\\\\`(",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{node.Text("`(")}},
 			},
 		},
 		{
-			"\\\\`(",
+			"\\\\\\`(",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text(`\`),
@@ -2435,13 +2434,13 @@ func TestInlineEscape(t *testing.T) {
 			},
 		},
 		{
-			`\<`,
+			`\\<`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{node.Text("<")}},
 			},
 		},
 		{
-			`\\<`,
+			`\\\<`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text(`\`),
@@ -2457,7 +2456,7 @@ func TestInlineEscape(t *testing.T) {
 			},
 		},
 		{
-			`|**\**`,
+			`\**\**`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					&node.Uniform{"Strong", []node.Inline{
@@ -2467,7 +2466,7 @@ func TestInlineEscape(t *testing.T) {
 			},
 		},
 		{
-			"|``\\``",
+			"\\``\\``",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					&node.Escaped{"Code", []byte(`\`)},
@@ -2535,7 +2534,7 @@ func TestLineComment(t *testing.T) {
 
 		// escape
 		{
-			`\//`,
+			`\\//`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text("//"),

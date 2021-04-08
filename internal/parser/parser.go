@@ -146,7 +146,7 @@ func (p *parser) parseBlock() node.Block {
 		defer p.trace("parseBlock")()
 	}
 
-	if p.ch == '|' {
+	if p.ch == '\\' {
 		// escape block
 		p.nextch()
 	} else {
