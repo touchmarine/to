@@ -210,6 +210,59 @@ func TestWalled(t *testing.T) {
 				}},
 			},
 		},
+
+		// spacing
+		{
+			" >",
+			[]node.Node{&node.Walled{"Blockquote", nil}},
+		},
+
+		// regression
+		{
+			"> >",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			">\t>",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", nil},
+				}},
+			},
+		},
+		{
+			"> > >",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Walled{"Blockquote", []node.Block{
+						&node.Walled{"Blockquote", nil},
+					}},
+				}},
+			},
+		},
+		{
+			">\n >",
+			[]node.Node{
+				&node.Walled{"Blockquote", nil},
+			},
+		},
+		{
+			">a\n >b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", []node.Inline{
+						node.Text("a"),
+					}},
+					&node.Line{"Line", []node.Inline{
+						node.Text("b"),
+					}},
+				}},
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -565,6 +618,21 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"DescriptionList", 0, []node.Block{
 					&node.Walled{"Blockquote", []node.Block{
+						&node.Line{"Line", []node.Inline{
+							node.Text("b"),
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			"*>a\n >b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", 0, []node.Block{
+					&node.Walled{"Blockquote", []node.Block{
+						&node.Line{"Line", []node.Inline{
+							node.Text("a"),
+						}},
 						&node.Line{"Line", []node.Inline{
 							node.Text("b"),
 						}},
@@ -1449,6 +1517,36 @@ func TestHangingMulti(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Walled{"Blockquote", []node.Block{
+						&node.Line{"Line", []node.Inline{
+							node.Text("b"),
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			"1.>a\n  >b",
+			[]node.Node{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Walled{"Blockquote", []node.Block{
+						&node.Line{"Line", []node.Inline{
+							node.Text("a"),
+						}},
+						&node.Line{"Line", []node.Inline{
+							node.Text("b"),
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			"1. >a\n   >b",
+			[]node.Node{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Walled{"Blockquote", []node.Block{
+						&node.Line{"Line", []node.Inline{
+							node.Text("a"),
+						}},
 						&node.Line{"Line", []node.Inline{
 							node.Text("b"),
 						}},

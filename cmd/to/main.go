@@ -11,10 +11,14 @@ import (
 	"to/internal/node"
 	"to/internal/parser"
 	"to/internal/renderer"
+	"to/internal/stringifier"
 	"to/internal/transformer"
 )
 
-var confPath = flag.String("conf", "", "custom config")
+var (
+	confPath  = flag.String("conf", "", "custom config")
+	stringify = flag.Bool("stringify", false, "stringify")
+)
 
 func main() {
 	flag.Parse()
@@ -54,21 +58,22 @@ func main() {
 	nodes = transformer.Group(conf.Groups, nodes)
 	nodes = transformer.Sequence(conf.Elements, nodes)
 
-	aggregates := aggregator.Aggregate(config.Default.Aggregates, nodes)
+	if *stringify {
+		stringifier.StringifyTo(os.Stdout, nodes...)
+	} else {
+		aggregates := aggregator.Aggregate(config.Default.Aggregates, nodes)
 
-	data := map[string]interface{}{
-		"Aggregates": aggregates,
+		data := map[string]interface{}{
+			"Aggregates": aggregates,
+		}
+
+		tmpl := template.New("html")
+		rndr := renderer.New(tmpl, data)
+
+		tmpl.Funcs(renderer.FuncMap)
+		tmpl.Funcs(rndr.FuncMap())
+
+		template.Must(conf.ParseTemplates(tmpl, "html"))
+		rndr.Render(os.Stdout, nodes)
 	}
-
-	//rndr := renderer.New(conf)
-	//rndr.Render(os.Stdout, "html", node.BlocksToNodes(blocks))
-
-	tmpl := template.New("html")
-	rndr := renderer.New(tmpl, data)
-
-	tmpl.Funcs(renderer.FuncMap)
-	tmpl.Funcs(rndr.FuncMap())
-
-	template.Must(conf.ParseTemplates(tmpl, "html"))
-	rndr.Render(os.Stdout, nodes)
 }

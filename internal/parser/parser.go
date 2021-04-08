@@ -402,7 +402,7 @@ func (p *parser) parseChildren(reqdBlocks []rune) []node.Block {
 		}
 
 		if p.ch == ' ' || p.ch == '\t' {
-			p.parseLead()
+			p.parseSpacing()
 		}
 
 		if !p.continues(reqdBlocks) {
@@ -1086,6 +1086,9 @@ func (p *parser) init(r io.Reader) {
 	p.parseLead()
 }
 
+// parseLead parses spacing and block delimiters at the start of the line.
+//
+// Call at the start of the line as it consumes required block delimiters.
 func (p *parser) parseLead() {
 	if trace {
 		defer p.trace("parseLead")()
@@ -1095,30 +1098,48 @@ func (p *parser) parseLead() {
 	var lead []rune
 	var i int
 	for {
-		if p.ch == ' ' || p.ch == '\t' {
-			goto cont
-		}
-
-		if i > len(p.blocks)-1 {
+		if i < len(p.blocks) && p.ch == p.blocks[i] {
+			i++
+		} else if p.ch == ' ' || p.ch == '\t' {
+		} else {
 			break
 		}
 
-		if p.ch != p.blocks[i] {
-			break
-		}
-
-	cont:
 		lead = append(lead, p.ch)
 
 		if !p.nextch() {
 			break
 		}
-		i++
 	}
 
 	p.addLead(lead...)
 
 	if trace {
+		p.printBlocks("new", lead)
+		p.printBlocks("lead", p.lead)
+	}
+}
+
+// parseSpacing is like parseLead but only parses spacing and can be used in the
+// middle of the line.
+func (p *parser) parseSpacing() {
+	if trace {
+		defer p.trace("parseSpacing")()
+	}
+
+	var lead []rune
+	for p.ch == ' ' || p.ch == '\t' {
+		lead = append(lead, p.ch)
+
+		if !p.nextch() {
+			break
+		}
+	}
+
+	p.addLead(lead...)
+
+	if trace {
+		p.printBlocks("new", lead)
 		p.printBlocks("lead", p.lead)
 	}
 }
