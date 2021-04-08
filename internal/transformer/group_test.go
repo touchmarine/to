@@ -226,15 +226,17 @@ func TestGroup(t *testing.T) {
 		{
 			"nested non groupable",
 			[]node.Node{
-				&node.Group{"NumberedListDot", []node.Block{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Line{"Line", nil},
 					&node.Line{"Line", nil},
 				}},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Line{"Line", nil},
+					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+						&node.Line{"Line", nil},
+						&node.Line{"Line", nil},
+					}},
 				}},
 			},
 		},

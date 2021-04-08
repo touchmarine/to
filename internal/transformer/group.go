@@ -2,14 +2,36 @@ package transformer
 
 import (
 	"fmt"
+	"strings"
 	"to/internal/config"
 	"to/internal/node"
 )
 
 const trace = false
 
+type grouper struct {
+	groups []config.Group
+	depth  int
+
+	indent int
+}
+
 func Group(groups []config.Group, nodes []node.Node) []node.Node {
-	var group *config.Group
+	g := grouper{groups, -1, 0}
+	return g.group(nodes)
+}
+
+func (g *grouper) group(nodes []node.Node) []node.Node {
+	g.depth++
+	defer func() {
+		g.depth--
+	}()
+
+	if trace {
+		defer g.tracef("group (depth=%d)", g.depth)()
+	}
+
+	var grp config.Group
 	var open string
 	var pos int
 
@@ -18,10 +40,10 @@ func Group(groups []config.Group, nodes []node.Node) []node.Node {
 		name := n.Node()
 
 		if open == "" {
-			if isGrouped(groups, name) {
-				group = elementGroup(groups, name)
+			var ok bool
+			if grp, ok = g.elementGroup(name); ok && g.isGroupable(grp) {
 				if trace {
-					printf("open  %s for %s (i=%d) [1]", group.Name, name, i)
+					g.printf("open  %s for %s (i=%d) [1]", grp.Name, name, i)
 				}
 
 				open = name
@@ -31,26 +53,26 @@ func Group(groups []config.Group, nodes []node.Node) []node.Node {
 			end := i - 1
 
 			if trace {
-				printf("close %s for %s (i=%d, group=%d-%d)", group.Name, open, i, pos, end)
+				g.printf("close %s for %s (i=%d, group=%d-%d)", grp.Name, open, i, pos, end)
 			}
 
 			children := node.NodesToBlocks(nodes[pos : end+1])
-			g := &node.Group{group.Name, children}
+			grpNode := &node.Group{grp.Name, children}
 
-			nodes[pos] = g
+			nodes[pos] = grpNode
 			if end-pos > 0 {
 				if trace {
-					printf("cut nodes %d-%d [1]", pos+1, end+1)
+					g.printf("cut nodes %d-%d [1]", pos+1, end+1)
 				}
 
 				nodes = cut(nodes, pos+1, end+1)
 				i -= end - pos
 			}
 
-			if isGrouped(groups, name) {
-				group = elementGroup(groups, name)
+			var ok bool
+			if grp, ok = g.elementGroup(name); ok && g.isGroupable(grp) {
 				if trace {
-					printf("open  %s for %s (i=%d) [2]", group.Name, name, i)
+					g.printf("open  %s for %s (i=%d) [2]", grp.Name, name, i)
 				}
 
 				open = name
@@ -61,11 +83,9 @@ func Group(groups []config.Group, nodes []node.Node) []node.Node {
 			}
 		}
 
-		if group != nil && group.GroupNested {
-			if m, ok := n.(node.SettableBlockChildren); ok {
-				grouped := Group(groups, node.BlocksToNodes(m.BlockChildren()))
-				m.SetBlockChildren(node.NodesToBlocks(grouped))
-			}
+		if m, ok := n.(node.SettableBlockChildren); ok {
+			grouped := g.group(node.BlocksToNodes(m.BlockChildren()))
+			m.SetBlockChildren(node.NodesToBlocks(grouped))
 		}
 	}
 
@@ -74,16 +94,16 @@ func Group(groups []config.Group, nodes []node.Node) []node.Node {
 		end := l - 1
 
 		if trace {
-			printf("close %s for %s (i=%d, group=%d-%d) [last]", group.Name, open, l, pos, end)
+			g.printf("close %s for %s (i=%d, group=%d-%d) [last]", grp.Name, open, l, pos, end)
 		}
 
 		children := node.NodesToBlocks(nodes[pos:])
-		g := &node.Group{group.Name, children}
+		grpNode := &node.Group{grp.Name, children}
 
-		nodes[pos] = g
+		nodes[pos] = grpNode
 		if end-pos > 0 {
 			if trace {
-				printf("cut nodes %d-%d [2]", pos+1, end+1)
+				g.printf("cut nodes %d-%d [2]", pos+1, end+1)
 			}
 
 			nodes = cut(nodes, pos+1, end+1)
@@ -93,8 +113,54 @@ func Group(groups []config.Group, nodes []node.Node) []node.Node {
 	return nodes
 }
 
-func printf(format string, a ...interface{}) {
-	fmt.Printf(format+"\n", a...)
+func (g *grouper) elementGroup(element string) (config.Group, bool) {
+	for _, grp := range g.groups {
+		if grp.Element == element {
+			return grp, true
+		}
+	}
+	return config.Group{}, false
+}
+
+func (g *grouper) isGroupable(grp config.Group) bool {
+	if trace {
+		defer g.tracef("isGroupable (%s, groupNested=%t)", grp.Name, grp.GroupNested)()
+	}
+
+	var t bool
+	if grp.GroupNested {
+		t = true
+	} else {
+		t = g.depth < 1
+	}
+
+	if trace {
+		g.printf("return %t", t)
+	}
+
+	return t
+}
+
+func (g *grouper) tracef(format string, v ...interface{}) func() {
+	return g.trace(fmt.Sprintf(format, v...))
+}
+
+func (g *grouper) trace(msg string) func() {
+	g.printf("%s (", msg)
+	g.indent++
+
+	return func() {
+		g.indent--
+		g.print(")")
+	}
+}
+
+func (g *grouper) printf(format string, v ...interface{}) {
+	g.print(fmt.Sprintf(format, v...))
+}
+
+func (g *grouper) print(msg string) {
+	fmt.Println(strings.Repeat("\t", g.indent) + msg)
 }
 
 // https://github.com/golang/go/wiki/SliceTricks
@@ -105,22 +171,4 @@ func cut(a []node.Node, i, j int) []node.Node {
 	}
 	a = a[:len(a)-j+i]
 	return a
-}
-
-func elementGroup(groups []config.Group, element string) *config.Group {
-	for _, group := range groups {
-		if group.Element == element {
-			return &group
-		}
-	}
-	panic(fmt.Sprintf("element %s group not found", element))
-}
-
-func isGrouped(groups []config.Group, s string) bool {
-	for _, group := range groups {
-		if group.Element == s {
-			return true
-		}
-	}
-	return false
 }
