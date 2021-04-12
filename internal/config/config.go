@@ -105,10 +105,11 @@ type Element struct {
 }
 
 type Group struct {
-	Name        string            `json:"name"`
-	Element     string            `json:"element"`
-	GroupNested bool              `json:"groupNested"`
-	Templates   map[string]string `json:"templates"`
+	Name      string            `json:"name"`
+	Element   string            `json:"element"`
+	NoEmpty   bool              `json:"noEmpty"`
+	NoNested  bool              `json:"noNested"`
+	Templates map[string]string `json:"templates"`
 }
 
 type Aggregate struct {

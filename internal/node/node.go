@@ -184,6 +184,10 @@ func (w *Walled) BlockChildren() []Block {
 	return w.Children
 }
 
+func (w *Walled) SetBlockChildren(children []Block) {
+	w.Children = children
+}
+
 type Hanging struct {
 	Name     string
 	Rank0    uint

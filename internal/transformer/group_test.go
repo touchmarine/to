@@ -57,14 +57,14 @@ func TestGroup(t *testing.T) {
 			"two single groups",
 			[]node.Node{
 				&node.Hanging{"NumberedListItemDot", 0, nil},
-				&node.Line{"BlankLine", nil},
+				&node.Line{"Line", nil},
 				&node.Hanging{"NumberedListItemDot", 0, nil},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
 					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
-				&node.Line{"BlankLine", nil},
+				&node.Line{"Line", nil},
 				&node.Group{"NumberedListDot", []node.Block{
 					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
@@ -75,7 +75,7 @@ func TestGroup(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"NumberedListItemDot", 0, nil},
 				&node.Hanging{"NumberedListItemDot", 0, nil},
-				&node.Line{"BlankLine", nil},
+				&node.Line{"Line", nil},
 				&node.Hanging{"NumberedListItemDot", 0, nil},
 			},
 			[]node.Node{
@@ -83,7 +83,7 @@ func TestGroup(t *testing.T) {
 					&node.Hanging{"NumberedListItemDot", 0, nil},
 					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
-				&node.Line{"BlankLine", nil},
+				&node.Line{"Line", nil},
 				&node.Group{"NumberedListDot", []node.Block{
 					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
@@ -93,7 +93,7 @@ func TestGroup(t *testing.T) {
 			"single and double group",
 			[]node.Node{
 				&node.Hanging{"NumberedListItemDot", 0, nil},
-				&node.Line{"BlankLine", nil},
+				&node.Line{"Line", nil},
 				&node.Hanging{"NumberedListItemDot", 0, nil},
 				&node.Hanging{"NumberedListItemDot", 0, nil},
 			},
@@ -101,7 +101,7 @@ func TestGroup(t *testing.T) {
 				&node.Group{"NumberedListDot", []node.Block{
 					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
-				&node.Line{"BlankLine", nil},
+				&node.Line{"Line", nil},
 				&node.Group{"NumberedListDot", []node.Block{
 					&node.Hanging{"NumberedListItemDot", 0, nil},
 					&node.Hanging{"NumberedListItemDot", 0, nil},
@@ -112,11 +112,11 @@ func TestGroup(t *testing.T) {
 		{
 			"after another",
 			[]node.Node{
-				&node.Line{"BlankLine", nil},
+				&node.Line{"Line", nil},
 				&node.Hanging{"NumberedListItemDot", 0, nil},
 			},
 			[]node.Node{
-				&node.Line{"BlankLine", nil},
+				&node.Line{"Line", nil},
 				&node.Group{"NumberedListDot", []node.Block{
 					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
@@ -126,13 +126,13 @@ func TestGroup(t *testing.T) {
 			"before another",
 			[]node.Node{
 				&node.Hanging{"NumberedListItemDot", 0, nil},
-				&node.Line{"BlankLine", nil},
+				&node.Line{"Line", nil},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
 					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
-				&node.Line{"BlankLine", nil},
+				&node.Line{"Line", nil},
 			},
 		},
 
@@ -185,7 +185,7 @@ func TestGroup(t *testing.T) {
 				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
-				&node.Line{"BlankLine", nil},
+				&node.Line{"Line", nil},
 				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 					&node.Hanging{"NumberedListItemDot", 0, nil},
 				}},
@@ -198,7 +198,7 @@ func TestGroup(t *testing.T) {
 						}},
 					}},
 				}},
-				&node.Line{"BlankLine", nil},
+				&node.Line{"Line", nil},
 				&node.Group{"NumberedListDot", []node.Block{
 					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
 						&node.Group{"NumberedListDot", []node.Block{
@@ -208,18 +208,39 @@ func TestGroup(t *testing.T) {
 				}},
 			},
 		},
+		{
+			"nested in another",
+			[]node.Node{
+				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Walled{"Paragraph", []node.Block{
+						&node.Hanging{"ListItemDot", 0, nil},
+					}},
+				}},
+			},
+			[]node.Node{
+				&node.Group{"NumberedListDot", []node.Block{
+					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+						&node.Walled{"Paragraph", []node.Block{
+							&node.Group{"ListDot", []node.Block{
+								&node.Hanging{"ListItemDot", 0, nil},
+							}},
+						}},
+					}},
+				}},
+			},
+		},
 
-		// group nested
+		// no nested
 		{
 			"top level",
 			[]node.Node{
-				&node.Line{"Line", nil},
-				&node.Line{"Line", nil},
+				&node.Line{"Line", []node.Inline{node.Text("a")}},
+				&node.Line{"Line", []node.Inline{node.Text("a")}},
 			},
 			[]node.Node{
 				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Line{"Line", nil},
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.Line{"Line", []node.Inline{node.Text("a")}},
 				}},
 			},
 		},
@@ -238,6 +259,19 @@ func TestGroup(t *testing.T) {
 						&node.Line{"Line", nil},
 					}},
 				}},
+			},
+		},
+
+		// no empty
+		{
+			"no empty",
+			[]node.Node{
+				&node.Line{"Line", nil},
+				&node.Line{"Line", nil},
+			},
+			[]node.Node{
+				&node.Line{"Line", nil},
+				&node.Line{"Line", nil},
 			},
 		},
 	}

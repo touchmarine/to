@@ -6,7 +6,7 @@
 	},
 	"Line": {
 		"templates": {
-			"html": "{{if not (onlyLineComment .InlineChildren)}}<div>{{range .InlineChildren}}{{render .}}{{end}}</div>{{end}}"
+			"html": "{{if and (gt (len .InlineChildren) 0) (not (onlyLineComment .InlineChildren))}}<div>{{range .InlineChildren}}{{render .}}{{end}}</div>{{end}}"
 		}
 	},
 	"LineComment": {
@@ -15,6 +15,14 @@
 		}
 	},
 	"elements": [
+		{
+			"name": "Paragraph",
+			"type": "walled",
+			"delimiter": "|",
+			"templates": {
+				"html": "<p>\n\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</p>"
+			}
+		},
 		{
 			"name": "Blockquote",
 			"type": "walled",
@@ -137,6 +145,8 @@
 		{
 			"name": "Paragraph",
 			"element": "Line",
+			"noEmpty": true,
+			"noNested": true,
 			"templates": {
 				"html": "<p>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</p>"
 			}
@@ -144,7 +154,6 @@
 		{
 			"name": "NumberedListDot",
 			"element": "NumberedListItemDot",
-			"groupNested": true,
 			"templates": {
 				"html": "<ol class=\"dot\">\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>"
 			}
@@ -152,7 +161,6 @@
 		{
 			"name": "NumberedListParen",
 			"element": "NumberedListItemParen",
-			"groupNested": true,
 			"templates": {
 				"html": "<ol class=\"paren\">\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ol>"
 			}
@@ -160,7 +168,6 @@
 		{
 			"name": "ListDot",
 			"element": "ListItemDot",
-			"groupNested": true,
 			"templates": {
 				"html": "<ul>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</ul>"
 			}

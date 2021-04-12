@@ -41,7 +41,7 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 
 		if open == "" {
 			var ok bool
-			if grp, ok = g.elementGroup(name); ok && g.isGroupable(grp) {
+			if grp, ok = g.elementGroup(name); ok && g.isGroupable(grp, n) {
 				if trace {
 					g.printf("open  %s for %s (i=%d) [1]", grp.Name, name, i)
 				}
@@ -49,7 +49,7 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 				open = name
 				pos = i
 			}
-		} else if name != open {
+		} else if name != open || name == open && isBlank1(n) {
 			end := i - 1
 
 			if trace {
@@ -70,7 +70,7 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 			}
 
 			var ok bool
-			if grp, ok = g.elementGroup(name); ok && g.isGroupable(grp) {
+			if grp, ok = g.elementGroup(name); ok && g.isGroupable(grp, n) {
 				if trace {
 					g.printf("open  %s for %s (i=%d) [2]", grp.Name, name, i)
 				}
@@ -86,6 +86,10 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 		if m, ok := n.(node.SettableBlockChildren); ok {
 			grouped := g.group(node.BlocksToNodes(m.BlockChildren()))
 			m.SetBlockChildren(node.NodesToBlocks(grouped))
+		} else {
+			if _, ok := n.(node.BlockChildren); ok {
+				panic(fmt.Sprintf("transformer: node %T does not implement SettableBlockChildren", n))
+			}
 		}
 	}
 
@@ -122,23 +126,45 @@ func (g *grouper) elementGroup(element string) (config.Group, bool) {
 	return config.Group{}, false
 }
 
-func (g *grouper) isGroupable(grp config.Group) bool {
+func (g *grouper) isGroupable(grp config.Group, n node.Node) bool {
 	if trace {
-		defer g.tracef("isGroupable (%s, groupNested=%t)", grp.Name, grp.GroupNested)()
+		defer g.tracef(
+			"isGroupable (%s, noEmpty=%t, noNested=%t)",
+			grp.Name,
+			grp.NoEmpty,
+			grp.NoNested,
+		)()
 	}
 
-	var t bool
-	if grp.GroupNested {
-		t = true
-	} else {
-		t = g.depth < 1
+	if grp.NoEmpty {
+		if m, ok := n.(node.InlineChildren); ok && isBlank(m) {
+			if trace {
+				g.print("return false (no empty)")
+			}
+			return false
+		}
+	}
+
+	if grp.NoNested && g.depth > 0 {
+		if trace {
+			g.print("return false (no nested)")
+		}
+		return false
 	}
 
 	if trace {
-		g.printf("return %t", t)
+		g.print("return true")
 	}
+	return true
+}
 
-	return t
+func isBlank(n node.InlineChildren) bool {
+	return len(n.InlineChildren()) == 0
+}
+
+func isBlank1(n node.Node) bool {
+	m, ok := n.(node.InlineChildren)
+	return ok && len(m.InlineChildren()) == 0
 }
 
 func (g *grouper) tracef(format string, v ...interface{}) func() {

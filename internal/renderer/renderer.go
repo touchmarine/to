@@ -17,8 +17,6 @@ var FuncMap = template.FuncMap{
 	"primarySecondary": parsePrimarySecondary,
 	"groupBySeqNum":    groupBySeqNum,
 	"isSeqNumGroup":    isSeqNumGroup,
-	"toSeqNumGroup":    toSeqNumGroup,
-	"toSeqNumItem":     toSeqNumItem,
 }
 
 func New(tmpl *template.Template, data map[string]interface{}) *Renderer {
@@ -32,10 +30,6 @@ type Renderer struct {
 
 func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 	for i, n := range nodes {
-		if n.Node() == "BlankLine" {
-			continue
-		}
-
 		if i > 0 {
 			out.Write([]byte("\n"))
 		}
@@ -179,14 +173,6 @@ func (i seqNumItem) seqNumNode() {}
 func isSeqNumGroup(v interface{}) bool {
 	_, ok := v.(seqNumGroup)
 	return ok
-}
-
-func toSeqNumGroup(v interface{}) seqNumGroup {
-	return v.(seqNumGroup)
-}
-
-func toSeqNumItem(v interface{}) seqNumItem {
-	return v.(seqNumItem)
 }
 
 const trace = false
