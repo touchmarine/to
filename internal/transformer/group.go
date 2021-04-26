@@ -32,12 +32,61 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 	}
 
 	var grp config.Group
+	var lines [][]byte
 	var open string
 	var pos int
 
 	for i := 0; i < len(nodes); i++ {
 		n := nodes[i]
 		name := n.Node()
+
+		if m, ok := n.(node.Boxed); ok {
+			if open != "" && lines != nil {
+				// close
+				end := i - 1
+
+				if trace {
+					g.printf("close %s for %s (i=%d, group=%d-%d)", grp.Name, open, i, pos, end)
+				}
+
+				children := node.NodesToBlocks(nodes[pos : end+1])
+				grpNode := &node.Group{grp.Name, children}
+				nod := &node.Hat{lines, grpNode}
+
+				nodes[pos] = nod
+				if end-pos > 0 {
+					if trace {
+						g.printf("cut nodes %d-%d [1]", pos+1, end+1)
+					}
+
+					nodes = cut(nodes, pos+1, end+1)
+					i -= end - pos
+				}
+
+				lines = nil
+				open = ""
+				pos = 0
+			}
+
+			switch k := n.(type) {
+			case *node.Hat:
+				lines = k.Lines()
+			case *node.SeqNumBox:
+			default:
+				panic(fmt.Sprintf("transformer: unexpected Boxed node %T", n))
+			}
+
+			n = m.Unbox()
+			name = n.Node()
+
+			if trace {
+				g.printf("unbox %T into %s", m, name)
+			}
+
+			if n == nil {
+				continue
+			}
+		}
 
 		if open == "" {
 			var ok bool
@@ -59,7 +108,15 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 			children := node.NodesToBlocks(nodes[pos : end+1])
 			grpNode := &node.Group{grp.Name, children}
 
-			nodes[pos] = grpNode
+			var nod node.Node
+			if lines == nil {
+				nod = grpNode
+			} else {
+				nod = &node.Hat{lines, grpNode}
+				lines = nil
+			}
+
+			nodes[pos] = nod
 			if end-pos > 0 {
 				if trace {
 					g.printf("cut nodes %d-%d [1]", pos+1, end+1)
@@ -104,7 +161,14 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 		children := node.NodesToBlocks(nodes[pos:])
 		grpNode := &node.Group{grp.Name, children}
 
-		nodes[pos] = grpNode
+		var nod node.Node
+		if lines == nil {
+			nod = grpNode
+		} else {
+			nod = &node.Hat{lines, grpNode}
+		}
+
+		nodes[pos] = nod
 		if end-pos > 0 {
 			if trace {
 				g.printf("cut nodes %d-%d [2]", pos+1, end+1)

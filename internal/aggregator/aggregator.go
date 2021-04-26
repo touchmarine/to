@@ -33,6 +33,7 @@ func (a *aggregator) aggregate(nodes []node.Node) map[string][]Item {
 
 		if m, ok := n.(node.Boxed); ok {
 			switch k := n.(type) {
+			case *node.Hat:
 			case *node.SeqNumBox:
 				item.SeqNums = k.SeqNums
 				item.SeqNum = k.SeqNum()

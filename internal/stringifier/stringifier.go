@@ -47,6 +47,16 @@ func (s *stringifier) stringify(nodes []node.Node) {
 				s.write(t)
 			}
 
+		case node.LinesBoxed:
+			verbatim := bytes.Join(m.Lines(), []byte("\n"))
+			s.writei([]byte(strconv.Quote(string(verbatim))))
+
+			nod := m.Unbox()
+			if nod != nil {
+				s.write([]byte(",\n"))
+				s.stringify([]node.Node{nod})
+			}
+
 		case node.Lines:
 			verbatim := bytes.Join(m.Lines(), []byte("\n"))
 			s.writei([]byte(strconv.Quote(string(verbatim))))

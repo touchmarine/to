@@ -2806,6 +2806,152 @@ func TestForward(t *testing.T) {
 	}
 }
 
+func TestHat(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"%a",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					nil,
+				},
+			},
+		},
+
+		{
+			"%a\nb",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				},
+			},
+		},
+		{
+			"%a\nb\n%c",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				},
+				&node.Hat{
+					[][]byte{[]byte("c")},
+					nil,
+				},
+			},
+		},
+		{
+			"%a\n%b\nc",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a"), []byte("b")},
+					&node.Line{"Line", []node.Inline{node.Text("c")}},
+				},
+			},
+		},
+		{
+			"%a\n%\nc",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a"), []byte("")},
+					&node.Line{"Line", []node.Inline{node.Text("c")}},
+				},
+			},
+		},
+
+		{
+			"%a\n>",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Walled{"Blockquote", []node.Block{
+						&node.Line{"Line", nil},
+					}},
+				},
+			},
+		},
+		{
+			"%a\n*",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Hanging{"DescriptionList", 0, []node.Block{
+						&node.Line{"Line", nil},
+					}},
+				},
+			},
+		},
+
+		{
+			">%a\n>b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hat{
+						[][]byte{[]byte("a")},
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					},
+				}},
+			},
+		},
+		{
+			"*%a\n b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", 0, []node.Block{
+					&node.Hat{
+						[][]byte{[]byte("a")},
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					},
+				}},
+			},
+		},
+
+		{
+			">%a\nb",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hat{
+						[][]byte{[]byte("a")},
+						nil,
+					},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+		{
+			"*%a\nb",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", 0, []node.Block{
+					&node.Hat{
+						[][]byte{[]byte("a")},
+						nil,
+					},
+				}},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+
+		{
+			"%a\n\nb",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Line{"Line", nil},
+				},
+				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
 func TestBlockEscape(t *testing.T) {
 	cases := []struct {
 		in  string

@@ -44,6 +44,7 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 
 		if m, ok := n.(node.Boxed); ok {
 			switch k := n.(type) {
+			case *node.Hat:
 			case *node.SeqNumBox:
 				data["SeqNums"] = k.SeqNums
 				data["SeqNum"] = k.SeqNum()
@@ -52,6 +53,9 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 			}
 
 			n = m.Unbox()
+			if n == nil {
+				continue
+			}
 		}
 
 		data["TextContent"] = node.ExtractText(n)

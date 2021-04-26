@@ -80,7 +80,7 @@
 			"type": "hanging",
 			"delimiter": "1.",
 			"templates": {
-				"html": "<li>{{- range .BlockChildren}}{{render .}}{{end -}}</li>"
+				"html": "<li {{.HatText}}>{{- range .BlockChildren}}{{render .}}{{end -}}</li>"
 			}
 		},
 		{

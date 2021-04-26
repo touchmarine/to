@@ -274,6 +274,140 @@ func TestGroup(t *testing.T) {
 				&node.Line{"Line", nil},
 			},
 		},
+
+		// boxed
+		{
+			"hat",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+				},
+			},
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Group{"NumberedListDot", []node.Block{
+						&node.Hat{
+							[][]byte{[]byte("a")},
+							&node.Hanging{"NumberedListItemDot", 0, nil},
+						},
+					}},
+				},
+			},
+		},
+		{
+			"two hats",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+				},
+				&node.Hat{
+					[][]byte{[]byte("b")},
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+				},
+			},
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Group{"NumberedListDot", []node.Block{
+						&node.Hat{
+							[][]byte{[]byte("a")},
+							&node.Hanging{"NumberedListItemDot", 0, nil},
+						},
+					}},
+				},
+				&node.Hat{
+					[][]byte{[]byte("b")},
+					&node.Group{"NumberedListDot", []node.Block{
+						&node.Hat{
+							[][]byte{[]byte("b")},
+							&node.Hanging{"NumberedListItemDot", 0, nil},
+						},
+					}},
+				},
+			},
+		},
+		{
+			"two hats 2",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+				},
+				&node.Line{"Line", nil},
+				&node.Hat{
+					[][]byte{[]byte("b")},
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+				},
+			},
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Group{"NumberedListDot", []node.Block{
+						&node.Hat{
+							[][]byte{[]byte("a")},
+							&node.Hanging{"NumberedListItemDot", 0, nil},
+						},
+					}},
+				},
+				&node.Line{"Line", nil},
+				&node.Hat{
+					[][]byte{[]byte("b")},
+					&node.Group{"NumberedListDot", []node.Block{
+						&node.Hat{
+							[][]byte{[]byte("b")},
+							&node.Hanging{"NumberedListItemDot", 0, nil},
+						},
+					}},
+				},
+			},
+		},
+		{
+			"mixed hat",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{},
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+				},
+				&node.Hanging{"NumberedListItemDot", 0, nil},
+			},
+			[]node.Node{
+				&node.Hat{
+					[][]byte{},
+					&node.Group{"NumberedListDot", []node.Block{
+						&node.Hat{
+							[][]byte{},
+							&node.Hanging{"NumberedListItemDot", 0, nil},
+						},
+						&node.Hanging{"NumberedListItemDot", 0, nil},
+					}},
+				},
+			},
+		},
+		{
+			"mixed hat reverse",
+			[]node.Node{
+				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hat{
+					[][]byte{},
+					&node.Hanging{"NumberedListItemDot", 0, nil},
+				},
+			},
+			[]node.Node{
+				&node.Hat{
+					[][]byte{},
+					&node.Group{"NumberedListDot", []node.Block{
+						&node.Hanging{"NumberedListItemDot", 0, nil},
+						&node.Hat{
+							[][]byte{},
+							&node.Hanging{"NumberedListItemDot", 0, nil},
+						},
+					}},
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {

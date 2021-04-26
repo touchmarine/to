@@ -179,6 +179,8 @@ func (p *parser) parseBlock() node.Block {
 	if p.ch == '\\' {
 		// escape block
 		p.nextch()
+	} else if p.ch == '%' {
+		return p.parseHat()
 	} else {
 		el, ok := p.matchBlock()
 		if ok {
@@ -320,6 +322,63 @@ func (p *parser) parseLineComment() node.Inline {
 	return node.LineComment(txt)
 }
 
+func (p *parser) parseHat() node.Block {
+	if trace {
+		defer p.trace("parseHat")()
+	}
+
+	lines := p.parseHatLines()
+
+	var nod node.Block
+	if !p.atEOF && p.continues(p.blocks) {
+		nod = p.parseBlock()
+	}
+
+	return &node.Hat{lines, nod}
+}
+
+func (p *parser) parseHatLines() [][]byte {
+	if trace {
+		defer p.trace("parseHatLines")()
+	}
+
+	p.addLead(p.ch)
+	defer p.open(p.ch)()
+
+	p.nextch() // consume delimiter
+
+	reqdBlocks := p.blocks
+
+	var lines [][]byte
+
+	var b strings.Builder
+	for {
+		if p.atEOL() {
+			lines = append(lines, []byte(b.String()))
+			b.Reset()
+
+			p.nextln()
+			p.nextch()
+			p.parseLead()
+
+			if p.atEOF {
+				break
+			}
+		}
+
+		if !p.continues(reqdBlocks) {
+			break
+		}
+
+		for !p.atEOL() {
+			b.WriteRune(p.ch)
+			p.nextch()
+		}
+	}
+
+	return lines
+}
+
 func (p *parser) parseWalled(name string) node.Block {
 	if trace {
 		defer p.tracef("parseWalled (%s)", name)()
@@ -426,7 +485,7 @@ func (p *parser) parseLines(reqdBlocks []rune) [][]byte {
 func (p *parser) continues(blocks []rune) bool {
 	if trace {
 		defer p.trace("continues")()
-		p.printBlocks("reqd", p.blocks)
+		p.printBlocks("reqd", blocks)
 		p.printBlocks("lead", p.lead)
 	}
 
@@ -448,19 +507,23 @@ func (p *parser) continues(blocks []rune) bool {
 
 		if blocks[i] == ' ' || blocks[i] == '\t' || p.lead[j] == ' ' || p.lead[j] == '\t' {
 			n, m := i, j
-			for ; i < len(p.blocks); i++ {
-				if p.blocks[i] == ' ' || p.blocks[i] == '\t' {
-					continue
+			for i < len(blocks) {
+				if blocks[i] == ' ' || blocks[i] == '\t' {
+					i++
+				} else {
+					break
 				}
 			}
 
-			for ; j < len(p.lead); j++ {
+			for j < len(p.lead) {
 				if p.lead[j] == ' ' || p.lead[j] == '\t' {
-					continue
+					j++
+				} else {
+					break
 				}
 			}
 
-			x := countSpacing(spacingSeq(p.blocks[n:i]))
+			x := countSpacing(spacingSeq(blocks[n:i]))
 			y := countSpacing(spacingSeq(p.lead[m:j]))
 
 			if y < x {
