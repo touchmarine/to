@@ -17,6 +17,15 @@ const trace = false
 
 const tabWidth = 8
 
+var tabSpaces []rune
+
+func init() {
+	tabSpaces = make([]rune, tabWidth)
+	for i := 0; i < tabWidth; i++ {
+		tabSpaces[i] = ' '
+	}
+}
+
 func Parse(r io.Reader) ([]node.Block, []error) {
 	return ParseCustom(r, config.Default.Elements)
 }
@@ -418,6 +427,11 @@ func (p *parser) parseHanging(name string, delim string, ranked, verbatim bool) 
 	}
 
 	newBlocks := diff(p.blocks, p.lead)
+	if trace {
+		p.printBlocks("reqd", p.blocks)
+		p.printBlocks("lead", p.lead)
+		p.printBlocks("diff", newBlocks)
+	}
 	defer p.open(newBlocks...)()
 
 	reqdBlocks := p.blocks
@@ -1120,6 +1134,8 @@ func (p *parser) parseLead() {
 		p.printBlocks("reqd", p.blocks)
 	}
 
+	a := stripSpacing(p.blocks)
+
 	var lead []rune
 	var i int
 	for {
@@ -1127,7 +1143,7 @@ func (p *parser) parseLead() {
 			p.filled = true
 		}
 
-		if i < len(p.blocks) && p.ch == p.blocks[i] {
+		if i < len(a) && p.ch == a[i] {
 			i++
 		} else if p.ch == ' ' || p.ch == '\t' {
 		} else {
@@ -1147,6 +1163,17 @@ func (p *parser) parseLead() {
 		p.printBlocks("new", lead)
 		p.printBlocks("lead", p.lead)
 	}
+}
+
+func stripSpacing(a []rune) []rune {
+	var b []rune
+	for _, c := range a {
+		if c == ' ' || c == '\t' {
+			continue
+		}
+		b = append(b, c)
+	}
+	return b
 }
 
 // parseSpacing is like parseLead but only parses spacing and can be used in the
@@ -1283,13 +1310,62 @@ func (p *parser) addLead(blocks ...rune) {
 }
 
 func diff(old, new []rune) []rune {
+	if len(old) == 0 {
+		return new
+	}
+
+	n := expandTabs(new)
+
+	a := trailingSpacing(old)
+	if len(a) < len(old) {
+		b := trailingSpacing(n)
+		if len(a) > 0 && len(b) > 0 {
+			x := countSpacing(a)
+			y := countSpacing(b)
+			if y > x {
+				// different trailing spacing
+				z := y - x
+				return n[len(n)-z:]
+			}
+		}
+	}
+
 	var i int
-	for i = len(new) - 1; i >= 0; i-- {
+	for i = len(n) - 1; i >= 0; i-- {
 		if i < len(old) {
 			break
 		}
+
+		c := n[i]
+		if c != ' ' && c != '\t' && c == old[len(old)-1] {
+			break
+		}
 	}
-	return new[i+1:]
+
+	return n[i+1:]
+}
+
+func trailingSpacing(a []rune) []rune {
+	var i int
+	for i = len(a) - 1; i >= 0; i-- {
+		c := a[i]
+		if c != ' ' && c != '\t' {
+			break
+		}
+	}
+	return a[i+1:]
+}
+
+func expandTabs(a []rune) []rune {
+	n := make([]rune, 0, len(a))
+	for _, c := range a {
+		if c == '\t' {
+			n = append(n, tabSpaces...)
+		} else {
+			n = append(n, c)
+		}
+	}
+	return n
 }
 
 func (p *parser) openInline(delim rune, escape rune) func() {
@@ -1329,10 +1405,6 @@ func fmtBlocks(blocks []rune) string {
 		}
 
 		b.WriteString(fmt.Sprintf("%q", blocks[i]))
-
-		if blocks[i] == '\t' {
-			b.WriteString(" (hanging)")
-		}
 	}
 
 	b.WriteString("]")

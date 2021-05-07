@@ -32,6 +32,14 @@
 			}
 		},
 		{
+			"name": "Admonition",
+			"type": "walled",
+			"delimiter": ":",
+			"templates": {
+				"html": "<div style=\"margin-left: 1em;padding-left:1em;border-left:2px solid deepskyblue;\">\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</div>"
+			}
+		},
+		{
 			"name": "DescriptionList",
 			"type": "hanging",
 			"delimiter": "*",

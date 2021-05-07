@@ -297,6 +297,15 @@ func TestWalled(t *testing.T) {
 			},
 		},
 		{
+			" >\n>",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"Line", nil},
+					&node.Line{"Line", nil},
+				}},
+			},
+		},
+		{
 			">a\n >b",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
@@ -892,6 +901,116 @@ func TestHanging(t *testing.T) {
 						}},
 						&node.Line{"Line", []node.Inline{
 							node.Text("b"),
+						}},
+					}},
+				}},
+			},
+		},
+
+		//*
+		//	*a
+		//	 *b
+		//	c
+		{
+			"*\n\t*a\n\t *b\n\tc",
+			[]node.Node{&node.Hanging{"DescriptionList", 0, []node.Block{
+				&node.Line{"Line", nil},
+				&node.Hanging{"DescriptionList", 0, []node.Block{
+					&node.Line{"Line", []node.Inline{
+						node.Text("a"),
+					}},
+					&node.Hanging{"DescriptionList", 0, []node.Block{
+						&node.Line{"Line", []node.Inline{
+							node.Text("b"),
+						}},
+					}},
+				}},
+				&node.Line{"Line", []node.Inline{
+					node.Text("c"),
+				}},
+			}}},
+		},
+
+		{
+			"*\n  >*a",
+			[]node.Node{&node.Hanging{"DescriptionList", 0, []node.Block{
+				&node.Line{"Line", nil},
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"DescriptionList", 0, []node.Block{
+						&node.Line{"Line", []node.Inline{
+							node.Text("a"),
+						}},
+					}},
+				}},
+			}}},
+		},
+		{
+			"*\n\t>*a",
+			[]node.Node{&node.Hanging{"DescriptionList", 0, []node.Block{
+				&node.Line{"Line", nil},
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"DescriptionList", 0, []node.Block{
+						&node.Line{"Line", []node.Inline{
+							node.Text("a"),
+						}},
+					}},
+				}},
+			}}},
+		},
+		//*
+		//	>	*
+		//	>
+		{
+			"*\n\t>\t*\n\t>",
+			[]node.Node{&node.Hanging{"DescriptionList", 0, []node.Block{
+				&node.Line{"Line", nil},
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"DescriptionList", 0, []node.Block{
+						&node.Line{"Line", nil},
+					}},
+					&node.Line{"Line", nil},
+				}},
+			}}},
+		},
+		{
+			"  >*a\n > *b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"DescriptionList", 0, []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+						&node.Hanging{"DescriptionList", 0, []node.Block{
+							&node.Line{"Line", []node.Inline{node.Text("b")}},
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			"  > *a\n >  *b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"DescriptionList", 0, []node.Block{
+						&node.Line{"Line", []node.Inline{node.Text("a")}},
+						&node.Hanging{"DescriptionList", 0, []node.Block{
+							&node.Line{"Line", []node.Inline{node.Text("b")}},
+						}},
+					}},
+				}},
+			},
+		},
+
+		//>*
+		//>
+		//> *
+		{
+			">*\n>\n> *",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"DescriptionList", 0, []node.Block{
+						&node.Line{"Line", nil},
+						&node.Line{"Line", nil},
+						&node.Hanging{"DescriptionList", 0, []node.Block{
+							&node.Line{"Line", nil},
 						}},
 					}},
 				}},

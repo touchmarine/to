@@ -47,6 +47,8 @@ func (s *stringifier) stringify(nodes []node.Node) {
 				s.write(t)
 			}
 
+			s.write([]byte("\n"))
+
 		case node.LinesBoxed:
 			verbatim := bytes.Join(m.Lines(), []byte("\n"))
 			s.writei([]byte(strconv.Quote(string(verbatim))))
@@ -117,9 +119,8 @@ func (s *stringifier) leave(n node.Node) {
 	case node.Block:
 		switch n.(type) {
 		case node.InlineChildren:
-			s.write([]byte(")"))
+			s.write([]byte(")\n"))
 		case node.BlockChildren, node.Lines:
-			s.write([]byte("\n"))
 			s.indent--
 			s.writei([]byte(")\n"))
 		default:
