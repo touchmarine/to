@@ -11,24 +11,17 @@ const trace = false
 
 type grouper struct {
 	groups []config.Group
-	depth  int
-
 	indent int
 }
 
 func Group(groups []config.Group, nodes []node.Node) []node.Node {
-	g := grouper{groups, -1, 0}
+	g := grouper{groups, 0}
 	return g.group(nodes)
 }
 
 func (g *grouper) group(nodes []node.Node) []node.Node {
-	g.depth++
-	defer func() {
-		g.depth--
-	}()
-
 	if trace {
-		defer g.tracef("group (depth=%d)", g.depth)()
+		defer g.trace("group")()
 	}
 
 	var grp config.Group
@@ -90,7 +83,7 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 
 		if open == "" {
 			var ok bool
-			if grp, ok = g.elementGroup(name); ok && g.isGroupable(grp, n) {
+			if grp, ok = g.elementGroup(name); ok {
 				if trace {
 					g.printf("open  %s for %s (i=%d) [1]", grp.Name, name, i)
 				}
@@ -127,7 +120,7 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 			}
 
 			var ok bool
-			if grp, ok = g.elementGroup(name); ok && g.isGroupable(grp, n) {
+			if grp, ok = g.elementGroup(name); ok {
 				if trace {
 					g.printf("open  %s for %s (i=%d) [2]", grp.Name, name, i)
 				}
@@ -144,7 +137,9 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 			grouped := g.group(node.BlocksToNodes(m.BlockChildren()))
 			m.SetBlockChildren(node.NodesToBlocks(grouped))
 		} else {
-			if _, ok := n.(node.BlockChildren); ok {
+			_, ok1 := n.(node.BlockChildren)
+			_, ok2 := n.(*node.Group)
+			if ok1 && !(ok2 && n.Node() == "Paragraph") {
 				panic(fmt.Sprintf("transformer: node %T does not implement SettableBlockChildren", n))
 			}
 		}
@@ -188,38 +183,6 @@ func (g *grouper) elementGroup(element string) (config.Group, bool) {
 		}
 	}
 	return config.Group{}, false
-}
-
-func (g *grouper) isGroupable(grp config.Group, n node.Node) bool {
-	if trace {
-		defer g.tracef(
-			"isGroupable (%s, noEmpty=%t, noNested=%t)",
-			grp.Name,
-			grp.NoEmpty,
-			grp.NoNested,
-		)()
-	}
-
-	if grp.NoEmpty {
-		if m, ok := n.(node.InlineChildren); ok && isBlank(m) {
-			if trace {
-				g.print("return false (no empty)")
-			}
-			return false
-		}
-	}
-
-	if grp.NoNested && g.depth > 0 {
-		if trace {
-			g.print("return false (no nested)")
-		}
-		return false
-	}
-
-	if trace {
-		g.print("return true")
-	}
-	return true
 }
 
 func isBlank(n node.InlineChildren) bool {

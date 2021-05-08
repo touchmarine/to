@@ -55,6 +55,7 @@ func main() {
 		nodes = node.BlocksToNodes(blocks)
 	}
 
+	nodes = transformer.Paragraph(nodes)
 	nodes = transformer.Group(conf.Groups, nodes)
 	nodes = transformer.Sequence(conf.Elements, nodes)
 

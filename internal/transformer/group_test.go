@@ -230,20 +230,6 @@ func TestGroup(t *testing.T) {
 			},
 		},
 
-		// no nested
-		{
-			"top level",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-			},
-			[]node.Node{
-				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-				}},
-			},
-		},
 		{
 			"nested non groupable",
 			[]node.Node{
@@ -259,19 +245,6 @@ func TestGroup(t *testing.T) {
 						&node.Line{"Line", nil},
 					}},
 				}},
-			},
-		},
-
-		// no empty
-		{
-			"no empty",
-			[]node.Node{
-				&node.Line{"Line", nil},
-				&node.Line{"Line", nil},
-			},
-			[]node.Node{
-				&node.Line{"Line", nil},
-				&node.Line{"Line", nil},
 			},
 		},
 

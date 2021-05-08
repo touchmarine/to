@@ -6,7 +6,12 @@
 	},
 	"Line": {
 		"templates": {
-			"html": "{{if and (gt (len .InlineChildren) 0) (not (onlyLineComment .InlineChildren))}}<div>{{range .InlineChildren}}{{render .}}{{end}}</div>{{end}}"
+			"html": "{{if and (gt (len .InlineChildren) 0) (not (onlyLineComment .InlineChildren))}}{{range .InlineChildren}}{{render .}}{{end}}{{end}}"
+		}
+	},
+	"Paragraph": {
+		"templates": {
+			"html": "<p>{{range .BlockChildren}}{{render .}}{{end}}</p>"
 		}
 	},
 	"LineComment": {
@@ -15,14 +20,6 @@
 		}
 	},
 	"elements": [
-		{
-			"name": "Paragraph",
-			"type": "walled",
-			"delimiter": "|",
-			"templates": {
-				"html": "<p>\n\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</p>"
-			}
-		},
 		{
 			"name": "Blockquote",
 			"type": "walled",
@@ -56,6 +53,14 @@
 			}
 		},
 		{
+			"name": "PreformattedBlock",
+			"type": "fenced",
+			"delimiter": "'",
+			"templates": {
+				"html": "<pre>{{body .Lines}}</pre>"
+			}
+		},
+		{
 			"name": "Heading",
 			"type": "hanging",
 			"delimiter": "=",
@@ -71,7 +76,7 @@
 			"ranked": true,
 			"minRank": 2,
 			"templates": {
-				"html": "<h{{.Rank}} id=\"{{.TextContent}}\">\n\t<div style=\"float:left\">{{.SeqNum}}&nbsp;</div>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</h{{.Rank}}>"
+				"html": "<h{{.Rank}} id=\"{{.TextContent}}\">\n\t<span style=\"float:left\">{{.SeqNum}}&nbsp;</span>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</h{{.Rank}}>"
 			}
 		},
 		{
@@ -150,15 +155,6 @@
 		}
 	],
 	"groups": [
-		{
-			"name": "Paragraph",
-			"element": "Line",
-			"noEmpty": true,
-			"noNested": true,
-			"templates": {
-				"html": "<p>\n{{- range .BlockChildren}}\n\t{{render .}}\n{{end -}}\n</p>"
-			}
-		},
 		{
 			"name": "NumberedListDot",
 			"element": "NumberedListItemDot",

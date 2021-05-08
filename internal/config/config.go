@@ -28,6 +28,9 @@ type Config struct {
 	Line struct {
 		Templates map[string]string `json:"templates"`
 	}
+	Paragraph struct {
+		Templates map[string]string `json:"templates"`
+	}
 	LineComment struct {
 		Templates map[string]string `json:"templates"`
 	}
@@ -59,6 +62,14 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 		return nil, fmt.Errorf("template %s for Line not found", name)
 	}
 	if _, err := target.New("Line").Parse(lineTmpl); err != nil {
+		return nil, err
+	}
+
+	paraTmpl, ok := c.Paragraph.Templates[name]
+	if !ok {
+		return nil, fmt.Errorf("template %s for Paragraph not found", name)
+	}
+	if _, err := target.New("Paragraph").Parse(paraTmpl); err != nil {
 		return nil, err
 	}
 
@@ -107,8 +118,6 @@ type Element struct {
 type Group struct {
 	Name      string            `json:"name"`
 	Element   string            `json:"element"`
-	NoEmpty   bool              `json:"noEmpty"`
-	NoNested  bool              `json:"noNested"`
 	Templates map[string]string `json:"templates"`
 }
 
