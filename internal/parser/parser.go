@@ -49,11 +49,11 @@ type parser struct {
 	ch    rune   // current character
 	atEOF bool   // at end of file
 
-	blocks    []rune // open blocks
-	lead      []rune // blocks on current line
-	filled    bool   // whether the lead is non-blank
-	blanks    int    // number of current consecutive blank lines
-	addBlanks bool   // whether to add blanks to parent
+	blocks []rune       // open blocks
+	lead   []rune       // blocks on current line
+	blank  bool         // whether the lead is blank
+	ambis  int          // number of current ambiguous lines
+	stage  []node.Block // ambiguous blocks
 
 	inlines [][2]rune // open inlines
 
@@ -114,59 +114,51 @@ func (p *parser) parse(reqdBlocks []rune) []node.Block {
 	}
 
 	var blocks []node.Block
+L:
 	for !p.atEOF {
 		if p.ch == ' ' || p.ch == '\t' {
 			p.parseSpacing()
 		}
 
-		if onlySpacing(reqdBlocks) && !p.filled {
-			if trace {
-				p.print("blank line")
-			}
+		switch x := p.continues0(reqdBlocks); x {
+		case 0: // continue
+			if p.stage != nil {
+				if trace {
+					p.printf("add %d ambiguous lines", p.ambis)
+				}
 
+				blocks = append(blocks, p.stage...)
+
+				p.ambis = 0
+				p.stage = nil
+			} else if p.ambis > 0 {
+				if trace {
+					p.print("clear ambiguous lines")
+				}
+
+				p.ambis = 0
+			}
+		case 1: // stop
+			if len(blocks) > 0 && p.ambis > 0 && p.stage == nil {
+				if trace {
+					p.printf("stage %d ambiguous lines", p.ambis)
+				}
+
+				p.stage = append(p.stage, blocks[len(blocks)-p.ambis:]...)
+				blocks = blocks[:len(blocks)-p.ambis]
+			}
+			break L
+		case 2: // maybe
 			if len(reqdBlocks) > 0 {
-				// not at top level (we cannot carry blank lines
-				// any further up at top level)
+				// not at top level (we cannot carry ambiguous
+				// lines any further up at top level)
 				if trace {
-					p.print("stage blank line")
+					p.print("note ambiguous line")
 				}
-
-				p.blanks++
+				p.ambis++
 			}
-		} else if !p.continues(reqdBlocks) {
-			if p.blanks > 0 && !p.addBlanks {
-				if trace {
-					p.printf("carry %d blank lines", p.blanks)
-				}
-
-				blocks = blocks[:len(blocks)-p.blanks]
-				p.addBlanks = true
-			}
-			break
-		} else {
-			if trace {
-				p.print("filled line")
-			}
-
-			if p.addBlanks {
-				if trace {
-					p.printf("add %d blank lines", p.blanks)
-				}
-
-				for i := 0; i < p.blanks; i++ {
-					blankLine := &node.Line{"Line", nil}
-					blocks = append(blocks, blankLine)
-				}
-
-				p.blanks = 0
-				p.addBlanks = false
-			} else if p.blanks > 0 {
-				if trace {
-					p.print("clear blank lines")
-				}
-
-				p.blanks = 0
-			}
+		default:
+			panic(fmt.Sprintf("parser: unexpected continues state %d", x))
 		}
 
 		b := p.parseBlock()
@@ -339,8 +331,14 @@ func (p *parser) parseHat() node.Block {
 	lines := p.parseHatLines()
 
 	var nod node.Block
-	if !p.atEOF && p.continues(p.blocks) {
-		nod = p.parseBlock()
+	if !p.atEOF {
+		switch x := p.continues0(p.blocks); x {
+		case 0, 2: // continue, maybe
+			nod = p.parseBlock()
+		case 1: // stop
+		default:
+			panic(fmt.Sprintf("parser: unexpected continues state %d", x))
+		}
 	}
 
 	return &node.Hat{lines, nod}
@@ -477,8 +475,12 @@ func (p *parser) parseLines(reqdBlocks []rune) [][]byte {
 		if !p.continues(reqdBlocks) {
 			if n > 1 {
 				blankLines := n - 1
-				p.blanks = blankLines
-				p.addBlanks = true
+				var blocks []node.Block
+				for i := 0; i < blankLines; i++ {
+					blocks = append(blocks, &node.Line{"Line", nil})
+				}
+				p.ambis = n - 1
+				p.stage = blocks
 				lines = lines[:len(lines)-blankLines]
 			}
 			break
@@ -497,10 +499,21 @@ func (p *parser) parseLines(reqdBlocks []rune) [][]byte {
 }
 
 func (p *parser) continues(blocks []rune) bool {
+	return p.continues0(blocks) == 0
+}
+
+func (p *parser) continues0(blocks []rune) int {
 	if trace {
-		defer p.trace("continues")()
+		defer p.trace("continues0")()
 		p.printBlocks("reqd", blocks)
 		p.printBlocks("lead", p.lead)
+	}
+
+	if p.blank && onlySpacing(blocks) {
+		if trace {
+			p.print("return maybe (blank)")
+		}
+		return 2
 	}
 
 	var i, j int
@@ -509,14 +522,22 @@ func (p *parser) continues(blocks []rune) bool {
 			if trace {
 				p.print("return true")
 			}
-			return true
+			return 0
 		}
 
 		if j > len(p.lead)-1 {
+			if onlySpacing(blocks[i:]) && len(p.lead) > 0 &&
+				(p.atEOL() || p.ch == ' ' || p.ch == '\t') {
+				if trace {
+					p.print("return maybe")
+				}
+				return 2
+			}
+
 			if trace {
 				p.print("return false (not enough blocks)")
 			}
-			return false
+			return 1
 		}
 
 		if blocks[i] == ' ' || blocks[i] == '\t' || p.lead[j] == ' ' || p.lead[j] == '\t' {
@@ -544,7 +565,7 @@ func (p *parser) continues(blocks []rune) bool {
 				if trace {
 					p.print("return false (lesser ident)")
 				}
-				return false
+				return 1
 			}
 
 			continue
@@ -554,7 +575,7 @@ func (p *parser) continues(blocks []rune) bool {
 			if trace {
 				p.printf("return false (%q != %q, i=%d, j=%d)", blocks[i], p.lead[j], i, j)
 			}
-			return false
+			return 1
 		}
 
 		i++
@@ -1140,7 +1161,7 @@ func (p *parser) parseLead() {
 	var i int
 	for {
 		if !p.atEOL() && p.ch != ' ' && p.ch != '\t' {
-			p.filled = true
+			p.blank = false
 		}
 
 		if i < len(a) && p.ch == a[i] {
@@ -1221,7 +1242,7 @@ func (p *parser) nextln() bool {
 		p.atEOF = true
 	}
 	p.lead = nil
-	p.filled = false
+	p.blank = true
 
 	if trace {
 		if cont {

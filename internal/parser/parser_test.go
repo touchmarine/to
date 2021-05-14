@@ -967,8 +967,8 @@ func TestHanging(t *testing.T) {
 				&node.Walled{"Blockquote", []node.Block{
 					&node.Hanging{"DescriptionList", 0, []node.Block{
 						&node.Line{"Line", nil},
+						&node.Line{"Line", nil},
 					}},
-					&node.Line{"Line", nil},
 				}},
 			}}},
 		},
@@ -1793,6 +1793,35 @@ func TestHangingVerbatim(t *testing.T) {
 				}},
 				&node.Line{"Line", []node.Inline{
 					node.Text("b"),
+				}},
+			},
+		},
+
+		//>.image
+		//>
+		//>.image
+		{
+			">.image\n>\n>.image",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.HangingVerbatim{"Image", 0, [][]byte{nil}},
+					&node.Line{"Line", nil},
+					&node.HangingVerbatim{"Image", 0, [][]byte{nil}},
+				}},
+			},
+		},
+		//>.image
+		//>
+		//>      .image
+		{
+			">.image\n>\n>      .image",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.HangingVerbatim{"Image", 0, [][]byte{
+						nil,
+						nil,
+						[]byte(".image"),
+					}},
 				}},
 			},
 		},
@@ -3051,6 +3080,38 @@ func TestHat(t *testing.T) {
 				&node.Line{"Line", []node.Inline{node.Text("b")}},
 			},
 		},
+		//*%a
+		//
+		// b
+		{
+			"*%a\n\n b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", 0, []node.Block{
+					&node.Hat{
+						[][]byte{[]byte("a")},
+						&node.Line{"Line", nil},
+					},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		//>*%a
+		//>
+		//> b
+		{
+			">*%a\n>\n> b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Hanging{"DescriptionList", 0, []node.Block{
+						&node.Hat{
+							[][]byte{[]byte("a")},
+							&node.Line{"Line", nil},
+						},
+						&node.Line{"Line", []node.Inline{node.Text("b")}},
+					}},
+				}},
+			},
+		},
 
 		{
 			"%a\n\nb",
@@ -3060,6 +3121,24 @@ func TestHat(t *testing.T) {
 					&node.Line{"Line", nil},
 				},
 				&node.Line{"Line", []node.Inline{node.Text("b")}},
+			},
+		},
+
+		//*
+		// %a
+		//
+		// b
+		{
+			"*\n %a\n\n b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", 0, []node.Block{
+					&node.Line{"Line", nil},
+					&node.Hat{
+						[][]byte{[]byte("a")},
+						&node.Line{"Line", nil},
+					},
+					&node.Line{"Line", []node.Inline{node.Text("b")}},
+				}},
 			},
 		},
 	}
