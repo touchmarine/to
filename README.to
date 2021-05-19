@@ -1,11 +1,29 @@
 = Touch Markup Language
 
-**Progressive, Expressive, Collaborative Markup Language**
+Markup Language for unhappy Markdown users. Integrates features like numbered headings, TOC, admonitions, footnotes...
 
-:: Progressive
+* Progressive
 	Mark up as you go: write      -> structure -> style
-	Mark up as needed: plain text -> document  -> printer ready
-:: Expressive
-	Content is king. Easy write, easy read.
-:: Collaborative
-	Auto-formatted documents everyone understands.	
+	Mark up as needed: plain text -> document  -> print ready
+* Expressive
+	Easy to write and read
+* Collaborative
+	Auto-formatted documents everyone understands
+
+== Status
+
+Touch is in late stages of development. Most features are implemented and you can use the language by running ``go run cmd/to/main.go < in.to > out.html`` or as a library (see tests). Documentation is still all over the place and needs work, do not take it too seriously.
+
+Currently, Touch exports only HTML, but other formats, like PDF, are easy to add and will be added soon. Additionally, the formatter, a very imporant component of Touch, is coming. The formatter will pretiffy source code and format it into the standard form, making it easier to collaborate.
+
+== What & Why
+
+I used to write everything in Markdown, because of the flexibility it offers. It is a great example of the 80-20 rule in that it has a few basic features that get you most of what you need. But, the more I used it, the more features I was missing, like, numbered headings, TOC, admonitions, footnotes.
+
+Pandoc, a document converter by John MacFarlane, provides many of these features and kept me happy for a while. Note that John MacFarlane is also responsible for standardising Markdown by writing the CommonMark Spec (along a few other brilliant people which you can find at <https://commonmark.org/#who>) and in turn making Markdown/CommonMark more consistent across platforms. But, these additional features have a slightly akward syntax and need to be specifically enabled, which hurts portabiliy and collaboration.
+
+Another pain point of Markdown is multiple ways of doing the same thing. At first glance, it may seem great to have three options to write a list. You don't have to remember whether "-", "*", or "+" marks a list, because all of them do. But, it is harder to read and even harder to collaborate as each colleague might want to use its own variation. Not to mention that too many choices can be paralyzing and furthermore, we are hogging characters that might be used for other important features.
+
+Here is where Touch comes in. Touch provides all essential features that are most commonly used in writing. It has a simple syntax, which has multiple benefits. Simple syntax is easier to parse which in turn means better tooling. Simple syntax is easy to read and write. The syntax is simpler than Markdown's, even though it has more elements, as it does not try to be clever and doesn't have weird edge cases. For example, there are <17 principles governing emphasis><https://spec.commonmark.org/0.28/#emphasis-and-strong-emphasis> in CommonMark, which, again, makes parsing and tooling much harder.
+
+In addition to the extra features, Touch provides an opinionated syntax which makes everything, from tooling to collaboration, easier. Touch will ship with a formatter that will prettify your source code and format it into the standard form which will further ease collaboration.
