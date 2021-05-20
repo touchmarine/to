@@ -2,11 +2,11 @@ package renderer
 
 import (
 	"encoding/json"
+	"github.com/touchmarine/to/internal/aggregator"
+	"github.com/touchmarine/to/internal/node"
 	"sort"
 	"strings"
 	"testing"
-	"to/internal/aggregator"
-	"to/internal/node"
 )
 
 func TestOnlyLineComment(t *testing.T) {

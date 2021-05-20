@@ -5,11 +5,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/touchmarine/to/internal/config"
+	"github.com/touchmarine/to/internal/node"
 	"io"
 	"log"
 	"strings"
-	"to/internal/config"
-	"to/internal/node"
 	"unicode/utf8"
 )
 

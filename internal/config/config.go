@@ -5,8 +5,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/touchmarine/to/internal/node"
 	"html/template"
-	"to/internal/node"
 )
 
 //go:embed to.json

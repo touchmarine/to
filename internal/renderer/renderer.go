@@ -2,12 +2,12 @@ package renderer
 
 import (
 	"fmt"
+	"github.com/touchmarine/to/internal/aggregator"
+	"github.com/touchmarine/to/internal/node"
 	"html/template"
 	"io"
 	"strconv"
 	"strings"
-	"to/internal/aggregator"
-	"to/internal/node"
 )
 
 var FuncMap = template.FuncMap{

@@ -10,13 +10,15 @@ Markup Language for unhappy Markdown users. Integrates features like numbered he
 * Collaborative
 	Auto-formatted documents everyone understands
 
-== Status
+.toc == Table of Contents
+
+## Status
 
 Touch is in late stages of development. Most features are implemented and you can use the language by running ``go run cmd/to/main.go < in.to > out.html`` or as a library (see tests). Documentation is still all over the place and needs work, do not take it too seriously.
 
 Currently, Touch exports only HTML, but other formats, like PDF, are easy to add and will be added soon. Additionally, the formatter, a very imporant component of Touch, is coming. The formatter will pretiffy source code and format it into the standard form, making it easier to collaborate.
 
-== What & Why
+## What & Why
 
 I used to write everything in Markdown, because of the flexibility it offers. It is a great example of the 80-20 rule in that it has a few basic features that get you most of what you need. But, the more I used it, the more features I was missing, like, numbered headings, TOC, admonitions, footnotes.
 
@@ -27,3 +29,133 @@ Another pain point of Markdown is multiple ways of doing the same thing. At firs
 Here is where Touch comes in. Touch provides all essential features that are most commonly used in writing. It has a simple syntax, which has multiple benefits. Simple syntax is easier to parse which in turn means better tooling. Simple syntax is easy to read and write. The syntax is simpler than Markdown's, even though it has more elements, as it does not try to be clever and doesn't have weird edge cases. For example, there are <17 principles governing emphasis><https://spec.commonmark.org/0.28/#emphasis-and-strong-emphasis> in CommonMark, which, again, makes parsing and tooling much harder.
 
 In addition to the extra features, Touch provides an opinionated syntax which makes everything, from tooling to collaboration, easier. Touch will ship with a formatter that will prettify your source code and format it into the standard form which will further ease collaboration.
+
+
+## Syntax Reference
+
+### Block Elements
+
++ comments
+``to
+// I am a line comment, I won't be visible in the exported format
+``
+
++ headings
+``to
+= Title
+== A
+=== A.A
+``
+
++ numbered headings
+``to
+## A 
+### A.A
+#### A.A.A
+
+// not a heading, there should always be at most one top level heading and it
+// shouldn't be numbered; also reserved for hashtags
+# A
+``
+
++ lists
+``to
+// unordered
+- a
+- b
+ - c
+
+// ordered dot
+1. a
+1. b
+  1. c
+
+// ordered paren
+1) a
+1) b
+  1) c
+``
+
++ description lists
+``to
+* term
+ definition
+``
+
++ blockquotes
+``to
+> i like fire trucks
+— walter
+``
+
++ code blocks
+```to
+``language
+a
+``
+```
+
++ preformatted blocks
+``to
+''
+ASCII ART
+''
+``
+
++ table of contents
+``to
+// content after ".toc" is the heading
+.toc == Table Of Contents
+``
+
++ admonitions
+``to
+: Be careful!
+``
+
++ hats
+``to
+// hats are an extension system
+% center
+Paragraph text
+``
+
++ images
+``to
+.image https://images.unsplash.com/photo-1617379773512-4bb1ad9349cf?ixid=MXwxMjA3fDB8MHxlZGl0b3JpYWwtZmVlZHwzfHx8ZW58MHx8fA%3D%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60
+``
+
+### Inline Elements
+
++ emphasis
+``to
+a __emphasize__
+``
+
++ strong
+``to
+a **strong**
+``
+
++ link
+``to
+<https://touch.test>
+<Touch><https://touch.test> // custom text
+``
+
++ code
+```to
+a ``inline code``
+```
+
+### Escaping
+
+Block and inline elements can be escaped by prepending a backslash "\" to the element's delimiter.
+
+Inline elements that use the same delimiter characters as a block element, must be escaped with a backslash "\" if placed at the start of the line. In such cases, one backslash escapes the block element, and the second backslash, if present, escapes the inline element.
+
+``to
+**   // description list nested inside another description list
+\**  // strong (inline element)
+\\** // double asteriks (plain text, escape block and inline elements)
+``

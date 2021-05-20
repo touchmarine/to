@@ -2,9 +2,9 @@ package transformer
 
 import (
 	"fmt"
+	"github.com/touchmarine/to/internal/config"
+	"github.com/touchmarine/to/internal/node"
 	"strings"
-	"to/internal/config"
-	"to/internal/node"
 )
 
 const trace = false

@@ -3,16 +3,16 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"github.com/touchmarine/to/internal/aggregator"
+	"github.com/touchmarine/to/internal/config"
+	"github.com/touchmarine/to/internal/node"
+	"github.com/touchmarine/to/internal/parser"
+	"github.com/touchmarine/to/internal/renderer"
+	"github.com/touchmarine/to/internal/stringifier"
+	"github.com/touchmarine/to/internal/transformer"
 	"html/template"
 	"log"
 	"os"
-	"to/internal/aggregator"
-	"to/internal/config"
-	"to/internal/node"
-	"to/internal/parser"
-	"to/internal/renderer"
-	"to/internal/stringifier"
-	"to/internal/transformer"
 )
 
 var (

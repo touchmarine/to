@@ -2,8 +2,8 @@ package transformer
 
 import (
 	"fmt"
+	"github.com/touchmarine/to/internal/node"
 	"log"
-	"to/internal/node"
 )
 
 func Paragraph(nodes []node.Node) []node.Node {

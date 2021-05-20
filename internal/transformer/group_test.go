@@ -1,11 +1,11 @@
 package transformer_test
 
 import (
+	"github.com/touchmarine/to/internal/config"
+	"github.com/touchmarine/to/internal/node"
+	"github.com/touchmarine/to/internal/stringifier"
+	"github.com/touchmarine/to/internal/transformer"
 	"testing"
-	"to/internal/config"
-	"to/internal/node"
-	"to/internal/stringifier"
-	"to/internal/transformer"
 )
 
 func TestGroup(t *testing.T) {

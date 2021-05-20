@@ -3,10 +3,10 @@ package stringifier
 import (
 	"bytes"
 	"fmt"
+	"github.com/touchmarine/to/internal/node"
 	"io"
 	"strconv"
 	"strings"
-	"to/internal/node"
 )
 
 func Stringify(nodes ...node.Node) string {

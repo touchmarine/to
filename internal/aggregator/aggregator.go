@@ -2,8 +2,8 @@ package aggregator
 
 import (
 	"fmt"
-	"to/internal/config"
-	"to/internal/node"
+	"github.com/touchmarine/to/internal/config"
+	"github.com/touchmarine/to/internal/node"
 )
 
 type Item struct {

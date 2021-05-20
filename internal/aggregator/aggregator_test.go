@@ -2,10 +2,10 @@ package aggregator_test
 
 import (
 	"encoding/json"
+	"github.com/touchmarine/to/internal/aggregator"
+	"github.com/touchmarine/to/internal/config"
+	"github.com/touchmarine/to/internal/node"
 	"testing"
-	"to/internal/aggregator"
-	"to/internal/config"
-	"to/internal/node"
 )
 
 func TestAggregate(t *testing.T) {
