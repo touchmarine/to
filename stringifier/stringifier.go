@@ -3,7 +3,7 @@ package stringifier
 import (
 	"bytes"
 	"fmt"
-	"github.com/touchmarine/to/internal/node"
+	"github.com/touchmarine/to/node"
 	"io"
 	"strconv"
 	"strings"

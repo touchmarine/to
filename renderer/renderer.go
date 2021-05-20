@@ -2,8 +2,8 @@ package renderer
 
 import (
 	"fmt"
-	"github.com/touchmarine/to/internal/aggregator"
-	"github.com/touchmarine/to/internal/node"
+	"github.com/touchmarine/to/aggregator"
+	"github.com/touchmarine/to/node"
 	"html/template"
 	"io"
 	"strconv"

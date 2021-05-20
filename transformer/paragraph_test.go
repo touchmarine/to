@@ -1,9 +1,9 @@
 package transformer_test
 
 import (
-	"github.com/touchmarine/to/internal/node"
-	"github.com/touchmarine/to/internal/stringifier"
-	"github.com/touchmarine/to/internal/transformer"
+	"github.com/touchmarine/to/node"
+	"github.com/touchmarine/to/stringifier"
+	"github.com/touchmarine/to/transformer"
 	"testing"
 )
 

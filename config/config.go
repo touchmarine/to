@@ -5,7 +5,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"github.com/touchmarine/to/internal/node"
+	"github.com/touchmarine/to/node"
 	"html/template"
 )
 

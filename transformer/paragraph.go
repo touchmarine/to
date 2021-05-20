@@ -2,7 +2,7 @@ package transformer
 
 import (
 	"fmt"
-	"github.com/touchmarine/to/internal/node"
+	"github.com/touchmarine/to/node"
 	"log"
 )
 

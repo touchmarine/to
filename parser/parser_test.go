@@ -1,9 +1,9 @@
 package parser_test
 
 import (
-	"github.com/touchmarine/to/internal/node"
-	"github.com/touchmarine/to/internal/parser"
-	"github.com/touchmarine/to/internal/stringifier"
+	"github.com/touchmarine/to/node"
+	"github.com/touchmarine/to/parser"
+	"github.com/touchmarine/to/stringifier"
 	"strings"
 	"testing"
 	"unicode"

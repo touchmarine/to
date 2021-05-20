@@ -2,9 +2,9 @@ package aggregator_test
 
 import (
 	"encoding/json"
-	"github.com/touchmarine/to/internal/aggregator"
-	"github.com/touchmarine/to/internal/config"
-	"github.com/touchmarine/to/internal/node"
+	"github.com/touchmarine/to/aggregator"
+	"github.com/touchmarine/to/config"
+	"github.com/touchmarine/to/node"
 	"testing"
 )
 

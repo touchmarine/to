@@ -2,8 +2,8 @@ package transformer
 
 import (
 	"fmt"
-	"github.com/touchmarine/to/internal/config"
-	"github.com/touchmarine/to/internal/node"
+	"github.com/touchmarine/to/config"
+	"github.com/touchmarine/to/node"
 )
 
 type sequencer struct {
