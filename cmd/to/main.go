@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/touchmarine/to/aggregator"
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
@@ -15,13 +16,19 @@ import (
 	"os"
 )
 
-var (
-	confPath  = flag.String("conf", "", "custom config")
-	stringify = flag.Bool("stringify", false, "stringify")
-)
-
 func main() {
-	flag.Parse()
+	fmtCmd := flag.NewFlagSet("format", flag.ExitOnError)
+	confPath := fmtCmd.String("conf", "", "custom config")
+	stringify := fmtCmd.Bool("stringify", false, "stringify")
+
+	if len(os.Args) < 2 {
+		fmt.Fprintln(os.Stderr, "no format")
+		os.Exit(1)
+	}
+
+	fmtCmd.Parse(os.Args[2:])
+
+	format := os.Args[1]
 
 	var (
 		conf  *config.Config
@@ -68,13 +75,13 @@ func main() {
 			"Aggregates": aggregates,
 		}
 
-		tmpl := template.New("html")
+		tmpl := template.New(format)
 		rndr := renderer.New(tmpl, data)
 
 		tmpl.Funcs(renderer.FuncMap)
 		tmpl.Funcs(rndr.FuncMap())
 
-		template.Must(conf.ParseTemplates(tmpl, "html"))
-		rndr.Render(os.Stdout, nodes)
+		template.Must(conf.ParseTemplates(tmpl, format))
+		rndr.RenderWithCustomRoot(os.Stdout, nodes)
 	}
 }

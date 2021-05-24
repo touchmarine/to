@@ -1,4 +1,7 @@
 {
+	"rootTemplates": {
+		"html": "<html>\n<body>\n{{render .}}\n</body>\n</html>"
+	},
 	"Text": {
 		"templates": {
 			"html": "{{.Content}}"

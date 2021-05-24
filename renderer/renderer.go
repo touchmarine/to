@@ -28,6 +28,12 @@ type Renderer struct {
 	data map[string]interface{}
 }
 
+func (r *Renderer) RenderWithCustomRoot(out io.Writer, nodes []node.Node) {
+	if err := r.tmpl.ExecuteTemplate(out, "root", nodes); err != nil {
+		panic(err)
+	}
+}
+
 func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 	for i, n := range nodes {
 		if i > 0 {
@@ -102,6 +108,8 @@ func (r *Renderer) FuncMap() template.FuncMap {
 			var b strings.Builder
 
 			switch n := v.(type) {
+			case []node.Node:
+				r.Render(&b, n)
 			case node.Node:
 				r.Render(&b, []node.Node{n})
 			default:

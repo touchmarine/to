@@ -22,7 +22,8 @@ func init() {
 }
 
 type Config struct {
-	Text struct {
+	RootTemplates map[string]string `json:"rootTemplates"`
+	Text          struct {
 		Templates map[string]string `json:"templates"`
 	}
 	Line struct {
@@ -49,9 +50,17 @@ func (c *Config) Element(name string) (Element, bool) {
 }
 
 func (c *Config) ParseTemplates(target *template.Template, name string) (*template.Template, error) {
+	rootTmpl, ok := c.RootTemplates[name]
+	if !ok {
+		return nil, fmt.Errorf("root %s template not found", name)
+	}
+	if _, err := target.New("root").Parse(rootTmpl); err != nil {
+		return nil, err
+	}
+
 	textTmpl, ok := c.Text.Templates[name]
 	if !ok {
-		return nil, fmt.Errorf("template %s for Text not found", name)
+		return nil, fmt.Errorf("Text %s template not found", name)
 	}
 	if _, err := target.New("Text").Parse(textTmpl); err != nil {
 		return nil, err
@@ -59,7 +68,7 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 
 	lineTmpl, ok := c.Line.Templates[name]
 	if !ok {
-		return nil, fmt.Errorf("template %s for Line not found", name)
+		return nil, fmt.Errorf("Line %s template not found", name)
 	}
 	if _, err := target.New("Line").Parse(lineTmpl); err != nil {
 		return nil, err
@@ -67,7 +76,7 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 
 	paraTmpl, ok := c.Paragraph.Templates[name]
 	if !ok {
-		return nil, fmt.Errorf("template %s for Paragraph not found", name)
+		return nil, fmt.Errorf("Paragraph %s template not found", name)
 	}
 	if _, err := target.New("Paragraph").Parse(paraTmpl); err != nil {
 		return nil, err
@@ -75,7 +84,7 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 
 	lineCommentTmpl, ok := c.LineComment.Templates[name]
 	if !ok {
-		return nil, fmt.Errorf("template %s for LineComment not found", name)
+		return nil, fmt.Errorf("LineComment %s template not found", name)
 	}
 	if _, err := target.New("LineComment").Parse(lineCommentTmpl); err != nil {
 		return nil, err
@@ -84,7 +93,7 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 	for _, el := range c.Elements {
 		elTmpl, ok := el.Templates[name]
 		if !ok {
-			return nil, fmt.Errorf("template %s for element %s not found", name, el.Name)
+			return nil, fmt.Errorf("element %s %s template not found", el.Name, name)
 		}
 		if _, err := target.New(el.Name).Parse(elTmpl); err != nil {
 			return nil, err
@@ -94,7 +103,7 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 	for _, group := range c.Groups {
 		gTmpl, ok := group.Templates[name]
 		if !ok {
-			return nil, fmt.Errorf("template %s for group %s not found", name, group.Name)
+			return nil, fmt.Errorf("group %s %s template not found", group.Name, name)
 		}
 		if _, err := target.New(group.Name).Parse(gTmpl); err != nil {
 			return nil, err
