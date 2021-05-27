@@ -7,8 +7,6 @@ import (
 	"strings"
 )
 
-const trace = false
-
 type grouper struct {
 	groups []config.Group
 	indent int
@@ -70,14 +68,14 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 			}
 
 			n = m.Unbox()
+			if n == nil {
+				continue
+			}
+
 			name = n.Node()
 
 			if trace {
-				g.printf("unbox %T into %s", m, name)
-			}
-
-			if n == nil {
-				continue
+				g.printf("unboxed %T into %s", m, name)
 			}
 		}
 
@@ -90,8 +88,10 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 
 				open = name
 				pos = i
+			} else {
+				lines = nil
 			}
-		} else if name != open || name == open && isBlank1(n) {
+		} else if ln, ok := n.(*node.Line); name != open || name == open && ok && n.Node() == "Line" && isBlank(ln) {
 			end := i - 1
 
 			if trace {
@@ -185,15 +185,6 @@ func (g *grouper) elementGroup(element string) (config.Group, bool) {
 	return config.Group{}, false
 }
 
-func isBlank(n node.InlineChildren) bool {
-	return len(n.InlineChildren()) == 0
-}
-
-func isBlank1(n node.Node) bool {
-	m, ok := n.(node.InlineChildren)
-	return ok && len(m.InlineChildren()) == 0
-}
-
 func (g *grouper) tracef(format string, v ...interface{}) func() {
 	return g.trace(fmt.Sprintf(format, v...))
 }
@@ -214,14 +205,4 @@ func (g *grouper) printf(format string, v ...interface{}) {
 
 func (g *grouper) print(msg string) {
 	fmt.Println(strings.Repeat("\t", g.indent) + msg)
-}
-
-// https://github.com/golang/go/wiki/SliceTricks
-func cut(a []node.Node, i, j int) []node.Node {
-	copy(a[i:], a[j:])
-	for k, n := len(a)-j+i, len(a); k < n; k++ {
-		a[k] = nil
-	}
-	a = a[:len(a)-j+i]
-	return a
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
+	"github.com/touchmarine/to/printer"
 	"github.com/touchmarine/to/renderer"
 	"github.com/touchmarine/to/stringifier"
 	"github.com/touchmarine/to/transformer"
@@ -66,8 +67,14 @@ func main() {
 	nodes = transformer.Group(conf.Groups, nodes)
 	nodes = transformer.Sequence(conf.Elements, nodes)
 
+	if format == "fmt" {
+		nodes = transformer.BlankLine(nodes)
+	}
+
 	if *stringify {
 		stringifier.StringifyTo(os.Stdout, nodes...)
+	} else if format == "fmt" {
+		printer.Fprint(os.Stdout, conf, nodes)
 	} else {
 		aggregates := aggregator.Aggregate(config.Default.Aggregates, nodes)
 

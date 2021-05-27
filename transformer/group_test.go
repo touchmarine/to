@@ -381,6 +381,42 @@ func TestGroup(t *testing.T) {
 				},
 			},
 		},
+		{
+			"empty hat",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					nil,
+				},
+			},
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					nil,
+				},
+			},
+		},
+
+		// regression
+		{
+			"fix lines not reset",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Hanging{"Heading", 0, nil},
+				},
+				&node.Hanging{"ListItemDot", 0, nil},
+			},
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Hanging{"Heading", 0, nil},
+				},
+				&node.Group{"ListDot", []node.Block{
+					&node.Hanging{"ListItemDot", 0, nil},
+				}},
+			},
+		},
 	}
 
 	for _, c := range cases {

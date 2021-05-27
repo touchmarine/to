@@ -43,8 +43,8 @@ func (s *stringifier) stringify(nodes []node.Node) {
 
 			t := m.TrailingText()
 			if t != nil && len(t) > 0 {
-				s.write([]byte(", "))
-				s.write(t)
+				s.write([]byte(",\n"))
+				s.writei([]byte(strconv.Quote(string(t))))
 			}
 
 			s.write([]byte("\n"))
@@ -54,7 +54,9 @@ func (s *stringifier) stringify(nodes []node.Node) {
 			s.writei([]byte(strconv.Quote(string(verbatim))))
 
 			nod := m.Unbox()
-			if nod != nil {
+			if nod == nil {
+				s.write([]byte("\n"))
+			} else {
 				s.write([]byte(",\n"))
 				s.stringify([]node.Node{nod})
 			}

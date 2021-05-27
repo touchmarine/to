@@ -14,9 +14,11 @@ Markup Language for unhappy Markdown users. Integrates features like numbered he
 
 ## Status
 
-Touch is in late stages of development. Most features are implemented and you can use the language by running ``go run cmd/to/main.go < in.to > out.html`` or as a library (see tests). Documentation is still all over the place and needs work, do not take it too seriously.
+Touch is in late stages of development. Most features are implemented and you can use the language by running ``go run cmd/to/main.go html < in.to > out.html`` or as a library (see ``cmd/to/main.go``). Documentation is still all over the place and needs work.
 
-Currently, Touch exports only HTML, but other formats, like PDF, are easy to add and will be added soon. Additionally, the formatter, a very imporant component of Touch, is coming. The formatter will pretiffy source code and format it into the standard form, making it easier to collaborate.
+Currently, Touch exports only HTML, but other formats can be added by providing a custom config like ``go run cmd/to/main.go txt -conf to.json < in.to > out.txt``. Use ``config/to.json`` as a reference on creating a custom config. Note that config is not yet properly validated—it does not check for duplicates, it does not prevent overriding core elements, etc.
+
+Touch comes with a formatter that outputs the source code formatted in the canonical form. Use it by running ``go run cmd/to/main.go fmt < in.to 1<> in.to``.
 
 ## What & Why
 

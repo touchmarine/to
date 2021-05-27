@@ -103,6 +103,11 @@ type Lines interface {
 	Lines() [][]byte
 }
 
+type SettableLines interface {
+	Lines
+	SetLines(lines [][]byte)
+}
+
 type TrailingText interface {
 	TrailingText() []byte
 }
@@ -237,6 +242,10 @@ func (hv *HangingVerbatim) Lines() [][]byte {
 	return hv.Lines0
 }
 
+func (hv *HangingVerbatim) SetLines(lines [][]byte) {
+	hv.Lines0 = lines
+}
+
 type Fenced struct {
 	Name          string
 	Lines0        [][]byte
@@ -350,6 +359,10 @@ func (g Group) Block() {}
 
 func (g *Group) BlockChildren() []Block {
 	return g.Children
+}
+
+func (g *Group) SetBlockChildren(children []Block) {
+	g.Children = children
 }
 
 type Hat struct {

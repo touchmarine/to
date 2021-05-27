@@ -49,6 +49,15 @@ func (c *Config) Element(name string) (Element, bool) {
 	return Element{}, false
 }
 
+func (c *Config) Group(name string) (Group, bool) {
+	for _, grp := range c.Groups {
+		if grp.Name == name {
+			return grp, true
+		}
+	}
+	return Group{}, false
+}
+
 func (c *Config) ParseTemplates(target *template.Template, name string) (*template.Template, error) {
 	rootTmpl, ok := c.RootTemplates[name]
 	if !ok {

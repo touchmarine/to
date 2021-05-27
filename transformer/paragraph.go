@@ -15,12 +15,12 @@ func Paragraph(nodes []node.Node) []node.Node {
 
 	beginning:
 		if beg < 0 {
-			if isLine(n) && !isBlank1(n) {
+			if ln, ok := n.(*node.Line); ok && n.Node() == "Line" && !isBlank(ln) {
 				beg = i
 			}
 		} else {
 			if end < 0 {
-				if isLine(n) && !isBlank1(n) {
+				if ln, ok := n.(*node.Line); ok && n.Node() == "Line" && !isBlank(ln) {
 					// paragraph continues
 				} else {
 					end = i
@@ -31,7 +31,7 @@ func Paragraph(nodes []node.Node) []node.Node {
 			}
 
 			if end > -1 {
-				if isLine(n) && isBlank1(n) {
+				if ln, ok := n.(*node.Line); ok && n.Node() == "Line" && isBlank(ln) {
 					// do not add para if blank line
 				} else {
 					if trace {
@@ -88,9 +88,4 @@ func Paragraph(nodes []node.Node) []node.Node {
 	}
 
 	return nodes
-}
-
-func isLine(n node.Node) bool {
-	_, ok := n.(*node.Line)
-	return ok && n.Node() == "Line"
 }
