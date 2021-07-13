@@ -73,7 +73,9 @@ func main() {
 
 	if *stringify {
 		stringifier.StringifyTo(os.Stdout, nodes...)
-	} else if format == "fmt" {
+	}
+
+	if format == "fmt" {
 		printer.Fprint(os.Stdout, conf, nodes)
 	} else {
 		aggregates := aggregator.Aggregate(config.Default.Aggregates, nodes)

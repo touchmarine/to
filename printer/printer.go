@@ -5,156 +5,273 @@ import (
 	"fmt"
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
-	"github.com/touchmarine/to/stringifier"
 	"io"
-	"os"
 	"strings"
 	"unicode/utf8"
 )
 
 const trace = false
 
-func Fprint(out io.Writer, conf *config.Config, nodes []node.Node) {
+func Fprint(w io.Writer, conf *config.Config, nodes []node.Node) {
 	p := &printer{
-		conf: conf,
-		w:    out,
+		conf:  conf,
+		w:     w,
+		nodes: nodes,
+
+		pos: -1,
 	}
-	p.print(nodes)
+
+	p.printNodes()
 }
 
 type printer struct {
-	conf *config.Config
-	w    io.Writer
+	conf   *config.Config
+	w      io.Writer
+	nodes  []node.Node
+	parent node.Node
 
+	n   node.Node
+	pos int
+
+	prefixes []string
+
+	// tracing
 	indent int
-	atBOL  bool
 }
 
-func (p *printer) print(nodes []node.Node) {
-	for i, n := range nodes {
-		switch m := n.(type) {
-		case node.Boxed:
-			if trace {
-				stringifier.StringifyTo(os.Stdout, n)
+func (p *printer) printChildren(w io.Writer, nodes []node.Node) {
+	if p.n == nil {
+		panic("printer: nil parent")
+	}
+
+	if trace {
+		defer p.trace("printChildren")()
+	}
+
+	n := &printer{
+		conf:   p.conf,
+		w:      w,
+		nodes:  nodes,
+		parent: p.n,
+
+		pos: -1,
+
+		prefixes: p.prefixes,
+
+		indent: p.indent,
+	}
+
+	n.printNodes()
+}
+
+func (p *printer) printNodes() {
+	if trace {
+		defer p.tracef("printNodes (%d)", len(p.nodes))()
+	}
+
+	for p.next() {
+		if p.pos > 0 {
+			if _, isInGroup := p.parent.(*node.Group); isLine(p.n) || isInGroup {
+				p.newline(p.w)
+			} else {
+				p.newline(p.w)
+				p.newline(p.w)
 			}
-
-			switch k := m.(type) {
-			case *node.Hat:
-				p.writeLines([]byte("%"), k.Lines())
-
-				n = m.Unbox()
-				if n == nil {
-					if i < len(nodes)-1 {
-						p.w.Write([]byte("\n\n"))
-					}
-					continue
-				}
-
-				p.w.Write([]byte("\n"))
-			case *node.SeqNumBox:
-				n = m.Unbox()
-				if n == nil {
-					continue
-				}
-			default:
-				panic(fmt.Sprintf("printer: unexpected Boxed node %T", n))
-			}
 		}
 
-		if trace {
-			stringifier.StringifyTo(os.Stdout, n)
+		if !p.unbox() {
+			continue
 		}
 
-		name := n.Node()
-
-		if _, ok := n.(*node.Line); ok && name == "Line" {
-			p.atBOL = true
-		}
-
-		if i > 0 && p.indent > 0 {
-			p.w.Write(bytes.Repeat([]byte(" "), p.indent))
-		}
-
-		pre, post := p.delimiters(n)
-
-		p.w.Write([]byte(pre))
-
-		hanging := false
-		switch n.(type) {
-		case *node.Hanging, *node.HangingVerbatim:
-			hanging = true
-		}
-
-		if hanging {
-			p.indent += len(pre)
-		}
-
-		if ln, ok := n.(*node.Line); ok && p.needBlockEscape(ln) {
-			p.w.Write([]byte(`\`))
-		}
-
-		switch m := n.(type) {
-		case node.Text:
-			p.printText(m)
-		case node.ContentInlineChildren:
-			if ic := m.InlineChildren(); len(ic) > 0 {
-				p.print(node.InlinesToNodes(ic))
-				p.w.Write([]byte(post + pre))
-			}
-			p.w.Write(m.Content())
-		case node.BlockChildren:
-			p.print(node.BlocksToNodes(m.BlockChildren()))
-		case node.InlineChildren:
-			p.print(node.InlinesToNodes(m.InlineChildren()))
-		case node.Lines:
-			p.writeLines(nil, m.Lines())
-		case node.Content:
-			p.w.Write(m.Content())
-		}
-
-		if hanging {
-			p.indent -= len(pre)
-		}
-
-		p.w.Write([]byte(post))
-
-		if _, ok := n.(node.Block); ok && i < len(nodes)-1 {
-			if _, ok := n.(*node.Line); ok && name == "Line" {
-				// do nothing
-			} else if p.indent == 0 {
-				p.w.Write([]byte("\n"))
-			}
-			p.w.Write([]byte("\n"))
-		}
-
-		if p.atBOL {
-			p.atBOL = false
-		}
+		p.printNode()
 	}
 }
 
-func (p *printer) writeLines(prefix []byte, lines [][]byte) {
+func (p *printer) next() bool {
+	p.pos++
+
+	if p.pos >= len(p.nodes) {
+		return false
+	}
+
+	p.n = p.nodes[p.pos]
+
+	return true
+}
+
+func (p *printer) unbox() bool {
+	var n node.Node
+
+	switch m := p.n.(type) {
+	case node.Boxed:
+		if trace {
+			defer p.trace("unbox")()
+		}
+
+		switch k := m.(type) {
+		case *node.Hat:
+			p.printLines(p.w, []byte("%"), k.Lines())
+
+			n = m.Unbox()
+			if n == nil {
+				if p.pos < len(p.nodes) {
+					p.newline(p.w)
+					p.newline(p.w)
+				}
+
+				if trace {
+					p.print("empty")
+				}
+
+				return false
+			}
+
+			p.w.Write([]byte("\n"))
+		case *node.SeqNumBox:
+			n = m.Unbox()
+			if n == nil {
+				if trace {
+					p.print("empty")
+				}
+
+				return false
+			}
+		default:
+			panic(fmt.Sprintf("printer: unexpected Boxed node %T", n))
+		}
+
+		p.n = n
+	}
+
+	return true
+}
+
+func (p *printer) newline(w io.Writer) {
+	if trace {
+		p.print("newline")
+	}
+
+	w.Write([]byte("\n"))
+
+	if len(p.prefixes) > 0 {
+		w.Write([]byte(strings.Join(p.prefixes, " ")))
+	}
+}
+
+func (p *printer) printNode() {
+	if trace {
+		defer p.tracef("printNode (%d)", p.pos)()
+	}
+
+	var b bytes.Buffer
+
+	for _, prefix := range p.prefixes {
+		// TODO: Differentiate real and space prefixes for hanging
+		// blocks and add spacing between prefixes
+		p.printf("prefix=%q", prefix)
+		b.WriteString(prefix)
+	}
+
+	pre, post, needInlineEscape := p.delimiters()
+
+	switch p.n.(type) {
+	case node.Block:
+		defer func(b []string) {
+			p.prefixes = b
+		}(p.prefixes)
+
+		switch p.n.(type) {
+		case *node.Hanging, *node.HangingVerbatim:
+			s := strings.Repeat(" ", len(pre))
+			p.prefixes = append(p.prefixes, s)
+		default:
+			p.prefixes = append(p.prefixes, pre)
+		}
+
+		if post != "" {
+			defer func() {
+				switch p.n.(type) {
+				case *node.Fenced:
+					p.newline(&b)
+				}
+
+				b.Write([]byte(post))
+			}()
+		}
+	case node.Inline:
+		if p.atBOL() && needInlineEscape {
+			b.Write([]byte(`\`))
+		}
+
+		b.Write([]byte(pre))
+
+		defer func() {
+			b.Write([]byte(post))
+		}()
+	default:
+		panic(fmt.Sprintf("printer: unexpected node type %T", p.n))
+	}
+
+	if isLine(p.n) && p.needBlockEscape() {
+		b.Write([]byte(`\`))
+	}
+
+	switch m := p.n.(type) {
+	case node.Text:
+		p.printText(&b, m)
+	case node.ContentInlineChildren:
+		if ic := m.InlineChildren(); len(ic) > 0 {
+			p.printChildren(&b, node.InlinesToNodes(ic))
+			b.Write([]byte(post + pre))
+		}
+
+		b.Write(m.Content())
+	case node.BlockChildren:
+		p.printChildren(&b, node.BlocksToNodes(m.BlockChildren()))
+	case node.InlineChildren:
+		p.printChildren(&b, node.InlinesToNodes(m.InlineChildren()))
+	case node.Lines:
+		p.printLines(&b, nil, m.Lines())
+	case node.Content:
+		b.Write(m.Content())
+	}
+
+	if trace {
+		p.printf("return %q", b.String())
+	}
+
+	b.WriteTo(p.w)
+
+	return
+}
+
+func (p *printer) atBOL() bool {
+	return isLine(p.parent) && p.pos == 0
+}
+
+func (p *printer) printLines(w io.Writer, prefix []byte, lines [][]byte) {
+	if trace {
+		defer p.trace("printLines")()
+	}
+
 	for i, ln := range lines {
 		if i > 0 {
-			p.w.Write([]byte("\n"))
-			if p.indent > 0 {
-				p.w.Write(bytes.Repeat([]byte(" "), p.indent))
-			}
+			p.newline(w)
 		}
 
 		if len(ln) > 0 {
 			if len(prefix) > 0 {
-				p.w.Write(prefix)
-				p.w.Write([]byte(" "))
+				w.Write(prefix)
+				w.Write([]byte(" "))
 			}
 
-			p.w.Write(bytes.Trim(ln, " \t"))
+			w.Write(bytes.Trim(ln, " \t"))
 		}
 	}
 }
 
-func (p *printer) needBlockEscape(ln *node.Line) bool {
-	txt := node.ExtractText(ln)
+func (p *printer) needBlockEscape() bool {
+	txt := node.ExtractText(p.n)
 	if txt == "" {
 		return false
 	}
@@ -170,7 +287,11 @@ func (p *printer) needBlockEscape(ln *node.Line) bool {
 	return false
 }
 
-func (p *printer) printText(t node.Text) {
+func (p *printer) printText(w io.Writer, t node.Text) {
+	if trace {
+		defer p.trace("printText")()
+	}
+
 	con := string(t.Content())
 	if con == "" {
 		return
@@ -220,29 +341,27 @@ func (p *printer) printText(t node.Text) {
 		b.WriteRune(ch)
 	}
 
-	b.WriteTo(p.w)
+	if trace {
+		p.printf("return %q", b.String())
+	}
 
+	b.WriteTo(w)
 }
 
-func (p *printer) delimiters(n node.Node) (string, string) {
+func (p *printer) delimiters() (string, string, bool) {
 	var pre, post string
+	var needInlineEscape bool // whether inline delimiter should be escaped at BOL
 
-	name := n.Node()
-	switch name {
+	switch name := p.n.Node(); name {
 	case "Text", "Line", "Paragraph":
 	case "LineComment":
 		pre = "//"
-
-		txt := node.ExtractText(n)
-		if txt != "" {
-			pre += " "
-		}
 	default:
 		el, ok := p.conf.Element(name)
 		if !ok {
 			_, grpOk := p.conf.Group(name)
 			if grpOk {
-				return "", ""
+				return "", "", false
 			} else {
 				panic("printer: unexpected element " + name)
 			}
@@ -251,12 +370,12 @@ func (p *printer) delimiters(n node.Node) (string, string) {
 		delim := el.Delimiter
 		typ := el.Type
 
-		switch n.(type) {
+		switch p.n.(type) {
 		case node.Block:
-			switch m := n.(type) {
+			switch m := p.n.(type) {
 			case *node.Fenced:
 				pre = delim + delim
-				post = "\n" + delim + delim
+				post = delim + delim
 			case node.Ranked:
 				rank := m.Rank()
 				if rank > 0 {
@@ -266,18 +385,8 @@ func (p *printer) delimiters(n node.Node) (string, string) {
 				} else {
 					pre = delim
 				}
-
-				txt := node.ExtractText(n)
-				if txt != "" {
-					pre += " "
-				}
 			default:
 				pre = delim
-
-				txt := node.ExtractText(n)
-				if txt != "" {
-					pre += " "
-				}
 			}
 
 		case node.Inline:
@@ -287,16 +396,8 @@ func (p *printer) delimiters(n node.Node) (string, string) {
 				panic("printer: invalid UTF-8 encoding in delimiter")
 			}
 
-			if p.atBOL {
-				// add backslash escape if needed
-				for _, e := range p.conf.Elements {
-					if node.TypeCategory(e.Type) == node.CategoryBlock {
-						if e.Delimiter == delim {
-							p.w.Write([]byte(`\`))
-							break
-						}
-					}
-				}
+			if p.needInlineEscape(delim) {
+				needInlineEscape = true
 			}
 
 			switch typ {
@@ -305,13 +406,15 @@ func (p *printer) delimiters(n node.Node) (string, string) {
 				post = pre
 			case node.TypeEscaped:
 				var content []byte
-				if m, ok := n.(node.Content); ok {
+				if m, ok := p.n.(node.Content); ok {
 					content = m.Content()
 				} else {
 					panic("printer: escaped element " + name + " does not implement node.Content")
 				}
 
 				if bytes.Contains(content, []byte(delim+delim)) {
+					// find another escape combination for delim
+
 					for _, ch := range counterpartChars {
 						cp := counterpart(ch)
 						pre0 := delim + string(ch)
@@ -344,14 +447,58 @@ func (p *printer) delimiters(n node.Node) (string, string) {
 		default:
 			panic(fmt.Sprintf(
 				"parser: unexpected node type %T (element=%q, delimiter=%q)",
-				n,
+				p.n,
 				name,
 				delim,
 			))
 		}
 	}
 
-	return pre, post
+	return pre, post, needInlineEscape
+}
+
+func (p *printer) needInlineEscape(delim string) bool {
+	for _, e := range p.conf.Elements {
+		if node.TypeCategory(e.Type) == node.CategoryBlock {
+			if e.Delimiter == delim {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (p *printer) tracef(format string, v ...interface{}) func() {
+	return p.trace(fmt.Sprintf(format, v...))
+}
+
+func (p *printer) trace(msg string) func() {
+	var name string
+	if p.n != nil {
+		name = p.n.Node()
+	}
+
+	p.printf("%q %T -> %s (", name, p.n, msg)
+	p.indent++
+
+	return func() {
+		p.indent--
+		p.print(")")
+	}
+}
+
+func (p *printer) printf(format string, v ...interface{}) {
+	p.print(fmt.Sprintf(format, v...))
+}
+
+func (p *printer) print(msg string) {
+	fmt.Println(strings.Repeat("\t", p.indent) + msg)
+}
+
+func isLine(n node.Node) bool {
+	_, ok := n.(*node.Line)
+	return ok && n.Node() == "Line"
 }
 
 func counterpart(ch rune) rune {
