@@ -70,20 +70,20 @@ func (p *printer) printNodes() {
 	}
 
 	for p.next() {
-		if p.pos > 0 {
-			if _, isInGroup := p.parent.(*node.Group); isLine(p.n) || isInGroup {
+		if !p.unbox() {
+			continue
+		}
+
+		p.printNode()
+
+		if peek := p.peek(); peek != nil {
+			if _, isInGroup := p.parent.(*node.Group); isInGroup || isLine(p.n) && isLine(peek) {
 				p.newline(p.w)
 			} else {
 				p.newline(p.w)
 				p.newline(p.w)
 			}
 		}
-
-		if !p.unbox() {
-			continue
-		}
-
-		p.printNode()
 	}
 }
 
@@ -99,6 +99,13 @@ func (p *printer) next() bool {
 	return true
 }
 
+func (p *printer) peek() node.Node {
+	if p.pos+1 < len(p.nodes) {
+		return p.nodes[p.pos+1]
+	}
+	return nil
+}
+
 func (p *printer) unbox() bool {
 	var n node.Node
 
@@ -108,30 +115,42 @@ func (p *printer) unbox() bool {
 			defer p.trace("unbox")()
 		}
 
+		var b bytes.Buffer
+
+		defer func() {
+			if trace {
+				p.printf("return %q", b.String())
+			}
+
+			b.WriteTo(p.w)
+		}()
+
 		switch k := m.(type) {
 		case *node.Hat:
-			p.printLines(p.w, []byte("%"), k.Lines())
+			p.printLines(&b, []byte("%"), trimLines(k.Lines()))
 
 			n = m.Unbox()
-			if n == nil {
-				if p.pos < len(p.nodes) {
-					p.newline(p.w)
-					p.newline(p.w)
+			if n != nil && !isEmpty(n) {
+				if b.Len() > 0 {
+					p.newline(&b)
+				}
+			} else {
+				if trace {
+					p.print("empty hat")
 				}
 
-				if trace {
-					p.print("empty")
+				if b.Len() > 0 && p.peek() != nil {
+					p.newline(&b)
+					p.newline(&b)
 				}
 
 				return false
 			}
-
-			p.w.Write([]byte("\n"))
 		case *node.SeqNumBox:
 			n = m.Unbox()
 			if n == nil {
 				if trace {
-					p.print("empty")
+					p.print("empty seqNumBox")
 				}
 
 				return false
@@ -152,10 +171,6 @@ func (p *printer) newline(w io.Writer) {
 	}
 
 	w.Write([]byte("\n"))
-
-	if len(p.prefixes) > 0 {
-		w.Write([]byte(strings.Join(p.prefixes, " ")))
-	}
 }
 
 func (p *printer) printNode() {
@@ -163,29 +178,52 @@ func (p *printer) printNode() {
 		defer p.tracef("printNode (%d)", p.pos)()
 	}
 
+	if isEmpty(p.n) {
+		if trace {
+			p.print("return, empty")
+		}
+
+		return
+	}
+
 	var b bytes.Buffer
 
-	for _, prefix := range p.prefixes {
-		// TODO: Differentiate real and space prefixes for hanging
-		// blocks and add spacing between prefixes
-		p.printf("prefix=%q", prefix)
-		b.WriteString(prefix)
+	defer func() {
+		if trace {
+			p.printf("return %q", b.String())
+		}
+
+		b.WriteTo(p.w)
+	}()
+
+	if p.pos > 0 {
+		p.prefix(&b)
 	}
 
 	pre, post, needInlineEscape := p.delimiters()
 
 	switch p.n.(type) {
 	case node.Block:
-		defer func(b []string) {
-			p.prefixes = b
-		}(p.prefixes)
+		if pre != "" {
+			b.WriteString(pre)
 
-		switch p.n.(type) {
-		case *node.Hanging, *node.HangingVerbatim:
-			s := strings.Repeat(" ", len(pre))
-			p.prefixes = append(p.prefixes, s)
-		default:
-			p.prefixes = append(p.prefixes, pre)
+			switch p.n.(type) {
+			case *node.Fenced:
+			default:
+				b.WriteString(" ")
+			}
+
+			defer func(size int) {
+				p.prefixes = p.prefixes[:size]
+			}(len(p.prefixes))
+
+			switch p.n.(type) {
+			case *node.Hanging, *node.HangingVerbatim:
+				s := strings.Repeat(" ", len(pre))
+				p.prefixes = append(p.prefixes, s)
+			case *node.Walled:
+				p.prefixes = append(p.prefixes, pre)
+			}
 		}
 
 		if post != "" {
@@ -193,27 +231,28 @@ func (p *printer) printNode() {
 				switch p.n.(type) {
 				case *node.Fenced:
 					p.newline(&b)
+					p.prefix(&b)
 				}
 
-				b.Write([]byte(post))
+				b.WriteString(post)
 			}()
 		}
 	case node.Inline:
 		if p.atBOL() && needInlineEscape {
-			b.Write([]byte(`\`))
+			b.WriteString(`\`)
 		}
 
-		b.Write([]byte(pre))
+		b.WriteString(pre)
 
 		defer func() {
-			b.Write([]byte(post))
+			b.WriteString(post)
 		}()
 	default:
 		panic(fmt.Sprintf("printer: unexpected node type %T", p.n))
 	}
 
 	if isLine(p.n) && p.needBlockEscape() {
-		b.Write([]byte(`\`))
+		b.WriteString(`\`)
 	}
 
 	switch m := p.n.(type) {
@@ -236,12 +275,6 @@ func (p *printer) printNode() {
 		b.Write(m.Content())
 	}
 
-	if trace {
-		p.printf("return %q", b.String())
-	}
-
-	b.WriteTo(p.w)
-
 	return
 }
 
@@ -255,19 +288,39 @@ func (p *printer) printLines(w io.Writer, prefix []byte, lines [][]byte) {
 	}
 
 	for i, ln := range lines {
-		if i > 0 {
-			p.newline(w)
-		}
-
 		if len(ln) > 0 {
 			if len(prefix) > 0 {
 				w.Write(prefix)
 				w.Write([]byte(" "))
 			}
 
-			w.Write(bytes.Trim(ln, " \t"))
+			w.Write(ln)
 		}
+
+		if i+1 < len(lines) && len(lines[i+1]) > 0 {
+			p.newline(w)
+			p.prefix(w)
+		}
+
 	}
+}
+
+func (p *printer) prefix(w io.Writer) {
+	if len(p.prefixes) == 0 {
+		return
+	}
+
+	var b bytes.Buffer
+
+	for _, prefix := range p.prefixes {
+		b.WriteString(prefix + " ")
+	}
+
+	if trace {
+		p.printf("prefix=%q", b.String())
+	}
+
+	b.WriteTo(w)
 }
 
 func (p *printer) needBlockEscape() bool {
@@ -496,9 +549,21 @@ func (p *printer) print(msg string) {
 	fmt.Println(strings.Repeat("\t", p.indent) + msg)
 }
 
+func isEmpty(n node.Node) bool {
+	return node.ExtractText(n) == ""
+}
+
 func isLine(n node.Node) bool {
 	_, ok := n.(*node.Line)
 	return ok && n.Node() == "Line"
+}
+
+func trimLines(lines [][]byte) [][]byte {
+	var l [][]byte
+	for _, line := range lines {
+		l = append(l, bytes.Trim(line, " \t"))
+	}
+	return l
 }
 
 func counterpart(ch rune) rune {

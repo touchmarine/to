@@ -646,13 +646,14 @@ OuterLoop:
 		for {
 			if p.ch == delim {
 				j++
-			} else if j != 0 {
+			} else {
 				j = 0
 			}
 
-			if j == i {
+			if j == i && len(lines) > 0 {
 				// closing delimiter
 				b.Reset()
+
 				for p.nextch() {
 					b.WriteRune(p.ch)
 				}
@@ -729,10 +730,10 @@ func (p *parser) spacing() []rune {
 		defer p.trace("spacing")()
 	}
 
-	var a []rune
-	for i := len(p.lead) - 1; i >= 0; i-- {
-		if p.lead[i] != ' ' && p.lead[i] != '\t' {
-			a = p.lead[i+1:]
+	a := p.lead
+	for i := len(a) - 1; i >= 0; i-- {
+		if a[i] != ' ' && a[i] != '\t' {
+			a = a[i+1:]
 			break
 		}
 	}

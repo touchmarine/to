@@ -2130,9 +2130,21 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
+			"``a``",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", [][]byte{[]byte("a``")}, nil},
+			},
+		},
+		{
 			"``\na",
 			[]node.Node{
 				&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}, nil},
+			},
+		},
+		{
+			"``\n a",
+			[]node.Node{
+				&node.Fenced{"CodeBlock", [][]byte{nil, []byte(" a")}, nil},
 			},
 		},
 		{
