@@ -77,11 +77,21 @@ func (p *printer) printNodes() {
 		p.printNode()
 
 		if peek := p.peek(); peek != nil {
-			if _, isInGroup := p.parent.(*node.Group); isInGroup || isLine(p.n) && isLine(peek) {
-				p.newline(p.w)
+			if p.isInline() {
+				if _, ok := peek.(node.LineComment); ok {
+					if trace {
+						p.print("space before comment")
+					}
+
+					p.w.Write([]byte(" "))
+				}
 			} else {
-				p.newline(p.w)
-				p.newline(p.w)
+				if _, isInGroup := p.parent.(*node.Group); isInGroup || isLine(p.n) && isLine(peek) {
+					p.newline(p.w)
+				} else {
+					p.newline(p.w)
+					p.newline(p.w)
+				}
 			}
 		}
 	}
@@ -261,7 +271,7 @@ func (p *printer) printNode() {
 	case node.ContentInlineChildren:
 		if ic := m.InlineChildren(); len(ic) > 0 {
 			p.printChildren(&b, node.InlinesToNodes(ic))
-			b.Write([]byte(post + pre))
+			b.WriteString(post + pre)
 		}
 
 		b.Write(m.Content())
@@ -272,14 +282,15 @@ func (p *printer) printNode() {
 	case node.Lines:
 		p.printLines(&b, nil, m.Lines())
 	case node.Content:
-		b.Write(m.Content())
+		switch m.(type) {
+		case node.LineComment:
+			b.Write(bytes.Trim(m.Content(), " \t"))
+		default:
+			b.Write(m.Content())
+		}
 	}
 
 	return
-}
-
-func (p *printer) atBOL() bool {
-	return isLine(p.parent) && p.pos == 0
 }
 
 func (p *printer) printLines(w io.Writer, prefix []byte, lines [][]byte) {
@@ -408,7 +419,7 @@ func (p *printer) delimiters() (string, string, bool) {
 	switch name := p.n.Node(); name {
 	case "Text", "Line", "Paragraph":
 	case "LineComment":
-		pre = "//"
+		pre = "// "
 	default:
 		el, ok := p.conf.Element(name)
 		if !ok {
@@ -522,6 +533,19 @@ func (p *printer) needInlineEscape(delim string) bool {
 	return false
 }
 
+func (p *printer) atBOL() bool {
+	return isLine(p.parent) && p.pos == 0
+}
+
+func (p *printer) isInline() bool {
+	switch p.n.(type) {
+	case node.Text, *node.Uniform, *node.Escaped, *node.Forward:
+		return true
+	default:
+		return false
+	}
+}
+
 func (p *printer) tracef(format string, v ...interface{}) func() {
 	return p.trace(fmt.Sprintf(format, v...))
 }
@@ -550,7 +574,14 @@ func (p *printer) print(msg string) {
 }
 
 func isEmpty(n node.Node) bool {
-	return node.ExtractText(n) == ""
+	txt := node.ExtractText(n)
+
+	if m, ok := n.(node.ContentInlineChildren); ok {
+		// fenced element
+		return len(m.Content()) == 0 && txt == ""
+	}
+
+	return txt == ""
 }
 
 func isLine(n node.Node) bool {

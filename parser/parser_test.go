@@ -2957,6 +2957,30 @@ func TestForward(t *testing.T) {
 				}},
 			},
 		},
+
+		// TODO: Fix ambigous combo of escaped and forward elements
+		//
+		// <``a>
+		//
+		// If link is one-part, it cannot contain code as it can only
+		// contain raw content.
+		//
+		// <``a><b>
+		//
+		// If link is two-part, it can contain code in the first part,
+		// but an unclosed code means that the link is never closed and
+		// is one-part that cannot contain code...
+		//
+		//{
+		//	"<``a><b>",
+		//	[]node.Node{
+		//		&node.Line{"Line", []node.Inline{
+		//			&node.Forward{"Link", []byte("b"), []node.Inline{
+		//				&node.Escaped{"Code", []byte("a")},
+		//			}},
+		//		}},
+		//	},
+		//},
 	}
 
 	for _, c := range cases {
