@@ -193,6 +193,7 @@ func TestFprint(t *testing.T) {
 		{`a\\**`, `a\\`},
 		{`a\**b`, `a\**b`},
 		{`a\\**b`, `a\\**b**`},
+		{`a\//`, `a\//`},
 
 		{`.toc\==a`, `.toc \==a`},
 
@@ -229,6 +230,7 @@ func TestFprint(t *testing.T) {
 
 		// TODO: {"a//", "a"},
 		{"a//b", "a // b"},
+		{"-\n a//b", "- a // b"},
 	}
 
 	for _, c := range cases {

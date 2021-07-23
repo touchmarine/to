@@ -360,19 +360,32 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 		defer p.trace("printText")()
 	}
 
-	con := string(t.Content())
-	if con == "" {
+	content := string(t.Content())
+	if content == "" {
 		return
 	}
 
 	var b bytes.Buffer
 
-	for i, ch := range con {
+	var i int
+L:
+	for i < len(content) {
+		ch := content[i]
+
 		if ch == '\\' {
-			b.Write([]byte(`\`))
+			// backslash
+			b.WriteString(`\\`)
+			i++
+			continue
 		}
 
-	L:
+		if strings.HasPrefix(content[i:], "//") {
+			// comment
+			b.WriteString(`\//`)
+			i += 2
+			continue
+		}
+
 		for _, e := range p.conf.Elements {
 			if node.TypeCategory(e.Type) == node.CategoryInline {
 				// perfom the same check as parser
@@ -381,7 +394,7 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 					panic("printer: invalid UTF-8 encoding in delimiter")
 				}
 
-				var cases []string
+				var cases []string // all possible inline delimiters
 
 				switch e.Type {
 				case node.TypeUniform:
@@ -398,15 +411,18 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 				}
 
 				for _, c := range cases {
-					if strings.HasPrefix(con[i:], c) {
-						b.Write([]byte(`\`))
-						break L
+					if strings.HasPrefix(content[i:], c) {
+						// matches inline delimiter
+						b.WriteString(`\` + c)
+						i += len(c)
+						continue L
 					}
 				}
 			}
 		}
 
-		b.WriteRune(ch)
+		b.WriteByte(ch)
+		i++
 	}
 
 	if trace {
@@ -542,12 +558,8 @@ func (p *printer) atBOL() bool {
 }
 
 func (p *printer) isInline() bool {
-	switch p.n.(type) {
-	case node.Text, *node.Uniform, *node.Escaped, *node.Forward:
-		return true
-	default:
-		return false
-	}
+	_, ok := p.n.(node.Inline)
+	return ok
 }
 
 func (p *printer) tracef(format string, v ...interface{}) func() {
