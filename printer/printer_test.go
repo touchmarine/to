@@ -29,6 +29,9 @@ func TestFprint(t *testing.T) {
 		{"*\n a", "* a"},
 		{"*a\n b", "* a\n  b"},
 		{"*a\n *b", "* a\n\n  * b"},
+		{"*a\n\n *b", "* a\n\n  * b"},
+		{"*a\n \n *b", "* a\n\n  * b"},
+		{"*a\n\n\n *b", "* a\n\n  * b"},
 
 		{"=*", ""},
 		{"=*a", "= * a"},
@@ -69,17 +72,25 @@ func TestFprint(t *testing.T) {
 		{"==", ""},
 		{"==a", "== a"},
 		{"==a\n  b", "== a\n   b"},
+		{"==a\n\n  b", "== a\n\n   b"},
+		{"==a\n \n  b", "== a\n\n   b"},
+		{"==a\n\n\n  b", "== a\n\n   b"},
 
 		// verbatim hanging
 		{".image", ""},
 		{".imagea", ".image a"},
 		{".imagea\n      b", ".image a\n       b"},
+		{".imagea\n\n      b", ".image a\n       b"},
+		{".imagea\n \n      b", ".image a\n       b"},
 
 		// walled
 		{">", ""},
 		{">a", "> a"},
 		{">\n>", ""},
 		{">a\n>b", "> a\n> b"},
+		{">a\n>\n>b", "> a\n>\n> b"},
+		{">a\n> \n>b", "> a\n>\n> b"},
+		{">a\n>\n>\n>b", "> a\n>\n> b"},
 
 		{">``a\n>b", "> ``a\n> b\n> ``"},
 
@@ -88,6 +99,10 @@ func TestFprint(t *testing.T) {
 		{"``a", "``a\n``"},
 		{"``a``", "``a``\n``"},
 		{"``a\nb", "``a\nb\n``"},
+		{"``a\n ", "``a\n \n``"},
+		{"``a\n\nb", "``a\n\nb\n``"},
+		{"``a\n \nb", "``a\n \nb\n``"},
+		{"``a\n\n\nb", "``a\n\n\nb\n``"},
 
 		// groups
 		{"-", ""},
@@ -108,14 +123,20 @@ func TestFprint(t *testing.T) {
 		{"%a\nb", "% a\nb"},
 		{"%\n\na", "a"},
 		{"%a\n\nb", "% a\n\nb"},
+		{"%a\n \nb", "% a\n\nb"},
+		{"%a\n\n\nb", "% a\n\nb"},
 
 		// multiple blocks
 		{"a\n\nb", "a\n\nb"},
+		{"a\n\n\nb", "a\n\nb"},
+		{"a\n \nb", "a\n\nb"},
 		{"a\n*b", "a\n\n* b"},
 		{"*a\nb", "* a\n\nb"},
 		{"*a\n*b", "* a\n\n* b"},
 		{"*a\n>b", "* a\n\n> b"},
 		{">a\n\n>b", "> a\n\n> b"},
+		{">a\n \n>b", "> a\n\n> b"},
+		{">a\n\n\n>b", "> a\n\n> b"},
 		{">a\n*b", "> a\n\n* b"},
 
 		// uniform
@@ -149,6 +170,9 @@ func TestFprint(t *testing.T) {
 		{"a<b ><>", "a<b ><>"},
 		{"a<><b>", "a<b>"},
 		{"a<b><c>", "a<b><c>"},
+
+		// TODO: {"- <b>", "- <b>"},
+		{"- a <b>", "- a <b>"},
 
 		// block escape
 		{`\**`, ""},

@@ -90,6 +90,7 @@ func (p *printer) printNodes() {
 					p.newline(p.w)
 				} else {
 					p.newline(p.w)
+					p.prefix(p.w, false)
 					p.newline(p.w)
 				}
 			}
@@ -206,8 +207,8 @@ func (p *printer) printNode() {
 		b.WriteTo(p.w)
 	}()
 
-	if p.pos > 0 {
-		p.prefix(&b)
+	if !p.isInline() && p.pos > 0 {
+		p.prefix(&b, true)
 	}
 
 	pre, post, needInlineEscape := p.delimiters()
@@ -241,7 +242,7 @@ func (p *printer) printNode() {
 				switch p.n.(type) {
 				case *node.Fenced:
 					p.newline(&b)
-					p.prefix(&b)
+					p.prefix(&b, true)
 				}
 
 				b.WriteString(post)
@@ -299,6 +300,11 @@ func (p *printer) printLines(w io.Writer, prefix []byte, lines [][]byte) {
 	}
 
 	for i, ln := range lines {
+		if i > 0 {
+			p.newline(w)
+			p.prefix(w, true)
+		}
+
 		if len(ln) > 0 {
 			if len(prefix) > 0 {
 				w.Write(prefix)
@@ -307,31 +313,29 @@ func (p *printer) printLines(w io.Writer, prefix []byte, lines [][]byte) {
 
 			w.Write(ln)
 		}
-
-		if i+1 < len(lines) && len(lines[i+1]) > 0 {
-			p.newline(w)
-			p.prefix(w)
-		}
-
 	}
 }
 
-func (p *printer) prefix(w io.Writer) {
+// prefix writes the current prefix to w. It adds a trailing space if spacing
+// is true and removes any trailing spacing if spacing is false.
+func (p *printer) prefix(w io.Writer, spacing bool) {
 	if len(p.prefixes) == 0 {
 		return
 	}
 
-	var b bytes.Buffer
+	prefix := strings.Join(p.prefixes, " ")
 
-	for _, prefix := range p.prefixes {
-		b.WriteString(prefix + " ")
+	if spacing {
+		prefix += " "
+	} else {
+		prefix = strings.Trim(prefix, " \t")
 	}
 
 	if trace {
-		p.printf("prefix=%q", b.String())
+		p.printf("prefix=%q", prefix)
 	}
 
-	b.WriteTo(w)
+	w.Write([]byte(prefix))
 }
 
 func (p *printer) needBlockEscape() bool {
@@ -591,9 +595,16 @@ func isLine(n node.Node) bool {
 
 func trimLines(lines [][]byte) [][]byte {
 	var l [][]byte
+
 	for _, line := range lines {
-		l = append(l, bytes.Trim(line, " \t"))
+		t := bytes.Trim(line, " \t")
+		if len(t) == 0 {
+			continue
+		}
+
+		l = append(l, t)
 	}
+
 	return l
 }
 

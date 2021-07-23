@@ -422,6 +422,7 @@ func ExtractText(n Node) string {
 			if i > 0 {
 				b.WriteString("\n")
 			}
+
 			b.WriteString(ExtractText(c))
 		}
 	}
