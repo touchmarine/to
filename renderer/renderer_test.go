@@ -2,6 +2,7 @@ package renderer
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/touchmarine/to/aggregator"
 	"github.com/touchmarine/to/node"
 	"sort"
@@ -751,6 +752,204 @@ func TestGroupBySeqNum(t *testing.T) {
 
 			if got != want {
 				t.Errorf("\ngot\n%s\nwant\n%s", got, want)
+			}
+		})
+	}
+}
+
+func TestParseAttr(t *testing.T) {
+	cases := []struct {
+		in  string
+		out map[string]string
+	}{
+		{
+			"",
+			nil,
+		},
+		{
+			" ",
+			nil,
+		},
+		{
+			"=",
+			nil,
+		},
+
+		{
+			"a",
+			map[string]string{"a": ""},
+		},
+		{
+			"a=",
+			map[string]string{"a": ""},
+		},
+		{
+			" a=",
+			map[string]string{"a": ""},
+		},
+		{
+			"abc",
+			map[string]string{"abc": ""},
+		},
+		{
+			"-_",
+			map[string]string{"-_": ""},
+		},
+
+		{
+			"a=b",
+			map[string]string{"a": "b"},
+		},
+		{
+			"=b",
+			nil,
+		},
+
+		{
+			`a=b"`,
+			map[string]string{"a": `b"`},
+		},
+		{
+			"a=b'",
+			map[string]string{"a": "b'"},
+		},
+
+		// spacing
+		{
+			" a",
+			map[string]string{"a": ""},
+		},
+		{
+			"a ",
+			map[string]string{"a": ""},
+		},
+
+		// newline
+		{
+			"\na",
+			map[string]string{"a": ""},
+		},
+		{
+			"a\n",
+			map[string]string{"a": ""},
+		},
+		{
+			"a=\nb",
+			map[string]string{"a": "", "b": ""},
+		},
+		{
+			"a=b\n",
+			map[string]string{"a": "b"},
+		},
+		{
+			"a=\"\nb\"",
+			map[string]string{"a": "\nb"},
+		},
+		{
+			"a=\"b\n\"",
+			map[string]string{"a": "b\n"},
+		},
+		{
+			"a='\nb'",
+			map[string]string{"a": "\nb"},
+		},
+		{
+			"a='b\n'",
+			map[string]string{"a": "b\n"},
+		},
+
+		// double quote
+		{
+			`a="b"`,
+			map[string]string{"a": "b"},
+		},
+		{
+			`a=" b "`,
+			map[string]string{"a": " b "},
+		},
+		{
+			`a="'"`,
+			map[string]string{"a": "'"},
+		},
+		{
+			`a="''"`,
+			map[string]string{"a": "''"},
+		},
+
+		// escape
+		{
+			`a="\\"`,
+			map[string]string{"a": `\`},
+		},
+		{
+			`a="\""`,
+			map[string]string{"a": `"`},
+		},
+
+		// single quote (raw content)
+		{
+			"a='b'",
+			map[string]string{"a": "b"},
+		},
+		{
+			"a=' b '",
+			map[string]string{"a": " b "},
+		},
+		{
+			`a='"'`,
+			map[string]string{"a": `"`},
+		},
+		{
+			`a='""'`,
+			map[string]string{"a": `""`},
+		},
+
+		// no escape
+		{
+			`a='\\'`,
+			map[string]string{"a": `\\`},
+		},
+		{
+			`a='\"'`,
+			map[string]string{"a": `\"`},
+		},
+
+		// multiple
+		{
+			"a b",
+			map[string]string{"a": "", "b": ""},
+		},
+		{
+			`a="1" b="2"`,
+			map[string]string{"a": "1", "b": "2"},
+		},
+		{
+			`a="1"b="2"`,
+			map[string]string{"a": "1", "b": "2"},
+		},
+		{
+			"a='1'b='2'",
+			map[string]string{"a": "1", "b": "2"},
+		},
+		{
+			"a=1b=2",
+			map[string]string{"a": "1b=2"},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
+			var p attrParser
+			p.init(strings.NewReader(c.in))
+			p.parse()
+
+			attrs := p.attrs
+
+			got := fmt.Sprint(attrs)
+			want := fmt.Sprint(c.out)
+
+			if got != want {
+				t.Errorf("got %s, want %s", got, want)
 			}
 		})
 	}

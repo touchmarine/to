@@ -1,6 +1,8 @@
 package renderer
 
 import (
+	"bufio"
+	"errors"
 	"fmt"
 	"github.com/touchmarine/to/aggregator"
 	"github.com/touchmarine/to/node"
@@ -17,6 +19,7 @@ var FuncMap = template.FuncMap{
 	"primarySecondary": parsePrimarySecondary,
 	"groupBySeqNum":    groupBySeqNum,
 	"isSeqNumGroup":    isSeqNumGroup,
+	"attributes":       parseAttrs,
 }
 
 func New(tmpl *template.Template, data map[string]interface{}) *Renderer {
@@ -277,6 +280,173 @@ func (s *seqNumGrouper) printf(format string, v ...interface{}) {
 
 func (s *seqNumGrouper) print(msg string) {
 	fmt.Println(strings.Repeat("\t", s.indent) + msg)
+}
+
+func parseAttrs(lines []string) map[string]string {
+	s := strings.Join(lines, "\n")
+	reader := strings.NewReader(s)
+
+	var p attrParser
+	p.init(reader)
+	p.parse()
+
+	return p.attrs
+}
+
+// attrParser holds the parser state.
+//
+// attrParser parses HTML-like attributes. An attribute has the folowing form:
+//
+// <name> = <value>
+//
+// where <name> is a string of Unicode characters except spacing or newline and
+// <value> is a string of Unicode characaters except spacing or a double quote
+// '"' delimited string that can contain spacing and escape sequences or a
+// single quote "'" delimited string that can contain raw content.
+//
+// Only the name is required. Spacing is a space or a tab.
+//
+// Attributes must be separated by spacing except after an attribute with quoted
+// value—they can be placed one after another as such:
+//
+// a="b"c=d
+type attrParser struct {
+	reader *bufio.Reader
+
+	ch byte
+
+	attrs map[string]string
+}
+
+func (p *attrParser) init(r io.Reader) {
+	p.reader = bufio.NewReader(r)
+	p.attrs = make(map[string]string)
+}
+
+func (p *attrParser) next() bool {
+	b, err := p.reader.ReadByte()
+	if err != nil {
+		return false
+	}
+
+	p.ch = b
+	return true
+}
+
+func (p *attrParser) peek() byte {
+	b, err := p.reader.Peek(1)
+	if err != nil && !errors.Is(err, io.EOF) {
+		panic(err)
+	}
+
+	if l := len(b); l == 0 {
+		return 0
+	} else if l == 1 {
+		return b[0]
+	} else {
+		panic("renderer: unexpected byte length")
+	}
+}
+
+func (p *attrParser) isSpacing() bool {
+	return p.ch == '\t' || p.ch == ' '
+}
+
+func (p *attrParser) parse() {
+	for p.next() {
+		if p.isSpacing() || p.ch == '\n' {
+			continue
+		}
+
+		name, value := p.parseAttr()
+		if name != "" {
+			p.attrs[name] = value
+		}
+	}
+}
+
+func (p *attrParser) parseAttr() (string, string) {
+	var name, value strings.Builder
+
+	var hitEquals bool // whether encountered name-value delimiter "="
+	var quote byte     // which quote if any
+
+	for {
+		if hitEquals {
+			// in value part of attribute
+
+			if quote != 0 {
+				// inside quotes
+
+				if p.ch == quote {
+					// closing quote
+					break
+				}
+
+				if quote == '"' {
+					// inside double quotes '"'
+
+					if peek := p.peek(); p.ch == '\\' && (peek == '\\' || peek == '"') {
+						// escape
+						value.WriteByte(peek)
+
+						if !p.next() { // skip escape backslash
+							panic("renderer: no escape backslash")
+						}
+						if !p.next() { // skip escaped char
+							panic("renderer: no escaped char")
+						}
+
+						continue
+					}
+				} else if quote == '\'' {
+					// inside single quotes "'" (raw content)
+				} else {
+					panic("renderer: quote is neither '\"' or \"'\"")
+				}
+
+				value.WriteByte(p.ch)
+			} else {
+				if p.isSpacing() || p.ch == '\n' {
+					break
+				}
+
+				value.WriteByte(p.ch)
+			}
+		} else if p.ch == '=' {
+			// name-value delimiter
+
+			hitEquals = true
+
+			if peek := p.peek(); peek == '"' || peek == '\'' {
+				// opening quote
+				quote = peek
+
+				if !p.next() {
+					panic("renderer: no equals char")
+				}
+				if !p.next() {
+					panic("renderer: no opening quote")
+				}
+
+				continue
+			}
+		} else {
+			// in name part of attribute
+
+			if p.isSpacing() || p.ch == '\n' {
+				break
+			}
+
+			name.WriteByte(p.ch)
+		}
+
+		if !p.next() {
+			break
+		}
+	}
+
+	return name.String(), value.String()
 }
 
 type namedUnnamed struct {
