@@ -165,6 +165,23 @@ func TestGroupBySeqNum(t *testing.T) {
 		out  seqNumGroup
 	}{
 		{
+			"single",
+			[]aggregator.Item{
+				{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+			},
+			seqNumGroup{
+				seqNumItem{
+					Element: "NumberedHeading",
+					SeqNums: []uint{1},
+					SeqNum:  "1",
+				},
+			},
+		},
+		{
 			"1 depth",
 			[]aggregator.Item{
 				{
@@ -371,7 +388,7 @@ func TestGroupBySeqNum(t *testing.T) {
 			},
 		},
 		{
-			"decrease depth 3",
+			"increase depth",
 			[]aggregator.Item{
 				{
 					Element: "NumberedHeading",
@@ -410,7 +427,7 @@ func TestGroupBySeqNum(t *testing.T) {
 			},
 		},
 		{
-			"decrease depth 4",
+			"increase depth",
 			[]aggregator.Item{
 				{
 					Element: "NumberedHeading",
@@ -460,119 +477,6 @@ func TestGroupBySeqNum(t *testing.T) {
 				},
 			},
 		},
-
-		/*
-			{
-				"single",
-				[]aggregator.Item{
-					{
-						Element: "NumberedHeading",
-						SeqNums: []uint{1},
-						SeqNum:  "1",
-					},
-				},
-				[][]aggregator.Item{
-					{
-						{
-							Element: "NumberedHeading",
-							SeqNums: []uint{1},
-							SeqNum:  "1",
-						},
-					},
-				},
-			},
-			{
-				"same depth",
-				[]aggregator.Item{
-					{
-						Element: "NumberedHeading",
-						SeqNums: []uint{1},
-						SeqNum:  "1",
-					},
-					{
-						Element: "NumberedHeading",
-						SeqNums: []uint{2},
-						SeqNum:  "2",
-					},
-				},
-				[][]aggregator.Item{
-					{
-						{
-							Element: "NumberedHeading",
-							SeqNums: []uint{1},
-							SeqNum:  "1",
-						},
-						{
-							Element: "NumberedHeading",
-							SeqNums: []uint{2},
-							SeqNum:  "2",
-						},
-					},
-				},
-			},
-			{
-				"two depths",
-				[]aggregator.Item{
-					{
-						Element: "NumberedHeading",
-						SeqNums: []uint{1},
-						SeqNum:  "1",
-					},
-					{
-						Element: "NumberedHeading",
-						SeqNums: []uint{1, 1},
-						SeqNum:  "1.1",
-					},
-				},
-				[][]aggregator.Item{
-					{
-						{
-							Element: "NumberedHeading",
-							SeqNums: []uint{1},
-							SeqNum:  "1",
-						},
-					},
-					{
-						{
-							Element: "NumberedHeading",
-							SeqNums: []uint{1, 1},
-							SeqNum:  "1.1",
-						},
-					},
-				},
-			},
-			{
-				"returning depth",
-				[]aggregator.Item{
-					{
-						Element: "NumberedHeading",
-						SeqNums: []uint{1, 1},
-						SeqNum:  "1.1",
-					},
-					{
-						Element: "NumberedHeading",
-						SeqNums: []uint{1},
-						SeqNum:  "1",
-					},
-				},
-				[][]aggregator.Item{
-					{
-						{
-							Element: "NumberedHeading",
-							SeqNums: []uint{1, 1},
-							SeqNum:  "1.1",
-						},
-					},
-					{
-						{
-							Element: "NumberedHeading",
-							SeqNums: []uint{1},
-							SeqNum:  "1",
-						},
-					},
-				},
-			},
-		*/
 	}
 
 	for _, c := range cases {
