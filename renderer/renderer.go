@@ -19,7 +19,8 @@ var FuncMap = template.FuncMap{
 	"primarySecondary": parsePrimarySecondary,
 	"groupBySeqNum":    groupBySeqNum,
 	"isSeqNumGroup":    isSeqNumGroup,
-	"attributes":       parseAttrs,
+	"parseAttrs":       parseAttrs,
+	"htmlAttrs":        htmlAttrs,
 }
 
 func New(tmpl *template.Template, data map[string]interface{}) *Renderer {
@@ -54,6 +55,11 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 		if m, ok := n.(node.Boxed); ok {
 			switch k := n.(type) {
 			case *node.Hat:
+				lines := btosSlice(k.Lines())
+				joined := strings.Join(lines, "\n")
+
+				data["Hat"] = joined
+				data["HatAttrs"] = parseAttrs(lines)
 			case *node.SeqNumBox:
 				data["SeqNums"] = k.SeqNums
 				data["SeqNum"] = k.SeqNum()
@@ -86,10 +92,8 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 		}
 
 		if m, ok := n.(node.Lines); ok {
-			var lines []string
-			for _, line := range m.Lines() {
-				lines = append(lines, string(line))
-			}
+			lines := btosSlice(m.Lines())
+
 			data["Lines"] = lines
 			data["Text"] = strings.Join(lines, "\n")
 		}
@@ -122,6 +126,15 @@ func (r *Renderer) FuncMap() template.FuncMap {
 			return template.HTML(b.String())
 		},
 	}
+}
+
+// btosSlice returns a slice of strings from a slice of bytes.
+func btosSlice(p [][]byte) []string {
+	var lines []string
+	for _, line := range p {
+		lines = append(lines, string(line))
+	}
+	return lines
 }
 
 func onlyLineComment(inlines []node.Inline) bool {
@@ -197,6 +210,7 @@ func groupBySeqNum(items []aggregator.Item) seqNumGroup {
 	return s.groupBySeqNum(items)
 }
 
+// seqNumGrouper groups aggregator items by their sequence number.
 type seqNumGrouper struct {
 	lowest int
 	indent int
@@ -447,4 +461,26 @@ func (p *attrParser) parseAttr() (string, string) {
 	}
 
 	return name.String(), value.String()
+}
+
+// htmlAttrs returns a HTML-formatted string of attributes from the given attrs.
+func htmlAttrs(attrs map[string]string) template.HTMLAttr {
+	var b strings.Builder
+
+	var i int
+	for name, value := range attrs {
+		if i > 0 {
+			b.WriteString(" ")
+		}
+
+		b.WriteString(name)
+
+		if value != "" {
+			b.WriteString(`="` + value + `"`)
+		}
+
+		i++
+	}
+
+	return template.HTMLAttr(b.String())
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/touchmarine/to/aggregator"
 	"github.com/touchmarine/to/node"
-	"sort"
 	"strings"
 	"testing"
 )
@@ -768,6 +767,16 @@ func TestParseAttr(t *testing.T) {
 			"a=1b=2",
 			map[string]string{"a": "1b=2"},
 		},
+
+		// duplicates
+		{
+			"a a",
+			map[string]string{"a": ""},
+		},
+		{
+			"a=a a=b",
+			map[string]string{"a": "b"},
+		},
 	}
 
 	for _, c := range cases {
@@ -786,27 +795,6 @@ func TestParseAttr(t *testing.T) {
 			}
 		})
 	}
-}
-
-func namedStr(m map[string]string) string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	var b strings.Builder
-	var i int
-	for _, k := range keys {
-		if i > 0 {
-			b.WriteString("; ")
-		}
-
-		b.WriteString(k + ": " + m[k])
-		i++
-	}
-
-	return b.String()
 }
 
 func jsonMarshal(t *testing.T, v interface{}) string {
