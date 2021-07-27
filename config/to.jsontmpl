@@ -1,6 +1,11 @@
 {
 	"rootTemplates": {
-		"html": "<html>\n<body>\n{{render .}}\n</body>\n</html>"
+		"html": '''
+<html>
+<body>
+{{render .}}
+</body>
+</html>'''
 	},
 	"Text": {
 		"templates": {
@@ -9,7 +14,12 @@
 	},
 	"Line": {
 		"templates": {
-			"html": "{{if and (gt (len .InlineChildren) 0) (not (onlyLineComment .InlineChildren))}}\n\t{{- range .InlineChildren}}\n\t\t{{- render .}}\n\t{{- end}}\n{{- end}}"
+			"html": '''
+{{if and (gt (len .InlineChildren) 0) (not (onlyLineComment .InlineChildren))}}
+	{{- range .InlineChildren}}
+		{{- render .}}
+	{{- end}}
+{{- end}}'''
 		}
 	},
 	"Paragraph": {
@@ -28,7 +38,12 @@
 			"type": "walled",
 			"delimiter": ">",
 			"templates": {
-				"html": "<blockquote {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{end -}}\n</blockquote>"
+				"html": '''
+<blockquote {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+	{{- range .BlockChildren}}
+		{{render .}}
+	{{end -}}
+</blockquote>'''
 			}
 		},
 		{
@@ -36,7 +51,15 @@
 			"type": "walled",
 			"delimiter": ":",
 			"templates": {
-				"html": "<div\n\tstyle=\"margin-left: 1em;padding-left:1em;border-left:2px solid deepskyblue;\"\n\t{{- with .HatAttrs}} {{htmlAttrs .}}{{end}}\n>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{end -}}\n</div>"
+				"html": '''
+<div
+	style="margin-left: 1em;padding-left:1em;border-left:2px solid deepskyblue;"
+	{{- with .HatAttrs}} {{htmlAttrs .}}{{end}}
+>
+	{{- range .BlockChildren}}
+		{{render .}}
+	{{end -}}
+</div>'''
 			}
 		},
 		{
@@ -44,7 +67,16 @@
 			"type": "hanging",
 			"delimiter": "*",
 			"templates": {
-				"html": "<dl {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range $index, $element := .BlockChildren}}\n\t\t{{- if eq $index 0}}\n\t\t\t<dt>{{render $element}}</dt>\n\t\t{{- else}}\n\t\t\t<dd>{{render $element}}</dd>\n\t\t{{- end}}\n\t{{end -}}\n</dl>"
+				"html": '''
+<dl {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+	{{- range $index, $element := .BlockChildren}}
+		{{- if eq $index 0}}
+			<dt>{{render $element}}</dt>
+		{{- else}}
+			<dd>{{render $element}}</dd>
+		{{- end}}
+	{{end -}}
+</dl>'''
 			}
 		},
 		{
@@ -52,7 +84,10 @@
 			"type": "fenced",
 			"delimiter": "`",
 			"templates": {
-				"html": "<pre {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}><code {{- with head .Lines}} lang=\"{{.}}\"{{end}}>\n\t{{- body .Lines -}}\n</code></pre>"
+				"html": '''
+<pre {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}><code {{- with head .Lines}} lang="{{.}}"{{end}}>
+	{{- body .Lines -}}
+</code></pre>'''
 			}
 		},
 		{
@@ -60,7 +95,10 @@
 			"type": "fenced",
 			"delimiter": "'",
 			"templates": {
-				"html": "<pre {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>\n\t{{- body .Lines -}}\n</pre>"
+				"html": '''
+<pre {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+	{{- body .Lines -}}
+</pre>'''
 			}
 		},
 		{
@@ -69,7 +107,12 @@
 			"delimiter": "=",
 			"ranked": true,
 			"templates": {
-				"html": "<h{{.Rank}} {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{end -}}\n</h{{.Rank}}>"
+				"html": '''
+<h{{.Rank}} {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+	{{- range .BlockChildren}}
+		{{render .}}
+	{{end -}}
+</h{{.Rank}}>'''
 			}
 		},
 		{
@@ -79,7 +122,14 @@
 			"ranked": true,
 			"minRank": 2,
 			"templates": {
-				"html": "<h{{.Rank}} id=\"{{.TextContent}}\" {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>\n\t<span style=\"float:left\">{{.SeqNum}}&nbsp;</span>\n\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{end -}}\n</h{{.Rank}}>"
+				"html": '''
+<h{{.Rank}} id="{{.TextContent}}" {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+	<span style="float:left">{{.SeqNum}}&nbsp;</span>
+
+	{{- range .BlockChildren}}
+		{{render .}}
+	{{end -}}
+</h{{.Rank}}>'''
 			}
 		},
 		{
@@ -88,7 +138,14 @@
 			"delimiter": ".image",
 			"verbatim": true,
 			"templates": {
-				"html": "<img\n\t{{- with primarySecondary .Lines}}\n\t\t{{- with .Primary}} src=\"{{.}}\"{{end}}\n\t\t{{- with .Secondary}} alt=\"{{.}}\"{{end}}\n\t{{- end}}\n\t{{- with .HatAttrs}} {{htmlAttrs .}}{{end -}}\n/>"
+				"html": '''
+<img
+	{{- with primarySecondary .Lines}}
+		{{- with .Primary}} src="{{.}}"{{end}}
+		{{- with .Secondary}} alt="{{.}}"{{end}}
+	{{- end}}
+	{{- with .HatAttrs}} {{htmlAttrs .}}{{end -}}
+/>'''
 			}
 		},
 		{
@@ -120,7 +177,24 @@
 			"type": "hanging",
 			"delimiter": ".toc",
 			"templates": {
-				"html": "<div {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>\n\t<p>{{range .BlockChildren}}{{render .}}{{end}}</p>\n\n\t{{block \"grouper\" groupBySeqNum .Aggregates.Headings}}\n\t\t<ul>\n\t\t\t{{range .}}\n\t\t\t\t{{if isSeqNumGroup .}}\n\t\t\t\t\t{{template \"grouper\" .}}\n\t\t\t\t{{else}}\n\t\t\t\t\t<li>\n\t\t\t\t\t\t<a href=\"#{{.ID}}\">{{.SeqNum}} {{.Text}}</a>\n\t\t\t\t\t</li>\n\t\t\t\t{{end}}\n\t\t\t{{end}}\n\t\t</ul>\n\t{{end}}\n</div>"
+				"html": '''
+<div {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+	<p>{{range .BlockChildren}}{{render .}}{{end}}</p>
+
+	{{block "grouper" groupBySeqNum .Aggregates.Headings}}
+		<ul>
+			{{range .}}
+				{{if isSeqNumGroup .}}
+					{{template "grouper" .}}
+				{{else}}
+					<li>
+						<a href="#{{.ID}}">{{.SeqNum}} {{.Text}}</a>
+					</li>
+				{{end}}
+			{{end}}
+		</ul>
+	{{end}}
+</div>'''
 			}
 		},
 
@@ -153,7 +227,14 @@
 			"type": "forward",
 			"delimiter": "<",
 			"templates": {
-				"html": "<a href=\"{{.Content}}\">\n\t{{- range .InlineChildren}}\n\t\t{{render .}}\n\t{{- else}}\n\t\t{{.Content}}\n\t{{- end -}}\n</a>"
+				"html": '''
+<a href="{{.Content}}">
+	{{- range .InlineChildren}}
+		{{render .}}
+	{{- else}}
+		{{.Content}}
+	{{- end -}}
+</a>'''
 			}
 		}
 	],
@@ -162,21 +243,36 @@
 			"name": "NumberedListDot",
 			"element": "NumberedListItemDot",
 			"templates": {
-				"html": "<ol class=\"dot\" {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{- end}}\n</ol>"
+				"html": '''
+<ol class="dot" {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+	{{- range .BlockChildren}}
+		{{render .}}
+	{{- end}}
+</ol>'''
 			}
 		},
 		{
 			"name": "NumberedListParen",
 			"element": "NumberedListItemParen",
 			"templates": {
-				"html": "<ol class=\"paren\" {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{- end}}\n</ol>"
+				"html": '''
+<ol class="paren" {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+	{{- range .BlockChildren}}
+		{{render .}}
+	{{- end}}
+</ol>'''
 			}
 		},
 		{
 			"name": "ListDot",
 			"element": "ListItemDot",
 			"templates": {
-				"html": "<ul {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{- end}}\n</ul>"
+				"html": '''
+<ul {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+	{{- range .BlockChildren}}
+		{{render .}}
+	{{- end}}
+</ul>'''
 			}
 		}
 	],
