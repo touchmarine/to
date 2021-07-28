@@ -230,9 +230,9 @@
 				"html": '''
 <a href="{{.Content}}">
 	{{- range .InlineChildren}}
-		{{render .}}
+		{{- render .}}
 	{{- else}}
-		{{.Content}}
+		{{- .Content}}
 	{{- end -}}
 </a>'''
 			}

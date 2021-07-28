@@ -153,7 +153,7 @@
 			"type": "forward",
 			"delimiter": "<",
 			"templates": {
-				"html": "<a href=\"{{.Content}}\">\n\t{{- range .InlineChildren}}\n\t\t{{render .}}\n\t{{- else}}\n\t\t{{.Content}}\n\t{{- end -}}\n</a>"
+				"html": "<a href=\"{{.Content}}\">\n\t{{- range .InlineChildren}}\n\t\t{{- render .}}\n\t{{- else}}\n\t\t{{- .Content}}\n\t{{- end -}}\n</a>"
 			}
 		}
 	],

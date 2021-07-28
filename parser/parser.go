@@ -907,7 +907,7 @@ func (p *parser) parseEscaped(name string) node.Inline {
 	if !p.atEOL() {
 		var b bytes.Buffer
 		for {
-			if p.ch == counterpart(escape) && p.peekEquals(delim) {
+			if p.ch == counterpart(escape) && p.peekEquals(counterpart(delim)) {
 				p.nextch()
 				p.nextch()
 				break

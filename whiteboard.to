@@ -157,6 +157,27 @@ RFC2119(#rfc2119)
 <Multi word link><https://koala.test>
 <Multi word link></relative>
 (Look at this <multi word link><https://koala.teskoala.test... and an <image of a duck><https://images.com/duck.jpg>.
+
+// or composite grouper
+
+// [[ is a link, (( is a grouper -> ((text [[link]]))-like signature is a link
+// with text
+[[#HTTP]]
+[[/relative]]
+((Multi word link[[https://koala.test]]))
+((Multi word link[[/relative]]))
+(Look at this ((multi word link[[https://koala.test]])))
+
+// Similar to the option above, but would need a special element with a single
+// delimiter. Additionally, with the same rules as for other elements, mainly
+// permitted leading and trailing space and optional closing delimiter, we would
+// quickly get false positives. For example, "1 < 2", would result in a text
+// followed by a link.
+<#HTTP>
+</relative>
+((Multi word link<https://koala.test>))
+((Multi word link</relative>))
+(Look at this ((multi word link<https://koala.test>)))
 ``
 
 ### Code
