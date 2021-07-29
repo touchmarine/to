@@ -814,8 +814,6 @@ func (p *parser) parseInline() node.Inline {
 			if p.isEscaped() {
 				return p.parseEscaped(el.Name)
 			}
-		case node.TypeForward:
-			return p.parseForward(el.Name)
 		default:
 			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
 		}
@@ -884,6 +882,7 @@ func (p *parser) parseUniform(name string) node.Inline {
 	defer p.openInline(delim, delim)()
 
 	children := p.parseInlines()
+
 	if inlineEquals([2]rune{delim, delim}, p.closingDelimiter()) {
 		p.nextch()
 		p.nextch()
@@ -928,87 +927,6 @@ func (p *parser) parseEscaped(name string) node.Inline {
 	}
 
 	return &node.Escaped{name, content}
-}
-
-func (p *parser) parseForward(name string) node.Inline {
-	if trace {
-		defer p.tracef("parseForward (%s)", name)()
-		p.printInlines("inlines", p.inlines)
-	}
-
-	delim := p.ch
-	p.nextch()
-
-	var isTwoPart bool
-	var offs int
-	for {
-		if offs > len(p.ln)-1 {
-			break
-		}
-
-		r1, w := utf8.DecodeRune(p.ln[offs:])
-		if r1 == utf8.RuneError {
-			offs += w
-			continue
-		}
-
-		if offs == 0 && p.ch == counterpart(delim) {
-			if r1 == delim {
-				isTwoPart = true
-			}
-			break
-		}
-
-		r2, _ := utf8.DecodeRune(p.ln[offs+w:])
-		if r2 != utf8.RuneError && r1 == counterpart(delim) {
-			if r2 == delim {
-				isTwoPart = true
-			}
-			break
-		}
-
-		offs += w
-	}
-
-	if trace {
-		p.printf("isTwoPart=%t", isTwoPart)
-	}
-
-	var content []byte
-	var children []node.Inline
-
-	if isTwoPart {
-		defer p.openInline(delim, 0)()
-		children = p.parseInlines()
-
-		if inlineEquals([2]rune{delim, 0}, p.closingDelimiter()) {
-			p.nextch()
-		} else {
-			return &node.Forward{name, content, children}
-		}
-
-		p.nextch() // consume opening delimiter of second part
-	}
-
-	if !p.atEOL() {
-		var b bytes.Buffer
-		for {
-			if p.ch == counterpart(delim) {
-				p.nextch()
-				break
-			}
-
-			b.WriteRune(p.ch)
-
-			if !p.nextch() {
-				break
-			}
-		}
-
-		content = b.Bytes()
-	}
-
-	return &node.Forward{name, content, children}
 }
 
 func counterpart(ch rune) rune {
@@ -1125,8 +1043,6 @@ func (p *parser) isInlineDelimiter() bool {
 			if p.isEscaped() {
 				return true
 			}
-		case node.TypeForward:
-			return true
 		default:
 			panic(fmt.Sprintf("parser.parseText: unexpected node type %s (%s)", el.Type, el.Name))
 		}

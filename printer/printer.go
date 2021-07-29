@@ -405,7 +405,6 @@ L:
 					for _, c := range counterpartChars {
 						cases = append(cases, string(d)+string(c))
 					}
-				case node.TypeForward:
 				default:
 					panic(fmt.Sprintf("printer: unexpected node type %s", e.Type))
 				}
@@ -521,9 +520,6 @@ func (p *printer) delimiters() (string, string, bool) {
 					pre = delim + delim
 					post = pre
 				}
-			case node.TypeForward:
-				pre = delim
-				post = string(counterpart(r))
 			default:
 				panic(fmt.Sprintf("printer: unexpected node type %s (%s)", typ, name))
 			}

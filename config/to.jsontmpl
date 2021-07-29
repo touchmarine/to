@@ -221,21 +221,6 @@
 			"templates": {
 				"html": "<code>{{.Content}}</code>"
 			}
-		},
-		{
-			"name": "Link",
-			"type": "forward",
-			"delimiter": "<",
-			"templates": {
-				"html": '''
-<a href="{{.Content}}">
-	{{- range .InlineChildren}}
-		{{- render .}}
-	{{- else}}
-		{{- .Content}}
-	{{- end -}}
-</a>'''
-			}
 		}
 	],
 	"groups": [
