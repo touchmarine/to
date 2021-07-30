@@ -77,6 +77,9 @@ func (s *stringifier) stringify(nodes []node.Node) {
 		case node.Content:
 			s.write([]byte(strconv.Quote(string(m.Content()))))
 
+		case node.Composited:
+			s.stringify(node.InlinesToNodes([]node.Inline{m.Primary(), m.Secondary()}))
+
 		case node.Boxed:
 			s.stringify([]node.Node{m.Unbox()})
 

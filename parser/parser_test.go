@@ -2725,6 +2725,25 @@ func TestEscaped(t *testing.T) {
 			},
 		},
 
+		{
+			"a\\````",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a`"),
+					&node.Escaped{"Code", []byte("`")},
+				}},
+			},
+		},
+		{
+			"a\\[[]]",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a["),
+					&node.Escaped{"Link", []byte("]")},
+				}},
+			},
+		},
+
 		// nested elements are not allowed
 		{
 			"a`(``)`",

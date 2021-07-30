@@ -122,6 +122,16 @@ type InlineChildren interface {
 	InlineChildren() []Inline
 }
 
+type SettableInlineChildren interface {
+	InlineChildren
+	SetInlineChildren(children []Inline)
+}
+
+type Composited interface {
+	Primary() Inline
+	Secondary() Inline
+}
+
 type Ranked interface {
 	Rank() uint
 }
@@ -141,6 +151,19 @@ func NodesToBlocks(nodes []Node) []Block {
 		blocks[i] = block
 	}
 	return blocks
+}
+
+// NodesToInlines converts nodes to blocks.
+func NodesToInlines(nodes []Node) []Inline {
+	inlines := make([]Inline, len(nodes))
+	for i, n := range nodes {
+		inline, ok := n.(Inline)
+		if !ok {
+			panic(fmt.Sprintf("node: node %s does not implement node.Inline", n.Node()))
+		}
+		inlines[i] = inline
+	}
+	return inlines
 }
 
 // BlocksToNodes converts blocks to nodes.
@@ -174,6 +197,10 @@ func (l Line) Block() {}
 
 func (l *Line) InlineChildren() []Inline {
 	return l.Children
+}
+
+func (l *Line) SetInlineChildren(children []Inline) {
+	l.Children = children
 }
 
 type Walled struct {
@@ -342,6 +369,26 @@ func (g *Group) SetBlockChildren(children []Block) {
 	g.Children = children
 }
 
+type Composite struct {
+	Name       string
+	Primary0   Inline
+	Secondary0 Inline
+}
+
+func (c Composite) Node() string {
+	return c.Name
+}
+
+func (c Composite) Inline() {}
+
+func (c *Composite) Primary() Inline {
+	return c.Primary0
+}
+
+func (c *Composite) Secondary() Inline {
+	return c.Secondary0
+}
+
 type Hat struct {
 	Lines0 [][]byte
 	Nod    Node
@@ -389,9 +436,21 @@ func ExtractText(n Node) string {
 	var b strings.Builder
 
 	switch n.(type) {
-	case BlockChildren, InlineChildren, Content, Lines:
+	case BlockChildren, InlineChildren, Content, Lines, Composited, Boxed:
 	default:
 		panic(fmt.Sprintf("ExtractText: unexpected node type %T", n))
+	}
+
+	if m, ok := n.(Boxed); ok {
+		unboxed := m.Unbox()
+		if unboxed == nil {
+			return ""
+		}
+		return ExtractText(unboxed)
+	}
+
+	if m, ok := n.(Composited); ok {
+		return ExtractText(m.Primary())
 	}
 
 	if m, ok := n.(BlockChildren); ok {

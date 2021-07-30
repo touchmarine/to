@@ -151,6 +151,18 @@ func TestFprint(t *testing.T) {
 		{"a``b ", "a``b ``"},
 		{"a__``b", "a__``b``__"},
 
+		// composite
+		{"(())[[]]", ""},
+		{"((a))[[b]]", "((a))[[b]]"},
+		{"a((b))[[c]]", "a((b))[[c]]"},
+		{"(( a ))[[b]]", "(( a ))[[b]]"},
+		{"((a))[[ b ]]", "((a))[[ b ]]"},
+		{"((a))[(b)]", "((a))[[b]]"},
+		{"((((c))[[d]]a))[[b]]", "((((c))[[d]]a))[[b]]"},
+
+		{"((``a))[[b]]", "((``a))[[b]]``))"},
+		{"((``a``))[[b]]", "((``a``))[[b]]"},
+
 		// block escape
 		{`\**`, ""},
 		{`\**a`, `\**a**`},
@@ -170,7 +182,16 @@ func TestFprint(t *testing.T) {
 		{`a\\**`, `a\\`},
 		{`a\**b`, `a\**b`},
 		{`a\\**b`, `a\\**b**`},
+		{"a\\``", "a\\``"},
+		{"a\\```", "a\\```"},
+		{"a\\```b", "a\\```b``"},
+		{`a\[[`, `a\[[`},
 		{`a\//`, `a\//`},
+		{`a\(())[[]]`, `a\(())`},
+		{`a(())\[[]]`, `a\[[[]]]`},
+		{`a\((a))[[b]]`, `a\((a))[[b]]`},
+		{`a((a))\[[b]]`, `a((a))\[[b]]`},
+		{`a\((a))\[[b]]`, `a\((a))\[[b]]`},
 
 		{`.toc\==a`, `.toc \==a`},
 
@@ -225,6 +246,7 @@ func TestFprint(t *testing.T) {
 			nodes = transformer.Group(conf.Groups, nodes)
 			nodes = transformer.Sequence(conf.Elements, nodes)
 			nodes = transformer.BlankLine(nodes)
+			nodes = transformer.Composite(conf.Composites, nodes)
 
 			var b strings.Builder
 			printer.Fprint(&b, conf, nodes)

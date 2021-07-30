@@ -45,59 +45,26 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 		}
 
 		switch n.(type) {
-		case node.Boxed, node.Ranked, node.BlockChildren, node.InlineChildren, node.Content, node.Lines:
+		case node.BlockChildren, node.InlineChildren, node.Content,
+			node.Lines, node.Composited, node.Ranked, node.Boxed:
 		default:
-			panic(fmt.Sprintf("Render: unexpected node %T", n))
+			panic(fmt.Sprintf("render: unexpected node %T", n))
 		}
 
 		data := make(map[string]interface{})
 
-		if m, ok := n.(node.Boxed); ok {
-			switch k := n.(type) {
-			case *node.Hat:
-				lines := btosSlice(k.Lines())
-				joined := strings.Join(lines, "\n")
-
-				data["Hat"] = joined
-				data["HatAttrs"] = parseAttrs(lines)
-			case *node.SeqNumBox:
-				data["SeqNums"] = k.SeqNums
-				data["SeqNum"] = k.SeqNum()
-			default:
-				panic(fmt.Sprintf("Render: unexpected Boxed node %T", n))
-			}
-
-			n = m.Unbox()
-			if n == nil {
+		if boxed, isBoxed := n.(node.Boxed); isBoxed {
+			unboxed := boxed.Unbox()
+			if unboxed == nil {
 				continue
 			}
+
+			fillData(data, n)
+
+			n = unboxed
 		}
 
-		data["TextContent"] = node.ExtractText(n)
-
-		if m, ok := n.(node.Ranked); ok {
-			data["Rank"] = strconv.FormatUint(uint64(m.Rank()), 10)
-		}
-
-		if m, ok := n.(node.BlockChildren); ok {
-			data["BlockChildren"] = m.BlockChildren()
-		}
-
-		if m, ok := n.(node.InlineChildren); ok {
-			data["InlineChildren"] = m.InlineChildren()
-		}
-
-		if m, ok := n.(node.Content); ok {
-			data["Content"] = string(m.Content())
-		}
-
-		if m, ok := n.(node.Lines); ok {
-			lines := btosSlice(m.Lines())
-
-			data["Lines"] = lines
-			data["Text"] = strings.Join(lines, "\n")
-		}
-
+		fillData(data, n)
 		for k, v := range r.data {
 			data[k] = v
 		}
@@ -105,6 +72,58 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 		name := n.Node()
 		if err := r.tmpl.ExecuteTemplate(out, name, data); err != nil {
 			panic(err)
+		}
+	}
+}
+
+func fillData(data map[string]interface{}, n node.Node) {
+	data["TextContent"] = node.ExtractText(n)
+
+	if m, ok := n.(node.BlockChildren); ok {
+		data["BlockChildren"] = m.BlockChildren()
+	}
+
+	if m, ok := n.(node.InlineChildren); ok {
+		data["InlineChildren"] = m.InlineChildren()
+	}
+
+	if m, ok := n.(node.Content); ok {
+		data["Content"] = string(m.Content())
+	}
+
+	if m, ok := n.(node.Lines); ok {
+		lines := btosSlice(m.Lines())
+
+		data["Lines"] = lines
+		data["Text"] = strings.Join(lines, "\n")
+	}
+
+	if m, ok := n.(node.Composited); ok {
+		primary, secondary := make(map[string]interface{}), make(map[string]interface{})
+		fillData(primary, m.Primary())
+		fillData(secondary, m.Secondary())
+
+		data["PrimaryElement"] = primary
+		data["SecondaryElement"] = secondary
+	}
+
+	if m, ok := n.(node.Ranked); ok {
+		data["Rank"] = strconv.FormatUint(uint64(m.Rank()), 10)
+	}
+
+	if _, ok := n.(node.Boxed); ok {
+		switch k := n.(type) {
+		case *node.Hat:
+			lines := btosSlice(k.Lines())
+			joined := strings.Join(lines, "\n")
+
+			data["Hat"] = joined
+			data["HatAttrs"] = parseAttrs(lines)
+		case *node.SeqNumBox:
+			data["SeqNums"] = k.SeqNums
+			data["SeqNum"] = k.SeqNum()
+		default:
+			panic(fmt.Sprintf("render: unexpected Boxed node %T", n))
 		}
 	}
 }

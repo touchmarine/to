@@ -36,6 +36,7 @@ type Config struct {
 		Templates map[string]string `json:"templates"`
 	}
 	Elements   []Element   `json:"elements"`
+	Composites []Composite `json:"composites"`
 	Groups     []Group     `json:"groups"`
 	Aggregates []Aggregate `json:"aggregates"`
 }
@@ -47,6 +48,15 @@ func (c *Config) Element(name string) (Element, bool) {
 		}
 	}
 	return Element{}, false
+}
+
+func (c *Config) Composite(name string) (Composite, bool) {
+	for _, comp := range c.Composites {
+		if comp.Name == name {
+			return comp, true
+		}
+	}
+	return Composite{}, false
 }
 
 func (c *Config) Group(name string) (Group, bool) {
@@ -109,6 +119,16 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 		}
 	}
 
+	for _, composite := range c.Composites {
+		cTmpl, ok := composite.Templates[name]
+		if !ok {
+			return nil, fmt.Errorf("composite %s %s template not found", composite.Name, name)
+		}
+		if _, err := target.New(composite.Name).Parse(cTmpl); err != nil {
+			return nil, err
+		}
+	}
+
 	for _, group := range c.Groups {
 		gTmpl, ok := group.Templates[name]
 		if !ok {
@@ -131,6 +151,17 @@ type Element struct {
 	MinRank   uint              `json:"minRank"`
 	Verbatim  bool              `json:"verbatim"`
 	Templates map[string]string `json:"templates"`
+}
+
+// Composite is like an inline Group. It is an element created by traversing
+// nodes and trying to recognize patterns between inline elements.
+//
+// The pattern is the PrimaryElement followed by the SecondaryElement.
+type Composite struct {
+	Name             string            `json:"name"`
+	PrimaryElement   string            `json:"primaryElement"`
+	SecondaryElement string            `json:"secondaryElement"`
+	Templates        map[string]string `json:"templates"`
 }
 
 type Group struct {

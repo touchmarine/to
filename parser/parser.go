@@ -1003,7 +1003,7 @@ func (p *parser) isClosingDelimiter() bool {
 			return true
 		}
 
-		if p.ch == counterpart(escape) && p.peekEquals(delim) {
+		if p.ch == counterpart(escape) && p.peekEquals(counterpart(delim)) {
 			ok = true
 			break
 		}
@@ -1023,7 +1023,7 @@ func (p *parser) closingDelimiter() [2]rune {
 			return [2]rune{0, p.ch}
 		}
 
-		if p.ch == counterpart(escape) && p.peekEquals(delim) {
+		if p.ch == counterpart(escape) && p.peekEquals(counterpart(delim)) {
 			return [2]rune{p.ch, delim}
 		}
 	}

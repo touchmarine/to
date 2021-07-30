@@ -125,6 +125,14 @@
 		},
 
 		{
+			"name": "Group",
+			"type": "uniform",
+			"delimiter": "(",
+			"templates": {
+				"html": "{{range .InlineChildren}}{{render .}}{{end}}"
+			}
+		},
+		{
 			"name": "Emphasis",
 			"type": "uniform",
 			"delimiter": "_",
@@ -141,11 +149,29 @@
 			}
 		},
 		{
+			"name": "Link",
+			"type": "escaped",
+			"delimiter": "[",
+			"templates": {
+				"html": "<a href=\"{{.Content}}\">{{.Content}}</a>"
+			}
+		},
+		{
 			"name": "Code",
 			"type": "escaped",
 			"delimiter": "`",
 			"templates": {
 				"html": "<code>{{.Content}}</code>"
+			}
+		}
+	],
+	"composites": [
+		{
+			"name": "NamedLink",
+			"primaryElement": "Group",
+			"secondaryElement": "Link",
+			"templates": {
+				"html": "<a href=\"{{.SecondaryElement.Content}}\">{{range .PrimaryElement.InlineChildren}}{{render .}}{{end}}</a>\n"
 			}
 		}
 	],

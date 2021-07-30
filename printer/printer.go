@@ -289,6 +289,8 @@ func (p *printer) printNode() {
 		default:
 			b.Write(m.Content())
 		}
+	case node.Composited:
+		p.printChildren(&b, []node.Node{m.Primary(), m.Secondary()})
 	}
 
 	return
@@ -442,8 +444,9 @@ func (p *printer) delimiters() (string, string, bool) {
 	default:
 		el, ok := p.conf.Element(name)
 		if !ok {
+			_, compOk := p.conf.Composite(name)
 			_, grpOk := p.conf.Group(name)
-			if grpOk {
+			if compOk || grpOk {
 				return "", "", false
 			} else {
 				panic("printer: unexpected element " + name)
@@ -486,7 +489,7 @@ func (p *printer) delimiters() (string, string, bool) {
 			switch typ {
 			case node.TypeUniform:
 				pre = delim + delim
-				post = pre
+				post = counterpartString(pre)
 			case node.TypeEscaped:
 				var content []byte
 				if m, ok := p.n.(node.Content); ok {
@@ -518,7 +521,7 @@ func (p *printer) delimiters() (string, string, bool) {
 					}
 				} else {
 					pre = delim + delim
-					post = pre
+					post = counterpartString(pre)
 				}
 			default:
 				panic(fmt.Sprintf("printer: unexpected node type %s (%s)", typ, name))
@@ -614,6 +617,14 @@ func trimLines(lines [][]byte) [][]byte {
 	}
 
 	return l
+}
+
+func counterpartString(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		b.WriteRune(counterpart(r))
+	}
+	return b.String()
 }
 
 func counterpart(ch rune) rune {
