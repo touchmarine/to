@@ -367,10 +367,14 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 		return
 	}
 
+	if trace {
+		p.printf("content=%q", t.Content())
+	}
+
 	var b bytes.Buffer
 
 	var i int
-L:
+OuterLoop:
 	for i < len(content) {
 		ch := content[i]
 
@@ -387,6 +391,9 @@ L:
 			i += 2
 			continue
 		}
+
+		// TODO: check also the delimiter of the next element when
+		// determining if the inline elements needs escaping
 
 		for _, e := range p.conf.Elements {
 			if node.TypeCategory(e.Type) == node.CategoryInline {
@@ -416,7 +423,17 @@ L:
 						// matches inline delimiter
 						b.WriteString(`\` + c)
 						i += len(c)
-						continue L
+						continue OuterLoop
+					}
+
+					if peekDelim := p.peekDelimiter(); peekDelim > -1 {
+						d := string(ch) + string(peekDelim)
+						if d == c {
+							b.WriteString(`\`)
+							b.WriteByte(ch)
+							i++
+							continue OuterLoop
+						}
 					}
 				}
 			}
@@ -538,6 +555,43 @@ func (p *printer) delimiters() (string, string, bool) {
 	}
 
 	return pre, post, needInlineEscape
+}
+
+func (p *printer) peekDelimiter() rune {
+	peek := p.peek()
+	if peek == nil {
+		return -1
+	}
+
+	if _, isInline := peek.(node.Inline); !isInline {
+		return -1
+	}
+
+	switch name := peek.Node(); name {
+	case "Text":
+		return -1
+	case "LineComment":
+		return '/'
+	default:
+		el, ok := p.conf.Element(name)
+		if !ok {
+			_, compOk := p.conf.Composite(name)
+			_, grpOk := p.conf.Group(name)
+			if compOk || grpOk {
+				return -1
+			} else {
+				panic("printer: unexpected element " + name)
+			}
+		}
+
+		r, _ := utf8.DecodeRuneInString(el.Delimiter)
+		// perfom the same check as parser
+		if r == utf8.RuneError {
+			panic("printer: invalid UTF-8 encoding in delimiter")
+		}
+
+		return r
+	}
 }
 
 func (p *printer) needInlineEscape(delim string) bool {
