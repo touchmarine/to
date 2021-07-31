@@ -32,9 +32,6 @@ type Config struct {
 	Paragraph struct {
 		Templates map[string]string `json:"templates"`
 	}
-	LineComment struct {
-		Templates map[string]string `json:"templates"`
-	}
 	Elements   []Element   `json:"elements"`
 	Composites []Composite `json:"composites"`
 	Groups     []Group     `json:"groups"`
@@ -98,14 +95,6 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 		return nil, fmt.Errorf("Paragraph %s template not found", name)
 	}
 	if _, err := target.New("Paragraph").Parse(paraTmpl); err != nil {
-		return nil, err
-	}
-
-	lineCommentTmpl, ok := c.LineComment.Templates[name]
-	if !ok {
-		return nil, fmt.Errorf("LineComment %s template not found", name)
-	}
-	if _, err := target.New("LineComment").Parse(lineCommentTmpl); err != nil {
 		return nil, err
 	}
 

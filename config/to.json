@@ -9,17 +9,12 @@
 	},
 	"Line": {
 		"templates": {
-			"html": "{{if and (gt (len .InlineChildren) 0) (not (onlyLineComment .InlineChildren))}}\n\t{{- range .InlineChildren}}\n\t\t{{- render .}}\n\t{{- end}}\n{{- end}}"
+			"html": "{{- range .InlineChildren}}\n\t{{- render .}}\n{{- end}}"
 		}
 	},
 	"Paragraph": {
 		"templates": {
 			"html": "<p>{{range .BlockChildren}}{{render .}}{{end}}</p>"
-		}
-	},
-	"LineComment": {
-		"templates": {
-			"html": ""
 		}
 	},
 	"elements": [
@@ -146,6 +141,14 @@
 			"delimiter": "*",
 			"templates": {
 				"html": "<strong>{{range .InlineChildren}}{{render .}}{{end}}</strong>"
+			}
+		},
+		{
+			"name": "Comment",
+			"type": "escaped",
+			"delimiter": "/",
+			"templates": {
+				"html": ""
 			}
 		},
 		{

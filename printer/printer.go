@@ -76,23 +76,13 @@ func (p *printer) printNodes() {
 
 		p.printNode()
 
-		if peek := p.peek(); peek != nil {
-			if p.isInline() {
-				if _, ok := peek.(node.LineComment); ok {
-					if trace {
-						p.print("space before comment")
-					}
-
-					p.w.Write([]byte(" "))
-				}
+		if peek := p.peek(); peek != nil && !p.isInline() {
+			if _, isInGroup := p.parent.(*node.Group); isInGroup || isLine(p.n) && isLine(peek) {
+				p.newline(p.w)
 			} else {
-				if _, isInGroup := p.parent.(*node.Group); isInGroup || isLine(p.n) && isLine(peek) {
-					p.newline(p.w)
-				} else {
-					p.newline(p.w)
-					p.prefix(p.w, false)
-					p.newline(p.w)
-				}
+				p.newline(p.w)
+				p.prefix(p.w, false)
+				p.newline(p.w)
 			}
 		}
 	}
@@ -283,12 +273,7 @@ func (p *printer) printNode() {
 	case node.Lines:
 		p.printLines(&b, nil, m.Lines())
 	case node.Content:
-		switch m.(type) {
-		case node.LineComment:
-			b.Write(bytes.Trim(m.Content(), " \t"))
-		default:
-			b.Write(m.Content())
-		}
+		b.Write(m.Content())
 	case node.Composited:
 		p.printChildren(&b, []node.Node{m.Primary(), m.Secondary()})
 	}
@@ -385,16 +370,6 @@ OuterLoop:
 			continue
 		}
 
-		if strings.HasPrefix(content[i:], "//") {
-			// comment
-			b.WriteString(`\//`)
-			i += 2
-			continue
-		}
-
-		// TODO: check also the delimiter of the next element when
-		// determining if the inline elements needs escaping
-
 		for _, e := range p.conf.Elements {
 			if node.TypeCategory(e.Type) == node.CategoryInline {
 				// perfom the same check as parser
@@ -427,6 +402,8 @@ OuterLoop:
 					}
 
 					if peekDelim := p.peekDelimiter(); peekDelim > -1 {
+						// escape current character and the next element's
+						// first delimiter character
 						d := string(ch) + string(peekDelim)
 						if d == c {
 							b.WriteString(`\`)
@@ -456,8 +433,6 @@ func (p *printer) delimiters() (string, string, bool) {
 
 	switch name := p.n.Node(); name {
 	case "Text", "Line", "Paragraph":
-	case "LineComment":
-		pre = "// "
 	default:
 		el, ok := p.conf.Element(name)
 		if !ok {
@@ -570,8 +545,6 @@ func (p *printer) peekDelimiter() rune {
 	switch name := peek.Node(); name {
 	case "Text":
 		return -1
-	case "LineComment":
-		return '/'
 	default:
 		el, ok := p.conf.Element(name)
 		if !ok {

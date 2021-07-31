@@ -283,46 +283,6 @@ func (p *parser) consecutive() uint {
 	return i
 }
 
-func (p *parser) isLineComment() bool {
-	if trace {
-		defer p.trace("isLineComment")()
-	}
-
-	t := p.ch == '/' && p.peekEquals('/')
-
-	if trace {
-		p.printf("return %t", t)
-	}
-	return t
-}
-
-func (p *parser) parseLineComment() node.Inline {
-	if trace {
-		defer p.trace("parseLineComment")()
-	}
-
-	p.nextch()
-	p.nextch()
-
-	var b bytes.Buffer
-	for {
-		if p.atEOL() {
-			break
-		}
-
-		b.WriteRune(p.ch)
-		p.nextch()
-	}
-
-	txt := b.Bytes()
-
-	if trace {
-		p.printf("return %q", txt)
-	}
-
-	return node.LineComment(txt)
-}
-
 func (p *parser) parseHat() node.Block {
 	if trace {
 		defer p.trace("parseHat")()
@@ -799,10 +759,6 @@ func (p *parser) parseInline() node.Inline {
 		defer p.trace("parseInline")()
 	}
 
-	if p.isLineComment() {
-		return p.parseLineComment()
-	}
-
 	el, ok := p.inlineElems[p.ch]
 	if ok {
 		switch el.Type {
@@ -958,10 +914,6 @@ func (p *parser) parseText() node.Inline {
 		if p.isInlineEscape() {
 			p.nextch()
 			goto next
-		}
-
-		if p.isLineComment() {
-			break
 		}
 
 		if p.isClosingDelimiter() {

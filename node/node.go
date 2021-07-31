@@ -335,21 +335,6 @@ func (t Text) Content() []byte {
 	return t
 }
 
-// LineComment represents text—an atomic, inline node.
-type LineComment []byte
-
-// Node returns the node's name.
-func (c LineComment) Node() string {
-	return "LineComment"
-}
-
-func (c LineComment) Inline() {}
-
-// Content returns the LineComment's text.
-func (c LineComment) Content() []byte {
-	return c
-}
-
 type Group struct {
 	Name     string
 	Children []Block

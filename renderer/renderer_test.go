@@ -4,54 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/touchmarine/to/aggregator"
-	"github.com/touchmarine/to/node"
 	"strings"
 	"testing"
 )
-
-func TestOnlyLineComment(t *testing.T) {
-	cases := []struct {
-		name string
-		in   []node.Inline
-		out  bool
-	}{
-		{
-			"empty",
-			[]node.Inline{},
-			false,
-		},
-		{
-			"text",
-			[]node.Inline{
-				node.Text("a"),
-			},
-			false,
-		},
-		{
-			"text and comment",
-			[]node.Inline{
-				node.Text("a"),
-				node.LineComment("b"),
-			},
-			false,
-		},
-		{
-			"comment",
-			[]node.Inline{
-				node.LineComment("b"),
-			},
-			true,
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			if got := onlyLineComment(c.in); got != c.out {
-				t.Errorf("got %t, want %t", got, c.out)
-			}
-		})
-	}
-}
 
 func TestHead(t *testing.T) {
 	cases := []struct {

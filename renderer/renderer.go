@@ -13,7 +13,6 @@ import (
 )
 
 var FuncMap = template.FuncMap{
-	"onlyLineComment":  onlyLineComment,
 	"head":             head,
 	"body":             body,
 	"primarySecondary": parsePrimarySecondary,
@@ -154,14 +153,6 @@ func btosSlice(p [][]byte) []string {
 		lines = append(lines, string(line))
 	}
 	return lines
-}
-
-func onlyLineComment(inlines []node.Inline) bool {
-	if len(inlines) == 1 {
-		_, ok := inlines[0].(node.LineComment)
-		return ok
-	}
-	return false
 }
 
 func head(lines []string) string {
