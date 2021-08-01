@@ -16,7 +16,7 @@ const (
 )
 
 //go:generate stringer -type=Type
-type Type uint
+type Type int
 
 // Types of nodes
 const (

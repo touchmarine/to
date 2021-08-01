@@ -55,7 +55,7 @@ type parser struct {
 	ambis  int          // number of current ambiguous lines
 	stage  []node.Block // ambiguous blocks
 
-	inlines [][2]rune // open inlines
+	inlines []rune // open inlines
 
 	// tracing
 	tindent int // trace indentation
@@ -107,14 +107,13 @@ func (p *parser) register(elems []config.Element) {
 	}
 }
 
-// The argument l is whether only line children are allowed.
 func (p *parser) parse(reqdBlocks []rune) []node.Block {
 	if trace {
 		defer p.trace("parse")()
 	}
 
 	var blocks []node.Block
-L:
+OuterLoop:
 	for !p.atEOF {
 		if p.ch == ' ' || p.ch == '\t' {
 			p.parseSpacing()
@@ -147,7 +146,7 @@ L:
 				p.stage = append(p.stage, blocks[len(blocks)-p.ambis:]...)
 				blocks = blocks[:len(blocks)-p.ambis]
 			}
-			break L
+			break OuterLoop
 		case 2: // maybe
 			if len(reqdBlocks) > 0 {
 				// not at top level (we cannot carry ambiguous
@@ -200,7 +199,7 @@ func (p *parser) parseBlock() node.Block {
 					)
 				}
 			case node.TypeFenced:
-				if p.peekEquals(p.ch) {
+				if peek := p.peek(); isValidRune(peek) && p.ch == peek {
 					return p.parseFenced(el.Name)
 				}
 			default:
@@ -223,18 +222,15 @@ OuterLoop:
 		for i, r := range name {
 			if i == 0 {
 				if p.ch != r {
-					// skip
 					continue OuterLoop
 				}
 			} else {
 				if offs > len(p.ln)-1 {
-					// skip
 					continue OuterLoop
 				}
 
 				rr, w := utf8.DecodeRune(p.ln[offs:])
 				if rr != r {
-					// skip
 					continue OuterLoop
 				}
 				offs += w
@@ -732,7 +728,7 @@ func (p *parser) parseInlines() []node.Inline {
 			break
 		}
 
-		if p.isClosingDelimiter() {
+		if p.closingDelimiter() > 0 {
 			break
 		}
 
@@ -746,49 +742,24 @@ func (p *parser) parseInlines() []node.Inline {
 	return inlines
 }
 
-func inlineEquals(opening, closing [2]rune) bool {
-	if opening[1] == 0 {
-		// no escape character
-		return opening[0] == counterpart(closing[1])
-	}
-	return opening[0] == closing[1] && opening[1] == counterpart(closing[0])
-}
-
 func (p *parser) parseInline() node.Inline {
 	if trace {
 		defer p.trace("parseInline")()
 	}
 
-	el, ok := p.inlineElems[p.ch]
+	el, ok := p.openingDelimiter()
 	if ok {
 		switch el.Type {
 		case node.TypeUniform:
-			if p.peekEquals(p.ch) {
-				return p.parseUniform(el.Name)
-			}
+			return p.parseUniform(el.Name)
 		case node.TypeEscaped:
-			if p.isEscaped() {
-				return p.parseEscaped(el.Name)
-			}
+			return p.parseEscaped(el.Name)
 		default:
 			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
 		}
 	}
 
 	return p.parseText()
-}
-
-func (p *parser) isEscaped() bool {
-	if p.peekEquals(p.ch) {
-		return true
-	}
-
-	peek, _ := utf8.DecodeRune(p.ln)
-	if peek != utf8.RuneError {
-		_, ok := leftRightChars[peek]
-		return ok
-	}
-	return false
 }
 
 func (p *parser) isInlineEscape() bool {
@@ -803,7 +774,7 @@ func (p *parser) isInlineEscape() bool {
 		return false
 	}
 
-	peek, _ := utf8.DecodeRune(p.ln)
+	peek := p.peek()
 	if peek == utf8.RuneError {
 		if trace {
 			p.print("return false")
@@ -832,16 +803,14 @@ func (p *parser) parseUniform(name string) node.Inline {
 	}
 
 	delim := p.ch
-	p.nextch()
-	p.nextch()
+	p.nextchn(2)
 
-	defer p.openInline(delim, delim)()
+	defer p.openInline(delim)()
 
 	children := p.parseInlines()
 
-	if inlineEquals([2]rune{delim, delim}, p.closingDelimiter()) {
-		p.nextch()
-		p.nextch()
+	if p.closingDelimiter() == counterpart(delim) {
+		p.nextchn(2)
 	}
 
 	return &node.Uniform{name, children}
@@ -853,18 +822,32 @@ func (p *parser) parseEscaped(name string) node.Inline {
 	}
 
 	delim := p.ch
-	p.nextch()
-	escape := p.ch
-	p.nextch()
+	c := counterpart(delim)
+	closing := []rune{c, c}
+
+	p.nextchn(2)
+
+	escaped := p.ch == '\\'
+	if escaped {
+		closing = append([]rune{'\\'}, closing...)
+		p.nextch()
+	}
 
 	var content []byte
 
 	if !p.atEOL() {
 		var b bytes.Buffer
 		for {
-			if p.ch == counterpart(escape) && p.peekEquals(counterpart(delim)) {
-				p.nextch()
-				p.nextch()
+			var a []rune
+			if escaped {
+				a = append([]rune{p.ch}, p.peekn(2)...)
+			} else {
+				a = []rune{p.ch, p.peek()}
+			}
+
+			if cmpRunes(a, closing) {
+				// closing delimiter
+				p.nextchn(len(closing))
 				break
 			}
 
@@ -885,6 +868,21 @@ func (p *parser) parseEscaped(name string) node.Inline {
 	return &node.Escaped{name, content}
 }
 
+// cmpRunes determines whether a and b have the same values.
+func cmpRunes(a, b []rune) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := 0; i < len(a); i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
 func counterpart(ch rune) rune {
 	c, ok := leftRightChars[ch]
 	if ok {
@@ -894,14 +892,14 @@ func counterpart(ch rune) rune {
 }
 
 var leftRightChars = map[rune]rune{
+	'{': '}',
+	'}': '{',
+	'[': ']',
+	']': '[',
 	'(': ')',
 	')': '(',
 	'<': '>',
 	'>': '<',
-	'[': ']',
-	']': '[',
-	'{': '}',
-	'}': '{',
 }
 
 func (p *parser) parseText() node.Inline {
@@ -916,11 +914,11 @@ func (p *parser) parseText() node.Inline {
 			goto next
 		}
 
-		if p.isClosingDelimiter() {
+		if p.closingDelimiter() > 0 {
 			break
 		}
 
-		if p.isInlineDelimiter() {
+		if _, ok := p.openingDelimiter(); ok {
 			break
 		}
 
@@ -941,66 +939,45 @@ func (p *parser) parseText() node.Inline {
 	return node.Text(txt)
 }
 
-func (p *parser) isClosingDelimiter() bool {
-	if trace {
-		defer p.trace("isClosingDelimiter")()
-	}
-
-	var ok bool
-	for i := len(p.inlines) - 1; i >= 0; i-- {
-		delim, escape := p.inlines[i][0], p.inlines[i][1]
-		if escape == 0 && p.ch == counterpart(delim) {
-			ok = true
-			break
-			return true
-		}
-
-		if p.ch == counterpart(escape) && p.peekEquals(counterpart(delim)) {
-			ok = true
-			break
-		}
-	}
-
-	if trace {
-		p.printf("return %t", ok)
-	}
-
-	return ok
-}
-
-func (p *parser) closingDelimiter() [2]rune {
-	for i := len(p.inlines) - 1; i >= 0; i-- {
-		delim, escape := p.inlines[i][0], p.inlines[i][1]
-		if escape == 0 && p.ch == counterpart(delim) {
-			return [2]rune{0, p.ch}
-		}
-
-		if p.ch == counterpart(escape) && p.peekEquals(counterpart(delim)) {
-			return [2]rune{p.ch, delim}
-		}
-	}
-
-	return [2]rune{0, 0}
-}
-
-func (p *parser) isInlineDelimiter() bool {
+// openingDelimiter returns the element of inline delimiter if found.
+func (p *parser) openingDelimiter() (config.Element, bool) {
 	el, ok := p.inlineElems[p.ch]
-	if ok {
+	if ok && p.ch == p.peek() {
 		switch el.Type {
-		case node.TypeUniform:
-			if p.peekEquals(p.ch) {
-				return true
-			}
-		case node.TypeEscaped:
-			if p.isEscaped() {
-				return true
-			}
+		case node.TypeUniform, node.TypeEscaped:
+			return el, true
 		default:
 			panic(fmt.Sprintf("parser.parseText: unexpected node type %s (%s)", el.Type, el.Name))
 		}
 	}
 
-	return false
+	return config.Element{}, false
+}
+
+// closingDelimiter returns the closing delimiter if found, otherwise 0.
+func (p *parser) closingDelimiter() rune {
+	if trace {
+		defer p.trace("closingDelimiter")()
+	}
+
+	for i := len(p.inlines) - 1; i >= 0; i-- {
+		delim := p.inlines[i]
+		c := counterpart(delim)
+
+		if p.ch == c && p.peek() == c {
+			if trace {
+				p.printf("return %q (is closing delim)", c)
+			}
+
+			return c
+		}
+	}
+
+	if trace {
+		p.printf("return 0 (not closing delim)")
+	}
+
+	return 0
 }
 
 func (p *parser) init(r io.Reader) {
@@ -1131,6 +1108,17 @@ var (
 	ErrIllegalBOM          = errors.New("illegal byte order mark")
 )
 
+// nextchn calls nextch n times. It returns false if any call returns false.
+func (p *parser) nextchn(n int) bool {
+	for i := 0; i < n; i++ {
+		if !p.nextch() {
+			return false
+		}
+	}
+	return true
+}
+
+// nextch reads the next character.
 func (p *parser) nextch() bool {
 	if trace {
 		defer p.trace("nextch")()
@@ -1177,13 +1165,40 @@ func (p *parser) atEOL() bool {
 	return p.ch == 0
 }
 
-func (p *parser) peekEquals(ch rune) bool {
-	r, _ := utf8.DecodeRune(p.ln)
-	if r == utf8.RuneError {
-		return false
+// peek returns the next character but does not advance the parser.
+func (p *parser) peek() rune {
+	a := p.peekn(1)
+	if len(a) != 1 {
+		panic("parser: unexpected number of peeks")
 	}
 
-	return r == ch
+	return a[0]
+}
+
+// peekn returns n next characters. Slice length is always n. Empty runes are
+// set to 0.
+func (p *parser) peekn(n int) []rune {
+	a := make([]rune, n)
+
+	var offs int
+	for i := 0; i < n; i++ {
+		r, w := utf8.DecodeRune(p.ln[offs:])
+		if r == utf8.RuneError && w == 0 {
+			// empty
+			a[i] = 0
+		} else {
+			a[i] = r
+		}
+
+		offs += w
+	}
+
+	return a
+}
+
+// isValidRune determines whether rune is not empty and not RuneError.
+func isValidRune(r rune) bool {
+	return r > 0 && r != utf8.RuneError
 }
 
 func (p *parser) open(blocks ...rune) func() {
@@ -1258,9 +1273,9 @@ func expandTabs(a []rune) []rune {
 	return n
 }
 
-func (p *parser) openInline(delim rune, escape rune) func() {
+func (p *parser) openInline(delim rune) func() {
 	size := len(p.inlines)
-	p.inlines = append(p.inlines, [2]rune{delim, escape})
+	p.inlines = append(p.inlines, delim)
 
 	return func() {
 		p.inlines = p.inlines[:size]
@@ -1301,27 +1316,8 @@ func fmtBlocks(blocks []rune) string {
 	return b.String()
 }
 
-func (p *parser) printInlines(name string, inlines [][2]rune) {
-	p.print(name + "=" + fmtInlines(inlines))
-}
-
-func fmtInlines(inlines [][2]rune) string {
-	var b strings.Builder
-	b.WriteString("[")
-	for i, v := range inlines {
-		if i > 0 {
-			b.WriteString(", ")
-		}
-
-		b.WriteString(fmt.Sprintf("[del=%q esc=%q]", v[0], v[1]))
-	}
-
-	b.WriteString("]")
-	return b.String()
-}
-
-func reverseInline(i [2]rune) [2]rune {
-	return [2]rune{i[1], i[0]}
+func (p *parser) printInlines(name string, inlines []rune) {
+	p.printf("%s=%q", name, inlines)
 }
 
 func (p *parser) tracef(format string, v ...interface{}) func() {

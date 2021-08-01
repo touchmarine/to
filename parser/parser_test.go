@@ -2547,6 +2547,55 @@ func TestUniform(t *testing.T) {
 			},
 		},
 
+		// left-right delimiter
+		{
+			"((",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Group", nil},
+				}},
+			},
+		},
+		{
+			"(())",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Group", nil},
+				}},
+			},
+		},
+		{
+			"((a",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Group", []node.Inline{
+						node.Text("a"),
+					}},
+				}},
+			},
+		},
+		{
+			"((a))",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Group", []node.Inline{
+						node.Text("a"),
+					}},
+				}},
+			},
+		},
+		{
+			"((a))b",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					&node.Uniform{"Group", []node.Inline{
+						node.Text("a"),
+					}},
+					node.Text("b"),
+				}},
+			},
+		},
+
 		// nested
 		{
 			"__**",
@@ -2634,6 +2683,15 @@ func TestEscaped(t *testing.T) {
 			},
 		},
 		{
+			"a```",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte("`")},
+				}},
+			},
+		},
+		{
 			"a````",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
@@ -2643,84 +2701,85 @@ func TestEscaped(t *testing.T) {
 			},
 		},
 		{
-			"a`()`",
+			"a`````",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text("a"),
 					&node.Escaped{"Code", nil},
+					node.Text("`"),
 				}},
 			},
 		},
 		{
-			"a``b",
+			"a``\\```",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text("a"),
-					&node.Escaped{"Code", []byte("b")},
+					&node.Escaped{"Code", []byte("```")},
 				}},
 			},
 		},
 		{
-			"a``b``",
+			"a``\\`",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text("a"),
-					&node.Escaped{"Code", []byte("b")},
+					&node.Escaped{"Code", []byte("`")},
+				}},
+			},
+		},
+		{
+			"a``\\`\\``",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte("`")},
+				}},
+			},
+		},
+		{
+			"a``\\``\\``",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte("``")},
+				}},
+			},
+		},
+		{
+			"a``\\```\\``",
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte("```")},
 				}},
 			},
 		},
 
 		{
-			"a`(",
+			"a[[",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text("a"),
-					&node.Escaped{"Code", nil},
+					&node.Escaped{"Link", nil},
 				}},
 			},
 		},
 		{
-			"a`(b)`",
+			"a[[[",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text("a"),
-					&node.Escaped{"Code", []byte("b")},
+					&node.Escaped{"Link", []byte("[")},
 				}},
 			},
 		},
 		{
-			"a`)",
+			"a[[]]",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text("a"),
-					&node.Escaped{"Code", nil},
-				}},
-			},
-		},
-		{
-			"a`)b(`",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{
-					node.Text("a"),
-					&node.Escaped{"Code", []byte("b")},
-				}},
-			},
-		},
-		{
-			"a`<",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{
-					node.Text("a"),
-					&node.Escaped{"Code", nil},
-				}},
-			},
-		},
-		{
-			"a`[",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{
-					node.Text("a"),
-					&node.Escaped{"Code", nil},
+					&node.Escaped{"Link", nil},
 				}},
 			},
 		},
@@ -2738,22 +2797,12 @@ func TestEscaped(t *testing.T) {
 			"a\\[[]]",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
-					node.Text("a["),
-					&node.Escaped{"Link", []byte("]")},
+					node.Text("a[[]]"),
 				}},
 			},
 		},
 
 		// nested elements are not allowed
-		{
-			"a`(``)`",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{
-					node.Text("a"),
-					&node.Escaped{"Code", []byte("``")},
-				}},
-			},
-		},
 		{
 			"a``__``",
 			[]node.Node{
@@ -3093,6 +3142,12 @@ func TestInlineEscape(t *testing.T) {
 			},
 		},
 		{
+			`\\\`,
+			[]node.Node{
+				&node.Line{"Line", []node.Inline{node.Text(`\`)}},
+			},
+		},
+		{
 			`\\a`,
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{node.Text(`\a`)}},
@@ -3114,13 +3169,13 @@ func TestInlineEscape(t *testing.T) {
 			},
 		},
 		{
-			"\\\\`(",
+			"\\\\``",
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("`(")}},
+				&node.Line{"Line", []node.Inline{node.Text("``")}},
 			},
 		},
 		{
-			"\\\\\\`(",
+			"\\\\\\``",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
 					node.Text(`\`),
@@ -3163,7 +3218,7 @@ func TestInlineEscape(t *testing.T) {
 			"\\``\\``",
 			[]node.Node{
 				&node.Line{"Line", []node.Inline{
-					&node.Escaped{"Code", []byte(`\`)},
+					&node.Escaped{"Code", []byte("``")},
 				}},
 			},
 		},

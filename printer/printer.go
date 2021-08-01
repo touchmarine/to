@@ -6,6 +6,7 @@ import (
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"io"
+	"log"
 	"strings"
 	"unicode/utf8"
 )
@@ -381,14 +382,9 @@ OuterLoop:
 				var cases []string // all possible inline delimiters
 
 				switch e.Type {
-				case node.TypeUniform:
-					cases = append(cases, string(d)+string(d))
-				case node.TypeEscaped:
+				case node.TypeUniform, node.TypeEscaped:
 					cases = append(cases, string(d)+string(d))
 
-					for _, c := range counterpartChars {
-						cases = append(cases, string(d)+string(c))
-					}
 				default:
 					panic(fmt.Sprintf("printer: unexpected node type %s", e.Type))
 				}
@@ -468,11 +464,20 @@ func (p *printer) delimiters() (string, string, bool) {
 			}
 
 		case node.Inline:
-			r, _ := utf8.DecodeRuneInString(delim)
+			r, w := utf8.DecodeRuneInString(delim)
 			// perfom the same check as parser
 			if r == utf8.RuneError {
 				panic("printer: invalid UTF-8 encoding in delimiter")
 			}
+
+			if len(delim) > w {
+				log.Fatalf("inline delimiter %q too long", delim)
+			}
+
+			counterDelim := counterpart(r)
+
+			pre = delim + delim
+			post = string(counterDelim) + string(counterDelim)
 
 			if p.needInlineEscape(delim) {
 				needInlineEscape = true
@@ -480,8 +485,6 @@ func (p *printer) delimiters() (string, string, bool) {
 
 			switch typ {
 			case node.TypeUniform:
-				pre = delim + delim
-				post = counterpartString(pre)
 			case node.TypeEscaped:
 				var content []byte
 				if m, ok := p.n.(node.Content); ok {
@@ -491,29 +494,9 @@ func (p *printer) delimiters() (string, string, bool) {
 				}
 
 				if bytes.Contains(content, []byte(delim+delim)) {
-					// find another escape combination for delim
-
-					for _, ch := range counterpartChars {
-						cp := counterpart(ch)
-						pre0 := delim + string(ch)
-						post0 := string(cp) + delim
-
-						if bytes.Contains(content, []byte(pre0)) ||
-							bytes.Contains(content, []byte(post0)) {
-							continue
-						}
-
-						pre = pre0
-						post = post0
-						break
-					}
-
-					if pre == "" || post == "" {
-						panic("printer: no escape character available")
-					}
-				} else {
-					pre = delim + delim
-					post = counterpartString(pre)
+					// needs escape
+					pre += "\\"
+					post = "\\" + post
 				}
 			default:
 				panic(fmt.Sprintf("printer: unexpected node type %s (%s)", typ, name))
@@ -644,14 +627,6 @@ func trimLines(lines [][]byte) [][]byte {
 	}
 
 	return l
-}
-
-func counterpartString(s string) string {
-	var b strings.Builder
-	for _, r := range s {
-		b.WriteRune(counterpart(r))
-	}
-	return b.String()
 }
 
 func counterpart(ch rune) rune {
