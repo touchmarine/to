@@ -138,7 +138,6 @@ type Element struct {
 	Delimiter string            `json:"delimiter"`
 	Ranked    bool              `json:"ranked"`
 	MinRank   uint              `json:"minRank"`
-	Verbatim  bool              `json:"verbatim"`
 	Templates map[string]string `json:"templates"`
 }
 

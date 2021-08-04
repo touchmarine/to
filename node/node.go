@@ -22,6 +22,7 @@ type Type int
 const (
 	// blocks
 	TypeLine Type = iota
+	TypeVerbatimLine
 	TypeWalled
 	TypeHanging
 	TypeFenced
@@ -33,9 +34,11 @@ const (
 )
 
 func (t *Type) UnmarshalText(text []byte) error {
-	switch strings.ToLower(string(text)) {
+	switch s := strings.ToLower(string(text)); s {
 	case "line":
 		*t = TypeLine
+	case "verbatimline":
+		*t = TypeVerbatimLine
 	case "walled":
 		*t = TypeWalled
 	case "hanging":
@@ -49,14 +52,14 @@ func (t *Type) UnmarshalText(text []byte) error {
 	case "escaped":
 		*t = TypeEscaped
 	default:
-		return fmt.Errorf("unexpected node.Type value: %s", text)
+		return fmt.Errorf("unexpected node.Type value: %q", s)
 	}
 	return nil
 }
 
 // TypeCategory is used by parser to determine node category based on type.
 func TypeCategory(typ Type) Category {
-	if typ > 3 {
+	if typ > 4 {
 		return CategoryInline
 	}
 	return CategoryBlock
@@ -77,23 +80,8 @@ type Inline interface {
 	Inline()
 }
 
-type ContentInlineChildren interface {
-	Content
-	InlineChildren
-}
-
 type Content interface {
 	Content() []byte
-}
-
-type LinesTrailingText interface {
-	Lines
-	TrailingText
-}
-
-type LinesBoxed interface {
-	Lines
-	Boxed
 }
 
 type Lines interface {
@@ -203,6 +191,21 @@ func (l *Line) SetInlineChildren(children []Inline) {
 	l.Children = children
 }
 
+type VerbatimLine struct {
+	Name     string
+	Content0 []byte
+}
+
+func (l VerbatimLine) Node() string {
+	return l.Name
+}
+
+func (l VerbatimLine) Block() {}
+
+func (l *VerbatimLine) Content() []byte {
+	return l.Content0
+}
+
 type Walled struct {
 	Name     string
 	Children []Block
@@ -244,30 +247,6 @@ func (h *Hanging) BlockChildren() []Block {
 
 func (h *Hanging) SetBlockChildren(children []Block) {
 	h.Children = children
-}
-
-type HangingVerbatim struct {
-	Name   string
-	Rank0  uint
-	Lines0 [][]byte
-}
-
-func (hv HangingVerbatim) Node() string {
-	return hv.Name
-}
-
-func (hv HangingVerbatim) Block() {}
-
-func (hv *HangingVerbatim) Rank() uint {
-	return hv.Rank0
-}
-
-func (hv *HangingVerbatim) Lines() [][]byte {
-	return hv.Lines0
-}
-
-func (hv *HangingVerbatim) SetLines(lines [][]byte) {
-	hv.Lines0 = lines
 }
 
 type Fenced struct {
@@ -448,11 +427,7 @@ func ExtractText(n Node) string {
 		}
 	}
 
-	if m, ok := n.(ContentInlineChildren); ok {
-		for _, c := range m.InlineChildren() {
-			b.WriteString(ExtractText(c))
-		}
-	} else if m, ok := n.(InlineChildren); ok {
+	if m, ok := n.(InlineChildren); ok {
 		for _, c := range m.InlineChildren() {
 			b.WriteString(ExtractText(c))
 		}

@@ -85,15 +85,6 @@ func TestBlankLine(t *testing.T) {
 		},
 
 		{
-			"lines",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{nil, []byte("a")}},
-			},
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{[]byte("a")}},
-			},
-		},
-		{
 			"lines not settable",
 			[]node.Node{
 				&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}, nil},

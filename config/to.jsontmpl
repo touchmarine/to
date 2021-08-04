@@ -127,9 +127,8 @@
 		},
 		{
 			"name": "Image",
-			"type": "hanging",
+			"type": "verbatimLine",
 			"delimiter": ".image",
-			"verbatim": true,
 			"templates": {
 				"html": '''
 <img

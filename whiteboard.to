@@ -1189,6 +1189,9 @@ Auto-numbered footnote [[STD552]].
 
 #### Inline
 
+Problem: Where to place the footnote? With linked notes we can use one notation
+for both footnotes and endnotes and place the notes wherever.
+
 ``to
 At the end of this line is a footnote that says ^[Teapot standard].
 
@@ -1221,6 +1224,10 @@ Teapot standard was defined in ~~STD552~~.
 Teapot standard was defined in ^<STD552>.
 
 Teapot standard was defined in ~<STD552>.
+
+// or (one-for all reference element)
+
+Teapot standard was defined in {{STD552}}.
 ``
 
 Definitions:
@@ -1229,7 +1236,7 @@ Definitions:
 ^:STD552
 	Teapot standard
 
-// or (preferred)
+// or
 
 :^STD552
 	Teapot standard
@@ -1255,16 +1262,38 @@ Definitions:
 STD552
 	Teapot standard
 ^^
+
+// or
+
+: STD552
+	Teapot standard
+
+// or
+
+^ STD552
+	Teapot standard
+
+// or
+
+& STD552
+	Teapot standard
+
+// or
+
+~ STD552
+	Teapot standard
 ``
 
 ### Math
+
+#### Block
 
 ```to
 ~~
 LaTeX/KaTeX in here
 ~~
 
-// or
+// or (preferred)
 
 $$
 LaTeX/KaTex in here
@@ -1276,6 +1305,12 @@ $$
 ``latex
 LaTeX/KaTex in here
 ```
+
+#### Inline
+
+``to
+a $$LaTeX/KaTeX in here$$
+``
 
 ### Thematic Break
 

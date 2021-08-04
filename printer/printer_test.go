@@ -23,6 +23,11 @@ func TestFprint(t *testing.T) {
 		{"\na", "a"},
 		{"a\nb", "a\nb"},
 
+		// verbatim line
+		{".image", ""},
+		{".imagea", ".image a"},
+		{".imagea ", ".image a"},
+
 		// hanging
 		{"*", ""},
 		{"*a", "* a"},
@@ -40,8 +45,6 @@ func TestFprint(t *testing.T) {
 
 		{".image*", ".image *"},
 		{".image*a", ".image *a"},
-		{".image\n      *", ".image *"},
-		{".image\n      *a", ".image *a"},
 
 		{">*", ""},
 		{">*a", "> * a"},
@@ -75,13 +78,6 @@ func TestFprint(t *testing.T) {
 		{"==a\n\n  b", "== a\n\n   b"},
 		{"==a\n \n  b", "== a\n\n   b"},
 		{"==a\n\n\n  b", "== a\n\n   b"},
-
-		// verbatim hanging
-		{".image", ""},
-		{".imagea", ".image a"},
-		{".imagea\n      b", ".image a\n       b"},
-		{".imagea\n\n      b", ".image a\n       b"},
-		{".imagea\n \n      b", ".image a\n       b"},
 
 		// walled
 		{">", ""},

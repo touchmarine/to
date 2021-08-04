@@ -79,9 +79,8 @@
 		},
 		{
 			"name": "Image",
-			"type": "hanging",
+			"type": "verbatimLine",
 			"delimiter": ".image",
-			"verbatim": true,
 			"templates": {
 				"html": "<img\n\t{{- with primarySecondary .Lines}}\n\t\t{{- with .Primary}} src=\"{{.}}\"{{end}}\n\t\t{{- with .Secondary}} alt=\"{{.}}\"{{end}}\n\t{{- end}}\n\t{{- with .HatAttrs}} {{htmlAttrs .}}{{end -}}\n/>"
 			}

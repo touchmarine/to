@@ -187,6 +187,8 @@ func (p *parser) parseBlock() node.Block {
 			switch el.Type {
 			case node.TypeLine:
 				return p.parseLine(el.Name)
+			case node.TypeVerbatimLine:
+				return p.parseVerbatimLine(el.Name, el.Delimiter)
 			case node.TypeWalled:
 				return p.parseWalled(el.Name)
 			case node.TypeHanging:
@@ -195,7 +197,6 @@ func (p *parser) parseBlock() node.Block {
 						el.Name,
 						el.Delimiter,
 						el.Ranked,
-						el.Verbatim,
 					)
 				}
 			case node.TypeFenced:
@@ -357,11 +358,11 @@ func (p *parser) parseWalled(name string) node.Block {
 	return &node.Walled{name, children}
 }
 
-func (p *parser) parseHanging(name string, delim string, ranked, verbatim bool) node.Block {
+func (p *parser) parseHanging(name, delim string, ranked bool) node.Block {
 	if trace {
 		defer p.tracef(
-			"parseHanging (%s, delim=%q, ranked=%t, verbatim=%t)",
-			name, delim, ranked, verbatim,
+			"parseHanging (%s, delim=%q, ranked=%t)",
+			name, delim, ranked,
 		)()
 	}
 
@@ -389,69 +390,9 @@ func (p *parser) parseHanging(name string, delim string, ranked, verbatim bool) 
 	defer p.open(newBlocks...)()
 
 	reqdBlocks := p.blocks
-
-	if verbatim {
-		lines := p.parseLines(reqdBlocks)
-		return &node.HangingVerbatim{name, rank, lines}
-	}
-
 	children := p.parse(reqdBlocks)
+
 	return &node.Hanging{name, rank, children}
-}
-
-func (p *parser) parseLines(reqdBlocks []rune) [][]byte {
-	if trace {
-		defer p.trace("parseLines")()
-	}
-
-	var lines [][]byte
-
-	var b strings.Builder
-	for {
-		n := 0 // blank lines index
-
-		if p.atEOL() {
-			for p.atEOL() && !p.atEOF {
-				lines = append(lines, []byte(b.String()))
-				b.Reset()
-
-				// skip empty lines
-				p.nextln()
-				p.nextch()
-				p.parseLead()
-
-				n++
-			}
-
-			if p.atEOF {
-				break
-			}
-		}
-
-		if !p.continues(reqdBlocks) {
-			if n > 1 {
-				blankLines := n - 1
-				var blocks []node.Block
-				for i := 0; i < blankLines; i++ {
-					blocks = append(blocks, &node.Line{"Line", nil})
-				}
-				p.ambis = n - 1
-				p.stage = blocks
-				lines = lines[:len(lines)-blankLines]
-			}
-			break
-		}
-
-		for {
-			b.WriteRune(p.ch)
-
-			if !p.nextch() {
-				break
-			}
-		}
-	}
-
-	return lines
 }
 
 func (p *parser) continues(blocks []rune) bool {
@@ -699,6 +640,29 @@ func (p *parser) spacing() []rune {
 	}
 
 	return a
+}
+
+func (p *parser) parseVerbatimLine(name, delim string) node.Block {
+	if trace {
+		defer p.tracef("parseVerbatimLine (%s, delim=%q)", name, delim)()
+	}
+
+	p.nextchn(utf8.RuneCountInString(delim))
+
+	var b bytes.Buffer
+	for !p.atEOL() {
+		b.WriteRune(p.ch)
+
+		if !p.nextch() {
+			break
+		}
+	}
+
+	p.nextln()
+	p.nextch()
+	p.parseLead()
+
+	return &node.VerbatimLine{name, b.Bytes()}
 }
 
 func (p *parser) parseLine(name string) node.Block {

@@ -1483,356 +1483,68 @@ func TestHangingMinRank(t *testing.T) {
 	}
 }
 
-func TestHangingVerbatim(t *testing.T) {
+func TestVerbatimLine(t *testing.T) {
 	cases := []struct {
 		in  string
 		out []node.Node
 	}{
 		{
 			".image",
-			[]node.Node{&node.HangingVerbatim{"Image", 0, [][]byte{
-				[]byte(""),
-			}}},
-		},
-		{
-			".image.image",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte(".image"),
-				}},
-			},
+			[]node.Node{&node.VerbatimLine{"Image", nil}},
 		},
 		{
 			".imagea",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte("a"),
-				}},
-			},
-		},
-		{
-			".image\n.image",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, nil},
-				&node.HangingVerbatim{"Image", 0, nil},
-			},
-		},
-		{
-			".image\n\n.image",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte(""),
-				}},
-				&node.Line{"Line", nil},
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte(""),
-				}},
-			},
-		},
-		{
-			".image\n\n\n.image",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte(""),
-				}},
-				&node.Line{"Line", nil},
-				&node.Line{"Line", nil},
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte(""),
-				}},
-			},
-		},
-		{
-			".imagea\n\n.imageb",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte("a"),
-				}},
-				&node.Line{"Line", nil},
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte("b"),
-				}},
-			},
-		},
-		{
-			".imagea\nb",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte("a"),
-				}},
-				&node.Line{"Line", []node.Inline{node.Text("b")}},
-			},
-		},
-		{
-			".imagea\n      b",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte("a"),
-					[]byte("b"),
-				}},
-			},
-		},
-		{
-			".imagea\n       b",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte("a"),
-					[]byte("b"),
-				}},
-			},
+			[]node.Node{&node.VerbatimLine{"Image", []byte("a")}},
 		},
 		{
 			".image a",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte(" a"),
-				}},
-			},
+			[]node.Node{&node.VerbatimLine{"Image", []byte(" a")}},
 		},
 		{
 			".imagea ",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte("a "),
-				}},
-			},
-		},
-
-		// spacing
-		{
-			" .imagea\n b",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte("a"),
-				}},
-				&node.Line{"Line", []node.Inline{node.Text("b")}},
-			},
-		},
-
-		// nested
-		{
-			".image\n      .image",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					nil,
-					[]byte(".image"),
-				}},
-			},
+			[]node.Node{&node.VerbatimLine{"Image", []byte("a ")}},
 		},
 		{
-			".imagea\n      .imageb",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte("a"),
-					[]byte(".imageb"),
-				}},
-			},
+			".image*",
+			[]node.Node{&node.VerbatimLine{"Image", []byte("*")}},
+		},
+		{
+			`.image\**`,
+			[]node.Node{&node.VerbatimLine{"Image", []byte(`\**`)}},
 		},
 
 		{
-			">.image",
+			".image\n      a",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.HangingVerbatim{"Image", 0, nil},
-				}},
-			},
-		},
-		{
-			">.image\n.image",
-			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.HangingVerbatim{"Image", 0, nil},
-				}},
-				&node.HangingVerbatim{"Image", 0, nil},
-			},
-		},
-		{
-			">.image\n>.image",
-			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.HangingVerbatim{"Image", 0, nil},
-					&node.HangingVerbatim{"Image", 0, nil},
-				}},
-			},
-		},
-		{
-			">.image\n>      .image",
-			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.HangingVerbatim{"Image", 0, [][]byte{
-						nil,
-						[]byte(".image"),
-					}},
-				}},
-			},
-		},
-		{
-			">.image\n>      a",
-			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.HangingVerbatim{"Image", 0, [][]byte{
-						nil,
-						[]byte("a"),
-					}},
-				}},
-			},
-		},
-		{
-			">.image\n>       a",
-			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.HangingVerbatim{"Image", 0, [][]byte{
-						nil,
-						[]byte("a"),
-					}},
-				}},
-			},
-		},
-		{
-			"> .image\n>       a",
-			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.HangingVerbatim{"Image", 0, [][]byte{
-						nil,
-						[]byte("a"),
-					}},
-				}},
-			},
-		},
-
-		// nested+spacing
-		{
-			" .image\n .image",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, nil},
-				&node.HangingVerbatim{"Image", 0, nil},
-			},
-		},
-		{
-			" .image\n       .image",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					nil,
-					[]byte(".image"),
-				}},
-			},
-		},
-
-		// nested+blank lines
-		{
-			".image\n      .image",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					nil,
-					[]byte(".image"),
-				}},
-			},
-		},
-		{
-			".image\n\n      .image",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					nil,
-					[]byte(""),
-					[]byte(".image"),
-				}},
-			},
-		},
-		{
-			".image\n \t\n      .image",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					nil,
-					[]byte(""),
-					[]byte(".image"),
-				}},
-			},
-		},
-		{
-			".imagea\n\tb\n\n      c\n\td",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte("a"),
-					[]byte("b"),
-					[]byte(""),
-					[]byte("c"),
-					[]byte("d"),
-				}},
-			},
-		},
-
-		{
-			".image.image\n\na",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte(".image"),
-				}},
-				&node.Line{"Line", nil},
+				&node.VerbatimLine{"Image", nil},
 				&node.Line{"Line", []node.Inline{
 					node.Text("a"),
 				}},
 			},
 		},
 		{
-			".image.image\n\n      a",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte(".image"),
-					[]byte(""),
-					[]byte("a"),
-				}},
-			},
-		},
-		{
-			".image.image\n\n      a\nb",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte(".image"),
-					[]byte(""),
-					[]byte("a"),
-				}},
-				&node.Line{"Line", []node.Inline{
-					node.Text("b"),
-				}},
-			},
-		},
-
-		//>.image
-		//>
-		//>.image
-		{
-			">.image\n>\n>.image",
+			">.image",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.HangingVerbatim{"Image", 0, [][]byte{nil}},
+					&node.VerbatimLine{"Image", nil},
+				}},
+			},
+		},
+		{
+			">\n.image",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
 					&node.Line{"Line", nil},
-					&node.HangingVerbatim{"Image", 0, [][]byte{nil}},
 				}},
+				&node.VerbatimLine{"Image", nil},
 			},
 		},
-		//>.image
-		//>
-		//>      .image
 		{
-			">.image\n>\n>      .image",
+			".image\n>",
 			[]node.Node{
+				&node.VerbatimLine{"Image", nil},
 				&node.Walled{"Blockquote", []node.Block{
-					&node.HangingVerbatim{"Image", 0, [][]byte{
-						nil,
-						nil,
-						[]byte(".image"),
-					}},
-				}},
-			},
-		},
-
-		// regression
-		{
-			".image\n      >b",
-			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					nil,
-					[]byte(">b"),
+					&node.Line{"Line", nil},
 				}},
 			},
 		},
@@ -3110,9 +2822,7 @@ func TestBlockEscape(t *testing.T) {
 		{
 			`.image\.image`,
 			[]node.Node{
-				&node.HangingVerbatim{"Image", 0, [][]byte{
-					[]byte(`\.image`),
-				}},
+				&node.VerbatimLine{"Image", []byte(`\.image`)},
 			},
 		},
 	}

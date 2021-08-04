@@ -220,7 +220,7 @@ func (p *printer) printNode() {
 			}(len(p.prefixes))
 
 			switch p.n.(type) {
-			case *node.Hanging, *node.HangingVerbatim:
+			case *node.Hanging:
 				s := strings.Repeat(" ", len(pre))
 				p.prefixes = append(p.prefixes, s)
 			case *node.Walled:
@@ -260,13 +260,6 @@ func (p *printer) printNode() {
 	switch m := p.n.(type) {
 	case node.Text:
 		p.printText(&b, m)
-	case node.ContentInlineChildren:
-		if ic := m.InlineChildren(); len(ic) > 0 {
-			p.printChildren(&b, node.InlinesToNodes(ic))
-			b.WriteString(post + pre)
-		}
-
-		b.Write(m.Content())
 	case node.BlockChildren:
 		p.printChildren(&b, node.BlocksToNodes(m.BlockChildren()))
 	case node.InlineChildren:
@@ -274,7 +267,13 @@ func (p *printer) printNode() {
 	case node.Lines:
 		p.printLines(&b, nil, m.Lines())
 	case node.Content:
-		b.Write(m.Content())
+		c := m.Content()
+
+		if _, ok := p.n.(node.Block); ok {
+			c = bytes.Trim(c, " \t")
+		}
+
+		b.Write(c)
 	case node.Composited:
 		p.printChildren(&b, []node.Node{m.Primary(), m.Secondary()})
 	}
@@ -599,14 +598,7 @@ func (p *printer) print(msg string) {
 }
 
 func isEmpty(n node.Node) bool {
-	txt := node.ExtractText(n)
-
-	if m, ok := n.(node.ContentInlineChildren); ok {
-		// fenced element
-		return len(m.Content()) == 0 && txt == ""
-	}
-
-	return txt == ""
+	return node.ExtractText(n) == ""
 }
 
 func isLine(n node.Node) bool {

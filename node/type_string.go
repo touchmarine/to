@@ -9,20 +9,21 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[TypeLine-0]
-	_ = x[TypeWalled-1]
-	_ = x[TypeHanging-2]
-	_ = x[TypeFenced-3]
-	_ = x[TypeText-4]
-	_ = x[TypeUniform-5]
-	_ = x[TypeEscaped-6]
+	_ = x[TypeVerbatimLine-1]
+	_ = x[TypeWalled-2]
+	_ = x[TypeHanging-3]
+	_ = x[TypeFenced-4]
+	_ = x[TypeText-5]
+	_ = x[TypeUniform-6]
+	_ = x[TypeEscaped-7]
 }
 
-const _Type_name = "TypeLineTypeWalledTypeHangingTypeFencedTypeTextTypeUniformTypeEscaped"
+const _Type_name = "TypeLineTypeVerbatimLineTypeWalledTypeHangingTypeFencedTypeTextTypeUniformTypeEscaped"
 
-var _Type_index = [...]uint8{0, 8, 18, 29, 39, 47, 58, 69}
+var _Type_index = [...]uint8{0, 8, 24, 34, 45, 55, 63, 74, 85}
 
 func (i Type) String() string {
-	if i >= Type(len(_Type_index)-1) {
+	if i < 0 || i >= Type(len(_Type_index)-1) {
 		return "Type(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
 	return _Type_name[_Type_index[i]:_Type_index[i+1]]

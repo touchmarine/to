@@ -31,39 +31,27 @@ func (s *stringifier) stringify(nodes []node.Node) {
 		s.enter(n)
 
 		switch m := n.(type) {
-		case node.ContentInlineChildren:
-			s.write([]byte(strconv.Quote(string(m.Content())) + ", "))
-			if ic := m.InlineChildren(); ic != nil {
-				s.stringify(node.InlinesToNodes(ic))
-			}
-
-		case node.LinesTrailingText:
-			verbatim := bytes.Join(m.Lines(), []byte("\n"))
-			s.writei([]byte(strconv.Quote(string(verbatim))))
-
-			t := m.TrailingText()
-			if t != nil && len(t) > 0 {
-				s.write([]byte(",\n"))
-				s.writei([]byte(strconv.Quote(string(t))))
-			}
-
-			s.write([]byte("\n"))
-
-		case node.LinesBoxed:
-			verbatim := bytes.Join(m.Lines(), []byte("\n"))
-			s.writei([]byte(strconv.Quote(string(verbatim))))
-
-			nod := m.Unbox()
-			if nod == nil {
-				s.write([]byte("\n"))
-			} else {
-				s.write([]byte(",\n"))
-				s.stringify([]node.Node{nod})
-			}
-
 		case node.Lines:
 			verbatim := bytes.Join(m.Lines(), []byte("\n"))
 			s.writei([]byte(strconv.Quote(string(verbatim))))
+
+			if k, ok := n.(node.Boxed); ok {
+				unboxed := k.Unbox()
+				if unboxed == nil {
+					s.write([]byte("\n"))
+				} else {
+					s.write([]byte(",\n"))
+					s.stringify([]node.Node{unboxed})
+				}
+			} else if k, ok := n.(node.TrailingText); ok {
+				t := k.TrailingText()
+				if t != nil && len(t) > 0 {
+					s.write([]byte(",\n"))
+					s.writei([]byte(strconv.Quote(string(t))))
+				}
+
+				s.write([]byte("\n"))
+			}
 
 		case node.TrailingText:
 			s.write(m.TrailingText())
@@ -101,7 +89,7 @@ func (s *stringifier) enter(n node.Node) {
 		}
 
 		switch n.(type) {
-		case node.InlineChildren:
+		case node.InlineChildren, node.Content:
 			s.write([]byte("("))
 		case node.BlockChildren, node.Lines:
 			s.write([]byte("(\n"))
@@ -123,7 +111,7 @@ func (s *stringifier) leave(n node.Node) {
 	switch n.(type) {
 	case node.Block:
 		switch n.(type) {
-		case node.InlineChildren:
+		case node.InlineChildren, node.Content:
 			s.write([]byte(")\n"))
 		case node.BlockChildren, node.Lines:
 			s.indent--
