@@ -2,19 +2,16 @@ package transformer
 
 import (
 	"fmt"
-	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 )
 
 type sequencer struct {
-	elems  []config.Element
-	seqMap map[string]map[uint]uint
+	seqMap map[string]map[int]int
 }
 
-func Sequence(elements []config.Element, nodes []node.Node) []node.Node {
+func Sequence(nodes []node.Node) []node.Node {
 	s := &sequencer{
-		elems:  elements,
-		seqMap: make(map[string]map[uint]uint),
+		seqMap: make(map[string]map[int]int),
 	}
 	nodes = s.sequence(nodes)
 	return nodes
@@ -28,7 +25,7 @@ func (s *sequencer) sequence(nodes []node.Node) []node.Node {
 			name := n.Node()
 			rank := m.Rank()
 
-			s.incSeqNum(name, rank)
+			s.increment(name, rank)
 			seqNums := s.seqNums(name, rank)
 
 			nodes[i] = &node.SeqNumBox{n, seqNums}
@@ -37,44 +34,31 @@ func (s *sequencer) sequence(nodes []node.Node) []node.Node {
 	return nodes
 }
 
-func (s *sequencer) incSeqNum(name string, rank uint) {
+func (s *sequencer) increment(name string, rank int) {
 	if _, ok := s.seqMap[name]; !ok {
-		s.seqMap[name] = make(map[uint]uint)
+		s.seqMap[name] = make(map[int]int)
 	}
 
 	s.seqMap[name][rank]++
 
-	for rk, _ := range s.seqMap[name] {
-		if rk > rank {
-			s.seqMap[name][rk] = 0
+	for r, _ := range s.seqMap[name] {
+		if r > rank {
+			// clear deeper rank
+			s.seqMap[name][r] = 0
 		}
 	}
 }
 
-func (s *sequencer) seqNums(name string, rank uint) []uint {
+func (s *sequencer) seqNums(name string, rank int) []int {
 	m, ok := s.seqMap[name]
 	if !ok {
-		panic(fmt.Sprintf("sequencer.seqNum: missing map for ranked node %s", name))
+		panic(fmt.Sprintf("transformer: missing map for node %s", name))
 	}
 
-	el, ok := s.element(name)
-	if !ok {
-		panic(fmt.Sprintf("sequencer.seqNum: missing element in config for node %s", name))
-	}
-
-	var seq []uint
-	for i := el.MinRank; i <= rank; i++ {
+	var seq []int
+	for i := 2; i <= rank; i++ {
 		seq = append(seq, m[i])
 	}
 
 	return seq
-}
-
-func (s *sequencer) element(name string) (config.Element, bool) {
-	for _, el := range s.elems {
-		if el.Name == name {
-			return el, true
-		}
-	}
-	return config.Element{}, false
 }

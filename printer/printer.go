@@ -220,7 +220,7 @@ func (p *printer) printNode() {
 			}(len(p.prefixes))
 
 			switch p.n.(type) {
-			case *node.Hanging:
+			case *node.Hanging, *node.RankedHanging:
 				s := strings.Repeat(" ", len(pre))
 				p.prefixes = append(p.prefixes, s)
 			case *node.Walled:
@@ -451,12 +451,9 @@ func (p *printer) delimiters() (string, string, bool) {
 				post = delim + delim
 			case node.Ranked:
 				rank := m.Rank()
-				if rank > 0 {
-					for i := 0; i < int(rank); i++ {
-						pre += delim
-					}
-				} else {
-					pre = delim
+
+				for i := 0; i < rank; i++ {
+					pre += delim
 				}
 			default:
 				pre = delim

@@ -136,8 +136,6 @@ type Element struct {
 	Name      string            `json:"name"`
 	Type      node.Type         `json:"type"`
 	Delimiter string            `json:"delimiter"`
-	Ranked    bool              `json:"ranked"`
-	MinRank   uint              `json:"minRank"`
 	Templates map[string]string `json:"templates"`
 }
 

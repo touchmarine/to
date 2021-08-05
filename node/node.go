@@ -7,7 +7,7 @@ import (
 )
 
 //go:generate stringer -type=Category
-type Category uint
+type Category int
 
 // Categories of nodes
 const (
@@ -25,6 +25,7 @@ const (
 	TypeVerbatimLine
 	TypeWalled
 	TypeHanging
+	TypeRankedHanging
 	TypeFenced
 
 	// inlines
@@ -43,6 +44,8 @@ func (t *Type) UnmarshalText(text []byte) error {
 		*t = TypeWalled
 	case "hanging":
 		*t = TypeHanging
+	case "rankedhanging":
+		*t = TypeRankedHanging
 	case "fenced":
 		*t = TypeFenced
 	case "text":
@@ -59,7 +62,7 @@ func (t *Type) UnmarshalText(text []byte) error {
 
 // TypeCategory is used by parser to determine node category based on type.
 func TypeCategory(typ Type) Category {
-	if typ > 4 {
+	if typ > 5 {
 		return CategoryInline
 	}
 	return CategoryBlock
@@ -121,7 +124,7 @@ type Composited interface {
 }
 
 type Ranked interface {
-	Rank() uint
+	Rank() int
 }
 
 type Boxed interface {
@@ -227,7 +230,6 @@ func (w *Walled) SetBlockChildren(children []Block) {
 
 type Hanging struct {
 	Name     string
-	Rank0    uint
 	Children []Block
 }
 
@@ -237,15 +239,35 @@ func (h Hanging) Node() string {
 
 func (h Hanging) Block() {}
 
-func (h *Hanging) Rank() uint {
-	return h.Rank0
-}
-
 func (h *Hanging) BlockChildren() []Block {
 	return h.Children
 }
 
 func (h *Hanging) SetBlockChildren(children []Block) {
+	h.Children = children
+}
+
+type RankedHanging struct {
+	Name     string
+	Rank0    int
+	Children []Block
+}
+
+func (h RankedHanging) Node() string {
+	return h.Name
+}
+
+func (h RankedHanging) Block() {}
+
+func (h *RankedHanging) Rank() int {
+	return h.Rank0
+}
+
+func (h *RankedHanging) BlockChildren() []Block {
+	return h.Children
+}
+
+func (h *RankedHanging) SetBlockChildren(children []Block) {
 	h.Children = children
 }
 
@@ -377,7 +399,7 @@ func (h *Hat) Unbox() Node {
 
 type SeqNumBox struct {
 	Nod     Node
-	SeqNums []uint
+	SeqNums []int
 }
 
 func (s SeqNumBox) Node() string {

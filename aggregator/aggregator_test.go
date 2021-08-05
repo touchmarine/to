@@ -18,15 +18,15 @@ func TestAggregate(t *testing.T) {
 			"1 heading",
 			[]node.Node{
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 2, nil},
-					[]uint{1},
+					&node.RankedHanging{"NumberedHeading", 2, nil},
+					[]int{1},
 				},
 			},
 			map[string][]aggregator.Item{
 				"Headings": []aggregator.Item{
 					{
 						Element: "NumberedHeading",
-						SeqNums: []uint{1},
+						SeqNums: []int{1},
 						SeqNum:  "1",
 					},
 				},
@@ -35,7 +35,7 @@ func TestAggregate(t *testing.T) {
 		{
 			"no seqbox",
 			[]node.Node{
-				&node.Hanging{"NumberedHeading", 2, nil},
+				&node.RankedHanging{"NumberedHeading", 2, nil},
 			},
 			map[string][]aggregator.Item{
 				"Headings": []aggregator.Item{
@@ -50,12 +50,12 @@ func TestAggregate(t *testing.T) {
 			"1 heading with text",
 			[]node.Node{
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 2, []node.Block{
+					&node.RankedHanging{"NumberedHeading", 2, []node.Block{
 						&node.Line{"Line", []node.Inline{
 							node.Text("a"),
 						}},
 					}},
-					[]uint{1},
+					[]int{1},
 				},
 			},
 			map[string][]aggregator.Item{
@@ -64,7 +64,7 @@ func TestAggregate(t *testing.T) {
 						Element: "NumberedHeading",
 						ID:      "a",
 						Text:    "a",
-						SeqNums: []uint{1},
+						SeqNums: []int{1},
 						SeqNum:  "1",
 					},
 				},
@@ -74,7 +74,7 @@ func TestAggregate(t *testing.T) {
 			"1 heading with multiple inlines",
 			[]node.Node{
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 2, []node.Block{
+					&node.RankedHanging{"NumberedHeading", 2, []node.Block{
 						&node.Line{"Line", []node.Inline{
 							node.Text("a"),
 							&node.Uniform{"Emphasis", []node.Inline{
@@ -83,7 +83,7 @@ func TestAggregate(t *testing.T) {
 							node.Text("c"),
 						}},
 					}},
-					[]uint{1},
+					[]int{1},
 				},
 			},
 			map[string][]aggregator.Item{
@@ -92,7 +92,7 @@ func TestAggregate(t *testing.T) {
 						Element: "NumberedHeading",
 						ID:      "abc",
 						Text:    "abc",
-						SeqNums: []uint{1},
+						SeqNums: []int{1},
 						SeqNum:  "1",
 					},
 				},
@@ -102,7 +102,7 @@ func TestAggregate(t *testing.T) {
 			"1 heading with multiple blocks",
 			[]node.Node{
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 2, []node.Block{
+					&node.RankedHanging{"NumberedHeading", 2, []node.Block{
 						&node.Line{"Line", []node.Inline{
 							node.Text("a"),
 						}},
@@ -110,7 +110,7 @@ func TestAggregate(t *testing.T) {
 							node.Text("b"),
 						}},
 					}},
-					[]uint{1},
+					[]int{1},
 				},
 			},
 			map[string][]aggregator.Item{
@@ -119,7 +119,7 @@ func TestAggregate(t *testing.T) {
 						Element: "NumberedHeading",
 						ID:      "a\nb",
 						Text:    "a\nb",
-						SeqNums: []uint{1},
+						SeqNums: []int{1},
 						SeqNum:  "1",
 					},
 				},
@@ -130,24 +130,24 @@ func TestAggregate(t *testing.T) {
 			"2 headings",
 			[]node.Node{
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 2, nil},
-					[]uint{1},
+					&node.RankedHanging{"NumberedHeading", 2, nil},
+					[]int{1},
 				},
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 3, nil},
-					[]uint{1, 1},
+					&node.RankedHanging{"NumberedHeading", 3, nil},
+					[]int{1, 1},
 				},
 			},
 			map[string][]aggregator.Item{
 				"Headings": []aggregator.Item{
 					{
 						Element: "NumberedHeading",
-						SeqNums: []uint{1},
+						SeqNums: []int{1},
 						SeqNum:  "1",
 					},
 					{
 						Element: "NumberedHeading",
-						SeqNums: []uint{1, 1},
+						SeqNums: []int{1, 1},
 						SeqNum:  "1.1",
 					},
 				},

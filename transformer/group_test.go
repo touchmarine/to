@@ -17,94 +17,94 @@ func TestGroup(t *testing.T) {
 		{
 			"single item",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 			},
 		},
 		{
 			"two items",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, nil},
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 			},
 		},
 		{
 			"three items",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, nil},
-				&node.Hanging{"NumberedListItemDot", 0, nil},
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
+				&node.Hanging{"NumberedListItemDot", nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
-					&node.Hanging{"NumberedListItemDot", 0, nil},
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
+					&node.Hanging{"NumberedListItemDot", nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 			},
 		},
 		{
 			"two single groups",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 				&node.Line{"Line", nil},
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 				&node.Line{"Line", nil},
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 			},
 		},
 		{
 			"double and single group",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, nil},
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 				&node.Line{"Line", nil},
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 				&node.Line{"Line", nil},
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 			},
 		},
 		{
 			"single and double group",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 				&node.Line{"Line", nil},
-				&node.Hanging{"NumberedListItemDot", 0, nil},
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 				&node.Line{"Line", nil},
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 			},
 		},
@@ -113,24 +113,24 @@ func TestGroup(t *testing.T) {
 			"after another",
 			[]node.Node{
 				&node.Line{"Line", nil},
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 			},
 			[]node.Node{
 				&node.Line{"Line", nil},
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 			},
 		},
 		{
 			"before another",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 				&node.Line{"Line", nil},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 				&node.Line{"Line", nil},
 			},
@@ -140,15 +140,15 @@ func TestGroup(t *testing.T) {
 		{
 			"nested single item",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", []node.Block{
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", []node.Block{
 						&node.Group{"NumberedListDot", []node.Block{
-							&node.Hanging{"NumberedListItemDot", 0, nil},
+							&node.Hanging{"NumberedListItemDot", nil},
 						}},
 					}},
 				}},
@@ -157,23 +157,23 @@ func TestGroup(t *testing.T) {
 		{
 			"nested two items",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", []node.Block{
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
-				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", []node.Block{
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", []node.Block{
 						&node.Group{"NumberedListDot", []node.Block{
-							&node.Hanging{"NumberedListItemDot", 0, nil},
+							&node.Hanging{"NumberedListItemDot", nil},
 						}},
 					}},
-					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", []node.Block{
 						&node.Group{"NumberedListDot", []node.Block{
-							&node.Hanging{"NumberedListItemDot", 0, nil},
+							&node.Hanging{"NumberedListItemDot", nil},
 						}},
 					}},
 				}},
@@ -182,27 +182,27 @@ func TestGroup(t *testing.T) {
 		{
 			"nested two single groups",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", []node.Block{
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 				&node.Line{"Line", nil},
-				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", []node.Block{
+					&node.Hanging{"NumberedListItemDot", nil},
 				}},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", []node.Block{
 						&node.Group{"NumberedListDot", []node.Block{
-							&node.Hanging{"NumberedListItemDot", 0, nil},
+							&node.Hanging{"NumberedListItemDot", nil},
 						}},
 					}},
 				}},
 				&node.Line{"Line", nil},
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", []node.Block{
 						&node.Group{"NumberedListDot", []node.Block{
-							&node.Hanging{"NumberedListItemDot", 0, nil},
+							&node.Hanging{"NumberedListItemDot", nil},
 						}},
 					}},
 				}},
@@ -211,18 +211,18 @@ func TestGroup(t *testing.T) {
 		{
 			"nested in another",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+				&node.Hanging{"NumberedListItemDot", []node.Block{
 					&node.Walled{"Paragraph", []node.Block{
-						&node.Hanging{"ListItemDot", 0, nil},
+						&node.Hanging{"ListItemDot", nil},
 					}},
 				}},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", []node.Block{
 						&node.Walled{"Paragraph", []node.Block{
 							&node.Group{"ListDot", []node.Block{
-								&node.Hanging{"ListItemDot", 0, nil},
+								&node.Hanging{"ListItemDot", nil},
 							}},
 						}},
 					}},
@@ -233,14 +233,14 @@ func TestGroup(t *testing.T) {
 		{
 			"nested non groupable",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+				&node.Hanging{"NumberedListItemDot", []node.Block{
 					&node.Line{"Line", nil},
 					&node.Line{"Line", nil},
 				}},
 			},
 			[]node.Node{
 				&node.Group{"NumberedListDot", []node.Block{
-					&node.Hanging{"NumberedListItemDot", 0, []node.Block{
+					&node.Hanging{"NumberedListItemDot", []node.Block{
 						&node.Line{"Line", nil},
 						&node.Line{"Line", nil},
 					}},
@@ -254,7 +254,7 @@ func TestGroup(t *testing.T) {
 			[]node.Node{
 				&node.Hat{
 					[][]byte{[]byte("a")},
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				},
 			},
 			[]node.Node{
@@ -263,7 +263,7 @@ func TestGroup(t *testing.T) {
 					&node.Group{"NumberedListDot", []node.Block{
 						&node.Hat{
 							[][]byte{[]byte("a")},
-							&node.Hanging{"NumberedListItemDot", 0, nil},
+							&node.Hanging{"NumberedListItemDot", nil},
 						},
 					}},
 				},
@@ -274,11 +274,11 @@ func TestGroup(t *testing.T) {
 			[]node.Node{
 				&node.Hat{
 					[][]byte{[]byte("a")},
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				},
 				&node.Hat{
 					[][]byte{[]byte("b")},
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				},
 			},
 			[]node.Node{
@@ -287,7 +287,7 @@ func TestGroup(t *testing.T) {
 					&node.Group{"NumberedListDot", []node.Block{
 						&node.Hat{
 							[][]byte{[]byte("a")},
-							&node.Hanging{"NumberedListItemDot", 0, nil},
+							&node.Hanging{"NumberedListItemDot", nil},
 						},
 					}},
 				},
@@ -296,7 +296,7 @@ func TestGroup(t *testing.T) {
 					&node.Group{"NumberedListDot", []node.Block{
 						&node.Hat{
 							[][]byte{[]byte("b")},
-							&node.Hanging{"NumberedListItemDot", 0, nil},
+							&node.Hanging{"NumberedListItemDot", nil},
 						},
 					}},
 				},
@@ -307,12 +307,12 @@ func TestGroup(t *testing.T) {
 			[]node.Node{
 				&node.Hat{
 					[][]byte{[]byte("a")},
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				},
 				&node.Line{"Line", nil},
 				&node.Hat{
 					[][]byte{[]byte("b")},
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				},
 			},
 			[]node.Node{
@@ -321,7 +321,7 @@ func TestGroup(t *testing.T) {
 					&node.Group{"NumberedListDot", []node.Block{
 						&node.Hat{
 							[][]byte{[]byte("a")},
-							&node.Hanging{"NumberedListItemDot", 0, nil},
+							&node.Hanging{"NumberedListItemDot", nil},
 						},
 					}},
 				},
@@ -331,7 +331,7 @@ func TestGroup(t *testing.T) {
 					&node.Group{"NumberedListDot", []node.Block{
 						&node.Hat{
 							[][]byte{[]byte("b")},
-							&node.Hanging{"NumberedListItemDot", 0, nil},
+							&node.Hanging{"NumberedListItemDot", nil},
 						},
 					}},
 				},
@@ -342,9 +342,9 @@ func TestGroup(t *testing.T) {
 			[]node.Node{
 				&node.Hat{
 					[][]byte{},
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				},
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 			},
 			[]node.Node{
 				&node.Hat{
@@ -352,9 +352,9 @@ func TestGroup(t *testing.T) {
 					&node.Group{"NumberedListDot", []node.Block{
 						&node.Hat{
 							[][]byte{},
-							&node.Hanging{"NumberedListItemDot", 0, nil},
+							&node.Hanging{"NumberedListItemDot", nil},
 						},
-						&node.Hanging{"NumberedListItemDot", 0, nil},
+						&node.Hanging{"NumberedListItemDot", nil},
 					}},
 				},
 			},
@@ -362,20 +362,20 @@ func TestGroup(t *testing.T) {
 		{
 			"mixed hat reverse",
 			[]node.Node{
-				&node.Hanging{"NumberedListItemDot", 0, nil},
+				&node.Hanging{"NumberedListItemDot", nil},
 				&node.Hat{
 					[][]byte{},
-					&node.Hanging{"NumberedListItemDot", 0, nil},
+					&node.Hanging{"NumberedListItemDot", nil},
 				},
 			},
 			[]node.Node{
 				&node.Hat{
 					[][]byte{},
 					&node.Group{"NumberedListDot", []node.Block{
-						&node.Hanging{"NumberedListItemDot", 0, nil},
+						&node.Hanging{"NumberedListItemDot", nil},
 						&node.Hat{
 							[][]byte{},
-							&node.Hanging{"NumberedListItemDot", 0, nil},
+							&node.Hanging{"NumberedListItemDot", nil},
 						},
 					}},
 				},
@@ -403,17 +403,17 @@ func TestGroup(t *testing.T) {
 			[]node.Node{
 				&node.Hat{
 					[][]byte{[]byte("a")},
-					&node.Hanging{"Heading", 0, nil},
+					&node.Hanging{"Heading", nil},
 				},
-				&node.Hanging{"ListItemDot", 0, nil},
+				&node.Hanging{"ListItemDot", nil},
 			},
 			[]node.Node{
 				&node.Hat{
 					[][]byte{[]byte("a")},
-					&node.Hanging{"Heading", 0, nil},
+					&node.Hanging{"Heading", nil},
 				},
 				&node.Group{"ListDot", []node.Block{
-					&node.Hanging{"ListItemDot", 0, nil},
+					&node.Hanging{"ListItemDot", nil},
 				}},
 			},
 		},

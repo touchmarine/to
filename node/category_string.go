@@ -17,7 +17,7 @@ const _Category_name = "CategoryBlockCategoryInline"
 var _Category_index = [...]uint8{0, 13, 27}
 
 func (i Category) String() string {
-	if i >= Category(len(_Category_index)-1) {
+	if i < 0 || i >= Category(len(_Category_index)-1) {
 		return "Category(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
 	return _Category_name[_Category_index[i]:_Category_index[i+1]]

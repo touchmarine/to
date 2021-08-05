@@ -221,7 +221,7 @@ func TestFprint(t *testing.T) {
 			conf := config.Default
 			nodes = transformer.Paragraph(nodes)
 			nodes = transformer.Group(conf.Groups, nodes)
-			nodes = transformer.Sequence(conf.Elements, nodes)
+			nodes = transformer.Sequence(nodes)
 			nodes = transformer.BlankLine(nodes)
 			nodes = transformer.Composite(conf.Composites, nodes)
 

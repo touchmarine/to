@@ -97,13 +97,13 @@ func TestBlankLine(t *testing.T) {
 		{
 			"nested",
 			[]node.Node{
-				&node.Hanging{"DescriptionList", 0, []node.Block{
+				&node.Hanging{"DescriptionList", []node.Block{
 					&node.Line{"Line", nil},
 					&node.Line{"Line", []node.Inline{node.Text("a")}},
 				}},
 			},
 			[]node.Node{
-				&node.Hanging{"DescriptionList", 0, []node.Block{
+				&node.Hanging{"DescriptionList", []node.Block{
 					&node.Line{"Line", []node.Inline{node.Text("a")}},
 				}},
 			},
@@ -112,19 +112,19 @@ func TestBlankLine(t *testing.T) {
 			"nested+boxed",
 			[]node.Node{
 				&node.SeqNumBox{
-					&node.Hanging{"DescriptionList", 0, []node.Block{
+					&node.Hanging{"DescriptionList", []node.Block{
 						&node.Line{"Line", nil},
 						&node.Line{"Line", []node.Inline{node.Text("a")}},
 					}},
-					[]uint{1},
+					[]int{1},
 				},
 			},
 			[]node.Node{
 				&node.SeqNumBox{
-					&node.Hanging{"DescriptionList", 0, []node.Block{
+					&node.Hanging{"DescriptionList", []node.Block{
 						&node.Line{"Line", []node.Inline{node.Text("a")}},
 					}},
-					[]uint{1},
+					[]int{1},
 				},
 			},
 		},

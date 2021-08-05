@@ -40,9 +40,9 @@ func ParseCustom(r io.Reader, elements []config.Element) ([]node.Block, []error)
 // parser holds the parsing state.
 type parser struct {
 	errors      []error
-	scnr        *bufio.Scanner            // line scanner
-	blockElems  map[string]config.Element // map of block elements by delimiter
-	inlineElems map[rune]config.Element   // map of inline elements by delimiter
+	scnr        *bufio.Scanner          // line scanner
+	blockElems  []config.Element        // map of block elements by delimiter
+	inlineElems map[rune]config.Element // map of inline elements by delimiter
 
 	// parsing
 	ln    []byte // current line excluding EOL
@@ -62,9 +62,6 @@ type parser struct {
 }
 
 func (p *parser) register(elems []config.Element) {
-	if p.blockElems == nil {
-		p.blockElems = make(map[string]config.Element)
-	}
 	if p.inlineElems == nil {
 		p.inlineElems = make(map[rune]config.Element)
 	}
@@ -72,14 +69,28 @@ func (p *parser) register(elems []config.Element) {
 	for _, el := range elems {
 		switch categ := node.TypeCategory(el.Type); categ {
 		case node.CategoryBlock:
-			if _, ok := p.blockElems[el.Delimiter]; ok {
-				log.Fatalf(
-					"parser: block delimiter %q is already registered",
-					el.Delimiter,
-				)
-			}
+			p.blockElems = append(p.blockElems, el)
 
-			p.blockElems[el.Delimiter] = el
+			//if els, ok := p.blockElems[el.Delimiter]; ok {
+			//	if len(els) == 1 {
+			//		e := els[0])
+
+			//		if (el.Type == node.TypeHanging || el.Type == node.TypeRankedHanging) &&
+			//		(e.Type == node.TypeHanging || e.Type == node.TypeRankedHanging) &&
+			//		el.Type != e.Type {
+			//			// hanging and ranked can use the same delimiter
+			//			p.blockElems = append(p.blockElems, el)
+			//			continue
+			//		}
+			//	}
+
+			//	log.Fatalf(
+			//		"parser: block delimiter %q is already registered",
+			//		el.Delimiter,
+			//	)
+			//} else {
+			//	p.blockElems[el.Delimiter] = []config.Element{el}
+			//}
 
 		case node.CategoryInline:
 			delim, _ := utf8.DecodeRuneInString(el.Delimiter)
@@ -192,13 +203,9 @@ func (p *parser) parseBlock() node.Block {
 			case node.TypeWalled:
 				return p.parseWalled(el.Name)
 			case node.TypeHanging:
-				if el.MinRank <= 1 || p.consecutive() >= el.MinRank {
-					return p.parseHanging(
-						el.Name,
-						el.Delimiter,
-						el.Ranked,
-					)
-				}
+				return p.parseHanging(el.Name, el.Delimiter)
+			case node.TypeRankedHanging:
+				return p.parseRankedHanging(el.Name, el.Delimiter)
 			case node.TypeFenced:
 				if peek := p.peek(); isValidRune(peek) && p.ch == peek {
 					return p.parseFenced(el.Name)
@@ -217,47 +224,48 @@ func (p *parser) matchBlock() (config.Element, bool) {
 		defer p.trace("matchBlock")()
 	}
 
-OuterLoop:
-	for name, el := range p.blockElems {
-		var offs int
-		for i, r := range name {
-			if i == 0 {
-				if p.ch != r {
-					continue OuterLoop
-				}
-			} else {
-				if offs > len(p.ln)-1 {
-					continue OuterLoop
-				}
+	var block config.Element
+	var found bool
 
-				rr, w := utf8.DecodeRune(p.ln[offs:])
-				if rr != r {
-					continue OuterLoop
-				}
-				offs += w
+	for _, el := range p.blockElems {
+		if p.hasPrefix([]byte(el.Delimiter)) {
+			block = el
+			found = true
+
+			if el.Type == node.TypeHanging && p.consecutive() > 1 ||
+				el.Type == node.TypeRankedHanging && p.consecutive() == 1 {
+				// ambigous hanging and ranked-try searching for
+				// the other pair otherwise use this one
+				continue
 			}
-		}
 
-		if trace {
-			p.printf("return true (%s)", el.Name)
+			break
 		}
-		return el, true
 	}
 
 	if trace {
-		p.print("return false")
+		p.printf("return %t (%s)", found, block.Name)
 	}
-	return config.Element{}, false
+
+	return block, found
 }
 
-func (p *parser) consecutive() uint {
+// hasPrefix determines whether b matches the p.ch and start of p.ln.
+func (p *parser) hasPrefix(b []byte) bool {
+	ln := append([]byte{byte(p.ch)}, p.ln...)
+	return bytes.HasPrefix(ln, b)
+}
+
+// consecutive determines the number of consecutive characters.
+func (p *parser) consecutive() int {
 	if trace {
 		defer p.trace("consecutive")()
 	}
 
 	ch := p.ch
 
-	var i uint = 1
+	i := 1
+
 	var offs int
 	for {
 		peek, w := utf8.DecodeRune(p.ln[offs:])
@@ -355,32 +363,44 @@ func (p *parser) parseWalled(name string) node.Block {
 
 	reqdBlocks := p.blocks
 	children := p.parse(reqdBlocks)
+
 	return &node.Walled{name, children}
 }
 
-func (p *parser) parseHanging(name, delim string, ranked bool) node.Block {
+func (p *parser) parseHanging(name, delim string) node.Block {
 	if trace {
-		defer p.tracef(
-			"parseHanging (%s, delim=%q, ranked=%t)",
-			name, delim, ranked,
-		)()
+		defer p.tracef("parseHanging (%s, delim=%q)", name, delim)()
 	}
 
-	var rank uint
-	if ranked {
-		delim := p.ch
-		for p.ch == delim {
-			rank++
-			p.addLead(' ')
-			p.nextch()
-		}
-	} else {
-		for i := 0; i < utf8.RuneCountInString(delim); i++ {
-			p.addLead(' ')
-			p.nextch() // consume delimiter
-		}
+	c := utf8.RuneCountInString(delim)
+	p.addLead([]rune(strings.Repeat(" ", c))...)
+	p.nextchn(c)
+
+	children := p.parseHanging0()
+	return &node.Hanging{name, children}
+}
+
+func (p *parser) parseRankedHanging(name, delim string) node.Block {
+	if trace {
+		defer p.tracef("parseRankedHanging (%s, delim=%q)", name, delim)()
 	}
 
+	var rank int
+
+	d := p.ch
+	for p.ch == d {
+		rank++
+
+		p.nextch()
+	}
+
+	p.addLead([]rune(strings.Repeat(" ", rank))...)
+
+	children := p.parseHanging0()
+	return &node.RankedHanging{name, rank, children}
+}
+
+func (p *parser) parseHanging0() []node.Block {
 	newBlocks := diff(p.blocks, p.lead)
 	if trace {
 		p.printBlocks("reqd", p.blocks)
@@ -390,9 +410,7 @@ func (p *parser) parseHanging(name, delim string, ranked bool) node.Block {
 	defer p.open(newBlocks...)()
 
 	reqdBlocks := p.blocks
-	children := p.parse(reqdBlocks)
-
-	return &node.Hanging{name, rank, children}
+	return p.parse(reqdBlocks)
 }
 
 func (p *parser) continues(blocks []rune) bool {

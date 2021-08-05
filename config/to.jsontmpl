@@ -95,10 +95,22 @@
 			}
 		},
 		{
-			"name": "Heading",
+			"name": "Title",
 			"type": "hanging",
 			"delimiter": "=",
-			"ranked": true,
+			"templates": {
+				"html": '''
+<h1 {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+	{{- range .BlockChildren}}
+		{{render .}}
+	{{end -}}
+</h1>'''
+			}
+		},
+		{
+			"name": "Heading",
+			"type": "rankedHanging",
+			"delimiter": "=",
 			"templates": {
 				"html": '''
 <h{{.Rank}} {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
@@ -110,10 +122,8 @@
 		},
 		{
 			"name": "NumberedHeading",
-			"type": "hanging",
+			"type": "rankedHanging",
 			"delimiter": "#",
-			"ranked": true,
-			"minRank": 2,
 			"templates": {
 				"html": '''
 <h{{.Rank}} id="{{.TextContent}}" {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>

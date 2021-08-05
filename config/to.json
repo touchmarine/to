@@ -59,20 +59,25 @@
 			}
 		},
 		{
-			"name": "Heading",
+			"name": "Title",
 			"type": "hanging",
 			"delimiter": "=",
-			"ranked": true,
+			"templates": {
+				"html": "<h1 {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{end -}}\n</h1>"
+			}
+		},
+		{
+			"name": "Heading",
+			"type": "rankedHanging",
+			"delimiter": "=",
 			"templates": {
 				"html": "<h{{.Rank}} {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{end -}}\n</h{{.Rank}}>"
 			}
 		},
 		{
 			"name": "NumberedHeading",
-			"type": "hanging",
+			"type": "rankedHanging",
 			"delimiter": "#",
-			"ranked": true,
-			"minRank": 2,
 			"templates": {
 				"html": "<h{{.Rank}} id=\"{{.TextContent}}\" {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>\n\t<span style=\"float:left\">{{.SeqNum}}&nbsp;</span>\n\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{end -}}\n</h{{.Rank}}>"
 			}

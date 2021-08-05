@@ -1,7 +1,6 @@
 package transformer_test
 
 import (
-	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/stringifier"
 	"github.com/touchmarine/to/transformer"
@@ -15,38 +14,14 @@ func TestSequence(t *testing.T) {
 		out  []node.Node
 	}{
 		{
-			"rank 0",
-			[]node.Node{
-				&node.Hanging{"NumberedHeading", 0, nil},
-			},
-			[]node.Node{
-				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 0, nil},
-					[]uint{},
-				},
-			},
-		},
-		{
-			"# (minRank 2)",
-			[]node.Node{
-				&node.Hanging{"NumberedHeading", 1, nil},
-			},
-			[]node.Node{
-				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 1, nil},
-					[]uint{},
-				},
-			},
-		},
-		{
 			"##",
 			[]node.Node{
-				&node.Hanging{"NumberedHeading", 2, nil},
+				&node.RankedHanging{"NumberedHeading", 2, nil},
 			},
 			[]node.Node{
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 2, nil},
-					[]uint{1},
+					&node.RankedHanging{"NumberedHeading", 2, nil},
+					[]int{1},
 				},
 			},
 		},
@@ -54,46 +29,46 @@ func TestSequence(t *testing.T) {
 		{
 			"##\n##",
 			[]node.Node{
-				&node.Hanging{"NumberedHeading", 2, nil},
-				&node.Hanging{"NumberedHeading", 2, nil},
+				&node.RankedHanging{"NumberedHeading", 2, nil},
+				&node.RankedHanging{"NumberedHeading", 2, nil},
 			},
 			[]node.Node{
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 2, nil},
-					[]uint{1},
+					&node.RankedHanging{"NumberedHeading", 2, nil},
+					[]int{1},
 				},
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 2, nil},
-					[]uint{2},
+					&node.RankedHanging{"NumberedHeading", 2, nil},
+					[]int{2},
 				},
 			},
 		},
 		{
 			"##\n###",
 			[]node.Node{
-				&node.Hanging{"NumberedHeading", 2, nil},
-				&node.Hanging{"NumberedHeading", 3, nil},
+				&node.RankedHanging{"NumberedHeading", 2, nil},
+				&node.RankedHanging{"NumberedHeading", 3, nil},
 			},
 			[]node.Node{
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 2, nil},
-					[]uint{1},
+					&node.RankedHanging{"NumberedHeading", 2, nil},
+					[]int{1},
 				},
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 3, nil},
-					[]uint{1, 1},
+					&node.RankedHanging{"NumberedHeading", 3, nil},
+					[]int{1, 1},
 				},
 			},
 		},
 		{
 			"###",
 			[]node.Node{
-				&node.Hanging{"NumberedHeading", 3, nil},
+				&node.RankedHanging{"NumberedHeading", 3, nil},
 			},
 			[]node.Node{
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 3, nil},
-					[]uint{0, 1},
+					&node.RankedHanging{"NumberedHeading", 3, nil},
+					[]int{0, 1},
 				},
 			},
 		},
@@ -101,27 +76,27 @@ func TestSequence(t *testing.T) {
 		{
 			"reset ##\n###\n##\n###",
 			[]node.Node{
-				&node.Hanging{"NumberedHeading", 2, nil},
-				&node.Hanging{"NumberedHeading", 3, nil},
-				&node.Hanging{"NumberedHeading", 2, nil},
-				&node.Hanging{"NumberedHeading", 3, nil},
+				&node.RankedHanging{"NumberedHeading", 2, nil},
+				&node.RankedHanging{"NumberedHeading", 3, nil},
+				&node.RankedHanging{"NumberedHeading", 2, nil},
+				&node.RankedHanging{"NumberedHeading", 3, nil},
 			},
 			[]node.Node{
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 2, nil},
-					[]uint{1},
+					&node.RankedHanging{"NumberedHeading", 2, nil},
+					[]int{1},
 				},
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 3, nil},
-					[]uint{1, 1},
+					&node.RankedHanging{"NumberedHeading", 3, nil},
+					[]int{1, 1},
 				},
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 2, nil},
-					[]uint{2},
+					&node.RankedHanging{"NumberedHeading", 2, nil},
+					[]int{2},
 				},
 				&node.SeqNumBox{
-					&node.Hanging{"NumberedHeading", 3, nil},
-					[]uint{2, 1},
+					&node.RankedHanging{"NumberedHeading", 3, nil},
+					[]int{2, 1},
 				},
 			},
 		},
@@ -131,7 +106,7 @@ func TestSequence(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			a := make([]node.Node, len(c.in))
 			copy(a, c.in)
-			a = transformer.Sequence(config.Default.Elements, a)
+			a = transformer.Sequence(a)
 
 			got := stringifier.Stringify(a...)
 			want := stringifier.Stringify(c.out...)

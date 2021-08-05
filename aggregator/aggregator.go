@@ -10,7 +10,7 @@ type Item struct {
 	Element string
 	ID      string
 	Text    string
-	SeqNums []uint
+	SeqNums []int
 	SeqNum  string
 }
 

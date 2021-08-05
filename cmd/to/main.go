@@ -65,7 +65,7 @@ func main() {
 
 	nodes = transformer.Paragraph(nodes)
 	nodes = transformer.Group(conf.Groups, nodes)
-	nodes = transformer.Sequence(conf.Elements, nodes)
+	nodes = transformer.Sequence(nodes)
 	nodes = transformer.Composite(conf.Composites, nodes)
 
 	if format == "fmt" {

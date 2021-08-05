@@ -124,14 +124,14 @@ func TestGroupBySeqNum(t *testing.T) {
 			[]aggregator.Item{
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 			},
 			seqNumGroup{
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 			},
@@ -141,24 +141,24 @@ func TestGroupBySeqNum(t *testing.T) {
 			[]aggregator.Item{
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{2},
+					SeqNums: []int{2},
 					SeqNum:  "2",
 				},
 			},
 			seqNumGroup{
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{2},
+					SeqNums: []int{2},
 					SeqNum:  "2",
 				},
 			},
@@ -168,25 +168,25 @@ func TestGroupBySeqNum(t *testing.T) {
 			[]aggregator.Item{
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1, 1},
+					SeqNums: []int{1, 1},
 					SeqNum:  "1.1",
 				},
 			},
 			seqNumGroup{
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				seqNumGroup{
 					seqNumItem{
 						Element: "NumberedHeading",
-						SeqNums: []uint{1, 1},
+						SeqNums: []int{1, 1},
 						SeqNum:  "1.1",
 					},
 				},
@@ -197,36 +197,36 @@ func TestGroupBySeqNum(t *testing.T) {
 			[]aggregator.Item{
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1, 1},
+					SeqNums: []int{1, 1},
 					SeqNum:  "1.1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1, 1, 1},
+					SeqNums: []int{1, 1, 1},
 					SeqNum:  "1.1.1",
 				},
 			},
 			seqNumGroup{
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				seqNumGroup{
 					seqNumItem{
 						Element: "NumberedHeading",
-						SeqNums: []uint{1, 1},
+						SeqNums: []int{1, 1},
 						SeqNum:  "1.1",
 					},
 					seqNumGroup{
 						seqNumItem{
 							Element: "NumberedHeading",
-							SeqNums: []uint{1, 1, 1},
+							SeqNums: []int{1, 1, 1},
 							SeqNum:  "1.1.1",
 						},
 					},
@@ -238,12 +238,12 @@ func TestGroupBySeqNum(t *testing.T) {
 			[]aggregator.Item{
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1, 1},
+					SeqNums: []int{1, 1},
 					SeqNum:  "1.1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 			},
@@ -251,13 +251,13 @@ func TestGroupBySeqNum(t *testing.T) {
 				seqNumGroup{
 					seqNumItem{
 						Element: "NumberedHeading",
-						SeqNums: []uint{1, 1},
+						SeqNums: []int{1, 1},
 						SeqNum:  "1.1",
 					},
 				},
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 			},
@@ -267,17 +267,17 @@ func TestGroupBySeqNum(t *testing.T) {
 			[]aggregator.Item{
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1, 1},
+					SeqNums: []int{1, 1},
 					SeqNum:  "1.1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{2},
+					SeqNums: []int{2},
 					SeqNum:  "2",
 				},
 			},
@@ -285,18 +285,18 @@ func TestGroupBySeqNum(t *testing.T) {
 				seqNumGroup{
 					seqNumItem{
 						Element: "NumberedHeading",
-						SeqNums: []uint{1, 1},
+						SeqNums: []int{1, 1},
 						SeqNum:  "1.1",
 					},
 				},
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{2},
+					SeqNums: []int{2},
 					SeqNum:  "2",
 				},
 			},
@@ -306,17 +306,17 @@ func TestGroupBySeqNum(t *testing.T) {
 			[]aggregator.Item{
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1, 1},
+					SeqNums: []int{1, 1},
 					SeqNum:  "1.1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{2, 1},
+					SeqNums: []int{2, 1},
 					SeqNum:  "2.1",
 				},
 			},
@@ -324,19 +324,19 @@ func TestGroupBySeqNum(t *testing.T) {
 				seqNumGroup{
 					seqNumItem{
 						Element: "NumberedHeading",
-						SeqNums: []uint{1, 1},
+						SeqNums: []int{1, 1},
 						SeqNum:  "1.1",
 					},
 				},
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				seqNumGroup{
 					seqNumItem{
 						Element: "NumberedHeading",
-						SeqNums: []uint{2, 1},
+						SeqNums: []int{2, 1},
 						SeqNum:  "2.1",
 					},
 				},
@@ -347,36 +347,36 @@ func TestGroupBySeqNum(t *testing.T) {
 			[]aggregator.Item{
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1, 1},
+					SeqNums: []int{1, 1},
 					SeqNum:  "1.1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{2},
+					SeqNums: []int{2},
 					SeqNum:  "2",
 				},
 			},
 			seqNumGroup{
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				seqNumGroup{
 					seqNumItem{
 						Element: "NumberedHeading",
-						SeqNums: []uint{1, 1},
+						SeqNums: []int{1, 1},
 						SeqNum:  "1.1",
 					},
 				},
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{2},
+					SeqNums: []int{2},
 					SeqNum:  "2",
 				},
 			},
@@ -386,47 +386,47 @@ func TestGroupBySeqNum(t *testing.T) {
 			[]aggregator.Item{
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1, 1},
+					SeqNums: []int{1, 1},
 					SeqNum:  "1.1",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{2},
+					SeqNums: []int{2},
 					SeqNum:  "2",
 				},
 				{
 					Element: "NumberedHeading",
-					SeqNums: []uint{2, 1},
+					SeqNums: []int{2, 1},
 					SeqNum:  "2.1",
 				},
 			},
 			seqNumGroup{
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{1},
+					SeqNums: []int{1},
 					SeqNum:  "1",
 				},
 				seqNumGroup{
 					seqNumItem{
 						Element: "NumberedHeading",
-						SeqNums: []uint{1, 1},
+						SeqNums: []int{1, 1},
 						SeqNum:  "1.1",
 					},
 				},
 				seqNumItem{
 					Element: "NumberedHeading",
-					SeqNums: []uint{2},
+					SeqNums: []int{2},
 					SeqNum:  "2",
 				},
 				seqNumGroup{
 					seqNumItem{
 						Element: "NumberedHeading",
-						SeqNums: []uint{2, 1},
+						SeqNums: []int{2, 1},
 						SeqNum:  "2.1",
 					},
 				},
