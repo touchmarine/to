@@ -96,16 +96,12 @@ func TestWalled(t *testing.T) {
 	}{
 		{
 			">",
-			[]node.Node{&node.Walled{"Blockquote", []node.Block{
-				&node.Line{"Line", nil},
-			}}},
+			[]node.Node{&node.Walled{"Blockquote", nil}},
 		},
 		{
 			">\na",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 				&node.Line{"Line", []node.Inline{node.Text("a")}},
 			},
 		},
@@ -113,9 +109,7 @@ func TestWalled(t *testing.T) {
 			">>",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Walled{"Blockquote", nil},
 				}},
 			},
 		},
@@ -130,10 +124,7 @@ func TestWalled(t *testing.T) {
 		{
 			">\n>",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 			},
 		},
 		{
@@ -149,10 +140,7 @@ func TestWalled(t *testing.T) {
 			">\n>>",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Walled{"Blockquote", nil},
 				}},
 			},
 		},
@@ -171,10 +159,7 @@ func TestWalled(t *testing.T) {
 			">>\n>>",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
-						&node.Line{"Line", nil},
-					}},
+					&node.Walled{"Blockquote", nil},
 				}},
 			},
 		},
@@ -193,10 +178,7 @@ func TestWalled(t *testing.T) {
 			">>\n>",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
-					}},
-					&node.Line{"Line", nil},
+					&node.Walled{"Blockquote", nil},
 				}},
 			},
 		},
@@ -214,10 +196,7 @@ func TestWalled(t *testing.T) {
 		{
 			">\n\n>",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 			},
 		},
 		{
@@ -233,9 +212,7 @@ func TestWalled(t *testing.T) {
 		// spacing
 		{
 			" >",
-			[]node.Node{&node.Walled{"Blockquote", []node.Block{
-				&node.Line{"Line", nil},
-			}}},
+			[]node.Node{&node.Walled{"Blockquote", nil}},
 		},
 
 		// regression
@@ -243,9 +220,7 @@ func TestWalled(t *testing.T) {
 			"> >",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Walled{"Blockquote", nil},
 				}},
 			},
 		},
@@ -253,9 +228,7 @@ func TestWalled(t *testing.T) {
 			">\t>",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Walled{"Blockquote", nil},
 				}},
 			},
 		},
@@ -264,9 +237,7 @@ func TestWalled(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
 					&node.Walled{"Blockquote", []node.Block{
-						&node.Walled{"Blockquote", []node.Block{
-							&node.Line{"Line", nil},
-						}},
+						&node.Walled{"Blockquote", nil},
 					}},
 				}},
 			},
@@ -274,19 +245,13 @@ func TestWalled(t *testing.T) {
 		{
 			">\n >",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 			},
 		},
 		{
 			" >\n>",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 			},
 		},
 		{
@@ -306,42 +271,28 @@ func TestWalled(t *testing.T) {
 		{
 			">\na",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 				&node.Line{"Line", []node.Inline{node.Text("a")}},
 			},
 		},
 		{
 			">\n>\na",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 				&node.Line{"Line", []node.Inline{node.Text("a")}},
 			},
 		},
 		{
 			">\n>\n>\na",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Line{"Line", nil},
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 				&node.Line{"Line", []node.Inline{node.Text("a")}},
 			},
 		},
 		{
 			">\n>\n>\n>\na",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Line{"Line", nil},
-					&node.Line{"Line", nil},
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 				&node.Line{"Line", []node.Inline{node.Text("a")}},
 			},
 		},
@@ -361,17 +312,13 @@ func TestHanging(t *testing.T) {
 	}{
 		{
 			"*",
-			[]node.Node{&node.Hanging{"A", []node.Block{
-				&node.Line{"Line", nil},
-			}}},
+			[]node.Node{&node.Hanging{"A", nil}},
 		},
 		{
 			"**",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
 			},
 		},
@@ -386,45 +333,29 @@ func TestHanging(t *testing.T) {
 		{
 			"*\n*",
 			[]node.Node{
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Hanging{"A", nil},
+				&node.Hanging{"A", nil},
 			},
 		},
 		{
 			"*\n\n*",
 			[]node.Node{
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Hanging{"A", nil},
+				&node.Hanging{"A", nil},
 			},
 		},
 		{
 			"*\n\n\n*",
 			[]node.Node{
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Hanging{"A", nil},
+				&node.Hanging{"A", nil},
 			},
 		},
 		{
 			"*\n\t\n*",
 			[]node.Node{
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Hanging{"A", nil},
+				&node.Hanging{"A", nil},
 			},
 		},
 		{
@@ -491,10 +422,7 @@ func TestHanging(t *testing.T) {
 			"*\n *",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
 			},
 		},
@@ -547,9 +475,7 @@ func TestHanging(t *testing.T) {
 			">*",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
 			},
 		},
@@ -557,25 +483,17 @@ func TestHanging(t *testing.T) {
 			">*\n*",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Hanging{"A", nil},
 			},
 		},
 		{
 			">*\n>*",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
+					&node.Hanging{"A", nil},
 				}},
 			},
 		},
@@ -584,10 +502,7 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-						&node.Hanging{"A", []node.Block{
-							&node.Line{"Line", nil},
-						}},
+						&node.Hanging{"A", nil},
 					}},
 				}},
 			},
@@ -597,7 +512,6 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
 						&node.Line{"Line", []node.Inline{node.Text("a")}},
 					}},
 				}},
@@ -608,7 +522,6 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
 						&node.Line{"Line", []node.Inline{node.Text("a")}},
 					}},
 				}},
@@ -619,22 +532,15 @@ func TestHanging(t *testing.T) {
 		{
 			" *\n *",
 			[]node.Node{
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Hanging{"A", nil},
+				&node.Hanging{"A", nil},
 			},
 		},
 		{
 			" *\n  *",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
 			},
 		},
@@ -728,10 +634,7 @@ func TestHanging(t *testing.T) {
 			"*\n *",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
 			},
 		},
@@ -742,10 +645,7 @@ func TestHanging(t *testing.T) {
 			"*\n\n *",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
 			},
 		},
@@ -753,10 +653,7 @@ func TestHanging(t *testing.T) {
 			"*\n \t\n *",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
 			},
 		},
@@ -765,13 +662,9 @@ func TestHanging(t *testing.T) {
 			"**\n\n*",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Hanging{"A", nil},
 			},
 		},
 		{
@@ -781,13 +674,9 @@ func TestHanging(t *testing.T) {
 					node.Text("a"),
 				}},
 				&node.Hanging{"A", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Hanging{"A", nil},
 			},
 		},
 
@@ -795,9 +684,7 @@ func TestHanging(t *testing.T) {
 			"**\n\na",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
 				&node.Line{"Line", []node.Inline{
 					node.Text("a"),
@@ -808,9 +695,7 @@ func TestHanging(t *testing.T) {
 			"**\n\n a",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 					&node.Line{"Line", []node.Inline{
 						node.Text("a"),
 					}},
@@ -822,7 +707,6 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
 						&node.Line{"Line", []node.Inline{
 							node.Text("a"),
 						}},
@@ -835,7 +719,6 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
 						&node.Line{"Line", []node.Inline{
 							node.Text("a"),
 						}},
@@ -852,7 +735,6 @@ func TestHanging(t *testing.T) {
 			"*\n >b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
 					&node.Walled{"B", []node.Block{
 						&node.Line{"Line", []node.Inline{
 							node.Text("b"),
@@ -884,7 +766,6 @@ func TestHanging(t *testing.T) {
 		{
 			"*\n\t*a\n\t *b\n\tc",
 			[]node.Node{&node.Hanging{"A", []node.Block{
-				&node.Line{"Line", nil},
 				&node.Hanging{"A", []node.Block{
 					&node.Line{"Line", []node.Inline{
 						node.Text("a"),
@@ -904,7 +785,6 @@ func TestHanging(t *testing.T) {
 		{
 			"*\n  >*a",
 			[]node.Node{&node.Hanging{"A", []node.Block{
-				&node.Line{"Line", nil},
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
 						&node.Line{"Line", []node.Inline{
@@ -917,7 +797,6 @@ func TestHanging(t *testing.T) {
 		{
 			"*\n\t>*a",
 			[]node.Node{&node.Hanging{"A", []node.Block{
-				&node.Line{"Line", nil},
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
 						&node.Line{"Line", []node.Inline{
@@ -933,12 +812,8 @@ func TestHanging(t *testing.T) {
 		{
 			"*\n\t>\t*\n\t>",
 			[]node.Node{&node.Hanging{"A", []node.Block{
-				&node.Line{"Line", nil},
 				&node.Walled{"B", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
 			}}},
 		},
@@ -977,11 +852,7 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-						&node.Line{"Line", nil},
-						&node.Hanging{"A", []node.Block{
-							&node.Line{"Line", nil},
-						}},
+						&node.Hanging{"A", nil},
 					}},
 				}},
 			},
@@ -1013,23 +884,17 @@ func TestRankedHanging(t *testing.T) {
 	}{
 		{
 			"=",
-			[]node.Node{&node.Hanging{"Title", []node.Block{
-				&node.Line{"Line", nil},
-			}}},
+			[]node.Node{&node.Hanging{"Title", nil}},
 		},
 		{
 			"==",
-			[]node.Node{&node.RankedHanging{"Heading", 2, []node.Block{
-				&node.Line{"Line", nil},
-			}}},
+			[]node.Node{&node.RankedHanging{"Heading", 2, nil}},
 		},
 		{
 			"= =",
 			[]node.Node{
 				&node.Hanging{"Title", []node.Block{
-					&node.Hanging{"Title", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"Title", nil},
 				}},
 			},
 		},
@@ -1037,9 +902,7 @@ func TestRankedHanging(t *testing.T) {
 			"== ==",
 			[]node.Node{
 				&node.RankedHanging{"Heading", 2, []node.Block{
-					&node.RankedHanging{"Heading", 2, []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.RankedHanging{"Heading", 2, nil},
 				}},
 			},
 		},
@@ -1054,12 +917,8 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"==\n==",
 			[]node.Node{
-				&node.RankedHanging{"Heading", 2, []node.Block{
-					&node.Line{"Line", nil},
-				}},
-				&node.RankedHanging{"Heading", 2, []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.RankedHanging{"Heading", 2, nil},
+				&node.RankedHanging{"Heading", 2, nil},
 			},
 		},
 
@@ -1125,10 +984,7 @@ func TestRankedHanging(t *testing.T) {
 			"==\n  ==",
 			[]node.Node{
 				&node.RankedHanging{"Heading", 2, []node.Block{
-					&node.Line{"Line", nil},
-					&node.RankedHanging{"Heading", 2, []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.RankedHanging{"Heading", 2, nil},
 				}},
 			},
 		},
@@ -1181,9 +1037,7 @@ func TestRankedHanging(t *testing.T) {
 			">==",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.RankedHanging{"Heading", 2, []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.RankedHanging{"Heading", 2, nil},
 				}},
 			},
 		},
@@ -1191,25 +1045,17 @@ func TestRankedHanging(t *testing.T) {
 			">==\n==",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.RankedHanging{"Heading", 2, []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.RankedHanging{"Heading", 2, nil},
 				}},
-				&node.RankedHanging{"Heading", 2, []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.RankedHanging{"Heading", 2, nil},
 			},
 		},
 		{
 			">==\n>==",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.RankedHanging{"Heading", 2, []node.Block{
-						&node.Line{"Line", nil},
-					}},
-					&node.RankedHanging{"Heading", 2, []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.RankedHanging{"Heading", 2, nil},
+					&node.RankedHanging{"Heading", 2, nil},
 				}},
 			},
 		},
@@ -1218,10 +1064,7 @@ func TestRankedHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
 					&node.RankedHanging{"Heading", 2, []node.Block{
-						&node.Line{"Line", nil},
-						&node.RankedHanging{"Heading", 2, []node.Block{
-							&node.Line{"Line", nil},
-						}},
+						&node.RankedHanging{"Heading", 2, nil},
 					}},
 				}},
 			},
@@ -1231,7 +1074,6 @@ func TestRankedHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
 					&node.RankedHanging{"Heading", 2, []node.Block{
-						&node.Line{"Line", nil},
 						&node.Line{"Line", []node.Inline{node.Text("a")}},
 					}},
 				}},
@@ -1242,7 +1084,6 @@ func TestRankedHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
 					&node.RankedHanging{"Heading", 2, []node.Block{
-						&node.Line{"Line", nil},
 						&node.Line{"Line", []node.Inline{node.Text("a")}},
 					}},
 				}},
@@ -1253,22 +1094,15 @@ func TestRankedHanging(t *testing.T) {
 		{
 			" ==\n ==",
 			[]node.Node{
-				&node.RankedHanging{"Heading", 2, []node.Block{
-					&node.Line{"Line", nil},
-				}},
-				&node.RankedHanging{"Heading", 2, []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.RankedHanging{"Heading", 2, nil},
+				&node.RankedHanging{"Heading", 2, nil},
 			},
 		},
 		{
 			" ==\n   ==",
 			[]node.Node{
 				&node.RankedHanging{"Heading", 2, []node.Block{
-					&node.Line{"Line", nil},
-					&node.RankedHanging{"Heading", 2, []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.RankedHanging{"Heading", 2, nil},
 				}},
 			},
 		},
@@ -1362,7 +1196,6 @@ func TestRankedHanging(t *testing.T) {
 			"==\n  >b",
 			[]node.Node{
 				&node.RankedHanging{"Heading", 2, []node.Block{
-					&node.Line{"Line", nil},
 					&node.Walled{"Blockquote", []node.Block{
 						&node.Line{"Line", []node.Inline{
 							node.Text("b"),
@@ -1430,9 +1263,7 @@ func TestVerbatimLine(t *testing.T) {
 		{
 			">\n.image",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 				&node.VerbatimLine{"Image", nil},
 			},
 		},
@@ -1440,9 +1271,7 @@ func TestVerbatimLine(t *testing.T) {
 			".image\n>",
 			[]node.Node{
 				&node.VerbatimLine{"Image", nil},
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 			},
 		},
 	}
@@ -1469,17 +1298,13 @@ func TestHangingMulti(t *testing.T) {
 		},
 		{
 			"1.",
-			[]node.Node{&node.Hanging{"A", []node.Block{
-				&node.Line{"Line", nil},
-			}}},
+			[]node.Node{&node.Hanging{"A", nil}},
 		},
 		{
 			"1.1.",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
 			},
 		},
@@ -1494,12 +1319,8 @@ func TestHangingMulti(t *testing.T) {
 		{
 			"1.\n1.",
 			[]node.Node{
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Hanging{"A", nil},
+				&node.Hanging{"A", nil},
 			},
 		},
 		{
@@ -1564,10 +1385,7 @@ func TestHangingMulti(t *testing.T) {
 			"1.\n  1.",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
 			},
 		},
@@ -1587,9 +1405,7 @@ func TestHangingMulti(t *testing.T) {
 			">1.",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
 			},
 		},
@@ -1597,25 +1413,17 @@ func TestHangingMulti(t *testing.T) {
 			">1.\n1.",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
 				}},
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Hanging{"A", nil},
 			},
 		},
 		{
 			">1.\n>1.",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
-					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"A", nil},
+					&node.Hanging{"A", nil},
 				}},
 			},
 		},
@@ -1624,10 +1432,7 @@ func TestHangingMulti(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
-						&node.Hanging{"A", []node.Block{
-							&node.Line{"Line", nil},
-						}},
+						&node.Hanging{"A", nil},
 					}},
 				}},
 			},
@@ -1637,7 +1442,6 @@ func TestHangingMulti(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
 						&node.Line{"Line", []node.Inline{node.Text("a")}},
 					}},
 				}},
@@ -1648,7 +1452,6 @@ func TestHangingMulti(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Line{"Line", nil},
 						&node.Line{"Line", []node.Inline{node.Text("a")}},
 					}},
 				}},
@@ -1659,13 +1462,9 @@ func TestHangingMulti(t *testing.T) {
 			"1.-\n\n1.",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Hanging{"C", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Hanging{"C", nil},
 				}},
-				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Hanging{"A", nil},
 			},
 		},
 
@@ -1674,7 +1473,6 @@ func TestHangingMulti(t *testing.T) {
 			"1.\n  >b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Line{"Line", nil},
 					&node.Walled{"B", []node.Block{
 						&node.Line{"Line", []node.Inline{
 							node.Text("b"),
@@ -1982,27 +1780,20 @@ func TestSpacing(t *testing.T) {
 		{
 			"\n>",
 			[]node.Node{
-				&node.Line{"Line", nil},
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 			},
 		},
 
 		// space
 		{
 			" >",
-			[]node.Node{&node.Walled{"Blockquote", []node.Block{
-				&node.Line{"Line", nil},
-			}}},
+			[]node.Node{&node.Walled{"Blockquote", nil}},
 		},
 		{
 			"> >",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Walled{"Blockquote", nil},
 				}},
 			},
 		},
@@ -2010,18 +1801,14 @@ func TestSpacing(t *testing.T) {
 			">  >",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Walled{"Blockquote", nil},
 				}},
 			},
 		},
 		{
 			"> ",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 			},
 		},
 		{
@@ -2036,17 +1823,13 @@ func TestSpacing(t *testing.T) {
 		// tab
 		{
 			"\t>",
-			[]node.Node{&node.Walled{"Blockquote", []node.Block{
-				&node.Line{"Line", nil},
-			}}},
+			[]node.Node{&node.Walled{"Blockquote", nil}},
 		},
 		{
 			">\t>",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Walled{"Blockquote", nil},
 				}},
 			},
 		},
@@ -2054,18 +1837,14 @@ func TestSpacing(t *testing.T) {
 			">\t\t>",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Walled{"Blockquote", nil},
 				}},
 			},
 		},
 		{
 			">\t",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 			},
 		},
 		{
@@ -2080,17 +1859,13 @@ func TestSpacing(t *testing.T) {
 		// space+tab
 		{
 			" \t>",
-			[]node.Node{&node.Walled{"Blockquote", []node.Block{
-				&node.Line{"Line", nil},
-			}}},
+			[]node.Node{&node.Walled{"Blockquote", nil}},
 		},
 		{
 			"> \t>",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Walled{"Blockquote", nil},
 				}},
 			},
 		},
@@ -2098,18 +1873,14 @@ func TestSpacing(t *testing.T) {
 			">  \t>",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
-					}},
+					&node.Walled{"Blockquote", nil},
 				}},
 			},
 		},
 		{
 			"> \t",
 			[]node.Node{
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"Line", nil},
-				}},
+				&node.Walled{"Blockquote", nil},
 			},
 		},
 		{
@@ -2468,6 +2239,7 @@ func TestEscaped(t *testing.T) {
 	}
 }
 
+/*
 func TestHat(t *testing.T) {
 	cases := []struct {
 		in  string
@@ -2530,7 +2302,6 @@ func TestHat(t *testing.T) {
 				&node.Hat{
 					[][]byte{[]byte("a")},
 					&node.Walled{"Blockquote", []node.Block{
-						&node.Line{"Line", nil},
 					}},
 				},
 			},
@@ -2541,7 +2312,6 @@ func TestHat(t *testing.T) {
 				&node.Hat{
 					[][]byte{[]byte("a")},
 					&node.Hanging{"DescriptionList", []node.Block{
-						&node.Line{"Line", nil},
 					}},
 				},
 			},
@@ -2603,7 +2373,6 @@ func TestHat(t *testing.T) {
 				&node.Hanging{"DescriptionList", []node.Block{
 					&node.Hat{
 						[][]byte{[]byte("a")},
-						&node.Line{"Line", nil},
 					},
 					&node.Line{"Line", []node.Inline{node.Text("b")}},
 				}},
@@ -2619,7 +2388,6 @@ func TestHat(t *testing.T) {
 					&node.Hanging{"DescriptionList", []node.Block{
 						&node.Hat{
 							[][]byte{[]byte("a")},
-							&node.Line{"Line", nil},
 						},
 						&node.Line{"Line", []node.Inline{node.Text("b")}},
 					}},
@@ -2632,7 +2400,6 @@ func TestHat(t *testing.T) {
 			[]node.Node{
 				&node.Hat{
 					[][]byte{[]byte("a")},
-					&node.Line{"Line", nil},
 				},
 				&node.Line{"Line", []node.Inline{node.Text("b")}},
 			},
@@ -2646,10 +2413,8 @@ func TestHat(t *testing.T) {
 			"*\n %a\n\n b",
 			[]node.Node{
 				&node.Hanging{"DescriptionList", []node.Block{
-					&node.Line{"Line", nil},
 					&node.Hat{
 						[][]byte{[]byte("a")},
-						&node.Line{"Line", nil},
 					},
 					&node.Line{"Line", []node.Inline{node.Text("b")}},
 				}},
@@ -2663,6 +2428,7 @@ func TestHat(t *testing.T) {
 		})
 	}
 }
+*/
 
 func TestBlockEscape(t *testing.T) {
 	cases := []struct {
@@ -2671,9 +2437,7 @@ func TestBlockEscape(t *testing.T) {
 	}{
 		{
 			`\`,
-			[]node.Node{
-				&node.Line{"Line", nil},
-			},
+			[]node.Node{},
 		},
 		{
 			`\\`,
@@ -2701,10 +2465,7 @@ func TestBlockEscape(t *testing.T) {
 		},
 		{
 			"\\\n\\",
-			[]node.Node{
-				&node.Line{"Line", nil},
-				&node.Line{"Line", nil},
-			},
+			[]node.Node{},
 		},
 		{
 			"\\a\n\\b",
@@ -2764,9 +2525,7 @@ func TestInlineEscape(t *testing.T) {
 	}{
 		{
 			`\`,
-			[]node.Node{
-				&node.Line{"Line", nil},
-			},
+			[]node.Node{},
 		},
 		{
 			`\\`,

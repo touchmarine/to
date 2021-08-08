@@ -57,7 +57,7 @@ type parser struct {
 	inlines []rune // open inlines
 
 	// tracing
-	tindent int // trace indentation
+	indent int // trace indentation
 }
 
 func (p *parser) register(elems []config.Element) {
@@ -84,7 +84,7 @@ func (p *parser) register(elems []config.Element) {
 			//	}
 
 			//	log.Fatalf(
-			//		"parser: block delimiter %q is already registered",
+			//		"block delimiter %q is already registered",
 			//		el.Delimiter,
 			//	)
 			//} else {
@@ -94,12 +94,12 @@ func (p *parser) register(elems []config.Element) {
 		case node.CategoryInline:
 			delim, _ := utf8.DecodeRuneInString(el.Delimiter)
 			if delim == utf8.RuneError {
-				log.Fatal("parser: invalid UTF-8 encoding in delimiter")
+				log.Fatal("invalid UTF-8 encoding in delimiter")
 			}
 
 			if _, ok := p.inlineElems[delim]; ok {
 				log.Fatalf(
-					"parser: inline delimiter %q is already registered",
+					"inline delimiter %q is already registered",
 					delim,
 				)
 			}
@@ -108,7 +108,7 @@ func (p *parser) register(elems []config.Element) {
 
 		default:
 			panic(fmt.Sprintf(
-				"parser: unexpected node category %s (element=%q, delimiter=%q)",
+				"unexpected node category %s (element=%q, delimiter=%q)",
 				categ.String(),
 				el.Name,
 				el.Delimiter,
@@ -127,6 +127,13 @@ OuterLoop:
 	for !p.atEOF {
 		if p.ch == ' ' || p.ch == '\t' {
 			p.parseSpacing()
+		}
+
+		if p.atEOL() {
+			p.nextlnf()
+			p.nextch()
+			p.parseLead()
+			continue
 		}
 
 		switch x := p.continues0(reqdBlocks); x {
@@ -167,15 +174,13 @@ OuterLoop:
 				p.ambis++
 			}
 		default:
-			panic(fmt.Sprintf("parser: unexpected continues state %d", x))
+			panic(fmt.Sprintf("unexpected continues state %d", x))
 		}
 
 		b := p.parseBlock()
-		if b == nil {
-			panic("parser: parseBlock() returned no block")
+		if b != nil {
+			blocks = append(blocks, b)
 		}
-
-		blocks = append(blocks, b)
 	}
 
 	return blocks
@@ -210,9 +215,13 @@ func (p *parser) parseBlock() node.Block {
 					return p.parseFenced(el.Name)
 				}
 			default:
-				panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
+				panic(fmt.Sprintf("parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
 			}
 		}
+	}
+
+	if p.atEOL() {
+		return nil
 	}
 
 	return p.parseLine("Line")
@@ -301,7 +310,7 @@ func (p *parser) parseHat() node.Block {
 			nod = p.parseBlock()
 		case 1: // stop
 		default:
-			panic(fmt.Sprintf("parser: unexpected continues state %d", x))
+			panic(fmt.Sprintf("unexpected continues state %d", x))
 		}
 	}
 
@@ -1154,7 +1163,7 @@ func (p *parser) atEOL() bool {
 func (p *parser) peek() rune {
 	a := p.peekn(1)
 	if len(a) != 1 {
-		panic("parser: unexpected number of peeks")
+		panic("unexpected number of peeks")
 	}
 
 	return a[0]
@@ -1311,10 +1320,10 @@ func (p *parser) tracef(format string, v ...interface{}) func() {
 
 func (p *parser) trace(msg string) func() {
 	p.printf("%q -> %s (", p.ch, msg)
-	p.tindent++
+	p.indent++
 
 	return func() {
-		p.tindent--
+		p.indent--
 		p.print(")")
 	}
 }
@@ -1324,5 +1333,5 @@ func (p *parser) printf(format string, v ...interface{}) {
 }
 
 func (p *parser) print(msg string) {
-	fmt.Println(strings.Repeat("\t", p.tindent) + msg)
+	fmt.Println(strings.Repeat("\t", p.indent) + msg)
 }
