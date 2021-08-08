@@ -51,7 +51,6 @@ type parser struct {
 
 	blocks []rune       // open blocks
 	lead   []rune       // blocks on current line
-	blank  bool         // whether the lead is blank
 	ambis  int          // number of current ambiguous lines
 	stage  []node.Block // ambiguous blocks
 
@@ -424,13 +423,6 @@ func (p *parser) continues0(blocks []rune) int {
 		p.printBlocks("lead", p.lead)
 	}
 
-	if p.blank && onlySpacing(blocks) {
-		if trace {
-			p.print("return maybe (blank)")
-		}
-		return 2
-	}
-
 	var i, j int
 	for {
 		if i > len(blocks)-1 {
@@ -676,7 +668,7 @@ func (p *parser) parseVerbatimLine(name, delim string) node.Block {
 		}
 	}
 
-	p.nextln()
+	p.nextlnf()
 	p.nextch()
 	p.parseLead()
 
@@ -691,7 +683,7 @@ func (p *parser) parseLine(name string) node.Block {
 	children := p.parseInlines()
 
 	if p.atEOL() {
-		p.nextln()
+		p.nextlnf()
 		p.nextch()
 		p.parseLead()
 	}
@@ -964,7 +956,7 @@ func (p *parser) closingDelimiter() rune {
 
 func (p *parser) init(r io.Reader) {
 	p.scnr = bufio.NewScanner(r)
-	p.nextln()
+	p.nextlnf()
 	ch, w := utf8.DecodeRune(p.ln)
 	if ch == '\uFEFF' {
 		// skip BOM if first character
@@ -988,10 +980,6 @@ func (p *parser) parseLead() {
 	var lead []rune
 	var i int
 	for {
-		if !p.atEOL() && p.ch != ' ' && p.ch != '\t' {
-			p.blank = false
-		}
-
 		if i < len(a) && p.ch == a[i] {
 			i++
 		} else if p.ch == ' ' || p.ch == '\t' {
@@ -1049,6 +1037,21 @@ func (p *parser) parseSpacing() {
 	}
 }
 
+// nextlnf sets next non-blank (filled) line.
+func (p *parser) nextlnf() bool {
+	if trace {
+		defer p.trace("nextlnf")()
+	}
+
+	cont := p.nextln()
+
+	if onlySpacing([]rune(string(p.ln))) {
+		return p.nextln()
+	}
+
+	return cont
+}
+
 func (p *parser) nextln() bool {
 	if trace {
 		defer p.trace("nextln")()
@@ -1069,8 +1072,8 @@ func (p *parser) nextln() bool {
 	if !cont {
 		p.atEOF = true
 	}
+
 	p.lead = nil
-	p.blank = true
 
 	if trace {
 		if cont {
