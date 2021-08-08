@@ -13,6 +13,7 @@ import (
 	"github.com/touchmarine/to/stringifier"
 	"github.com/touchmarine/to/transformer"
 	"html/template"
+	"io"
 	"log"
 	"os"
 )
@@ -36,10 +37,15 @@ func main() {
 		nodes []node.Node
 	)
 
+	src, err := io.ReadAll(os.Stdin)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	if *confPath == "" {
 		conf = config.Default
 
-		blocks, perr := parser.Parse(os.Stdin)
+		blocks, perr := parser.Parse(src)
 		if perr != nil {
 			log.Fatal(perr)
 		}
@@ -55,7 +61,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		blocks, perr := parser.ParseCustom(os.Stdin, conf.Elements)
+		blocks, perr := parser.ParseCustom(src, conf.Elements)
 		if perr != nil {
 			log.Fatal(perr)
 		}

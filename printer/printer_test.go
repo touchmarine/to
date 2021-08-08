@@ -210,8 +210,7 @@ func TestFprint(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-			r := strings.NewReader(c.in)
-			blocks, errs := parser.Parse(r)
+			blocks, errs := parser.Parse([]byte(c.in))
 			if errs != nil {
 				t.Fatal(errs)
 			}
