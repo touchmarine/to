@@ -74,10 +74,6 @@ func main() {
 	nodes = transformer.Sequence(nodes)
 	nodes = transformer.Composite(conf.Composites, nodes)
 
-	if format == "fmt" {
-		nodes = transformer.BlankLine(nodes)
-	}
-
 	if *stringify {
 		stringifier.StringifyTo(os.Stdout, nodes...)
 	}
