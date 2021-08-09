@@ -431,7 +431,7 @@ func (p *printer) delimiters() (string, string, bool) {
 	var needInlineEscape bool // whether inline delimiter should be escaped at BOL
 
 	switch name := p.n.Node(); name {
-	case "Text", "Line", "Paragraph":
+	case "Text", "TextBlock", "Paragraph":
 	default:
 		el, ok := p.conf.Element(name)
 		if !ok {
@@ -604,12 +604,12 @@ func isEmpty(n node.Node) bool {
 
 func isBlankLine(n node.Node) bool {
 	ln, ok := n.(*node.Line)
-	return ok && n.Node() == "Line" && len(ln.InlineChildren()) == 0
+	return ok && n.Node() == "TextBlock" && len(ln.InlineChildren()) == 0
 }
 
 func isLine(n node.Node) bool {
 	_, ok := n.(*node.Line)
-	return ok && n.Node() == "Line"
+	return ok && n.Node() == "TextBlock"
 }
 
 func trimLines(lines [][]byte) [][]byte {

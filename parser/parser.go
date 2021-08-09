@@ -126,6 +126,12 @@ Loop:
 	for p.ch > 0 {
 		if p.isSpacing() {
 			p.parseSpacing()
+			continue
+		}
+
+		if p.ch == '\n' {
+			p.next()
+			continue
 		}
 
 		switch x := p.continues(reqdBlocks); x {
@@ -177,17 +183,7 @@ Loop:
 			panic("parser: parseBlock() returned no block")
 		}
 
-		ln, ok := b.(*node.Line)
-		if ok && b.Node() == "Line" && len(ln.InlineChildren()) == 0 && len(blocks) == 0 {
-			// blank line and no blocks yet-do not add line
-
-			if p.ambis > 0 {
-				// un-note ambiguous line as we will not add it
-				p.ambis--
-			}
-		} else {
-			blocks = append(blocks, b)
-		}
+		blocks = append(blocks, b)
 	}
 
 	return blocks
@@ -227,7 +223,7 @@ func (p *parser) parseBlock() node.Block {
 		}
 	}
 
-	return p.parseLine("Line")
+	return p.parseTextBlock()
 }
 
 func (p *parser) matchBlock() (config.Element, bool) {
@@ -243,7 +239,7 @@ func (p *parser) matchBlock() (config.Element, bool) {
 			block = el
 			found = true
 
-			if r := rune(p.peek()); el.Type == node.TypeHanging && p.ch == r ||
+			if r := p.peekRune(); el.Type == node.TypeHanging && p.ch == r ||
 				el.Type == node.TypeRankedHanging && p.ch != r {
 				// ambigous hanging and ranked-try searching for
 				// the other pair otherwise use this one
@@ -671,12 +667,22 @@ func (p *parser) parseVerbatimLine(name, delim string) node.Block {
 	return &node.VerbatimLine{name, b.Bytes()}
 }
 
+func (p *parser) parseTextBlock() node.Block {
+	if trace {
+		defer p.trace("parseTextBlock")()
+	}
+
+	children := p.parseInlines(false)
+
+	return &node.Line{"TextBlock", children}
+}
+
 func (p *parser) parseLine(name string) node.Block {
 	if trace {
 		defer p.tracef("parseLine (%s)", name)()
 	}
 
-	children := p.parseInlines()
+	children := p.parseInlines(false)
 
 	if p.ch == 0 || p.ch == '\n' {
 		p.next()
@@ -686,28 +692,32 @@ func (p *parser) parseLine(name string) node.Block {
 	return &node.Line{name, children}
 }
 
-func (p *parser) parseInlines() []node.Inline {
+func (p *parser) parseInlines(afterNewline bool) []node.Inline {
 	if trace {
-		defer p.trace("parseInlines")()
+		defer p.tracef("parseInlines (afterNewline=%t)", afterNewline)()
 	}
 
 	var inlines []node.Inline
-	for p.ch > 0 && p.ch != '\n' {
+	for p.ch > 0 {
 		if p.closingDelimiter() > 0 {
 			break
 		}
 
-		inline := p.parseInline()
+		inline, cont := p.parseInline(afterNewline)
 		if inline == nil {
 			panic("parser.parseInlines: nil inline")
 		}
 
 		inlines = append(inlines, inline)
+
+		if !cont {
+			break
+		}
 	}
 	return inlines
 }
 
-func (p *parser) parseInline() node.Inline {
+func (p *parser) parseInline(afterNewline bool) (node.Inline, bool) {
 	if trace {
 		defer p.trace("parseInline")()
 	}
@@ -718,13 +728,13 @@ func (p *parser) parseInline() node.Inline {
 		case node.TypeUniform:
 			return p.parseUniform(el.Name)
 		case node.TypeEscaped:
-			return p.parseEscaped(el.Name)
+			return p.parseEscaped(el.Name), true
 		default:
 			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
 		}
 	}
 
-	return p.parseText()
+	return p.parseText(afterNewline)
 }
 
 func (p *parser) isInlineEscape() bool {
@@ -761,7 +771,7 @@ func (p *parser) isInlineEscape() bool {
 	return ok
 }
 
-func (p *parser) parseUniform(name string) node.Inline {
+func (p *parser) parseUniform(name string) (node.Inline, bool) {
 	if trace {
 		defer p.tracef("parseUniform (%s)", name)()
 		p.printInlines("inlines", p.inlines)
@@ -773,17 +783,30 @@ func (p *parser) parseUniform(name string) node.Inline {
 	p.next()
 	p.next()
 
+	afterNewline := false
+	if p.ch == '\n' {
+		p.next()
+		p.parseLead()
+
+		afterNewline = true
+
+		_, ok := p.matchBlock()
+		if ok {
+			return &node.Uniform{name, nil}, false
+		}
+	}
+
 	defer p.openInline(delim)()
 
-	children := p.parseInlines()
+	children := p.parseInlines(afterNewline)
 
 	if p.closingDelimiter() == counterpart(delim) {
-		// consume delimiter
+		// consume closing delimiter
 		p.next()
 		p.next()
 	}
 
-	return &node.Uniform{name, children}
+	return &node.Uniform{name, children}, true
 }
 
 func (p *parser) parseEscaped(name string) node.Inline {
@@ -875,13 +898,36 @@ var leftRightChars = map[rune]rune{
 	'>': '<',
 }
 
-func (p *parser) parseText() node.Inline {
+func (p *parser) parseText(afterNewline bool) (node.Inline, bool) {
 	if trace {
 		defer p.trace("parseText")()
 	}
 
+	cont := true
+	//afterNewline := false
+
 	var b bytes.Buffer
-	for p.ch > 0 && p.ch != '\n' {
+	for p.ch > 0 {
+		if p.ch == '\n' {
+			if afterNewline {
+				cont = false
+				break
+			}
+
+			p.next()
+			p.parseLead()
+
+			afterNewline = true
+
+			_, ok := p.matchBlock()
+			if ok {
+				cont = false
+				break
+			}
+
+			continue
+		}
+
 		if p.isInlineEscape() {
 			p.next()
 			goto next
@@ -896,6 +942,12 @@ func (p *parser) parseText() node.Inline {
 		}
 
 	next:
+		if afterNewline {
+			b.WriteByte(' ')
+
+			afterNewline = false
+		}
+
 		b.WriteRune(p.ch)
 
 		p.next()
@@ -907,19 +959,31 @@ func (p *parser) parseText() node.Inline {
 		defer p.printf("return %q", txt)
 	}
 
-	return node.Text(txt)
+	return node.Text(txt), cont
 }
 
 // openingDelimiter returns the element of inline delimiter if found.
 func (p *parser) openingDelimiter() (config.Element, bool) {
+	if trace {
+		defer p.trace("openingDelimiter")()
+	}
+
 	el, ok := p.inlineElems[p.ch]
 	if ok && p.ch == p.peekRune() {
 		switch el.Type {
 		case node.TypeUniform, node.TypeEscaped:
+			if trace {
+				p.printf("return true (%s)", el.Name)
+			}
+
 			return el, true
 		default:
 			panic(fmt.Sprintf("parser.parseText: unexpected node type %s (%s)", el.Type, el.Name))
 		}
+	}
+
+	if trace {
+		p.print("return false")
 	}
 
 	return config.Element{}, false
@@ -945,7 +1009,7 @@ func (p *parser) closingDelimiter() rune {
 	}
 
 	if trace {
-		p.printf("return 0 (not closing delim)")
+		p.print("return 0 (not closing delim)")
 	}
 
 	return 0
@@ -1138,13 +1202,6 @@ func (p *parser) peekRune2() rune {
 		}
 	}
 
-	return 0
-}
-
-func (p *parser) peek() byte {
-	if p.rdOffset < len(p.src) {
-		return p.src[p.rdOffset]
-	}
 	return 0
 }
 
