@@ -122,7 +122,7 @@ func (p *parser) parse(reqdBlocks []rune) []node.Block {
 	}
 
 	var blocks []node.Block
-OuterLoop:
+Loop:
 	for p.ch > 0 {
 		if p.isSpacing() {
 			p.parseSpacing()
@@ -146,6 +146,7 @@ OuterLoop:
 
 				p.ambis = 0
 			}
+
 		case stop:
 			if len(blocks) > 0 && p.ambis > 0 && p.stage == nil {
 				if trace {
@@ -155,7 +156,8 @@ OuterLoop:
 				p.stage = append(p.stage, blocks[len(blocks)-p.ambis:]...)
 				blocks = blocks[:len(blocks)-p.ambis]
 			}
-			break OuterLoop
+			break Loop
+
 		case maybe:
 			if len(reqdBlocks) > 0 {
 				// not at top level (we cannot carry ambiguous
@@ -165,6 +167,7 @@ OuterLoop:
 				}
 				p.ambis++
 			}
+
 		default:
 			panic(fmt.Sprintf("parser: unexpected continues state %d", x))
 		}
@@ -174,7 +177,17 @@ OuterLoop:
 			panic("parser: parseBlock() returned no block")
 		}
 
-		blocks = append(blocks, b)
+		ln, ok := b.(*node.Line)
+		if ok && b.Node() == "Line" && len(ln.InlineChildren()) == 0 && len(blocks) == 0 {
+			// blank line and no blocks yet-do not add line
+
+			if p.ambis > 0 {
+				// un-note ambiguous line as we will not add it
+				p.ambis--
+			}
+		} else {
+			blocks = append(blocks, b)
+		}
 	}
 
 	return blocks
