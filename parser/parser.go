@@ -129,29 +129,36 @@ Loop:
 			continue
 		}
 
-		if p.ch == '\n' {
-			p.next()
-			continue
-		}
+		//if p.ch == '\n' {
+		//	if p.continues(reqdBlocks) == stop {
+		//		break
+		//	}
+
+		//	p.next()
+		//	p.parseLead()
+
+		//	continue
+		//}
 
 		switch x := p.continues(reqdBlocks); x {
-		case continues:
-			if p.stage != nil {
-				if trace {
-					p.printf("add %d ambiguous lines", p.ambis)
-				}
+		case continues, maybe:
+		//case continues:
+		//	if p.stage != nil {
+		//		if trace {
+		//			p.printf("add %d ambiguous lines", p.ambis)
+		//		}
 
-				blocks = append(blocks, p.stage...)
+		//		blocks = append(blocks, p.stage...)
 
-				p.ambis = 0
-				p.stage = nil
-			} else if p.ambis > 0 {
-				if trace {
-					p.print("clear ambiguous lines")
-				}
+		//		p.ambis = 0
+		//		p.stage = nil
+		//	} else if p.ambis > 0 {
+		//		if trace {
+		//			p.print("clear ambiguous lines")
+		//		}
 
-				p.ambis = 0
-			}
+		//		p.ambis = 0
+		//	}
 
 		case stop:
 			if len(blocks) > 0 && p.ambis > 0 && p.stage == nil {
@@ -164,18 +171,25 @@ Loop:
 			}
 			break Loop
 
-		case maybe:
-			if len(reqdBlocks) > 0 {
-				// not at top level (we cannot carry ambiguous
-				// lines any further up at top level)
-				if trace {
-					p.print("note ambiguous line")
-				}
-				p.ambis++
-			}
+		//case maybe:
+		//	if len(reqdBlocks) > 0 {
+		//		// not at top level (we cannot carry ambiguous
+		//		// lines any further up at top level)
+		//		if trace {
+		//			p.print("note ambiguous line")
+		//		}
+		//		p.ambis++
+		//	}
 
 		default:
 			panic(fmt.Sprintf("parser: unexpected continues state %d", x))
+		}
+
+		if p.ch == '\n' {
+			p.next()
+			p.parseLead()
+
+			continue
 		}
 
 		b := p.parseBlock()
@@ -214,7 +228,7 @@ func (p *parser) parseBlock() node.Block {
 			case node.TypeRankedHanging:
 				return p.parseRankedHanging(el.Name, el.Delimiter)
 			case node.TypeFenced:
-				if r := p.peekRune(); r > 0 && r != utf8.RuneError && p.ch == r {
+				if peek := p.peek(); peek > 0 && peek != utf8.RuneError && p.ch == peek {
 					return p.parseFenced(el.Name)
 				}
 			default:
@@ -239,8 +253,8 @@ func (p *parser) matchBlock() (config.Element, bool) {
 			block = el
 			found = true
 
-			if r := p.peekRune(); el.Type == node.TypeHanging && p.ch == r ||
-				el.Type == node.TypeRankedHanging && p.ch != r {
+			if peek := p.peek(); el.Type == node.TypeHanging && p.ch == peek ||
+				el.Type == node.TypeRankedHanging && p.ch != peek {
 				// ambigous hanging and ranked-try searching for
 				// the other pair otherwise use this one
 				continue
@@ -379,6 +393,10 @@ func (p *parser) parseRankedHanging(name, delim string) node.Block {
 }
 
 func (p *parser) parseHanging0() []node.Block {
+	if trace {
+		defer p.trace("parseHanging0")()
+	}
+
 	newBlocks := diff(p.blocks, p.lead)
 	if trace {
 		p.printBlocks("reqd", p.blocks)
@@ -749,7 +767,7 @@ func (p *parser) isInlineEscape() bool {
 		return false
 	}
 
-	peek := p.peekRune()
+	peek := p.peek()
 	if peek == 0 || peek == utf8.RuneError {
 		if trace {
 			p.print("return false")
@@ -791,7 +809,7 @@ func (p *parser) parseUniform(name string) (node.Inline, bool) {
 		afterNewline = true
 
 		_, ok := p.matchBlock()
-		if ok {
+		if p.ch == '%' || ok || p.continues(p.blocks) != continues {
 			return &node.Uniform{name, nil}, false
 		}
 	}
@@ -835,9 +853,9 @@ func (p *parser) parseEscaped(name string) node.Inline {
 		for p.ch > 0 && p.ch != '\n' {
 			var a []rune
 			if escaped {
-				a = append([]rune{p.ch}, []rune{p.peekRune(), p.peekRune2()}...)
+				a = append([]rune{p.ch}, []rune{p.peek(), p.peek2()}...)
 			} else {
-				a = []rune{p.ch, p.peekRune()}
+				a = []rune{p.ch, p.peek()}
 			}
 
 			if cmpRunes(a, closing) {
@@ -904,7 +922,6 @@ func (p *parser) parseText(afterNewline bool) (node.Inline, bool) {
 	}
 
 	cont := true
-	//afterNewline := false
 
 	var b bytes.Buffer
 	for p.ch > 0 {
@@ -920,7 +937,7 @@ func (p *parser) parseText(afterNewline bool) (node.Inline, bool) {
 			afterNewline = true
 
 			_, ok := p.matchBlock()
-			if ok {
+			if p.ch == '%' || ok || p.continues(p.blocks) != continues {
 				cont = false
 				break
 			}
@@ -930,20 +947,26 @@ func (p *parser) parseText(afterNewline bool) (node.Inline, bool) {
 
 		if p.isInlineEscape() {
 			p.next()
-			goto next
+		} else {
+			if p.closingDelimiter() > 0 {
+				break
+			}
+
+			if _, ok := p.openingDelimiter(); ok {
+				break
+			}
 		}
 
-		if p.closingDelimiter() > 0 {
-			break
-		}
-
-		if _, ok := p.openingDelimiter(); ok {
-			break
-		}
-
-	next:
 		if afterNewline {
-			b.WriteByte(' ')
+			line := b.Bytes()
+			trailingSpacing := len(line) - len(bytes.TrimRight(line, " \t"))
+
+			if trailingSpacing > 0 {
+				// line has trailing spacing
+				b.Truncate(trailingSpacing)
+			}
+
+			b.WriteByte(' ') // newline separator
 
 			afterNewline = false
 		}
@@ -969,7 +992,7 @@ func (p *parser) openingDelimiter() (config.Element, bool) {
 	}
 
 	el, ok := p.inlineElems[p.ch]
-	if ok && p.ch == p.peekRune() {
+	if ok && p.ch == p.peek() {
 		switch el.Type {
 		case node.TypeUniform, node.TypeEscaped:
 			if trace {
@@ -999,7 +1022,7 @@ func (p *parser) closingDelimiter() rune {
 		delim := p.inlines[i]
 		c := counterpart(delim)
 
-		if p.ch == c && p.peekRune() == c {
+		if p.ch == c && p.peek() == c {
 			if trace {
 				p.printf("return %q (is closing delim)", c)
 			}
@@ -1156,7 +1179,7 @@ func (p *parser) next() {
 	}
 }
 
-func (p *parser) peekRune() rune {
+func (p *parser) peek() rune {
 	if p.rdOffset < len(p.src) {
 		r, w := utf8.DecodeRune(p.src[p.rdOffset:])
 
@@ -1178,7 +1201,7 @@ func (p *parser) peekRune() rune {
 	return 0
 }
 
-func (p *parser) peekRune2() rune {
+func (p *parser) peek2() rune {
 	if p.rdOffset < len(p.src) {
 		_, w := utf8.DecodeRune(p.src[p.rdOffset:])
 		if w == 0 {
