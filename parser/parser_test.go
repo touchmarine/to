@@ -80,18 +80,6 @@ func TestTextBlock(t *testing.T) {
 				}},
 			},
 		},
-		{
-			"a**\n>b",
-			[]node.Node{
-				&node.Line{"TextBlock", []node.Inline{
-					node.Text("a"),
-					&node.Uniform{"Strong", nil},
-				}},
-				&node.Walled{"Blockquote", []node.Block{
-					&node.Line{"TextBlock", []node.Inline{node.Text("b")}},
-				}},
-			},
-		},
 
 		// nested
 		{
@@ -217,7 +205,19 @@ func TestTextBlock(t *testing.T) {
 			},
 		},
 		{
+			"a  \nb",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{node.Text("a b")}},
+			},
+		},
+		{
 			"a\n b",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{node.Text("a b")}},
+			},
+		},
+		{
+			"a\n  b",
 			[]node.Node{
 				&node.Line{"TextBlock", []node.Inline{node.Text("a b")}},
 			},
@@ -2130,6 +2130,55 @@ func TestUniform(t *testing.T) {
 			},
 		},
 
+		// left-right delimiter
+		{
+			"((",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					&node.Uniform{"Group", nil},
+				}},
+			},
+		},
+		{
+			"(())",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					&node.Uniform{"Group", nil},
+				}},
+			},
+		},
+		{
+			"((a",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					&node.Uniform{"Group", []node.Inline{
+						node.Text("a"),
+					}},
+				}},
+			},
+		},
+		{
+			"((a))",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					&node.Uniform{"Group", []node.Inline{
+						node.Text("a"),
+					}},
+				}},
+			},
+		},
+		{
+			"((a))b",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					&node.Uniform{"Group", []node.Inline{
+						node.Text("a"),
+					}},
+					node.Text("b"),
+				}},
+			},
+		},
+
 		// across lines
 		{
 			"a__\nb",
@@ -2179,51 +2228,62 @@ func TestUniform(t *testing.T) {
 			},
 		},
 
-		// left-right delimiter
+		// across line spacing
 		{
-			"((",
+			"a__ \nb",
 			[]node.Node{
 				&node.Line{"TextBlock", []node.Inline{
-					&node.Uniform{"Group", nil},
+					node.Text("a"),
+					&node.Uniform{"Emphasis", []node.Inline{node.Text(" b")}},
 				}},
 			},
 		},
 		{
-			"(())",
+			"a__  \nb",
 			[]node.Node{
 				&node.Line{"TextBlock", []node.Inline{
-					&node.Uniform{"Group", nil},
+					node.Text("a"),
+					&node.Uniform{"Emphasis", []node.Inline{node.Text(" b")}},
 				}},
 			},
 		},
 		{
-			"((a",
+			"a__\n b",
 			[]node.Node{
 				&node.Line{"TextBlock", []node.Inline{
-					&node.Uniform{"Group", []node.Inline{
+					node.Text("a"),
+					&node.Uniform{"Emphasis", []node.Inline{node.Text(" b")}},
+				}},
+			},
+		},
+		{
+			"a__\n  b",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Uniform{"Emphasis", []node.Inline{node.Text(" b")}},
+				}},
+			},
+		},
+		{
+			"*a__\n b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"TextBlock", []node.Inline{
 						node.Text("a"),
+						&node.Uniform{"Emphasis", []node.Inline{node.Text(" b")}},
 					}},
 				}},
 			},
 		},
 		{
-			"((a))",
+			"*a__\n  b",
 			[]node.Node{
-				&node.Line{"TextBlock", []node.Inline{
-					&node.Uniform{"Group", []node.Inline{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"TextBlock", []node.Inline{
 						node.Text("a"),
+						&node.Uniform{"Emphasis", []node.Inline{node.Text(" b")}},
 					}},
-				}},
-			},
-		},
-		{
-			"((a))b",
-			[]node.Node{
-				&node.Line{"TextBlock", []node.Inline{
-					&node.Uniform{"Group", []node.Inline{
-						node.Text("a"),
-					}},
-					node.Text("b"),
 				}},
 			},
 		},
@@ -2286,6 +2346,33 @@ func TestUniform(t *testing.T) {
 							node.Text("a"),
 						}},
 						node.Text("b"),
+					}},
+					node.Text("c"),
+				}},
+			},
+		},
+
+		// nested across lines
+		{
+			"__**\na",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					&node.Uniform{"Emphasis", []node.Inline{
+						&node.Uniform{"Strong", []node.Inline{
+							node.Text(" a"),
+						}},
+					}},
+				}},
+			},
+		},
+		{
+			"__**a\nb**__c",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					&node.Uniform{"Emphasis", []node.Inline{
+						&node.Uniform{"Strong", []node.Inline{
+							node.Text("a b"),
+						}},
 					}},
 					node.Text("c"),
 				}},
@@ -2479,6 +2566,66 @@ func TestEscaped(t *testing.T) {
 					[][]byte{[]byte("b")},
 					nil,
 				},
+			},
+		},
+
+		// across line spacing
+		{
+			"a`` \nb",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte(" b")},
+				}},
+			},
+		},
+		{
+			"a``  \nb",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte(" b")},
+				}},
+			},
+		},
+		{
+			"a``\n b",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte(" b")},
+				}},
+			},
+		},
+		{
+			"a``\n  b",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"Code", []byte(" b")},
+				}},
+			},
+		},
+		{
+			"*a``\n b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"TextBlock", []node.Inline{
+						node.Text("a"),
+						&node.Escaped{"Code", []byte(" b")},
+					}},
+				}},
+			},
+		},
+		{
+			"*a``\n  b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.Line{"TextBlock", []node.Inline{
+						node.Text("a"),
+						&node.Escaped{"Code", []byte(" b")},
+					}},
+				}},
 			},
 		},
 

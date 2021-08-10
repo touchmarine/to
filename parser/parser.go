@@ -712,7 +712,7 @@ func (p *parser) parseLine(name string) node.Block {
 
 func (p *parser) parseInlines(afterNewline bool) []node.Inline {
 	if trace {
-		defer p.tracef("parseInlines (afterNewline=%t)", afterNewline)()
+		defer p.trace("parseInlines")()
 	}
 
 	var inlines []node.Inline
@@ -746,7 +746,7 @@ func (p *parser) parseInline(afterNewline bool) (node.Inline, bool) {
 		case node.TypeUniform:
 			return p.parseUniform(el.Name)
 		case node.TypeEscaped:
-			return p.parseEscaped(el.Name), true
+			return p.parseEscaped(el.Name)
 		default:
 			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
 		}
@@ -827,7 +827,7 @@ func (p *parser) parseUniform(name string) (node.Inline, bool) {
 	return &node.Uniform{name, children}, true
 }
 
-func (p *parser) parseEscaped(name string) node.Inline {
+func (p *parser) parseEscaped(name string) (node.Inline, bool) {
 	if trace {
 		defer p.tracef("parseEscaped (%s)", name)()
 	}
@@ -846,40 +846,75 @@ func (p *parser) parseEscaped(name string) node.Inline {
 		p.next()
 	}
 
-	var content []byte
+	cont := true
+	afterNewline := false
 
-	if p.ch > 0 && p.ch != '\n' {
-		var b bytes.Buffer
-		for p.ch > 0 && p.ch != '\n' {
-			var a []rune
-			if escaped {
-				a = append([]rune{p.ch}, []rune{p.peek(), p.peek2()}...)
-			} else {
-				a = []rune{p.ch, p.peek()}
+	var b bytes.Buffer
+	for p.ch > 0 {
+		if p.ch == '\n' {
+			line := b.Bytes()
+			trailingSpacing := len(line) - len(bytes.TrimRight(line, " \t"))
+
+			if trailingSpacing > 0 {
+				// remove trailing spacing
+				b.Truncate(len(line) - trailingSpacing)
 			}
 
-			if cmpRunes(a, closing) {
-				// consume closing delimiter
-				for i := 0; i < len(closing); i++ {
-					p.next()
-
-				}
+			if afterNewline {
+				cont = false
 				break
 			}
 
-			b.WriteRune(p.ch)
-
 			p.next()
+			p.parseLead()
+
+			afterNewline = true
+
+			_, ok := p.matchBlock()
+			if p.ch == '%' || ok || p.continues(p.blocks) != continues {
+				cont = false
+				break
+			}
+
+			continue
 		}
 
-		content = b.Bytes()
+		var a []rune
+		if escaped {
+			a = append([]rune{p.ch}, []rune{p.peek(), p.peek2()}...)
+		} else {
+			a = []rune{p.ch, p.peek()}
+		}
+
+		if cmpRunes(a, closing) {
+			// closing delimiter
+
+			for i := 0; i < len(closing); i++ {
+				p.next()
+
+			}
+
+			break
+		}
+
+		if afterNewline {
+			b.WriteByte(' ') // newline separator
+
+			afterNewline = false
+		}
+
+		b.WriteRune(p.ch)
+
+		p.next()
 	}
+
+	txt := b.Bytes()
 
 	if trace {
-		defer p.printf("return %q", content)
+		defer p.printf("return %q", txt)
 	}
 
-	return &node.Escaped{name, content}
+	return &node.Escaped{name, txt}, cont
 }
 
 // cmpRunes determines whether a and b have the same values.
@@ -918,7 +953,7 @@ var leftRightChars = map[rune]rune{
 
 func (p *parser) parseText(afterNewline bool) (node.Inline, bool) {
 	if trace {
-		defer p.trace("parseText")()
+		defer p.tracef("parseText (afterNewline=%t)", afterNewline)()
 	}
 
 	cont := true
@@ -926,6 +961,14 @@ func (p *parser) parseText(afterNewline bool) (node.Inline, bool) {
 	var b bytes.Buffer
 	for p.ch > 0 {
 		if p.ch == '\n' {
+			line := b.Bytes()
+			trailingSpacing := len(line) - len(bytes.TrimRight(line, " \t"))
+
+			if trailingSpacing > 0 {
+				// remove trailing spacing
+				b.Truncate(len(line) - trailingSpacing)
+			}
+
 			if afterNewline {
 				cont = false
 				break
@@ -958,14 +1001,6 @@ func (p *parser) parseText(afterNewline bool) (node.Inline, bool) {
 		}
 
 		if afterNewline {
-			line := b.Bytes()
-			trailingSpacing := len(line) - len(bytes.TrimRight(line, " \t"))
-
-			if trailingSpacing > 0 {
-				// line has trailing spacing
-				b.Truncate(trailingSpacing)
-			}
-
 			b.WriteByte(' ') // newline separator
 
 			afterNewline = false
