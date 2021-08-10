@@ -690,7 +690,7 @@ func (p *parser) parseTextBlock() node.Block {
 		defer p.trace("parseTextBlock")()
 	}
 
-	children := p.parseInlines(false)
+	children, _ := p.parseInlines()
 
 	return &node.Line{"TextBlock", children}
 }
@@ -700,7 +700,7 @@ func (p *parser) parseLine(name string) node.Block {
 		defer p.tracef("parseLine (%s)", name)()
 	}
 
-	children := p.parseInlines(false)
+	children, _ := p.parseInlines()
 
 	if p.ch == 0 || p.ch == '\n' {
 		p.next()
@@ -710,32 +710,32 @@ func (p *parser) parseLine(name string) node.Block {
 	return &node.Line{name, children}
 }
 
-func (p *parser) parseInlines(afterNewline bool) []node.Inline {
+func (p *parser) parseInlines() ([]node.Inline, bool) {
 	if trace {
 		defer p.trace("parseInlines")()
 	}
 
 	var inlines []node.Inline
+
 	for p.ch > 0 {
 		if p.closingDelimiter() > 0 {
 			break
 		}
 
-		inline, cont := p.parseInline(afterNewline)
-		if inline == nil {
-			panic("parser.parseInlines: nil inline")
+		inline, cont := p.parseInline()
+		if inline != nil {
+			inlines = append(inlines, inline)
 		}
-
-		inlines = append(inlines, inline)
 
 		if !cont {
-			break
+			return inlines, false
 		}
 	}
-	return inlines
+
+	return inlines, true
 }
 
-func (p *parser) parseInline(afterNewline bool) (node.Inline, bool) {
+func (p *parser) parseInline() (node.Inline, bool) {
 	if trace {
 		defer p.trace("parseInline")()
 	}
@@ -752,7 +752,7 @@ func (p *parser) parseInline(afterNewline bool) (node.Inline, bool) {
 		}
 	}
 
-	return p.parseText(afterNewline)
+	return p.parseText()
 }
 
 func (p *parser) isInlineEscape() bool {
@@ -801,22 +801,9 @@ func (p *parser) parseUniform(name string) (node.Inline, bool) {
 	p.next()
 	p.next()
 
-	afterNewline := false
-	if p.ch == '\n' {
-		p.next()
-		p.parseLead()
-
-		afterNewline = true
-
-		_, ok := p.matchBlock()
-		if p.ch == '%' || ok || p.continues(p.blocks) != continues {
-			return &node.Uniform{name, nil}, false
-		}
-	}
-
 	defer p.openInline(delim)()
 
-	children := p.parseInlines(afterNewline)
+	children, cont := p.parseInlines()
 
 	if p.closingDelimiter() == counterpart(delim) {
 		// consume closing delimiter
@@ -824,7 +811,7 @@ func (p *parser) parseUniform(name string) (node.Inline, bool) {
 		p.next()
 	}
 
-	return &node.Uniform{name, children}, true
+	return &node.Uniform{name, children}, cont
 }
 
 func (p *parser) parseEscaped(name string) (node.Inline, bool) {
@@ -951,12 +938,13 @@ var leftRightChars = map[rune]rune{
 	'>': '<',
 }
 
-func (p *parser) parseText(afterNewline bool) (node.Inline, bool) {
+func (p *parser) parseText() (node.Inline, bool) {
 	if trace {
-		defer p.tracef("parseText (afterNewline=%t)", afterNewline)()
+		defer p.trace("parseText")()
 	}
 
 	cont := true
+	afterNewline := false
 
 	var b bytes.Buffer
 	for p.ch > 0 {
@@ -1009,6 +997,14 @@ func (p *parser) parseText(afterNewline bool) (node.Inline, bool) {
 		b.WriteRune(p.ch)
 
 		p.next()
+	}
+
+	if b.Len() == 0 {
+		if trace {
+			p.print("return nil")
+		}
+
+		return nil, cont
 	}
 
 	txt := b.Bytes()
