@@ -283,6 +283,18 @@ func (p *parser) parseHat() node.Block {
 
 	lines := p.parseHatLines()
 
+	// consume spacing and newlines
+	for {
+		if p.isSpacing() {
+			p.parseSpacing()
+		} else if p.ch == '\n' {
+			p.next()
+			p.parseLead()
+		} else {
+			break
+		}
+	}
+
 	var nod node.Block
 	if p.ch > 0 {
 		switch x := p.continues(p.blocks); x {
@@ -967,36 +979,39 @@ func (p *parser) parseText() (node.Inline, bool) {
 
 			afterNewline = true
 
-			_, ok := p.matchBlock()
-			if p.ch == '%' || ok || p.continues(p.blocks) != continues {
-				cont = false
-				break
+			if p.ch == '\\' {
+				// block escape
+				p.next()
+			} else {
+				_, ok := p.matchBlock()
+				if p.ch == '%' || ok || p.continues(p.blocks) != continues {
+					cont = false
+					break
+				}
 			}
-
-			continue
-		}
-
-		if p.isInlineEscape() {
-			p.next()
 		} else {
-			if p.closingDelimiter() > 0 {
-				break
+			if afterNewline {
+				b.WriteByte(' ') // newline separator
+
+				afterNewline = false
 			}
 
-			if _, ok := p.openingDelimiter(); ok {
-				break
+			if p.isInlineEscape() {
+				p.next()
+			} else {
+				if p.closingDelimiter() > 0 {
+					break
+				}
+
+				if _, ok := p.openingDelimiter(); ok {
+					break
+				}
 			}
+
+			b.WriteRune(p.ch)
+
+			p.next()
 		}
-
-		if afterNewline {
-			b.WriteByte(' ') // newline separator
-
-			afterNewline = false
-		}
-
-		b.WriteRune(p.ch)
-
-		p.next()
 	}
 
 	if b.Len() == 0 {

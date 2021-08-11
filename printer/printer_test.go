@@ -21,7 +21,7 @@ func TestFprint(t *testing.T) {
 		{"a", "a"},
 		{"a\n", "a"},
 		{"\na", "a"},
-		{"a\nb", "a\nb"},
+		{"a\nb", "a b"},
 
 		// verbatim line
 		{".image", ""},
@@ -32,7 +32,7 @@ func TestFprint(t *testing.T) {
 		{"*", ""},
 		{"*a", "* a"},
 		{"*\n a", "* a"},
-		{"*a\n b", "* a\n  b"},
+		{"*a\n b", "* a b"},
 		{"*a\n *b", "* a\n\n  * b"},
 		{"*a\n\n *b", "* a\n\n  * b"},
 		{"*a\n \n *b", "* a\n\n  * b"},
@@ -71,10 +71,10 @@ func TestFprint(t *testing.T) {
 		// ranked hanging
 		{"=", ""},
 		{"=a", "= a"},
-		{"=a\n b", "= a\n  b"},
+		{"=a\n b", "= a b"},
 		{"==", ""},
 		{"==a", "== a"},
-		{"==a\n  b", "== a\n   b"},
+		{"==a\n  b", "== a b"},
 		{"==a\n\n  b", "== a\n\n   b"},
 		{"==a\n \n  b", "== a\n\n   b"},
 		{"==a\n\n\n  b", "== a\n\n   b"},
@@ -83,7 +83,7 @@ func TestFprint(t *testing.T) {
 		{">", ""},
 		{">a", "> a"},
 		{">\n>", ""},
-		{">a\n>b", "> a\n> b"},
+		{">a\n>b", "> a b"},
 		{">a\n>\n>b", "> a\n>\n> b"},
 		{">a\n> \n>b", "> a\n>\n> b"},
 		{">a\n>\n>\n>b", "> a\n>\n> b"},
@@ -118,9 +118,9 @@ func TestFprint(t *testing.T) {
 		{"%a\n\n", "% a"},
 		{"%a\nb", "% a\nb"},
 		{"%\n\na", "a"},
-		{"%a\n\nb", "% a\n\nb"},
-		{"%a\n \nb", "% a\n\nb"},
-		{"%a\n\n\nb", "% a\n\nb"},
+		{"%a\n\nb", "% a\nb"},
+		{"%a\n \nb", "% a\nb"},
+		{"%a\n\n\nb", "% a\nb"},
 
 		// multiple blocks
 		{"a\n\nb", "a\n\nb"},
@@ -174,7 +174,7 @@ func TestFprint(t *testing.T) {
 		{"\n\\**", ""},
 		{"\n\\**a", `\**a**`},
 		// TODO: {"a\n\\**", "a"},
-		{"a\n\\**a", "a\n\\**a**"},
+		{"a\n\\**a", "a **a**"},
 		{`>\**`, ""},
 		{`>\**a`, `> \**a**`},
 

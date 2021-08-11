@@ -82,7 +82,7 @@ func (p *printer) printNodes() {
 		p.printNode()
 
 		if peek := p.peek(); peek != nil && !p.isInline() {
-			if _, isInGroup := p.parent.(*node.Group); isInGroup || isLine(p.n) && isLine(peek) {
+			if _, isInGroup := p.parent.(*node.Group); isInGroup {
 				p.newline(p.w)
 			} else {
 				p.newline(p.w)
@@ -94,15 +94,14 @@ func (p *printer) printNodes() {
 }
 
 func (p *printer) next() bool {
-	p.pos++
+	if p.pos+1 < len(p.nodes) {
+		p.n = p.nodes[p.pos+1]
+		p.pos++
 
-	if p.pos >= len(p.nodes) {
-		return false
+		return true
 	}
 
-	p.n = p.nodes[p.pos]
-
-	return true
+	return false
 }
 
 func (p *printer) peek() node.Node {
@@ -257,7 +256,7 @@ func (p *printer) printNode() {
 		panic(fmt.Sprintf("printer: unexpected node type %T", p.n))
 	}
 
-	if isLine(p.n) && p.needBlockEscape() {
+	if isTextBlock(p.n) && p.needBlockEscape() {
 		b.WriteString(`\`)
 	}
 
@@ -563,7 +562,7 @@ func (p *printer) needInlineEscape(delim string) bool {
 }
 
 func (p *printer) atBOL() bool {
-	return isLine(p.parent) && p.pos == 0
+	return isTextBlock(p.parent) && p.pos == 0
 }
 
 func (p *printer) isInline() bool {
@@ -607,7 +606,7 @@ func isBlankLine(n node.Node) bool {
 	return ok && n.Node() == "TextBlock" && len(ln.InlineChildren()) == 0
 }
 
-func isLine(n node.Node) bool {
+func isTextBlock(n node.Node) bool {
 	_, ok := n.(*node.Line)
 	return ok && n.Node() == "TextBlock"
 }

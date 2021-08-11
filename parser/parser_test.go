@@ -135,6 +135,16 @@ func TestTextBlock(t *testing.T) {
 		},
 
 		{
+			">a\n>\n>b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Line{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.Line{"TextBlock", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+
+		{
 			"*a\n b",
 			[]node.Node{
 				&node.Hanging{"DescriptionList", []node.Block{
@@ -235,6 +245,27 @@ func TestTextBlock(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"DescriptionList", []node.Block{
 					&node.Line{"TextBlock", []node.Inline{node.Text("a b")}},
+				}},
+			},
+		},
+
+		// block escape
+		{
+			"a\n\\__",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					node.Text("a "),
+					&node.Uniform{"Emphasis", nil},
+				}},
+			},
+		},
+
+		// inline escape
+		{
+			"a\n\\\\__",
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{
+					node.Text("a __"),
 				}},
 			},
 		},
@@ -2685,6 +2716,15 @@ func TestHat(t *testing.T) {
 			},
 		},
 		{
+			"%a\n\nb",
+			[]node.Node{
+				&node.Hat{
+					[][]byte{[]byte("a")},
+					&node.Line{"TextBlock", []node.Inline{node.Text("b")}},
+				},
+			},
+		},
+		{
 			"%a\nb\n%c",
 			[]node.Node{
 				&node.Hat{
@@ -2791,7 +2831,7 @@ func TestHat(t *testing.T) {
 				&node.Hanging{"DescriptionList", []node.Block{
 					&node.Hat{
 						[][]byte{[]byte("a")},
-						&node.Line{"TextBlock", []node.Inline{node.Text(" b")}},
+						&node.Line{"TextBlock", []node.Inline{node.Text("b")}},
 					},
 				}},
 			},
@@ -2806,7 +2846,7 @@ func TestHat(t *testing.T) {
 					&node.Hanging{"DescriptionList", []node.Block{
 						&node.Hat{
 							[][]byte{[]byte("a")},
-							&node.Line{"TextBlock", []node.Inline{node.Text(" b")}},
+							&node.Line{"TextBlock", []node.Inline{node.Text("b")}},
 						},
 					}},
 				}},
@@ -2818,7 +2858,7 @@ func TestHat(t *testing.T) {
 			[]node.Node{
 				&node.Hat{
 					[][]byte{[]byte("a")},
-					&node.Line{"TextBlock", []node.Inline{node.Text(" b")}},
+					&node.Line{"TextBlock", []node.Inline{node.Text("b")}},
 				},
 			},
 		},
@@ -2833,7 +2873,7 @@ func TestHat(t *testing.T) {
 				&node.Hanging{"DescriptionList", []node.Block{
 					&node.Hat{
 						[][]byte{[]byte("a")},
-						&node.Line{"TextBlock", []node.Inline{node.Text(" b")}},
+						&node.Line{"TextBlock", []node.Inline{node.Text("b")}},
 					},
 				}},
 			},
@@ -2885,13 +2925,13 @@ func TestBlockEscape(t *testing.T) {
 		{
 			"\\\n\\",
 			[]node.Node{
-				&node.Line{"TextBlock", []node.Inline{node.Text(` \`)}},
+				&node.Line{"TextBlock", nil},
 			},
 		},
 		{
 			"\\a\n\\b",
 			[]node.Node{
-				&node.Line{"TextBlock", []node.Inline{node.Text(`a \b`)}},
+				&node.Line{"TextBlock", []node.Inline{node.Text(`a b`)}},
 			},
 		},
 		{
@@ -2906,6 +2946,13 @@ func TestBlockEscape(t *testing.T) {
 				&node.Line{"TextBlock", []node.Inline{
 					node.Text("``"),
 				}},
+			},
+		},
+
+		{
+			`\**`,
+			[]node.Node{
+				&node.Line{"TextBlock", []node.Inline{&node.Uniform{"Strong", nil}}},
 			},
 		},
 
