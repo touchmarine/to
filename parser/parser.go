@@ -121,7 +121,7 @@ func (p *parser) parse(reqdBlocks []rune) []node.Block {
 
 	var blocks []node.Block
 	for p.ch > 0 {
-		if p.isSpacing() {
+		if isSpacing(p.ch) {
 			p.parseSpacing()
 		} else if !p.continues(reqdBlocks) {
 			break
@@ -159,6 +159,8 @@ func (p *parser) parseBlock() node.Block {
 				return p.parseVerbatimLine(el.Name, el.Delimiter)
 			case node.TypeWalled:
 				return p.parseWalled(el.Name)
+			case node.TypeVerbatimWalled:
+				return p.parseVerbatimWalled(el.Name)
 			case node.TypeHanging:
 				return p.parseHanging(el.Name, el.Delimiter)
 			case node.TypeRankedHanging:
@@ -221,7 +223,7 @@ func (p *parser) parseHat() node.Block {
 
 	// consume spacing and newlines
 	for {
-		if p.isSpacing() {
+		if isSpacing(p.ch) {
 			p.parseSpacing()
 		} else if p.ch == '\n' {
 			p.next()
@@ -265,6 +267,7 @@ func (p *parser) parseHatLines() [][]byte {
 
 			p.next()
 			p.parseLead()
+			p.parseSpacing()
 		}
 
 		if !p.continues(reqdBlocks) {
@@ -294,6 +297,45 @@ func (p *parser) parseWalled(name string) node.Block {
 	children := p.parse(reqdBlocks)
 
 	return &node.Walled{name, children}
+}
+
+func (p *parser) parseVerbatimWalled(name string) node.Block {
+	if trace {
+		defer p.tracef("parseVerbatimWalled (%s)", name)()
+	}
+
+	p.addLead(p.ch)
+	defer p.open(p.ch)()
+
+	p.next() // consume delimiter
+
+	var lines [][]byte
+
+	var b strings.Builder
+	for {
+		if p.ch == 0 || p.ch == '\n' {
+			lines = append(lines, []byte(b.String()))
+			b.Reset()
+
+			if p.ch == 0 {
+				break
+			}
+
+			p.next()
+			p.parseLead()
+		}
+
+		if !p.continues(p.blocks) {
+			break
+		}
+
+		for p.ch > 0 && p.ch != '\n' {
+			b.WriteRune(p.ch)
+			p.next()
+		}
+	}
+
+	return &node.VerbatimWalled{name, lines}
 }
 
 func (p *parser) parseHanging(name, delim string) node.Block {
@@ -341,9 +383,9 @@ func (p *parser) parseHanging0() []node.Block {
 
 	newBlocks := diff(p.blocks, p.lead)
 	if trace {
-		p.printBlocks("reqd", p.blocks)
-		p.printBlocks("lead", p.lead)
-		p.printBlocks("diff", newBlocks)
+		p.printDelims("reqd", p.blocks)
+		p.printDelims("lead", p.lead)
+		p.printDelims("diff", newBlocks)
 	}
 	defer p.open(newBlocks...)()
 
@@ -354,8 +396,8 @@ func (p *parser) parseHanging0() []node.Block {
 func (p *parser) continues(blocks []rune) bool {
 	if trace {
 		defer p.trace("continues")()
-		p.printBlocks("reqd", blocks)
-		p.printBlocks("lead", p.lead)
+		p.printDelims("reqd", blocks)
+		p.printDelims("lead", p.lead)
 	}
 
 	if p.blank && onlySpacing(blocks) {
@@ -438,10 +480,20 @@ func onlySpacing(a []rune) bool {
 
 func spacingSeq(a []rune) []rune {
 	for i, v := range a {
-		if v == ' ' || v == '\t' {
+		if isSpacing(v) {
 			continue
 		}
 		return a[:i]
+	}
+	return a
+}
+
+func lastSpacingSeq(a []rune) []rune {
+	for i := len(a) - 1; i >= 0; i-- {
+		if !isSpacing(a[i]) {
+			a = a[i+1:]
+			break
+		}
 	}
 	return a
 }
@@ -451,8 +503,11 @@ func (p *parser) parseFenced(name string) node.Block {
 		defer p.tracef("parseFenced (%s)", name)()
 	}
 
-	openSpacing := p.spacing()
 	reqdBlocks := p.blocks
+
+	openSpacing := lastSpacingSeq(p.lead)
+	defer p.open(openSpacing...)()
+
 	delim := p.ch
 
 	var i int
@@ -479,7 +534,7 @@ OuterLoop:
 			p.next()
 			p.parseLead()
 
-			newSpacing := diffSpacing(openSpacing, p.spacing())
+			newSpacing := diffSpacing(lastSpacingSeq(p.blocks), lastSpacingSeq(p.lead))
 			for _, ch := range newSpacing {
 				b.WriteRune(ch)
 			}
@@ -514,6 +569,7 @@ OuterLoop:
 
 				p.next()
 				p.parseLead()
+				p.parseSpacing()
 
 				break OuterLoop
 			}
@@ -576,26 +632,6 @@ func countSpacing(s []rune) int {
 	return i
 }
 
-func (p *parser) spacing() []rune {
-	if trace {
-		defer p.trace("spacing")()
-	}
-
-	a := p.lead
-	for i := len(a) - 1; i >= 0; i-- {
-		if a[i] != ' ' && a[i] != '\t' {
-			a = a[i+1:]
-			break
-		}
-	}
-
-	if trace {
-		p.printBlocks("spacing", a)
-	}
-
-	return a
-}
-
 func (p *parser) parseVerbatimLine(name, delim string) node.Block {
 	if trace {
 		defer p.tracef("parseVerbatimLine (%s, delim=%q)", name, delim)()
@@ -615,6 +651,7 @@ func (p *parser) parseVerbatimLine(name, delim string) node.Block {
 
 	p.next()
 	p.parseLead()
+	p.parseSpacing()
 
 	return &node.VerbatimLine{name, b.Bytes()}
 }
@@ -711,7 +748,7 @@ func (p *parser) isInlineEscape() bool {
 func (p *parser) parseUniform(name string) (node.Inline, bool) {
 	if trace {
 		defer p.tracef("parseUniform (%s)", name)()
-		p.printInlines("inlines", p.inlines)
+		p.printDelims("inlines", p.inlines)
 	}
 
 	delim := p.ch
@@ -773,6 +810,7 @@ func (p *parser) parseEscaped(name string) (node.Inline, bool) {
 
 			p.next()
 			p.parseLead()
+			p.parseSpacing()
 
 			afterNewline = true
 
@@ -883,6 +921,7 @@ func (p *parser) parseText() (node.Inline, bool) {
 
 			p.next()
 			p.parseLead()
+			p.parseSpacing()
 
 			afterNewline = true
 
@@ -1001,30 +1040,43 @@ func (p *parser) init(src []byte) {
 	}
 }
 
-// parseLead parses spacing and block delimiters at the start of the line.
+// parseLead parses block delimiters at the start of the line.
 //
 // Call at the start of the line as it consumes required block delimiters.
 func (p *parser) parseLead() {
 	if trace {
 		defer p.trace("parseLead")()
-		p.printBlocks("reqd", p.blocks)
+		p.printDelims("reqd", p.blocks)
 	}
 
 	p.lead = nil
 	p.blank = true
 
-	a := stripSpacing(p.blocks)
+	a := expandTabs(p.blocks)
 
 	var lead []rune
 	var i int
-	for p.ch > 0 {
-		if p.ch != '\n' && p.ch != ' ' && p.ch != '\t' {
+
+	for p.ch > 0 && p.ch != '\n' && i < len(a) {
+		if !isSpacing(p.ch) {
 			p.blank = false
 		}
 
-		if i < len(a) && p.ch == a[i] {
+		ch := a[i]
+
+		if isSpacing(p.ch) && isSpacing(ch) {
+			if countSpacing([]rune{p.ch}) <= countSpacing(spacingSeq(a[i:])) {
+				i += countSpacing([]rune{p.ch})
+			} else if countSpacing([]rune{p.ch}) > countSpacing(spacingSeq(a[i:])) {
+				i += countSpacing([]rune{ch})
+			} else {
+				break
+			}
+		} else if isSpacing(p.ch) {
+			p.parseSpacing() // calls p.next()
+			continue
+		} else if p.ch == ch {
 			i++
-		} else if p.isSpacing() {
 		} else {
 			break
 		}
@@ -1037,8 +1089,8 @@ func (p *parser) parseLead() {
 	p.addLead(lead...)
 
 	if trace {
-		p.printBlocks("new", lead)
-		p.printBlocks("lead", p.lead)
+		p.printDelims("new", lead)
+		p.printDelims("lead", p.lead)
 	}
 }
 
@@ -1061,7 +1113,7 @@ func (p *parser) parseSpacing() {
 	}
 
 	var lead []rune
-	for p.isSpacing() {
+	for isSpacing(p.ch) {
 		lead = append(lead, p.ch)
 
 		p.next()
@@ -1070,13 +1122,13 @@ func (p *parser) parseSpacing() {
 	p.addLead(lead...)
 
 	if trace {
-		p.printBlocks("new", lead)
-		p.printBlocks("lead", p.lead)
+		p.printDelims("new", lead)
+		p.printDelims("lead", p.lead)
 	}
 }
 
-func (p *parser) isSpacing() bool {
-	return p.ch == ' ' || p.ch == '\t'
+func isSpacing(r rune) bool {
+	return r == ' ' || r == '\t'
 }
 
 // Encoding errors
@@ -1266,7 +1318,7 @@ func (p *parser) error(err error) {
 	p.errors = append(p.errors, err)
 }
 
-func (p *parser) printBlocks(name string, blocks []rune) {
+func (p *parser) printDelims(name string, blocks []rune) {
 	p.print(name + "=" + fmtBlocks(blocks))
 }
 
@@ -1294,10 +1346,6 @@ func fmtBlocks(blocks []rune) string {
 
 	b.WriteString("]")
 	return b.String()
-}
-
-func (p *parser) printInlines(name string, inlines []rune) {
-	p.printf("%s=%q", name, inlines)
 }
 
 func (p *parser) tracef(format string, v ...interface{}) func() {

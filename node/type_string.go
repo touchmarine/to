@@ -10,17 +10,18 @@ func _() {
 	var x [1]struct{}
 	_ = x[TypeVerbatimLine-0]
 	_ = x[TypeWalled-1]
-	_ = x[TypeHanging-2]
-	_ = x[TypeRankedHanging-3]
-	_ = x[TypeFenced-4]
-	_ = x[TypeText-5]
-	_ = x[TypeUniform-6]
-	_ = x[TypeEscaped-7]
+	_ = x[TypeVerbatimWalled-2]
+	_ = x[TypeHanging-3]
+	_ = x[TypeRankedHanging-4]
+	_ = x[TypeFenced-5]
+	_ = x[TypeText-6]
+	_ = x[TypeUniform-7]
+	_ = x[TypeEscaped-8]
 }
 
-const _Type_name = "TypeVerbatimLineTypeWalledTypeHangingTypeRankedHangingTypeFencedTypeTextTypeUniformTypeEscaped"
+const _Type_name = "TypeVerbatimLineTypeWalledTypeVerbatimWalledTypeHangingTypeRankedHangingTypeFencedTypeTextTypeUniformTypeEscaped"
 
-var _Type_index = [...]uint8{0, 16, 26, 37, 54, 64, 72, 83, 94}
+var _Type_index = [...]uint8{0, 16, 26, 44, 55, 72, 82, 90, 101, 112}
 
 func (i Type) String() string {
 	if i < 0 || i >= Type(len(_Type_index)-1) {

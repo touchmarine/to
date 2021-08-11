@@ -170,6 +170,14 @@
 			"templates": {
 				"html": "<code>{{.Content}}</code>"
 			}
+		},
+		{
+			"name": "BlockComment",
+			"type": "verbatimWalled",
+			"delimiter": "/",
+			"templates": {
+				"html": ""
+			}
 		}
 	],
 	"composites": [

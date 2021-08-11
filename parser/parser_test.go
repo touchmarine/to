@@ -487,6 +487,17 @@ func TestWalled(t *testing.T) {
 				}},
 			},
 		},
+		{
+			">a\n \n>b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				}},
+				&node.Walled{"Blockquote", []node.Block{
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
 
 		// spacing
 		{
@@ -570,6 +581,284 @@ func TestWalled(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"Blockquote", nil},
 				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil)
+		})
+	}
+}
+
+func TestVerbatimWalled(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"/",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", nil},
+			},
+		},
+		{
+			"/a",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
+			},
+		},
+		{
+			"/a\n",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
+			},
+		},
+		{
+			"/a\n/b",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{
+					[]byte("a"),
+					[]byte("b"),
+				}},
+			},
+		},
+		{
+			"/a\n/\n/b",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{
+					[]byte("a"),
+					nil,
+					[]byte("b"),
+				}},
+			},
+		},
+
+		// no nested content allowed
+		{
+			"/>a",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte(">a")}},
+			},
+		},
+		{
+			"/**a",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("**a")}},
+			},
+		},
+		{
+			`/\**a`,
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte(`\**a`)}},
+			},
+		},
+		{
+			`/\\**a`,
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte(`\\**a`)}},
+			},
+		},
+
+		// spacing
+		{
+			"/\n/",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{nil, nil}},
+			},
+		},
+		{
+			"/ \n/ ",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{
+					[]byte(" "),
+					[]byte(" "),
+				}},
+			},
+		},
+		{
+			"/ a",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte(" a")}},
+			},
+		},
+		{
+			"/a\n/ b",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{
+					[]byte("a"),
+					[]byte(" b"),
+				}},
+			},
+		},
+		{
+			">/ a\n>/ b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{
+						[]byte(" a"),
+						[]byte(" b"),
+					}},
+				}},
+			},
+		},
+		{
+			"*/ a\n / b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{
+						[]byte(" a"),
+						[]byte(" b"),
+					}},
+				}},
+			},
+		},
+		{
+			" / a",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte(" a")}},
+			},
+		},
+		{
+			" / \n / ",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{
+					[]byte(" "),
+					[]byte(" "),
+				}},
+			},
+		},
+		{
+			"*/\n / b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{
+						nil,
+						[]byte(" b"),
+					}},
+				}},
+			},
+		},
+
+		// continuation (stop)
+		{
+			"/a\nb",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+			},
+		},
+		{
+			"/a\n\n/b",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("b")}},
+			},
+		},
+		{
+			"/a\n>b",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
+				&node.Walled{"Blockquote", []node.Block{
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
+			"/a\n*b",
+			[]node.Node{
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+				}},
+			},
+		},
+		{
+			">/a\n/b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
+				}},
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("b")}},
+			},
+		},
+		{
+			"*/a\n/b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
+				}},
+				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("b")}},
+			},
+		},
+
+		// nested
+		{
+			">/a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
+				}},
+			},
+		},
+		{
+			">/a\n>/b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{
+						[]byte("a"),
+						[]byte("b"),
+					}},
+				}},
+			},
+		},
+		{
+			"*/a\n /b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{
+						[]byte("a"),
+						[]byte("b"),
+					}},
+				}},
+			},
+		},
+
+		{
+			">/a\n>/\n>/b",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{
+						[]byte("a"),
+						nil,
+						[]byte("b"),
+					}},
+				}},
+			},
+		},
+		{
+			"*/a\n /\n /b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{
+						[]byte("a"),
+						nil,
+						[]byte("b"),
+					}},
+				}},
+			},
+		},
+		{
+			"*\n /a\n /\n /b",
+			[]node.Node{
+				&node.Hanging{"DescriptionList", []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{
+						[]byte("a"),
+						nil,
+						[]byte("b"),
+					}},
+				}},
 			},
 		},
 	}
@@ -1082,6 +1371,8 @@ func TestHanging(t *testing.T) {
 				}},
 			}}},
 		},
+		//  >*a
+		// > *b
 		{
 			"  >*a\n > *b",
 			[]node.Node{
@@ -1910,6 +2201,14 @@ func TestFenced(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
 					&node.Fenced{"CodeBlock", [][]byte{nil, []byte(" a")}, nil},
+				}},
+			},
+		},
+		{
+			">  ``\n> a",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Fenced{"CodeBlock", [][]byte{nil, []byte("a")}, nil},
 				}},
 			},
 		},
