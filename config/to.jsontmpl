@@ -12,7 +12,7 @@
 			"html": "{{.Content}}"
 		}
 	},
-	"Line": {
+	"TextBlock": {
 		"templates": {
 			"html": '''
 {{- range .InlineChildren}}

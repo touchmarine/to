@@ -21,8 +21,7 @@ type Type int
 // Types of nodes
 const (
 	// blocks
-	TypeLine Type = iota
-	TypeVerbatimLine
+	TypeVerbatimLine Type = iota
 	TypeWalled
 	TypeHanging
 	TypeRankedHanging
@@ -36,8 +35,6 @@ const (
 
 func (t *Type) UnmarshalText(text []byte) error {
 	switch s := strings.ToLower(string(text)); s {
-	case "line":
-		*t = TypeLine
 	case "verbatimline":
 		*t = TypeVerbatimLine
 	case "walled":
@@ -62,7 +59,7 @@ func (t *Type) UnmarshalText(text []byte) error {
 
 // TypeCategory is used by parser to determine node category based on type.
 func TypeCategory(typ Type) Category {
-	if typ > 5 {
+	if typ > 4 {
 		return CategoryInline
 	}
 	return CategoryBlock
@@ -175,23 +172,23 @@ func InlinesToNodes(inlines []Inline) []Node {
 	return nodes
 }
 
-type Line struct {
+type BasicBlock struct {
 	Name     string
 	Children []Inline
 }
 
-func (l Line) Node() string {
-	return l.Name
+func (b BasicBlock) Node() string {
+	return b.Name
 }
 
-func (l Line) Block() {}
+func (b BasicBlock) Block() {}
 
-func (l *Line) InlineChildren() []Inline {
-	return l.Children
+func (b *BasicBlock) InlineChildren() []Inline {
+	return b.Children
 }
 
-func (l *Line) SetInlineChildren(children []Inline) {
-	l.Children = children
+func (b *BasicBlock) SetInlineChildren(children []Inline) {
+	b.Children = children
 }
 
 type VerbatimLine struct {

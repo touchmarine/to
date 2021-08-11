@@ -51,7 +51,7 @@ func TestAggregate(t *testing.T) {
 			[]node.Node{
 				&node.SeqNumBox{
 					&node.RankedHanging{"NumberedHeading", 2, []node.Block{
-						&node.Line{"Line", []node.Inline{
+						&node.BasicBlock{"TextBlock", []node.Inline{
 							node.Text("a"),
 						}},
 					}},
@@ -75,7 +75,7 @@ func TestAggregate(t *testing.T) {
 			[]node.Node{
 				&node.SeqNumBox{
 					&node.RankedHanging{"NumberedHeading", 2, []node.Block{
-						&node.Line{"Line", []node.Inline{
+						&node.BasicBlock{"TextBlock", []node.Inline{
 							node.Text("a"),
 							&node.Uniform{"Emphasis", []node.Inline{
 								node.Text("b"),
@@ -103,10 +103,10 @@ func TestAggregate(t *testing.T) {
 			[]node.Node{
 				&node.SeqNumBox{
 					&node.RankedHanging{"NumberedHeading", 2, []node.Block{
-						&node.Line{"Line", []node.Inline{
+						&node.BasicBlock{"TextBlock", []node.Inline{
 							node.Text("a"),
 						}},
-						&node.Line{"Line", []node.Inline{
+						&node.BasicBlock{"TextBlock", []node.Inline{
 							node.Text("b"),
 						}},
 					}},

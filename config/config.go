@@ -26,7 +26,7 @@ type Config struct {
 	Text          struct {
 		Templates map[string]string `json:"templates"`
 	}
-	Line struct {
+	TextBlock struct {
 		Templates map[string]string `json:"templates"`
 	}
 	Paragraph struct {
@@ -82,11 +82,11 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 		return nil, err
 	}
 
-	lineTmpl, ok := c.Line.Templates[name]
+	textBlockTmpl, ok := c.TextBlock.Templates[name]
 	if !ok {
-		return nil, fmt.Errorf("Line %s template not found", name)
+		return nil, fmt.Errorf("TextBlock %s template not found", name)
 	}
-	if _, err := target.New("Line").Parse(lineTmpl); err != nil {
+	if _, err := target.New("TextBlock").Parse(textBlockTmpl); err != nil {
 		return nil, err
 	}
 

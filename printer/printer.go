@@ -75,10 +75,6 @@ func (p *printer) printNodes() {
 			continue
 		}
 
-		if isBlankLine(p.n) {
-			continue
-		}
-
 		p.printNode()
 
 		if peek := p.peek(); peek != nil && !p.isInline() {
@@ -601,13 +597,8 @@ func isEmpty(n node.Node) bool {
 	return node.ExtractText(n) == ""
 }
 
-func isBlankLine(n node.Node) bool {
-	ln, ok := n.(*node.Line)
-	return ok && n.Node() == "TextBlock" && len(ln.InlineChildren()) == 0
-}
-
 func isTextBlock(n node.Node) bool {
-	_, ok := n.(*node.Line)
+	_, ok := n.(*node.BasicBlock)
 	return ok && n.Node() == "TextBlock"
 }
 

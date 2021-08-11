@@ -155,8 +155,6 @@ func (p *parser) parseBlock() node.Block {
 		el, ok := p.matchBlock()
 		if ok {
 			switch el.Type {
-			case node.TypeLine:
-				return p.parseLine(el.Name)
 			case node.TypeVerbatimLine:
 				return p.parseVerbatimLine(el.Name, el.Delimiter)
 			case node.TypeWalled:
@@ -628,22 +626,7 @@ func (p *parser) parseTextBlock() node.Block {
 
 	children, _ := p.parseInlines()
 
-	return &node.Line{"TextBlock", children}
-}
-
-func (p *parser) parseLine(name string) node.Block {
-	if trace {
-		defer p.tracef("parseLine (%s)", name)()
-	}
-
-	children, _ := p.parseInlines()
-
-	if p.ch == 0 || p.ch == '\n' {
-		p.next()
-		p.parseLead()
-	}
-
-	return &node.Line{name, children}
+	return &node.BasicBlock{"TextBlock", children}
 }
 
 func (p *parser) parseInlines() ([]node.Inline, bool) {

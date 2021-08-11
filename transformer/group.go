@@ -91,7 +91,7 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 			} else {
 				lines = nil
 			}
-		} else if ln, ok := n.(*node.Line); name != open || name == open && ok && n.Node() == "Line" && isBlank(ln) {
+		} else if name != open {
 			end := i - 1
 
 			if trace {
@@ -205,4 +205,14 @@ func (g *grouper) printf(format string, v ...interface{}) {
 
 func (g *grouper) print(msg string) {
 	fmt.Println(strings.Repeat("\t", g.indent) + msg)
+}
+
+// https://github.com/golang/go/wiki/SliceTricks
+func cut(a []node.Node, i, j int) []node.Node {
+	copy(a[i:], a[j:])
+	for k, n := len(a)-j+i, len(a); k < n; k++ {
+		a[k] = nil
+	}
+	a = a[:len(a)-j+i]
+	return a
 }

@@ -7,7 +7,7 @@
 			"html": "{{.Content}}"
 		}
 	},
-	"Line": {
+	"TextBlock": {
 		"templates": {
 			"html": "{{- range .InlineChildren}}\n\t{{- render .}}\n{{- end}}"
 		}

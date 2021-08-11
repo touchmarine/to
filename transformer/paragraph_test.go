@@ -14,176 +14,87 @@ func TestParagraph(t *testing.T) {
 		out  []node.Node
 	}{
 		{
-			"blank line",
+			"one textblock",
 			[]node.Node{
-				&node.Line{"Line", nil},
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 			},
 			[]node.Node{
-				&node.Line{"Line", nil},
-			},
-		},
-		{
-			"filled line",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-			},
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 			},
 		},
 		{
-			"filled and blank line",
+			"two textblocks",
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-				&node.Line{"Line", nil},
-			},
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-				&node.Line{"Line", nil},
-			},
-		},
-
-		{
-			"one filled",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-				&node.Line{"Line", nil},
-				&node.Line{"Line", []node.Inline{node.Text("b")}},
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
 			},
 			[]node.Node{
 				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
-				&node.Line{"Line", nil},
 				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("b")}},
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
 				}},
 			},
 		},
-		{
-			"two filled",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-				&node.Line{"Line", []node.Inline{node.Text("b")}},
-				&node.Line{"Line", nil},
-				&node.Line{"Line", []node.Inline{node.Text("c")}},
-			},
-			[]node.Node{
-				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-					&node.Line{"Line", []node.Inline{node.Text("b")}},
-				}},
-				&node.Line{"Line", nil},
-				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("c")}},
-				}},
-			},
-		},
-
-		{
-			"multiple blank lines",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-				&node.Line{"Line", nil},
-				&node.Line{"Line", nil},
-				&node.Line{"Line", []node.Inline{node.Text("b")}},
-			},
-			[]node.Node{
-				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-				}},
-				&node.Line{"Line", nil},
-				&node.Line{"Line", nil},
-				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("b")}},
-				}},
-			},
-		},
-
-		{
-			"alternating",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-				&node.Line{"Line", nil},
-				&node.Line{"Line", []node.Inline{node.Text("b")}},
-				&node.Line{"Line", nil},
-				&node.Line{"Line", []node.Inline{node.Text("c")}},
-			},
-			[]node.Node{
-				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-				}},
-				&node.Line{"Line", nil},
-				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("b")}},
-				}},
-				&node.Line{"Line", nil},
-				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("c")}},
-				}},
-			},
-		},
-		{
-			"alternating 1",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-				&node.Line{"Line", nil},
-				&node.Line{"Line", []node.Inline{node.Text("b")}},
-				&node.Line{"Line", nil},
-			},
-			[]node.Node{
-				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-				}},
-				&node.Line{"Line", nil},
-				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("b")}},
-				}},
-				&node.Line{"Line", nil},
-			},
-		},
-
 		{
 			"before walled",
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-				&node.Line{"Line", nil},
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 				&node.Walled{"Blockquote", nil},
 			},
 			[]node.Node{
 				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-				}},
-				&node.Line{"Line", nil},
-				&node.Walled{"Blockquote", nil},
-			},
-		},
-		{
-			"before walled 1",
-			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
-				&node.Walled{"Blockquote", nil},
-			},
-			[]node.Node{
-				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 				&node.Walled{"Blockquote", nil},
 			},
 		},
 		{
-			"before walled 2",
+			"after walled",
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{node.Text("a")}},
 				&node.Walled{"Blockquote", nil},
-				&node.Line{"Line", nil},
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 			},
 			[]node.Node{
-				&node.Group{"Paragraph", []node.Block{
-					&node.Line{"Line", []node.Inline{node.Text("a")}},
-				}},
 				&node.Walled{"Blockquote", nil},
-				&node.Line{"Line", nil},
+				&node.Group{"Paragraph", []node.Block{
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
+
+		// nested
+		{
+			"one nested textblock",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				}},
+			},
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				}},
+			},
+		},
+		{
+			"two nested textblocks",
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+				}},
+			},
+			[]node.Node{
+				&node.Walled{"Blockquote", []node.Block{
+					&node.Group{"Paragraph", []node.Block{
+						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+					}},
+					&node.Group{"Paragraph", []node.Block{
+						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+					}},
+				}},
 			},
 		},
 	}

@@ -17,13 +17,13 @@ func TestCompositer(t *testing.T) {
 		{
 			"basic",
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{
+				&node.BasicBlock{"TextBlock", []node.Inline{
 					&node.Uniform{"Group", nil},
 					&node.Escaped{"Link", nil},
 				}},
 			},
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{
+				&node.BasicBlock{"TextBlock", []node.Inline{
 					&node.Composite{
 						"NamedLink",
 						&node.Uniform{"Group", nil},
@@ -35,7 +35,7 @@ func TestCompositer(t *testing.T) {
 		{
 			"filled",
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{
+				&node.BasicBlock{"TextBlock", []node.Inline{
 					&node.Uniform{"Group", []node.Inline{
 						node.Text("a"),
 					}},
@@ -43,7 +43,7 @@ func TestCompositer(t *testing.T) {
 				}},
 			},
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{
+				&node.BasicBlock{"TextBlock", []node.Inline{
 					&node.Composite{
 						"NamedLink",
 						&node.Uniform{"Group", []node.Inline{
@@ -57,7 +57,7 @@ func TestCompositer(t *testing.T) {
 		{
 			"nested",
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{
+				&node.BasicBlock{"TextBlock", []node.Inline{
 					&node.Uniform{"Group", []node.Inline{
 						&node.Uniform{"Group", nil},
 						&node.Escaped{"Link", nil},
@@ -66,7 +66,7 @@ func TestCompositer(t *testing.T) {
 				}},
 			},
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{
+				&node.BasicBlock{"TextBlock", []node.Inline{
 					&node.Composite{
 						"NamedLink",
 						&node.Uniform{"Group", []node.Inline{
@@ -81,7 +81,7 @@ func TestCompositer(t *testing.T) {
 		{
 			"consecutive",
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{
+				&node.BasicBlock{"TextBlock", []node.Inline{
 					&node.Uniform{"Group", nil},
 					&node.Escaped{"Link", nil},
 					&node.Uniform{"Group", nil},
@@ -89,7 +89,7 @@ func TestCompositer(t *testing.T) {
 				}},
 			},
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{
+				&node.BasicBlock{"TextBlock", []node.Inline{
 					&node.Composite{
 						"NamedLink",
 						&node.Uniform{"Group", nil},
@@ -106,24 +106,24 @@ func TestCompositer(t *testing.T) {
 		{
 			"two lines",
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{
+				&node.BasicBlock{"TextBlock", []node.Inline{
 					&node.Uniform{"Group", nil},
 					&node.Escaped{"Link", nil},
 				}},
-				&node.Line{"Line", []node.Inline{
+				&node.BasicBlock{"TextBlock", []node.Inline{
 					&node.Uniform{"Group", nil},
 					&node.Escaped{"Link", nil},
 				}},
 			},
 			[]node.Node{
-				&node.Line{"Line", []node.Inline{
+				&node.BasicBlock{"TextBlock", []node.Inline{
 					&node.Composite{
 						"NamedLink",
 						&node.Uniform{"Group", nil},
 						&node.Escaped{"Link", nil},
 					},
 				}},
-				&node.Line{"Line", []node.Inline{
+				&node.BasicBlock{"TextBlock", []node.Inline{
 					&node.Composite{
 						"NamedLink",
 						&node.Uniform{"Group", nil},
@@ -138,7 +138,7 @@ func TestCompositer(t *testing.T) {
 				&node.Walled{
 					"Blockquote",
 					[]node.Block{
-						&node.Line{"Line", []node.Inline{
+						&node.BasicBlock{"TextBlock", []node.Inline{
 							&node.Uniform{"Group", nil},
 							&node.Escaped{"Link", nil},
 						}},
@@ -149,7 +149,7 @@ func TestCompositer(t *testing.T) {
 				&node.Walled{
 					"Blockquote",
 					[]node.Block{
-						&node.Line{"Line", []node.Inline{
+						&node.BasicBlock{"TextBlock", []node.Inline{
 							&node.Composite{
 								"NamedLink",
 								&node.Uniform{"Group", nil},
