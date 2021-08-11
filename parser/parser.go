@@ -47,11 +47,9 @@ type parser struct {
 	offset   int  // character offset
 	rdOffset int  // position after current character
 
-	blocks []rune       // open blocks
-	lead   []rune       // blocks on current line
-	blank  bool         // whether the lead is blank
-	ambis  int          // number of current ambiguous lines
-	stage  []node.Block // ambiguous blocks
+	blocks []rune // open blocks
+	lead   []rune // blocks on current line
+	blank  bool   // whether the lead is blank
 
 	inlines []rune // open inlines
 
@@ -122,82 +120,22 @@ func (p *parser) parse(reqdBlocks []rune) []node.Block {
 	}
 
 	var blocks []node.Block
-Loop:
 	for p.ch > 0 {
 		if p.isSpacing() {
 			p.parseSpacing()
-			continue
-		}
-
-		//if p.ch == '\n' {
-		//	if p.continues(reqdBlocks) == stop {
-		//		break
-		//	}
-
-		//	p.next()
-		//	p.parseLead()
-
-		//	continue
-		//}
-
-		switch x := p.continues(reqdBlocks); x {
-		case continues, maybe:
-		//case continues:
-		//	if p.stage != nil {
-		//		if trace {
-		//			p.printf("add %d ambiguous lines", p.ambis)
-		//		}
-
-		//		blocks = append(blocks, p.stage...)
-
-		//		p.ambis = 0
-		//		p.stage = nil
-		//	} else if p.ambis > 0 {
-		//		if trace {
-		//			p.print("clear ambiguous lines")
-		//		}
-
-		//		p.ambis = 0
-		//	}
-
-		case stop:
-			if len(blocks) > 0 && p.ambis > 0 && p.stage == nil {
-				if trace {
-					p.printf("stage %d ambiguous lines", p.ambis)
-				}
-
-				p.stage = append(p.stage, blocks[len(blocks)-p.ambis:]...)
-				blocks = blocks[:len(blocks)-p.ambis]
-			}
-			break Loop
-
-		//case maybe:
-		//	if len(reqdBlocks) > 0 {
-		//		// not at top level (we cannot carry ambiguous
-		//		// lines any further up at top level)
-		//		if trace {
-		//			p.print("note ambiguous line")
-		//		}
-		//		p.ambis++
-		//	}
-
-		default:
-			panic(fmt.Sprintf("parser: unexpected continues state %d", x))
-		}
-
-		if p.ch == '\n' {
+		} else if !p.continues(reqdBlocks) {
+			break
+		} else if p.ch == '\n' {
 			p.next()
 			p.parseLead()
+		} else {
+			b := p.parseBlock()
+			if b == nil {
+				panic("parser: parseBlock() returned no block")
+			}
 
-			continue
+			blocks = append(blocks, b)
 		}
-
-		b := p.parseBlock()
-		if b == nil {
-			panic("parser: parseBlock() returned no block")
-		}
-
-		blocks = append(blocks, b)
 	}
 
 	return blocks
@@ -296,14 +234,8 @@ func (p *parser) parseHat() node.Block {
 	}
 
 	var nod node.Block
-	if p.ch > 0 {
-		switch x := p.continues(p.blocks); x {
-		case continues, maybe:
-			nod = p.parseBlock()
-		case stop:
-		default:
-			panic(fmt.Sprintf("parser: unexpected continues state %d", x))
-		}
+	if p.ch > 0 && p.continues(p.blocks) {
+		nod = p.parseBlock()
 	}
 
 	return &node.Hat{lines, nod}
@@ -329,15 +261,15 @@ func (p *parser) parseHatLines() [][]byte {
 			lines = append(lines, []byte(b.String()))
 			b.Reset()
 
-			p.next()
-			p.parseLead()
-
 			if p.ch == 0 {
 				break
 			}
+
+			p.next()
+			p.parseLead()
 		}
 
-		if p.continues(reqdBlocks) != continues {
+		if !p.continues(reqdBlocks) {
 			break
 		}
 
@@ -421,15 +353,7 @@ func (p *parser) parseHanging0() []node.Block {
 	return p.parse(reqdBlocks)
 }
 
-type continuesState int
-
-const (
-	continues continuesState = iota
-	stop
-	maybe
-)
-
-func (p *parser) continues(blocks []rune) continuesState {
+func (p *parser) continues(blocks []rune) bool {
 	if trace {
 		defer p.trace("continues")()
 		p.printBlocks("reqd", blocks)
@@ -438,9 +362,9 @@ func (p *parser) continues(blocks []rune) continuesState {
 
 	if p.blank && onlySpacing(blocks) {
 		if trace {
-			p.print("return maybe (blank)")
+			p.print("return true (blank)")
 		}
-		return maybe
+		return true
 	}
 
 	var i, j int
@@ -449,22 +373,22 @@ func (p *parser) continues(blocks []rune) continuesState {
 			if trace {
 				p.print("return true")
 			}
-			return continues
+			return true
 		}
 
 		if j > len(p.lead)-1 {
 			if onlySpacing(blocks[i:]) && len(p.lead) > 0 &&
 				(p.ch == 0 || p.ch == '\n' || p.ch == ' ' || p.ch == '\t') {
 				if trace {
-					p.print("return maybe")
+					p.print("return true")
 				}
-				return maybe
+				return true
 			}
 
 			if trace {
 				p.print("return false (not enough blocks)")
 			}
-			return stop
+			return false
 		}
 
 		if blocks[i] == ' ' || blocks[i] == '\t' || p.lead[j] == ' ' || p.lead[j] == '\t' {
@@ -492,7 +416,7 @@ func (p *parser) continues(blocks []rune) continuesState {
 				if trace {
 					p.print("return false (lesser ident)")
 				}
-				return stop
+				return false
 			}
 
 			continue
@@ -502,7 +426,7 @@ func (p *parser) continues(blocks []rune) continuesState {
 			if trace {
 				p.printf("return false (%q != %q, i=%d, j=%d)", blocks[i], p.lead[j], i, j)
 			}
-			return stop
+			return false
 		}
 
 		i++
@@ -563,7 +487,7 @@ OuterLoop:
 			}
 		}
 
-		if p.continues(reqdBlocks) != continues {
+		if !p.continues(reqdBlocks) {
 			break
 		}
 
@@ -870,7 +794,7 @@ func (p *parser) parseEscaped(name string) (node.Inline, bool) {
 			afterNewline = true
 
 			_, ok := p.matchBlock()
-			if p.ch == '%' || ok || p.continues(p.blocks) != continues {
+			if p.ch == '%' || ok || !p.continues(p.blocks) {
 				cont = false
 				break
 			}
@@ -984,7 +908,7 @@ func (p *parser) parseText() (node.Inline, bool) {
 				p.next()
 			} else {
 				_, ok := p.matchBlock()
-				if p.ch == '%' || ok || p.continues(p.blocks) != continues {
+				if p.ch == '%' || ok || !p.continues(p.blocks) {
 					cont = false
 					break
 				}
