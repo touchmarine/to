@@ -370,6 +370,30 @@ func (g *Group) SetBlockChildren(children []Block) {
 	g.Children = children
 }
 
+type Sticky struct {
+	Name    string
+	Sticky0 Block
+	Target0 Block
+}
+
+func (s Sticky) Node() string {
+	return s.Name
+}
+
+func (s Sticky) Block() {}
+
+func (s *Sticky) Sticky() Block {
+	return s.Sticky0
+}
+
+func (s *Sticky) Target() Block {
+	return s.Target0
+}
+
+func (s *Sticky) BlockChildren() []Block {
+	return []Block{s.Sticky0, s.Target0}
+}
+
 type Composite struct {
 	Name       string
 	Primary0   Inline

@@ -255,6 +255,14 @@
 			"templates": {
 				"html": ""
 			}
+		},
+		{
+			"name": "Caption",
+			"type": "verbatimWalled",
+			"delimiter": "+",
+			"templates": {
+				"html": ""
+			}
 		}
 	],
 	"composites": [
@@ -266,6 +274,23 @@
 				"html": '''
 <a href="{{.SecondaryElement.Content}}">{{range .PrimaryElement.InlineChildren}}{{render .}}{{end}}</a>
 '''
+			}
+		}
+	],
+	"stickies": [
+		{
+			"name": "StickyComment",
+			"element": "BlockComment",
+			"templates": {
+				"html": ""
+			}
+		},
+		{
+			"name": "StickyCaption",
+			"element": "Caption",
+			"after": true,
+			"templates": {
+				"html": ""
 			}
 		}
 	],

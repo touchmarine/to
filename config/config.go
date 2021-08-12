@@ -34,6 +34,7 @@ type Config struct {
 	}
 	Elements   []Element   `json:"elements"`
 	Composites []Composite `json:"composites"`
+	Stickies   []Sticky    `json:"stickies"`
 	Groups     []Group     `json:"groups"`
 	Aggregates []Aggregate `json:"aggregates"`
 }
@@ -118,6 +119,16 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 		}
 	}
 
+	for _, sticky := range c.Stickies {
+		sTmpl, ok := sticky.Templates[name]
+		if !ok {
+			return nil, fmt.Errorf("sticky %s %s template not found", sticky.Name, name)
+		}
+		if _, err := target.New(sticky.Name).Parse(sTmpl); err != nil {
+			return nil, err
+		}
+	}
+
 	for _, group := range c.Groups {
 		gTmpl, ok := group.Templates[name]
 		if !ok {
@@ -139,10 +150,10 @@ type Element struct {
 	Templates map[string]string `json:"templates"`
 }
 
-// Composite is like an inline Group. It is an element created by traversing
-// nodes and trying to recognize patterns between inline elements.
+// Composite is a group of two inline elements, the PrimaryElement and the
+// SecondaryElement.
 //
-// The pattern is the PrimaryElement followed by the SecondaryElement.
+// The SecondaryElement immediately follows the PrimaryElement.
 type Composite struct {
 	Name             string            `json:"name"`
 	PrimaryElement   string            `json:"primaryElement"`
@@ -150,12 +161,29 @@ type Composite struct {
 	Templates        map[string]string `json:"templates"`
 }
 
+// Sticky is a group of two elements, the Element and an element the Element
+// sticks to.
+//
+// The Element sticks to the preceding element if After is true. Otherwise,
+// it sticks to the following element.
+type Sticky struct {
+	Name      string            `json:"name"`
+	Element   string            `json:"element"`
+	After     bool              `json:"after"`
+	Templates map[string]string `json:"templates"`
+}
+
+// Group is a group of consecutive Elements.
 type Group struct {
 	Name      string            `json:"name"`
 	Element   string            `json:"element"`
 	Templates map[string]string `json:"templates"`
 }
 
+// Aggregate is an aggregate of Elements.
+//
+// One current usage is generating table of contents based on an aggregate of
+// headings.
 type Aggregate struct {
 	Name     string   `json:"name"`
 	Elements []string `json"elements"`
