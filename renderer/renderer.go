@@ -129,12 +129,6 @@ func fillData(data map[string]interface{}, n node.Node) {
 
 	if _, ok := n.(node.Boxed); ok {
 		switch k := n.(type) {
-		case *node.Hat:
-			lines := btosSlice(k.Lines())
-			joined := strings.Join(lines, "\n")
-
-			data["Hat"] = joined
-			data["HatAttrs"] = parseAttrs(lines)
 		case *node.SeqNumBox:
 			data["SeqNums"] = k.SeqNums
 			data["SeqNum"] = k.SeqNum()

@@ -414,28 +414,6 @@ func (c *Composite) Secondary() Inline {
 	return c.Secondary0
 }
 
-type Hat struct {
-	Lines0 [][]byte
-	Nod    Node
-}
-
-func (h Hat) Node() string {
-	if h.Nod == nil {
-		return "Hat()"
-	}
-	return fmt.Sprintf("Hat(%s)", h.Nod.Node())
-}
-
-func (h Hat) Block() {}
-
-func (h *Hat) Lines() [][]byte {
-	return h.Lines0
-}
-
-func (h *Hat) Unbox() Node {
-	return h.Nod
-}
-
 type SeqNumBox struct {
 	Nod     Node
 	SeqNums []int

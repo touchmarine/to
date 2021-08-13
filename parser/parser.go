@@ -149,8 +149,6 @@ func (p *parser) parseBlock() node.Block {
 	if p.ch == '\\' {
 		// escape block
 		p.next()
-	} else if p.ch == '%' {
-		return p.parseHat()
 	} else {
 		el, ok := p.matchBlock()
 		if ok {
@@ -212,75 +210,6 @@ func (p *parser) matchBlock() (config.Element, bool) {
 // hasPrefix determines whether b matches source from offset.
 func (p *parser) hasPrefix(b []byte) bool {
 	return bytes.HasPrefix(p.src[p.offset:], b)
-}
-
-func (p *parser) parseHat() node.Block {
-	if trace {
-		defer p.trace("parseHat")()
-	}
-
-	lines := p.parseHatLines()
-
-	// consume spacing and newlines
-	for {
-		if isSpacing(p.ch) {
-			p.parseSpacing()
-		} else if p.ch == '\n' {
-			p.next()
-			p.parseLead()
-		} else {
-			break
-		}
-	}
-
-	var nod node.Block
-	if p.ch > 0 && p.continues(p.blocks) {
-		nod = p.parseBlock()
-	}
-
-	return &node.Hat{lines, nod}
-}
-
-func (p *parser) parseHatLines() [][]byte {
-	if trace {
-		defer p.trace("parseHatLines")()
-	}
-
-	p.addLead(p.ch)
-	defer p.open(p.ch)()
-
-	p.next() // consume delimiter
-
-	reqdBlocks := p.blocks
-
-	var lines [][]byte
-
-	var b strings.Builder
-	for {
-		if p.ch == 0 || p.ch == '\n' {
-			lines = append(lines, []byte(b.String()))
-			b.Reset()
-
-			if p.ch == 0 {
-				break
-			}
-
-			p.next()
-			p.parseLead()
-			p.parseSpacing()
-		}
-
-		if !p.continues(reqdBlocks) {
-			break
-		}
-
-		for p.ch > 0 && p.ch != '\n' {
-			b.WriteRune(p.ch)
-			p.next()
-		}
-	}
-
-	return lines
 }
 
 func (p *parser) parseWalled(name string) node.Block {

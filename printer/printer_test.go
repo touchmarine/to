@@ -61,13 +61,6 @@ func TestFprint(t *testing.T) {
 		{"-\n *", ""},
 		{"-\n *a", "- * a"},
 
-		{"%*", "% *"},
-		{"%*a", "% *a"},
-		{"%\n*", ""},
-		{"%\n*a", "* a"},
-		{"%\n\n*", ""},
-		{"%\n\n*a", "* a"},
-
 		// ranked hanging
 		{"=", ""},
 		{"=a", "= a"},
@@ -107,20 +100,6 @@ func TestFprint(t *testing.T) {
 		{"-a\n -b\n -c", "- a\n\n  - b\n  - c"},
 
 		//{"-a<b>c", "- a<b>c"},
-
-		// hats
-		{"%", ""},
-		{"% ", ""},
-		{"%a", "% a"},
-		{"% a", "% a"},
-		{"%\n%", ""},
-		{"%a\n%b", "% a\n% b"},
-		{"%a\n\n", "% a"},
-		{"%a\nb", "% a\nb"},
-		{"%\n\na", "a"},
-		{"%a\n\nb", "% a\nb"},
-		{"%a\n \nb", "% a\nb"},
-		{"%a\n\n\nb", "% a\nb"},
 
 		// multiple blocks
 		{"a\n\nb", "a\n\nb"},

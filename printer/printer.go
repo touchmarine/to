@@ -126,27 +126,7 @@ func (p *printer) unbox() bool {
 			b.WriteTo(p.w)
 		}()
 
-		switch k := m.(type) {
-		case *node.Hat:
-			p.printLines(&b, []byte("%"), trimLines(k.Lines()))
-
-			n = m.Unbox()
-			if n != nil && !isEmpty(n) {
-				if b.Len() > 0 {
-					p.newline(&b)
-				}
-			} else {
-				if trace {
-					p.print("empty hat")
-				}
-
-				if b.Len() > 0 && p.peek() != nil {
-					p.newline(&b)
-					p.newline(&b)
-				}
-
-				return false
-			}
+		switch m.(type) {
 		case *node.SeqNumBox:
 			n = m.Unbox()
 			if n == nil {
