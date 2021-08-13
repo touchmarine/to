@@ -2413,49 +2413,54 @@ func TestUniform(t *testing.T) {
 		out []node.Node
 	}{
 		{
-			"__",
+			"a__",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
 					&node.Uniform{"Emphasis", nil},
 				}},
 			},
 		},
 		{
-			"____",
+			"a____",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
 					&node.Uniform{"Emphasis", nil},
 				}},
 			},
 		},
 		{
-			"__a",
+			"a__b",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
 					&node.Uniform{"Emphasis", []node.Inline{
-						node.Text("a"),
+						node.Text("b"),
 					}},
 				}},
 			},
 		},
 		{
-			"__a__",
+			"a__b__",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
 					&node.Uniform{"Emphasis", []node.Inline{
-						node.Text("a"),
+						node.Text("b"),
 					}},
 				}},
 			},
 		},
 		{
-			"__a__b",
+			"a__b__c",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
 					&node.Uniform{"Emphasis", []node.Inline{
-						node.Text("a"),
+						node.Text("b"),
 					}},
-					node.Text("b"),
+					node.Text("c"),
 				}},
 			},
 		},
@@ -2607,9 +2612,10 @@ func TestUniform(t *testing.T) {
 
 		// nested
 		{
-			"__**",
+			"a__**",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
 					&node.Uniform{"Emphasis", []node.Inline{
 						&node.Uniform{"Strong", nil},
 					}},
@@ -2617,81 +2623,87 @@ func TestUniform(t *testing.T) {
 			},
 		},
 		{
-			"__**a",
+			"a__**b",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
 					&node.Uniform{"Emphasis", []node.Inline{
 						&node.Uniform{"Strong", []node.Inline{
-							node.Text("a"),
+							node.Text("b"),
 						}},
 					}},
 				}},
 			},
 		},
 		{
-			"__**a**b",
+			"a__**b**c",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
 					&node.Uniform{"Emphasis", []node.Inline{
 						&node.Uniform{"Strong", []node.Inline{
-							node.Text("a"),
+							node.Text("b"),
 						}},
-						node.Text("b"),
+						node.Text("c"),
 					}},
 				}},
 			},
 		},
 		{
-			"__**a__b",
+			"a__**b__c",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
 					&node.Uniform{"Emphasis", []node.Inline{
 						&node.Uniform{"Strong", []node.Inline{
-							node.Text("a"),
+							node.Text("b"),
 						}},
-					}},
-					node.Text("b"),
-				}},
-			},
-		},
-		{
-			"__**a**b__c",
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
-					&node.Uniform{"Emphasis", []node.Inline{
-						&node.Uniform{"Strong", []node.Inline{
-							node.Text("a"),
-						}},
-						node.Text("b"),
 					}},
 					node.Text("c"),
+				}},
+			},
+		},
+		{
+			"a__**b**c__d",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Uniform{"Emphasis", []node.Inline{
+						&node.Uniform{"Strong", []node.Inline{
+							node.Text("b"),
+						}},
+						node.Text("c"),
+					}},
+					node.Text("d"),
 				}},
 			},
 		},
 
 		// nested across lines
 		{
-			"__**\na",
+			"a__**\nb",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
 					&node.Uniform{"Emphasis", []node.Inline{
 						&node.Uniform{"Strong", []node.Inline{
-							node.Text(" a"),
+							node.Text(" b"),
 						}},
 					}},
 				}},
 			},
 		},
 		{
-			"__**a\nb**__c",
+			"a__**b\nc**__d",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
 					&node.Uniform{"Emphasis", []node.Inline{
 						&node.Uniform{"Strong", []node.Inline{
-							node.Text("a b"),
+							node.Text("b c"),
 						}},
 					}},
-					node.Text("c"),
+					node.Text("d"),
 				}},
 			},
 		},

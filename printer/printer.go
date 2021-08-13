@@ -202,7 +202,7 @@ func (p *printer) printNode() {
 			case *node.Hanging, *node.RankedHanging:
 				s := strings.Repeat(" ", len(pre))
 				p.prefixes = append(p.prefixes, s)
-			case *node.Walled:
+			case *node.Walled, *node.VerbatimWalled:
 				p.prefixes = append(p.prefixes, pre)
 			}
 		}
@@ -410,9 +410,10 @@ func (p *printer) delimiters() (string, string, bool) {
 	default:
 		el, ok := p.conf.Element(name)
 		if !ok {
-			_, compOk := p.conf.Composite(name)
-			_, grpOk := p.conf.Group(name)
-			if compOk || grpOk {
+			_, isComposite := p.conf.Composite(name)
+			_, isSticky := p.conf.Sticky(name)
+			_, isGroup := p.conf.Group(name)
+			if isComposite || isSticky || isGroup {
 				return "", "", false
 			} else {
 				panic("printer: unexpected element " + name)

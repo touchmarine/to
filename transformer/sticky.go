@@ -63,7 +63,7 @@ func (g *stickyGrouper) groupStickies() {
 			peek := g.peek()
 
 			if peek != nil {
-				blockPeek, isBlock := peek.(node.Block)
+				_, isBlock := peek.(node.Block)
 				if !isBlock {
 					panic("transformer: mixed node types, expected Block")
 				}
@@ -74,7 +74,7 @@ func (g *stickyGrouper) groupStickies() {
 				if isSticky && !sticky.After && !isPeekSticky {
 					// sticky before
 
-					g.sticky(sticky.Name, m, blockPeek)
+					g.sticky(sticky.Name, false)
 
 					// go back so a possible before and
 					// after sticky can be detected
@@ -82,7 +82,7 @@ func (g *stickyGrouper) groupStickies() {
 				} else if !isSticky && isPeekSticky && stickyPeek.After {
 					// sticky after
 
-					g.sticky(stickyPeek.Name, blockPeek, m)
+					g.sticky(stickyPeek.Name, true)
 				}
 			}
 
@@ -99,8 +99,9 @@ func (g *stickyGrouper) groupStickies() {
 }
 
 // sticky groups the current and the following node into a Sticky node.
-func (g *stickyGrouper) sticky(name string, sticky, target node.Block) {
-	n := &node.Sticky{name, sticky, target}
+func (g *stickyGrouper) sticky(name string, after bool) {
+	children := g.nodes[g.pos : g.pos+2]
+	n := &node.Sticky{name, after, node.NodesToBlocks(children)}
 
 	// set sticky to current node and remove the next node
 	g.node = n

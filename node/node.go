@@ -371,9 +371,9 @@ func (g *Group) SetBlockChildren(children []Block) {
 }
 
 type Sticky struct {
-	Name    string
-	Sticky0 Block
-	Target0 Block
+	Name     string
+	After    bool
+	Children []Block
 }
 
 func (s Sticky) Node() string {
@@ -383,15 +383,31 @@ func (s Sticky) Node() string {
 func (s Sticky) Block() {}
 
 func (s *Sticky) Sticky() Block {
-	return s.Sticky0
+	if l := len(s.Children); l != 2 {
+		panic(fmt.Sprintf("node: unexpected number of children: %d", l))
+	}
+
+	if s.After {
+		return s.Children[1]
+	} else {
+		return s.Children[0]
+	}
 }
 
 func (s *Sticky) Target() Block {
-	return s.Target0
+	if l := len(s.Children); l != 2 {
+		panic(fmt.Sprintf("node: unexpected number of children: %d", l))
+	}
+
+	if s.After {
+		return s.Children[0]
+	} else {
+		return s.Children[1]
+	}
 }
 
 func (s *Sticky) BlockChildren() []Block {
-	return []Block{s.Sticky0, s.Target0}
+	return s.Children
 }
 
 type Composite struct {

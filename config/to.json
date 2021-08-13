@@ -186,6 +186,14 @@
 			"templates": {
 				"html": "{{- range .BlockChildren}}\n\t{{- render .}}\n{{end -}}\n"
 			}
+		},
+		{
+			"name": "Subtitle",
+			"type": "walled",
+			"delimiter": "_",
+			"templates": {
+				"html": "{{- range .BlockChildren}}\n\t{{- render .}}\n{{end -}}\n"
+			}
 		}
 	],
 	"composites": [
@@ -212,6 +220,14 @@
 			"after": true,
 			"templates": {
 				"html": "<figure>\n\t{{render .TargetElement.Self}}\n\t<figcaption>\n\t\t{{- range .StickyElement.BlockChildren}}\n\t\t\t{{render .}}\n\t\t{{end -}}\n\t</figcaption>\n</figure>\n"
+			}
+		},
+		{
+			"name": "StickySubtitle",
+			"element": "Subtitle",
+			"after": true,
+			"templates": {
+				"html": "<header>\n\t{{render .TargetElement.Self}}\n\t<p>\n\t\t{{- range .StickyElement.BlockChildren}}\n\t\t\t{{render .}}\n\t\t{{end -}}\n\t</p>\n</header>\n"
 			}
 		}
 	],

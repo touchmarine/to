@@ -262,6 +262,18 @@
 {{end -}}
 '''
 			}
+		},
+		{
+			"name": "Subtitle",
+			"type": "walled",
+			"delimiter": "_",
+			"templates": {
+				"html": '''
+{{- range .BlockChildren}}
+	{{- render .}}
+{{end -}}
+'''
+			}
 		}
 	],
 	"composites": [
@@ -301,6 +313,23 @@
 		{{end -}}
 	</figcaption>
 </figure>
+'''
+			}
+		},
+		{
+			"name": "StickySubtitle",
+			"element": "Subtitle",
+			"after": true,
+			"templates": {
+				"html": '''
+<header>
+	{{render .TargetElement.Self}}
+	<p>
+		{{- range .StickyElement.BlockChildren}}
+			{{render .}}
+		{{end -}}
+	</p>
+</header>
 '''
 			}
 		}

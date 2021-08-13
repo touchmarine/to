@@ -31,11 +31,10 @@ func TestGroupStickies(t *testing.T) {
 				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 			},
 			[]node.Node{
-				&node.Sticky{
-					Name:    "StickyComment",
-					Sticky0: &node.VerbatimWalled{"BlockComment", [][]byte{[]byte("b")}},
-					Target0: &node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
-				},
+				&node.Sticky{"StickyComment", false, []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("b")}},
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				}},
 			},
 		},
 		{
@@ -58,11 +57,10 @@ func TestGroupStickies(t *testing.T) {
 			},
 			[]node.Node{
 				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
-				&node.Sticky{
-					Name:    "StickyComment",
-					Sticky0: &node.VerbatimWalled{"BlockComment", [][]byte{[]byte("b")}},
-					Target0: &node.BasicBlock{"TextBlock", []node.Inline{node.Text("c")}},
-				},
+				&node.Sticky{"StickyComment", false, []node.Block{
+					&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("b")}},
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("c")}},
+				}},
 			},
 		},
 		{
@@ -94,11 +92,10 @@ func TestGroupStickies(t *testing.T) {
 				&node.VerbatimWalled{"Caption", [][]byte{[]byte("b")}},
 			},
 			[]node.Node{
-				&node.Sticky{
-					Name:    "StickyCaption",
-					Sticky0: &node.VerbatimWalled{"Caption", [][]byte{[]byte("b")}},
-					Target0: &node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
-				},
+				&node.Sticky{"StickyCaption", true, []node.Block{
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.VerbatimWalled{"Caption", [][]byte{[]byte("b")}},
+				}},
 			},
 		},
 		{
@@ -120,11 +117,10 @@ func TestGroupStickies(t *testing.T) {
 				&node.VerbatimWalled{"Caption", [][]byte{[]byte("c")}},
 			},
 			[]node.Node{
-				&node.Sticky{
-					Name:    "StickyCaption",
-					Sticky0: &node.VerbatimWalled{"Caption", [][]byte{[]byte("b")}},
-					Target0: &node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
-				},
+				&node.Sticky{"StickyCaption", true, []node.Block{
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.VerbatimWalled{"Caption", [][]byte{[]byte("b")}},
+				}},
 				&node.VerbatimWalled{"Caption", [][]byte{[]byte("c")}},
 			},
 		},
@@ -149,15 +145,13 @@ func TestGroupStickies(t *testing.T) {
 				&node.VerbatimWalled{"Caption", [][]byte{[]byte("c")}},
 			},
 			[]node.Node{
-				&node.Sticky{
-					Name:    "StickyCaption",
-					Sticky0: &node.VerbatimWalled{"Caption", [][]byte{[]byte("c")}},
-					Target0: &node.Sticky{
-						Name:    "StickyComment",
-						Sticky0: &node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
-						Target0: &node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
-					},
-				},
+				&node.Sticky{"StickyCaption", true, []node.Block{
+					&node.Sticky{"StickyComment", false, []node.Block{
+						&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
+						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+					}},
+					&node.VerbatimWalled{"Caption", [][]byte{[]byte("c")}},
+				}},
 			},
 		},
 		{
@@ -171,15 +165,13 @@ func TestGroupStickies(t *testing.T) {
 			},
 			[]node.Node{
 				&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("a")}},
-				&node.Sticky{
-					Name:    "StickyCaption",
-					Sticky0: &node.VerbatimWalled{"Caption", [][]byte{[]byte("d")}},
-					Target0: &node.Sticky{
-						Name:    "StickyComment",
-						Sticky0: &node.VerbatimWalled{"BlockComment", [][]byte{[]byte("b")}},
-						Target0: &node.BasicBlock{"TextBlock", []node.Inline{node.Text("c")}},
-					},
-				},
+				&node.Sticky{"StickyCaption", true, []node.Block{
+					&node.Sticky{"StickyComment", false, []node.Block{
+						&node.VerbatimWalled{"BlockComment", [][]byte{[]byte("b")}},
+						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("c")}},
+					}},
+					&node.VerbatimWalled{"Caption", [][]byte{[]byte("d")}},
+				}},
 				&node.VerbatimWalled{"Caption", [][]byte{[]byte("e")}},
 			},
 		},

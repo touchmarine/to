@@ -57,6 +57,15 @@ func (c *Config) Composite(name string) (Composite, bool) {
 	return Composite{}, false
 }
 
+func (c *Config) Sticky(name string) (Sticky, bool) {
+	for _, sticky := range c.Stickies {
+		if sticky.Name == name {
+			return sticky, true
+		}
+	}
+	return Sticky{}, false
+}
+
 func (c *Config) Group(name string) (Group, bool) {
 	for _, grp := range c.Groups {
 		if grp.Name == name {

@@ -99,7 +99,16 @@ func TestFprint(t *testing.T) {
 		{"-a\n-b", "- a\n- b"},
 		{"-a\n -b\n -c", "- a\n\n  - b\n  - c"},
 
-		//{"-a<b>c", "- a<b>c"},
+		// sticky
+		{"/a\nb", "/ a\n\nb"},
+		{"/a\n/b\nc", "/ a\n/ b\n\nc"},
+		{"a\n/b", "a\n\n/ b"},
+		{"a\nb\n/c", "a b\n\n/ c"},
+
+		{"a\n_b", "a\n\n_ b"},
+		{"a\n_b\n_c", "a\n\n_ b c"},
+		{"_a\nb", "_ a\n\nb"},
+		{"_a\n_b\nc", "_ a b\n\nc"},
 
 		// multiple blocks
 		{"a\n\nb", "a\n\nb"},
@@ -131,8 +140,8 @@ func TestFprint(t *testing.T) {
 
 		{"a__``b", "a__``b``__"},
 
-		{"//a", "//a//"},
-		{"// a", "// a//"},
+		{"a//b", "a//b//"},
+		{"a// b", "a// b//"},
 		{"a //b", "a //b//"},
 		{"a //b// c", "a //b// c"},
 
@@ -152,7 +161,7 @@ func TestFprint(t *testing.T) {
 		{`\**a`, `\**a**`},
 		{"\n\\**", ""},
 		{"\n\\**a", `\**a**`},
-		// TODO: {"a\n\\**", "a"},
+		{"a\n\\**", "a "},
 		{"a\n\\**a", "a **a**"},
 		{`>\**`, ""},
 		{`>\**a`, `> \**a**`},
@@ -180,7 +189,7 @@ func TestFprint(t *testing.T) {
 		{`.toc\==a`, `.toc \==a`},
 
 		// block and inline escape
-		// TODO: {`\\`, ""},
+		{`\\`, `\\`},
 		{`\\*`, `\*`},
 		{`\\**`, `\\**`},
 		{`\\\`, `\\`},
@@ -201,6 +210,7 @@ func TestFprint(t *testing.T) {
 			nodes = transformer.Group(conf.Groups, nodes)
 			nodes = transformer.Sequence(nodes)
 			nodes = transformer.Composite(conf.Composites, nodes)
+			nodes = transformer.GroupStickies(conf.Stickies, nodes)
 
 			var b strings.Builder
 			printer.Fprint(&b, conf, nodes)
