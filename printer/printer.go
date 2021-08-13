@@ -78,7 +78,9 @@ func (p *printer) printNodes() {
 		p.printNode()
 
 		if peek := p.peek(); peek != nil && !p.isInline() {
-			if _, isInGroup := p.parent.(*node.Group); isInGroup {
+			_, isInSticky := p.parent.(*node.Sticky)
+			_, isInGroup := p.parent.(*node.Group)
+			if isInSticky || isInGroup {
 				p.newline(p.w)
 			} else {
 				p.newline(p.w)
@@ -189,7 +191,7 @@ func (p *printer) printNode() {
 			b.WriteString(pre)
 
 			switch p.n.(type) {
-			case *node.Fenced:
+			case *node.Fenced, *node.VerbatimWalled:
 			default:
 				b.WriteString(" ")
 			}
@@ -244,7 +246,8 @@ func (p *printer) printNode() {
 	case node.InlineChildren:
 		p.printChildren(&b, node.InlinesToNodes(m.InlineChildren()))
 	case node.Lines:
-		p.printLines(&b, nil, m.Lines())
+		_, isVerbatim := p.n.(*node.VerbatimWalled)
+		p.printLines(&b, m.Lines(), !isVerbatim)
 	case node.Content:
 		c := m.Content()
 
@@ -260,7 +263,7 @@ func (p *printer) printNode() {
 	return
 }
 
-func (p *printer) printLines(w io.Writer, prefix []byte, lines [][]byte) {
+func (p *printer) printLines(w io.Writer, lines [][]byte, spacing bool) {
 	if trace {
 		defer p.trace("printLines")()
 	}
@@ -268,15 +271,10 @@ func (p *printer) printLines(w io.Writer, prefix []byte, lines [][]byte) {
 	for i, ln := range lines {
 		if i > 0 {
 			p.newline(w)
-			p.prefix(w, true)
+			p.prefix(w, spacing)
 		}
 
 		if len(ln) > 0 {
-			if len(prefix) > 0 {
-				w.Write(prefix)
-				w.Write([]byte(" "))
-			}
-
 			w.Write(ln)
 		}
 	}

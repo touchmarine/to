@@ -83,6 +83,15 @@ func TestFprint(t *testing.T) {
 
 		{">``a\n>b", "> ``a\n> b\n> ``"},
 
+		// verbatim walled
+		{"/", ""},
+		{"/a", "/a"},
+		{"/ a", "/ a"},
+		{"/\n/", ""},
+		{"/a\n/b", "/a\n/b"},
+		{"/ a\n/ b", "/ a\n/ b"},
+		{"/a\n/\n/b", "/a\n/\n/b"},
+
 		// fenced
 		{"``", ""},
 		{"``a", "``a\n``"},
@@ -100,15 +109,15 @@ func TestFprint(t *testing.T) {
 		{"-a\n -b\n -c", "- a\n\n  - b\n  - c"},
 
 		// sticky
-		{"/a\nb", "/ a\n\nb"},
-		{"/a\n/b\nc", "/ a\n/ b\n\nc"},
-		{"a\n/b", "a\n\n/ b"},
-		{"a\nb\n/c", "a b\n\n/ c"},
+		{"/a\nb", "/a\nb"},
+		{"/a\n/b\nc", "/a\n/b\nc"},
+		{"a\n/b", "a\n\n/b"},
+		{"a\n/b\n/c", "a\n\n/b\n/c"},
 
-		{"a\n_b", "a\n\n_ b"},
-		{"a\n_b\n_c", "a\n\n_ b c"},
-		{"_a\nb", "_ a\n\nb"},
-		{"_a\n_b\nc", "_ a b\n\nc"},
+		{"a\n+b", "a\n+ b"},
+		{"a\n+b\n+c", "a\n+ b c"},
+		{"+a\nb", "+ a\n\nb"},
+		{"+a\n+b\nc", "+ a b\n\nc"},
 
 		// multiple blocks
 		{"a\n\nb", "a\n\nb"},
@@ -197,7 +206,9 @@ func TestFprint(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
+		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
+
+		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
 			blocks, errs := parser.Parse([]byte(c.in))
 			if errs != nil {
 				t.Fatal(errs)
