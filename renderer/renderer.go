@@ -13,13 +13,14 @@ import (
 )
 
 var FuncMap = template.FuncMap{
-	"head":             head,
-	"body":             body,
-	"primarySecondary": parsePrimarySecondary,
-	"groupBySeqNum":    groupBySeqNum,
-	"isSeqNumGroup":    isSeqNumGroup,
-	"parseAttrs":       parseAttrs,
-	"htmlAttrs":        htmlAttrs,
+	"dict":          dict,
+	"head":          head,
+	"body":          body,
+	"groupBySeqNum": groupBySeqNum,
+	"isSeqNumGroup": isSeqNumGroup,
+	"parseAttrs":    parseAttrs,
+	"htmlAttrs":     htmlAttrs,
+	"trimSpacing":   trimSpacing,
 }
 
 func New(tmpl *template.Template, data map[string]interface{}) *Renderer {
@@ -37,7 +38,7 @@ func (r *Renderer) RenderWithCustomRoot(out io.Writer, nodes []node.Node) {
 	}
 }
 
-func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
+func (r *Renderer) Render(out io.Writer, nodes []node.Node, tmplData map[string]interface{}) {
 	for i, n := range nodes {
 		if i > 0 {
 			out.Write([]byte("\n"))
@@ -64,7 +65,13 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 		}
 
 		fillData(data, n)
+
 		for k, v := range r.data {
+			data[k] = v
+		}
+
+		// data from renderWithData template function
+		for k, v := range tmplData {
 			data[k] = v
 		}
 
@@ -76,6 +83,7 @@ func (r *Renderer) Render(out io.Writer, nodes []node.Node) {
 }
 
 func fillData(data map[string]interface{}, n node.Node) {
+	data["Self"] = n
 	data["TextContent"] = node.ExtractText(n)
 
 	if m, ok := n.(node.BlockChildren); ok {
@@ -106,6 +114,15 @@ func fillData(data map[string]interface{}, n node.Node) {
 		data["SecondaryElement"] = secondary
 	}
 
+	if m, ok := n.(*node.Sticky); ok {
+		sticky, target := make(map[string]interface{}), make(map[string]interface{})
+		fillData(sticky, m.Sticky())
+		fillData(target, m.Target())
+
+		data["StickyElement"] = sticky
+		data["TargetElement"] = target
+	}
+
 	if m, ok := n.(node.Ranked); ok {
 		data["Rank"] = strconv.FormatUint(uint64(m.Rank()), 10)
 	}
@@ -129,21 +146,28 @@ func fillData(data map[string]interface{}, n node.Node) {
 
 func (r *Renderer) FuncMap() template.FuncMap {
 	return template.FuncMap{
-		"render": func(v interface{}) template.HTML {
-			var b strings.Builder
-
-			switch n := v.(type) {
-			case []node.Node:
-				r.Render(&b, n)
-			case node.Node:
-				r.Render(&b, []node.Node{n})
-			default:
-				panic(fmt.Sprintf("render: unexpected node %T", v))
-			}
-
-			return template.HTML(b.String())
-		},
+		"render":         r.renderFunc,
+		"renderWithData": r.renderWithDataFunc,
 	}
+}
+
+func (r *Renderer) renderFunc(v interface{}) template.HTML {
+	return r.renderWithDataFunc(v, nil)
+}
+
+func (r *Renderer) renderWithDataFunc(v interface{}, data map[string]interface{}) template.HTML {
+	var b strings.Builder
+
+	switch n := v.(type) {
+	case []node.Node:
+		r.Render(&b, n, data)
+	case node.Node:
+		r.Render(&b, []node.Node{n}, data)
+	default:
+		panic(fmt.Sprintf("render: unexpected node %T", v))
+	}
+
+	return template.HTML(b.String())
 }
 
 // btosSlice returns a slice of strings from a slice of bytes.
@@ -153,6 +177,27 @@ func btosSlice(p [][]byte) []string {
 		lines = append(lines, string(line))
 	}
 	return lines
+}
+
+func dict(v ...interface{}) (map[string]interface{}, error) {
+	if len(v)%2 > 0 {
+		return nil, fmt.Errorf("dict got odd number of parameters")
+	}
+
+	dict := make(map[string]interface{}, len(v)/2)
+
+	for i := 0; i < len(v); i += 2 {
+		key, ok := v[i].(string)
+		if !ok {
+			return nil, fmt.Errorf("dict key not a string")
+		}
+
+		if i+1 < len(v) {
+			dict[key] = v[i+1]
+		}
+	}
+
+	return dict, nil
 }
 
 func head(lines []string) string {
@@ -167,33 +212,6 @@ func body(lines []string) string {
 		return strings.Join(lines[1:], "\n")
 	}
 	return ""
-}
-
-type primarySecondary struct {
-	Primary   template.HTMLAttr
-	Secondary template.HTMLAttr
-}
-
-func parsePrimarySecondary(lines []string) primarySecondary {
-	trimmed := make([]string, len(lines))
-	for i := 0; i < len(lines); i++ {
-		trimmed[i] = strings.Trim(lines[i], " \t")
-	}
-
-	s := strings.Join(trimmed, " ")
-	i := strings.IndexAny(s, " \t")
-
-	var prim, sec string
-	if i > -1 {
-		prim = s[:i]
-		if i+1 < len(s) {
-			sec = s[i+1:]
-		}
-	} else {
-		prim = s
-	}
-
-	return primarySecondary{template.HTMLAttr(prim), template.HTMLAttr(sec)}
 }
 
 type seqNumNode interface {
@@ -307,8 +325,14 @@ func (s *seqNumGrouper) print(msg string) {
 }
 
 func parseAttrs(lines []string) map[string]string {
-	s := strings.Join(lines, "\n")
-	reader := strings.NewReader(s)
+	var b strings.Builder
+	for _, l := range lines {
+		if strings.HasPrefix(l, "!") {
+			b.WriteString(l[1:])
+		}
+	}
+
+	reader := strings.NewReader(b.String())
 
 	var p attrParser
 	p.init(reader)
@@ -493,4 +517,8 @@ func htmlAttrs(attrs map[string]string) template.HTMLAttr {
 	}
 
 	return template.HTMLAttr(b.String())
+}
+
+func trimSpacing(s string) string {
+	return strings.Trim(s, " \t")
 }

@@ -68,51 +68,6 @@ func TestBody(t *testing.T) {
 	}
 }
 
-func TestPrimarySecondary(t *testing.T) {
-	cases := []struct {
-		in  []string
-		out primarySecondary
-	}{
-		{
-			[]string{""},
-			primarySecondary{},
-		},
-		{
-			[]string{"a"},
-			primarySecondary{"a", ""},
-		},
-		{
-			[]string{"a b"},
-			primarySecondary{"a", "b"},
-		},
-		{
-			[]string{"a\tb"},
-			primarySecondary{"a", "b"},
-		},
-		{
-			[]string{"a", "b"},
-			primarySecondary{"a", "b"},
-		},
-		{
-			[]string{"", "b"},
-			primarySecondary{"", "b"},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(strings.Join(c.in, " "), func(t *testing.T) {
-			got := parsePrimarySecondary(c.in)
-
-			if got.Primary != c.out.Primary {
-				t.Errorf("got Primary %q, want %q", got.Primary, c.out.Primary)
-			}
-			if got.Secondary != c.out.Secondary {
-				t.Errorf("got Secondary %q, want %q", got.Secondary, c.out.Secondary)
-			}
-		})
-	}
-}
-
 func TestGroupBySeqNum(t *testing.T) {
 	cases := []struct {
 		name string

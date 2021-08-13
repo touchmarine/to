@@ -32,7 +32,7 @@
 			"delimiter": ">",
 			"templates": {
 				"html": '''
-<blockquote {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+<blockquote {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
 	{{- range .BlockChildren}}
 		{{render .}}
 	{{end -}}
@@ -47,7 +47,7 @@
 				"html": '''
 <div
 	style="margin-left: 1em;padding-left:1em;border-left:2px solid deepskyblue;"
-	{{- with .HatAttrs}} {{htmlAttrs .}}{{end}}
+	{{- with .Attrs}} {{htmlAttrs .}}{{end}}
 >
 	{{- range .BlockChildren}}
 		{{render .}}
@@ -61,7 +61,7 @@
 			"delimiter": "*",
 			"templates": {
 				"html": '''
-<dl {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+<dl {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
 	{{- range $index, $element := .BlockChildren}}
 		{{- if eq $index 0}}
 			<dt>{{render $element}}</dt>
@@ -78,7 +78,7 @@
 			"delimiter": "`",
 			"templates": {
 				"html": '''
-<pre {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}><code {{- with head .Lines}} lang="{{.}}"{{end}}>
+<pre {{- with .Attrs}} {{htmlAttrs .}}{{end}}><code {{- with head .Lines}} lang="{{.}}"{{end}}>
 	{{- body .Lines -}}
 </code></pre>'''
 			}
@@ -89,7 +89,7 @@
 			"delimiter": "'",
 			"templates": {
 				"html": '''
-<pre {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+<pre {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
 	{{- body .Lines -}}
 </pre>'''
 			}
@@ -100,7 +100,7 @@
 			"delimiter": "=",
 			"templates": {
 				"html": '''
-<h1 {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+<h1 {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
 	{{- range .BlockChildren}}
 		{{render .}}
 	{{end -}}
@@ -113,7 +113,7 @@
 			"delimiter": "=",
 			"templates": {
 				"html": '''
-<h{{.Rank}} {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+<h{{.Rank}} {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
 	{{- range .BlockChildren}}
 		{{render .}}
 	{{end -}}
@@ -126,7 +126,7 @@
 			"delimiter": "#",
 			"templates": {
 				"html": '''
-<h{{.Rank}} id="{{.TextContent}}" {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+<h{{.Rank}} id="{{.TextContent}}" {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
 	<span style="float:left">{{.SeqNum}}&nbsp;</span>
 
 	{{- range .BlockChildren}}
@@ -141,13 +141,8 @@
 			"delimiter": ".image",
 			"templates": {
 				"html": '''
-<img
-	{{- with primarySecondary .Lines}}
-		{{- with .Primary}} src="{{.}}"{{end}}
-		{{- with .Secondary}} alt="{{.}}"{{end}}
-	{{- end}}
-	{{- with .HatAttrs}} {{htmlAttrs .}}{{end -}}
-/>'''
+<img src="{{trimSpacing .Content}}" {{- with .Attrs}} {{htmlAttrs .}}{{end}} />
+'''
 			}
 		},
 		{
@@ -180,7 +175,7 @@
 			"delimiter": ".toc",
 			"templates": {
 				"html": '''
-<div {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+<div {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
 	<p>{{range .BlockChildren}}{{render .}}{{end}}</p>
 
 	{{block "grouper" groupBySeqNum .Aggregates.Headings}}
@@ -258,10 +253,14 @@
 		},
 		{
 			"name": "Caption",
-			"type": "verbatimWalled",
+			"type": "walled",
 			"delimiter": "+",
 			"templates": {
-				"html": ""
+				"html": '''
+{{- range .BlockChildren}}
+	{{- render .}}
+{{end -}}
+'''
 			}
 		}
 	],
@@ -282,7 +281,10 @@
 			"name": "StickyComment",
 			"element": "BlockComment",
 			"templates": {
-				"html": ""
+				"html": '''
+{{ $attrs := parseAttrs .StickyElement.Lines }}
+{{renderWithData .TargetElement.Self (dict "Attrs" $attrs)}}
+'''
 			}
 		},
 		{
@@ -290,7 +292,16 @@
 			"element": "Caption",
 			"after": true,
 			"templates": {
-				"html": ""
+				"html": '''
+<figure>
+	{{render .TargetElement.Self}}
+	<figcaption>
+		{{- range .StickyElement.BlockChildren}}
+			{{render .}}
+		{{end -}}
+	</figcaption>
+</figure>
+'''
 			}
 		}
 	],
@@ -300,7 +311,7 @@
 			"element": "NumberedListItemDot",
 			"templates": {
 				"html": '''
-<ol class="dot" {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+<ol class="dot" {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
 	{{- range .BlockChildren}}
 		{{render .}}
 	{{- end}}
@@ -312,7 +323,7 @@
 			"element": "NumberedListItemParen",
 			"templates": {
 				"html": '''
-<ol class="paren" {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+<ol class="paren" {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
 	{{- range .BlockChildren}}
 		{{render .}}
 	{{- end}}
@@ -324,7 +335,7 @@
 			"element": "ListItemDot",
 			"templates": {
 				"html": '''
-<ul {{- with .HatAttrs}} {{htmlAttrs .}}{{end}}>
+<ul {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
 	{{- range .BlockChildren}}
 		{{render .}}
 	{{- end}}
