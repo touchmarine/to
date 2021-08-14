@@ -40,13 +40,13 @@
 			}
 		},
 		{
-			"name": "Admonition",
+			"name": "Callout",
 			"type": "walled",
-			"delimiter": ":",
+			"delimiter": "^",
 			"templates": {
 				"html": '''
 <div
-	style="margin-left: 1em;padding-left:1em;border-left:2px solid deepskyblue;"
+	style="margin-left: 1em;padding-left:1em;border-left:2px solid blue;"
 	{{- with .Attrs}} {{htmlAttrs .}}{{end}}
 >
 	{{- range .BlockChildren}}
@@ -56,20 +56,19 @@
 			}
 		},
 		{
-			"name": "DescriptionList",
+			"name": "Term",
 			"type": "hanging",
 			"delimiter": "*",
 			"templates": {
-				"html": '''
-<dl {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
-	{{- range $index, $element := .BlockChildren}}
-		{{- if eq $index 0}}
-			<dt>{{render $element}}</dt>
-		{{- else}}
-			<dd>{{render $element}}</dd>
-		{{- end}}
-	{{end -}}
-</dl>'''
+				"html": "{{range .BlockChildren}}{{render .}}{{end}}"
+			}
+		},
+		{
+			"name": "Description",
+			"type": "hanging",
+			"delimiter": ":",
+			"templates": {
+				"html": "{{range .BlockChildren}}{{render .}}{{end}}"
 			}
 		},
 		{
@@ -295,7 +294,7 @@
 			"templates": {
 				"html": '''
 {{ $attrs := parseAttrs .StickyElement.Lines }}
-{{renderWithData .TargetElement.Self (dict "Attrs" $attrs)}}
+{{renderWithData .TargetElement.Self (mapAny "Attrs" $attrs)}}
 '''
 			}
 		},
@@ -330,6 +329,37 @@
 		{{end -}}
 	</p>
 </header>
+'''
+			}
+		},
+		{
+			"name": "StickyDescription",
+			"element": "DescriptionList",
+			"after": true,
+			"templates": {
+				"html": '''
+{{if eq .TargetElement.Self.Node "StickyComment"}}
+	{{- /* has sticky comment nested so parse attributes from it */ -}}
+
+	{{ $attrs := parseAttrs .TargetElement.StickyElement.Lines }}
+	<dl {{- with $attrs}} {{htmlAttrs .}}{{end}}>
+		{{- range .TargetElement.TargetElement.BlockChildren}}
+			<dt>{{render .}}</dt>
+		{{end -}}
+		{{- range .StickyElement.BlockChildren}}
+			<dd>{{render .}}</dd>
+		{{end -}}
+	</dl>
+{{else}}
+	<dl>
+		{{- range .TargetElement.BlockChildren}}
+			<dt>{{render .}}</dt>
+		{{end -}}
+		{{- range .StickyElement.BlockChildren}}
+			<dd>{{render .}}</dd>
+		{{end -}}
+	</dl>
+{{end}}
 '''
 			}
 		}
@@ -369,6 +399,28 @@
 		{{render .}}
 	{{- end}}
 </ul>'''
+			}
+		},
+		{
+			"name": "TermList",
+			"element": "Term",
+			"templates": {
+				"html": '''
+{{- range .BlockChildren}}
+	{{render .}}
+{{- end}}
+'''
+			}
+		},
+		{
+			"name": "DescriptionList",
+			"element": "Description",
+			"templates": {
+				"html": '''
+{{- range .BlockChildren}}
+	{{render .}}
+{{- end}}
+'''
 			}
 		}
 	],

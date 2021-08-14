@@ -27,19 +27,27 @@
 			}
 		},
 		{
-			"name": "Admonition",
+			"name": "Callout",
 			"type": "walled",
-			"delimiter": ":",
+			"delimiter": "^",
 			"templates": {
-				"html": "<div\n\tstyle=\"margin-left: 1em;padding-left:1em;border-left:2px solid deepskyblue;\"\n\t{{- with .Attrs}} {{htmlAttrs .}}{{end}}\n>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{end -}}\n</div>"
+				"html": "<div\n\tstyle=\"margin-left: 1em;padding-left:1em;border-left:2px solid blue;\"\n\t{{- with .Attrs}} {{htmlAttrs .}}{{end}}\n>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{end -}}\n</div>"
 			}
 		},
 		{
-			"name": "DescriptionList",
+			"name": "Term",
 			"type": "hanging",
 			"delimiter": "*",
 			"templates": {
-				"html": "<dl {{- with .Attrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range $index, $element := .BlockChildren}}\n\t\t{{- if eq $index 0}}\n\t\t\t<dt>{{render $element}}</dt>\n\t\t{{- else}}\n\t\t\t<dd>{{render $element}}</dd>\n\t\t{{- end}}\n\t{{end -}}\n</dl>"
+				"html": "{{range .BlockChildren}}{{render .}}{{end}}"
+			}
+		},
+		{
+			"name": "Description",
+			"type": "hanging",
+			"delimiter": ":",
+			"templates": {
+				"html": "{{range .BlockChildren}}{{render .}}{{end}}"
 			}
 		},
 		{
@@ -211,7 +219,7 @@
 			"name": "StickyComment",
 			"element": "BlockComment",
 			"templates": {
-				"html": "{{ $attrs := parseAttrs .StickyElement.Lines }}\n{{renderWithData .TargetElement.Self (dict \"Attrs\" $attrs)}}\n"
+				"html": "{{ $attrs := parseAttrs .StickyElement.Lines }}\n{{renderWithData .TargetElement.Self (mapAny \"Attrs\" $attrs)}}\n"
 			}
 		},
 		{
@@ -228,6 +236,14 @@
 			"after": true,
 			"templates": {
 				"html": "<header>\n\t{{render .TargetElement.Self}}\n\t<p>\n\t\t{{- range .StickyElement.BlockChildren}}\n\t\t\t{{render .}}\n\t\t{{end -}}\n\t</p>\n</header>\n"
+			}
+		},
+		{
+			"name": "StickyDescription",
+			"element": "DescriptionList",
+			"after": true,
+			"templates": {
+				"html": "{{if eq .TargetElement.Self.Node \"StickyComment\"}}\n\t{{- /* has sticky comment nested so parse attributes from it */ -}}\n\n\t{{ $attrs := parseAttrs .TargetElement.StickyElement.Lines }}\n\t<dl {{- with $attrs}} {{htmlAttrs .}}{{end}}>\n\t\t{{- range .TargetElement.TargetElement.BlockChildren}}\n\t\t\t<dt>{{render .}}</dt>\n\t\t{{end -}}\n\t\t{{- range .StickyElement.BlockChildren}}\n\t\t\t<dd>{{render .}}</dd>\n\t\t{{end -}}\n\t</dl>\n{{else}}\n\t<dl>\n\t\t{{- range .TargetElement.BlockChildren}}\n\t\t\t<dt>{{render .}}</dt>\n\t\t{{end -}}\n\t\t{{- range .StickyElement.BlockChildren}}\n\t\t\t<dd>{{render .}}</dd>\n\t\t{{end -}}\n\t</dl>\n{{end}}\n"
 			}
 		}
 	],
@@ -251,6 +267,20 @@
 			"element": "ListItemDot",
 			"templates": {
 				"html": "<ul {{- with .Attrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{- end}}\n</ul>"
+			}
+		},
+		{
+			"name": "TermList",
+			"element": "Term",
+			"templates": {
+				"html": "{{- range .BlockChildren}}\n\t{{render .}}\n{{- end}}\n"
+			}
+		},
+		{
+			"name": "DescriptionList",
+			"element": "Description",
+			"templates": {
+				"html": "{{- range .BlockChildren}}\n\t{{render .}}\n{{- end}}\n"
 			}
 		}
 	],

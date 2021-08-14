@@ -13,7 +13,10 @@ import (
 )
 
 var FuncMap = template.FuncMap{
-	"dict":          dict,
+	"mapAny":           mapAny,
+	"map":           mapString,
+	"get":        get,
+	"set":        set,
 	"head":          head,
 	"body":          body,
 	"groupBySeqNum": groupBySeqNum,
@@ -173,25 +176,57 @@ func btosSlice(p [][]byte) []string {
 	return lines
 }
 
-func dict(v ...interface{}) (map[string]interface{}, error) {
+func mapAny(v ...interface{}) (map[string]interface{}, error) {
 	if len(v)%2 > 0 {
-		return nil, fmt.Errorf("dict got odd number of parameters")
+		return nil, fmt.Errorf("map got odd number of parameters")
 	}
 
-	dict := make(map[string]interface{}, len(v)/2)
+	m := make(map[string]interface{}, len(v)/2)
 
 	for i := 0; i < len(v); i += 2 {
 		key, ok := v[i].(string)
 		if !ok {
-			return nil, fmt.Errorf("dict key not a string")
+			return nil, fmt.Errorf("map key not a string")
 		}
 
-		if i+1 < len(v) {
-			dict[key] = v[i+1]
-		}
+		m[key] = v[i+1]
 	}
 
-	return dict, nil
+	return m, nil
+}
+
+func mapString(v ...string) (map[string]string, error) {
+	if len(v)%2 > 0 {
+		return nil, fmt.Errorf("map got odd number of parameters")
+	}
+
+	m := make(map[string]string, len(v)/2)
+
+	for i := 0; i < len(v); i += 2 {
+		m[v[i]] = v[i+1]
+	}
+
+	return m, nil
+}
+
+func get(m map[string]string, key string) (string, error) {
+	if m == nil {
+		return "", fmt.Errorf("nil map")
+	}
+
+	if v, ok := m[key]; ok {
+		return v, nil
+	}
+	return "", nil
+}
+
+func set(m map[string]string, key string, value string) (map[string]string, error) {
+	if m == nil {
+		return nil, fmt.Errorf("nil map")
+	}
+
+	m[key] = value
+	return m, nil
 }
 
 func head(lines []string) string {
