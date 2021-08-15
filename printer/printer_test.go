@@ -125,7 +125,7 @@ func TestFprint(t *testing.T) {
 		{"a\n \nb", "a\n\nb"},
 		{"a\n*b", "a\n\n* b"},
 		{"*a\nb", "* a\n\nb"},
-		{"*a\n*b", "* a\n\n* b"},
+		{"*a\n*b", "* a\n* b"},
 		{"*a\n>b", "* a\n\n> b"},
 		{">a\n\n>b", "> a\n\n> b"},
 		{">a\n \n>b", "> a\n\n> b"},
