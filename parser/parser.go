@@ -164,9 +164,7 @@ func (p *parser) parseBlock() node.Block {
 			case node.TypeRankedHanging:
 				return p.parseRankedHanging(el.Name, el.Delimiter)
 			case node.TypeFenced:
-				if peek := p.peek(); peek > 0 && peek != utf8.RuneError && p.ch == peek {
-					return p.parseFenced(el.Name)
-				}
+				return p.parseFenced(el.Name)
 			default:
 				panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
 			}
@@ -238,18 +236,12 @@ func (p *parser) parseVerbatimWalled(name string) node.Block {
 
 	p.next() // consume delimiter
 
-	var lines [][]byte
+	firstLine := p.consumeLine() // consume here so we can have a nicer loop
 
-	var b strings.Builder
-	for {
-		if p.ch == 0 || p.ch == '\n' {
-			lines = append(lines, []byte(b.String()))
-			b.Reset()
+	lines := [][]byte{firstLine}
 
-			if p.ch == 0 {
-				break
-			}
-
+	for p.ch > 0 {
+		if p.ch == '\n' {
 			p.next()
 			p.parseLead()
 		}
@@ -258,10 +250,8 @@ func (p *parser) parseVerbatimWalled(name string) node.Block {
 			break
 		}
 
-		for p.ch > 0 && p.ch != '\n' {
-			b.WriteRune(p.ch)
-			p.next()
-		}
+		line := p.consumeLine()
+		lines = append(lines, line)
 	}
 
 	return &node.VerbatimWalled{name, lines}
@@ -434,82 +424,86 @@ func (p *parser) parseFenced(name string) node.Block {
 
 	reqdBlocks := p.blocks
 
-	openSpacing := lastSpacingSeq(p.lead)
+	openSpacing := diffSpacing(lastSpacingSeq(p.blocks), lastSpacingSeq(p.lead))
 	defer p.open(openSpacing...)()
 
 	delim := p.ch
 
-	var i int
-	for p.ch == delim {
-		i++
+	// consume delimiter
+	p.next()
+
+	escaped := p.ch == '\\'
+	if escaped {
+		p.next()
+	}
+
+	openingText := p.consumeLine()
+
+	lines := [][]byte{openingText}
+	afterNewline := false
+
+	for p.ch > 0 && p.continues(reqdBlocks) {
+		if !escaped && p.ch == delim || escaped && p.ch == '\\' && p.peek() == delim {
+			// closing delimiter
+
+			if escaped {
+				p.next()
+			}
+			p.next()
+
+			break
+		}
+
+		if p.ch == '\n' && !afterNewline {
+			p.next()
+			p.parseLead()
+
+			afterNewline = true
+		} else {
+			// leading spacing that is part of the element
+			spacing := diffSpacing(lastSpacingSeq(p.blocks), lastSpacingSeq(p.lead))
+			l := p.consumeLine()
+
+			line := string(spacing) + string(l)
+			lines = append(lines, []byte(line))
+
+			afterNewline = false
+		}
+	}
+
+	var closingText []byte
+
+	if p.continues(reqdBlocks) {
+		// closed by delimiter, not continues
+
+		closingText = p.consumeLine()
+
+		p.next()
+		p.parseLead()
+		p.parseSpacing()
+	}
+
+	return &node.Fenced{name, lines, closingText}
+}
+
+func (p *parser) consumeLine() []byte {
+	if trace {
+		defer p.trace("consumeLine")()
+	}
+
+	var b bytes.Buffer
+
+	for p.ch > 0 && p.ch != '\n' {
+		b.WriteRune(p.ch)
 
 		p.next()
 	}
 
-	var lines [][]byte
-	var trailingText []byte
-
-	var b strings.Builder
-OuterLoop:
-	for {
-		for p.ch == 0 || p.ch == '\n' {
-			lines = append(lines, []byte(b.String()))
-			b.Reset()
-
-			if p.ch == 0 {
-				break OuterLoop
-			}
-
-			p.next()
-			p.parseLead()
-
-			newSpacing := diffSpacing(lastSpacingSeq(p.blocks), lastSpacingSeq(p.lead))
-			for _, ch := range newSpacing {
-				b.WriteRune(ch)
-			}
-		}
-
-		if !p.continues(reqdBlocks) {
-			break
-		}
-
-		var j int
-		for p.ch > 0 && p.ch != '\n' {
-			if p.ch == delim {
-				j++
-			} else {
-				j = 0
-			}
-
-			if j == i && len(lines) > 0 {
-				// closing delimiter
-				b.Reset()
-
-				p.next() // consume last closing character
-
-				// save trailing text
-				for p.ch > 0 && p.ch != '\n' {
-					b.WriteRune(p.ch)
-
-					p.next()
-				}
-
-				trailingText = []byte(b.String())
-
-				p.next()
-				p.parseLead()
-				p.parseSpacing()
-
-				break OuterLoop
-			}
-
-			b.WriteRune(p.ch)
-
-			p.next()
-		}
+	if trace {
+		p.printf("return %q", b.Bytes())
 	}
 
-	return &node.Fenced{name, lines, trailingText}
+	return b.Bytes()
 }
 
 // a=old spacing
@@ -571,18 +565,13 @@ func (p *parser) parseVerbatimLine(name, delim string) node.Block {
 
 	}
 
-	var b bytes.Buffer
-	for p.ch > 0 && p.ch != '\n' {
-		b.WriteRune(p.ch)
-
-		p.next()
-	}
+	content := p.consumeLine()
 
 	p.next()
 	p.parseLead()
 	p.parseSpacing()
 
-	return &node.VerbatimLine{name, b.Bytes()}
+	return &node.VerbatimLine{name, content}
 }
 
 func (p *parser) parseTextBlock() node.Block {

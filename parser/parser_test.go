@@ -2145,35 +2145,35 @@ func TestFenced(t *testing.T) {
 		out []node.Node
 	}{
 		{
-			"``",
+			"`",
 			[]node.Node{&node.Fenced{"A", nil, nil}},
 		},
 		{
-			"``a",
+			"`a",
 			[]node.Node{
 				&node.Fenced{"A", [][]byte{[]byte("a")}, nil},
 			},
 		},
 		{
-			"``a``",
+			"`a`",
 			[]node.Node{
-				&node.Fenced{"A", [][]byte{[]byte("a``")}, nil},
+				&node.Fenced{"A", [][]byte{[]byte("a`")}, nil},
 			},
 		},
 		{
-			"``\na",
+			"`\na",
 			[]node.Node{
 				&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
 			},
 		},
 		{
-			"``\n a",
+			"`\n a",
 			[]node.Node{
 				&node.Fenced{"A", [][]byte{nil, []byte(" a")}, nil},
 			},
 		},
 		{
-			"``\n\na",
+			"`\n\na",
 			[]node.Node{
 				&node.Fenced{
 					"A",
@@ -2186,51 +2186,67 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			"````",
+			"``",
 			[]node.Node{
-				&node.Fenced{"A", nil, nil},
+				&node.Fenced{"A", [][]byte{[]byte("`")}, nil},
 			},
 		},
 		{
-			"``\n``",
+			"`\n`",
 			[]node.Node{
-				&node.Fenced{"A", nil, nil},
+				&node.Fenced{"A", [][]byte{nil}, nil},
 			},
 		},
 		{
-			"```\n```",
-			[]node.Node{
-				&node.Fenced{"A", nil, nil},
-			},
-		},
-		{
-			"```\n``\n```",
-			[]node.Node{
-				&node.Fenced{"A", [][]byte{nil, []byte("``")}, nil},
-			},
-		},
-		{
-			"```\n`````",
-			[]node.Node{
-				&node.Fenced{"A", nil, []byte("``")},
-			},
-		},
-		{
-			"``\n``a",
+			"`\n`a",
 			[]node.Node{
 				&node.Fenced{"A", nil, []byte("a")},
 			},
 		},
 
-		// nesting
+		// escape
 		{
-			"``\n>",
+			"`\\\n``",
+			[]node.Node{
+				&node.Fenced{"A", [][]byte{nil, []byte("``")}, nil},
+			},
+		},
+		{
+			"`\\\n``\n`",
+			[]node.Node{
+				&node.Fenced{"A", [][]byte{nil, []byte("``"), []byte("`")}, nil},
+			},
+		},
+		{
+			"`\\\n``\n\\`",
+			[]node.Node{
+				&node.Fenced{"A", [][]byte{nil, []byte("``")}, nil},
+			},
+		},
+
+		// closing delimiter spacing
+		{
+			"`\n `",
+			[]node.Node{
+				&node.Fenced{"A", [][]byte{nil, []byte(" `")}, nil},
+			},
+		},
+		{
+			"`\\\n \\`",
+			[]node.Node{
+				&node.Fenced{"A", [][]byte{nil, []byte(" \\`")}, nil},
+			},
+		},
+
+		// nested
+		{
+			"`\n>",
 			[]node.Node{
 				&node.Fenced{"A", [][]byte{nil, []byte(">")}, nil},
 			},
 		},
 		{
-			">``\na",
+			">`\na",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", nil, nil},
@@ -2239,7 +2255,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			">``\n>a",
+			">`\n>a",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
@@ -2247,7 +2263,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			">``\n>a\n>``",
+			">`\n>a\n>`",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
@@ -2255,7 +2271,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			">``\n>a\n>``b",
+			">`\n>a\n>`b",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("a")}, []byte("b")},
@@ -2263,7 +2279,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			">``\n>a\n>``\nb",
+			">`\n>a\n>`\nb",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
@@ -2272,9 +2288,9 @@ func TestFenced(t *testing.T) {
 			},
 		},
 
-		// nesting+spacing
+		// spacing
 		{
-			"> ``\n>a",
+			"> `\n>a",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
@@ -2282,7 +2298,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			"> ``\n> a",
+			"> `\n> a",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
@@ -2290,7 +2306,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			"> ``\n>  a",
+			"> `\n>  a",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte(" a")}, nil},
@@ -2298,7 +2314,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			">  ``\n> a",
+			">  `\n> a",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
@@ -2306,7 +2322,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			">  ``\n>  a",
+			">  `\n>  a",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
@@ -2314,9 +2330,50 @@ func TestFenced(t *testing.T) {
 			},
 		},
 
+		{
+			"* `\n a",
+			[]node.Node{
+				&node.Walled{"C", []node.Block{
+					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
+				}},
+			},
+		},
+		{
+			"* `\n  a",
+			[]node.Node{
+				&node.Walled{"C", []node.Block{
+					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
+				}},
+			},
+		},
+		{
+			"* `\n   a",
+			[]node.Node{
+				&node.Walled{"C", []node.Block{
+					&node.Fenced{"A", [][]byte{nil, []byte(" a")}, nil},
+				}},
+			},
+		},
+		{
+			"*  `\n  a",
+			[]node.Node{
+				&node.Walled{"C", []node.Block{
+					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
+				}},
+			},
+		},
+		{
+			"*  `\n   a",
+			[]node.Node{
+				&node.Walled{"C", []node.Block{
+					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
+				}},
+			},
+		},
+
 		// tab
 		{
-			">\t``\n>a",
+			">\t`\n>a",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
@@ -2324,7 +2381,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			">\t``\n>        a",
+			">\t`\n>        a",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
@@ -2332,7 +2389,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			">\t``\n>         a",
+			">\t`\n>         a",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte(" a")}, nil},
@@ -2340,7 +2397,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			">\t``\n>            a",
+			">\t`\n>            a",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("    a")}, nil},
@@ -2348,7 +2405,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			"> ``\n>\ta",
+			"> `\n>\ta",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("       a")}, nil},
@@ -2356,7 +2413,7 @@ func TestFenced(t *testing.T) {
 			},
 		},
 		{
-			"> \t``\n>\t a",
+			"> \t`\n>\t a",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
@@ -2377,6 +2434,11 @@ func TestFenced(t *testing.T) {
 					Name:      "B",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
+				},
+				{
+					Name:      "C",
+					Type:      node.TypeHanging,
+					Delimiter: "*",
 				},
 			})
 		})
@@ -3208,7 +3270,7 @@ func TestBlockEscape(t *testing.T) {
 		},
 
 		{
-			"``\\**\n\\**",
+			"`\\\\**\n\\**",
 			[]node.Node{
 				&node.Fenced{"A", [][]byte{[]byte("\\**"), []byte("\\**")}, nil},
 			},
@@ -3356,7 +3418,7 @@ func TestInlineEscape(t *testing.T) {
 			},
 		},
 		{
-			"``\\**\n\\**",
+			"`\\\\**\n\\**",
 			[]node.Node{
 				&node.Fenced{"A", [][]byte{[]byte(`\**`), []byte(`\**`)}, nil},
 			},

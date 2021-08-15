@@ -419,22 +419,37 @@ func (p *printer) delimiters() (string, string, bool) {
 		}
 
 		delim := el.Delimiter
-		typ := el.Type
 
 		switch p.n.(type) {
 		case node.Block:
 			switch m := p.n.(type) {
 			case *node.Fenced:
-				pre = delim + delim
-				post = delim + delim
+				pre = delim
+				post = delim
+
+				lines := m.Lines()
+
+				var content []byte
+				if len(lines) > 1 {
+					content = bytes.Join(lines[1:], []byte("\n"))
+				}
+
+				if bytes.Contains(content, []byte(delim)) {
+					// needs escape
+					pre += "\\"
+					post = "\\" + post
+				}
 			case node.Ranked:
 				rank := m.Rank()
 
 				for i := 0; i < rank; i++ {
 					pre += delim
 				}
-			default:
+			case *node.BasicBlock, *node.VerbatimLine, *node.Walled, *node.VerbatimWalled,
+				*node.Hanging, *node.RankedHanging, *node.Group, *node.Sticky:
 				pre = delim
+			default:
+				panic(fmt.Sprintf("printer: unexpected node type %T (%s)", p.n, name))
 			}
 
 		case node.Inline:
@@ -457,15 +472,10 @@ func (p *printer) delimiters() (string, string, bool) {
 				needInlineEscape = true
 			}
 
-			switch typ {
-			case node.TypeUniform:
-			case node.TypeEscaped:
-				var content []byte
-				if m, ok := p.n.(node.Content); ok {
-					content = m.Content()
-				} else {
-					panic("printer: escaped element " + name + " does not implement node.Content")
-				}
+			switch m := p.n.(type) {
+			case *node.Uniform:
+			case *node.Escaped:
+				content := m.Content()
 
 				if bytes.Contains(content, []byte(delim+delim)) {
 					// needs escape
@@ -473,7 +483,7 @@ func (p *printer) delimiters() (string, string, bool) {
 					post = "\\" + post
 				}
 			default:
-				panic(fmt.Sprintf("printer: unexpected node type %s (%s)", typ, name))
+				panic(fmt.Sprintf("printer: unexpected node type %T (%s)", p.n, name))
 			}
 
 		default:
