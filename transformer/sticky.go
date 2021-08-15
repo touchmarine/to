@@ -62,12 +62,7 @@ func (g *stickyGrouper) groupStickies() {
 		case node.Block:
 			peek := g.peek()
 
-			if peek != nil {
-				_, isBlock := peek.(node.Block)
-				if !isBlock {
-					panic("transformer: mixed node types, expected Block")
-				}
-
+			if _, isBlock := peek.(node.Block); isBlock {
 				sticky, isSticky := g.stickyByElement(g.node.Node())
 				stickyPeek, isPeekSticky := g.stickyByElement(peek.Node())
 

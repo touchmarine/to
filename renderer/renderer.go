@@ -13,10 +13,10 @@ import (
 )
 
 var FuncMap = template.FuncMap{
-	"mapAny":           mapAny,
+	"mapAny":        mapAny,
 	"map":           mapString,
-	"get":        get,
-	"set":        set,
+	"get":           get,
+	"set":           set,
 	"head":          head,
 	"body":          body,
 	"groupBySeqNum": groupBySeqNum,

@@ -71,11 +71,11 @@ func main() {
 
 	nodes = transformer.Paragraph(nodes)
 	nodes = transformer.Group(conf.Groups, nodes)
-	nodes = transformer.Sequence(nodes)
 	nodes = transformer.Composite(conf.Composites, nodes)
 	// must be after Composite otherwise Composites do not work inside
 	// Stickies
 	nodes = transformer.GroupStickies(conf.Stickies, nodes)
+	nodes = transformer.Sequence(nodes)
 
 	if *stringify {
 		stringifier.StringifyTo(os.Stdout, nodes...)
@@ -84,7 +84,7 @@ func main() {
 	if format == "fmt" {
 		printer.Fprint(os.Stdout, conf, nodes)
 	} else {
-		aggregates := aggregator.Aggregate(config.Default.Aggregates, nodes)
+		aggregates := aggregator.Aggregate(conf.Aggregates, nodes)
 
 		data := map[string]interface{}{
 			"Aggregates": aggregates,

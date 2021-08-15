@@ -21,6 +21,10 @@ func (s *sequencer) sequence(nodes []node.Node) []node.Node {
 	for i := 0; i < len(nodes); i++ {
 		n := nodes[i]
 
+		if m, ok := n.(*node.Sticky); ok {
+			n = m.Target()
+		}
+
 		if m, ok := n.(node.Ranked); ok {
 			name := n.Node()
 			rank := m.Rank()
