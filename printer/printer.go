@@ -80,6 +80,7 @@ func (p *printer) printNodes() {
 		if peek := p.peek(); peek != nil && !p.isInline() {
 			_, isInSticky := p.parent.(*node.Sticky)
 			_, isInGroup := p.parent.(*node.Group)
+
 			if isInSticky || isInGroup {
 				p.newline(p.w)
 			} else {
@@ -183,7 +184,7 @@ func (p *printer) printNode() {
 		p.prefix(&b, true)
 	}
 
-	pre, post, needInlineEscape := p.delimiters()
+	pre, post := p.delimiters()
 
 	switch p.n.(type) {
 	case node.Block:
@@ -221,10 +222,6 @@ func (p *printer) printNode() {
 			}()
 		}
 	case node.Inline:
-		if p.atBOL() && needInlineEscape {
-			b.WriteString(`\`)
-		}
-
 		b.WriteString(pre)
 
 		defer func() {
@@ -303,16 +300,43 @@ func (p *printer) prefix(w io.Writer, spacing bool) {
 }
 
 func (p *printer) needBlockEscape() bool {
-	txt := node.ExtractText(p.n)
-	if txt == "" {
+	textBlock, isBasicBlock := p.n.(*node.BasicBlock)
+	if !isBasicBlock || p.n.Node() != "TextBlock" {
+		panic("printer: expected TextBlock")
+	}
+
+	children := textBlock.InlineChildren()
+	if len(children) == 0 {
 		return false
 	}
 
+	child := children[0]
+
+	if text, ok := child.(node.Text); ok {
+		// we only need to check the first text node, any other node
+		// will have it's own non-block delimiter
+
+		content := text.Content()
+
+		if len(content) > 1 && content[0] == '\\' {
+			return !p.hasInlineDelimiterPrefix(content[1:]) &&
+				p.hasBlockDelimiterPrefix(content[1:])
+		} else if len(content) > 0 {
+			return !p.hasInlineDelimiterPrefix(content) &&
+				p.hasBlockDelimiterPrefix(content)
+		} else {
+			return false
+		}
+	}
+
+	return false
+}
+
+func (p *printer) hasBlockDelimiterPrefix(content []byte) bool {
 	for _, e := range p.conf.Elements {
-		if node.TypeCategory(e.Type) == node.CategoryBlock {
-			if strings.HasPrefix(txt, e.Delimiter) {
-				return true
-			}
+		if node.TypeCategory(e.Type) == node.CategoryBlock &&
+			bytes.HasPrefix(content, []byte(e.Delimiter)) {
+			return true
 		}
 	}
 
@@ -324,72 +348,76 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 		defer p.trace("printText")()
 	}
 
-	content := string(t.Content())
-	if content == "" {
+	content := t.Content()
+	if len(content) == 0 {
 		return
 	}
 
 	if trace {
-		p.printf("content=%q", t.Content())
+		p.printf("content=%q", content)
 	}
 
 	var b bytes.Buffer
 
-	var i int
-OuterLoop:
-	for i < len(content) {
+	for i := 0; i < len(content); i++ {
 		ch := content[i]
 
-		if ch == '\\' {
-			// backslash
-			b.WriteString(`\\`)
-			i++
-			continue
-		}
+		// backslash escape checks
+		if ch == '\\' && i+1 < len(content) && content[i+1] == '\\' {
+			// consecutive backslashes
 
-		for _, e := range p.conf.Elements {
-			if node.TypeCategory(e.Type) == node.CategoryInline {
-				// perfom the same check as parser
-				d, _ := utf8.DecodeRuneInString(e.Delimiter)
-				if d == utf8.RuneError {
-					panic("printer: invalid UTF-8 encoding in delimiter")
-				}
+			b.WriteString(`\`)
+		} else if ch == '\\' && i == len(content)-1 && p.peek() != nil && !isEmpty(p.peek()) {
+			// backslash at the end of text content with a non-empty
+			// inline element behind it
 
-				var cases []string // all possible inline delimiters
-
-				switch e.Type {
-				case node.TypeUniform, node.TypeEscaped:
-					cases = append(cases, string(d)+string(d))
-
-				default:
-					panic(fmt.Sprintf("printer: unexpected node type %s", e.Type))
-				}
-
-				for _, c := range cases {
-					if strings.HasPrefix(content[i:], c) {
-						// matches inline delimiter
-						b.WriteString(`\` + c)
-						i += len(c)
-						continue OuterLoop
-					}
-
-					if peekDelim := p.peekDelimiter(); peekDelim > -1 {
-						// escape current character and the next element's
-						// first delimiter character
-						d := string(ch) + string(peekDelim)
-						if d == c {
-							b.WriteString(`\`)
-							b.WriteByte(ch)
-							i++
-							continue OuterLoop
-						}
-					}
-				}
+			_, isInline := p.peek().(node.Inline)
+			if !isInline {
+				panic("peek is not inline")
 			}
+
+			b.WriteString(`\`)
+		} else if ch == '\\' && i+1 < len(content) && p.hasInlineDelimiterPrefix(content[i+1:]) {
+			b.WriteString(`\`)
+		} else if i == len(content)-1 && p.peek() != nil && !isEmpty(p.peek()) {
+			peek := p.peek()
+
+			_, isInline := peek.(node.Inline)
+			if !isInline {
+				panic("peek is not inline")
+			}
+
+			// get first node if composited
+			composited, isComposite := peek.(node.Composited)
+			if isComposite {
+				peek = composited.Primary()
+			}
+
+			e, isElement := p.conf.Element(peek.Node())
+			if !isElement {
+				panic("printer: node " + peek.Node() + " not found")
+			}
+
+			if len(e.Delimiter) != 1 {
+				panic("printer: delimiter size not 1 byte")
+			}
+
+			delimiter := e.Delimiter[0]
+
+			if ch == delimiter {
+				// current character and first character of the
+				// next element's delimiter form an inline
+				// element delimiter
+
+				b.WriteString(`\`)
+			}
+		} else if p.hasInlineDelimiterPrefix(content[i:]) {
+			// matches inline delimiter
+
+			b.WriteString(`\`)
 		}
 
 		b.WriteByte(ch)
-		i++
 	}
 
 	if trace {
@@ -399,9 +427,22 @@ OuterLoop:
 	b.WriteTo(w)
 }
 
-func (p *printer) delimiters() (string, string, bool) {
+func (p *printer) hasInlineDelimiterPrefix(content []byte) bool {
+	for _, e := range p.conf.Elements {
+		if node.TypeCategory(e.Type) == node.CategoryInline {
+			delimiter := []byte(e.Delimiter + e.Delimiter)
+
+			if bytes.HasPrefix(content, delimiter) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (p *printer) delimiters() (string, string) {
 	var pre, post string
-	var needInlineEscape bool // whether inline delimiter should be escaped at BOL
 
 	switch name := p.n.Node(); name {
 	case "Text", "TextBlock", "Paragraph":
@@ -412,7 +453,7 @@ func (p *printer) delimiters() (string, string, bool) {
 			_, isSticky := p.conf.Sticky(name)
 			_, isGroup := p.conf.Group(name)
 			if isComposite || isSticky || isGroup {
-				return "", "", false
+				return "", ""
 			} else {
 				panic("printer: unexpected element " + name)
 			}
@@ -468,10 +509,6 @@ func (p *printer) delimiters() (string, string, bool) {
 			pre = delim + delim
 			post = string(counterDelim) + string(counterDelim)
 
-			if p.needInlineEscape(delim) {
-				needInlineEscape = true
-			}
-
 			switch m := p.n.(type) {
 			case *node.Uniform:
 			case *node.Escaped:
@@ -496,54 +533,7 @@ func (p *printer) delimiters() (string, string, bool) {
 		}
 	}
 
-	return pre, post, needInlineEscape
-}
-
-func (p *printer) peekDelimiter() rune {
-	peek := p.peek()
-	if peek == nil {
-		return -1
-	}
-
-	if _, isInline := peek.(node.Inline); !isInline {
-		return -1
-	}
-
-	switch name := peek.Node(); name {
-	case "Text":
-		return -1
-	default:
-		el, ok := p.conf.Element(name)
-		if !ok {
-			_, compOk := p.conf.Composite(name)
-			_, grpOk := p.conf.Group(name)
-			if compOk || grpOk {
-				return -1
-			} else {
-				panic("printer: unexpected element " + name)
-			}
-		}
-
-		r, _ := utf8.DecodeRuneInString(el.Delimiter)
-		// perfom the same check as parser
-		if r == utf8.RuneError {
-			panic("printer: invalid UTF-8 encoding in delimiter")
-		}
-
-		return r
-	}
-}
-
-func (p *printer) needInlineEscape(delim string) bool {
-	for _, e := range p.conf.Elements {
-		if node.TypeCategory(e.Type) == node.CategoryBlock {
-			if e.Delimiter == delim {
-				return true
-			}
-		}
-	}
-
-	return false
+	return pre, post
 }
 
 func (p *printer) atBOL() bool {

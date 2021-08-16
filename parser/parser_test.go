@@ -3423,6 +3423,12 @@ func TestEscape(t *testing.T) {
 			},
 		},
 		{
+			`\\\\`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\\`)}},
+			},
+		},
+		{
 			"\\\n\\",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\ \`)}},
