@@ -149,25 +149,23 @@ func (p *parser) parseBlock() node.Block {
 	if p.ch == '\\' {
 		// escape block
 		p.next()
-	} else {
-		el, ok := p.matchBlock()
-		if ok {
-			switch el.Type {
-			case node.TypeVerbatimLine:
-				return p.parseVerbatimLine(el.Name, el.Delimiter)
-			case node.TypeWalled:
-				return p.parseWalled(el.Name)
-			case node.TypeVerbatimWalled:
-				return p.parseVerbatimWalled(el.Name)
-			case node.TypeHanging:
-				return p.parseHanging(el.Name, el.Delimiter)
-			case node.TypeRankedHanging:
-				return p.parseRankedHanging(el.Name, el.Delimiter)
-			case node.TypeFenced:
-				return p.parseFenced(el.Name)
-			default:
-				panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
-			}
+	} else if _, ok := p.matchInline(); ok {
+	} else if el, ok := p.matchBlock(); ok {
+		switch el.Type {
+		case node.TypeVerbatimLine:
+			return p.parseVerbatimLine(el.Name, el.Delimiter)
+		case node.TypeWalled:
+			return p.parseWalled(el.Name)
+		case node.TypeVerbatimWalled:
+			return p.parseVerbatimWalled(el.Name)
+		case node.TypeHanging:
+			return p.parseHanging(el.Name, el.Delimiter)
+		case node.TypeRankedHanging:
+			return p.parseRankedHanging(el.Name, el.Delimiter)
+		case node.TypeFenced:
+			return p.parseFenced(el.Name)
+		default:
+			panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
 		}
 	}
 
@@ -183,7 +181,14 @@ func (p *parser) matchBlock() (config.Element, bool) {
 	var found bool
 
 	for _, el := range p.blockElems {
-		if p.hasPrefix([]byte(el.Delimiter)) {
+		var delim string
+		if el.Type == node.TypeRankedHanging {
+			delim = el.Delimiter + el.Delimiter
+		} else {
+			delim = el.Delimiter
+		}
+
+		if p.hasPrefix([]byte(delim)) {
 			block = el
 			found = true
 
@@ -614,7 +619,7 @@ func (p *parser) parseInline() (node.Inline, bool) {
 		defer p.trace("parseInline")()
 	}
 
-	el, ok := p.openingDelimiter()
+	el, ok := p.matchInline()
 	if ok {
 		switch el.Type {
 		case node.TypeUniform:
@@ -732,8 +737,10 @@ func (p *parser) parseEscaped(name string) (node.Inline, bool) {
 
 			afterNewline = true
 
-			_, ok := p.matchBlock()
-			if p.ch == '%' || ok || !p.continues(p.blocks) {
+			_, matchesInline := p.matchInline()
+			_, matchesBlock := p.matchBlock()
+
+			if !matchesInline && matchesBlock || !p.continues(p.blocks) {
 				cont = false
 				break
 			}
@@ -847,8 +854,10 @@ func (p *parser) parseText() (node.Inline, bool) {
 				// block escape
 				p.next()
 			} else {
-				_, ok := p.matchBlock()
-				if p.ch == '%' || ok || !p.continues(p.blocks) {
+				_, matchesInline := p.matchInline()
+				_, matchesBlock := p.matchBlock()
+
+				if !matchesInline && matchesBlock || !p.continues(p.blocks) {
 					cont = false
 					break
 				}
@@ -867,7 +876,7 @@ func (p *parser) parseText() (node.Inline, bool) {
 					break
 				}
 
-				if _, ok := p.openingDelimiter(); ok {
+				if _, ok := p.matchInline(); ok {
 					break
 				}
 			}
@@ -895,10 +904,9 @@ func (p *parser) parseText() (node.Inline, bool) {
 	return node.Text(txt), cont
 }
 
-// openingDelimiter returns the element of inline delimiter if found.
-func (p *parser) openingDelimiter() (config.Element, bool) {
+func (p *parser) matchInline() (config.Element, bool) {
 	if trace {
-		defer p.trace("openingDelimiter")()
+		defer p.trace("matchInline")()
 	}
 
 	el, ok := p.inlineElems[p.ch]

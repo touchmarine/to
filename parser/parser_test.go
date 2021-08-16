@@ -1479,31 +1479,35 @@ func TestRankedHanging(t *testing.T) {
 	}{
 		{
 			"=",
-			[]node.Node{&node.Hanging{"A", nil}},
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("="),
+				}},
+			},
 		},
 		{
 			"==",
-			[]node.Node{&node.RankedHanging{"B", 2, nil}},
+			[]node.Node{&node.RankedHanging{"A", 2, nil}},
 		},
 		{
 			"= =",
 			[]node.Node{
-				&node.Hanging{"A", []node.Block{
-					&node.Hanging{"A", nil},
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("= ="),
 				}},
 			},
 		},
 		{
 			"== ==",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
-					&node.RankedHanging{"B", 2, nil},
+				&node.RankedHanging{"A", 2, []node.Block{
+					&node.RankedHanging{"A", 2, nil},
 				}},
 			},
 		},
 		{
 			"==a",
-			[]node.Node{&node.RankedHanging{"B", 2, []node.Block{
+			[]node.Node{&node.RankedHanging{"A", 2, []node.Block{
 				&node.BasicBlock{"TextBlock", []node.Inline{
 					node.Text("a"),
 				}},
@@ -1512,15 +1516,15 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"==\n==",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, nil},
-				&node.RankedHanging{"B", 2, nil},
+				&node.RankedHanging{"A", 2, nil},
+				&node.RankedHanging{"A", 2, nil},
 			},
 		},
 
 		{
 			"==a\nb",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
@@ -1529,7 +1533,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"==a\n b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
@@ -1538,7 +1542,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"==a\n  b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a b")}},
 				}},
 			},
@@ -1546,7 +1550,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"==a\n   b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a b")}},
 				}},
 			},
@@ -1556,7 +1560,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			" ==a\n  b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
@@ -1565,7 +1569,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			" ==a\n   b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a b")}},
 				}},
 			},
@@ -1575,17 +1579,17 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"==\n  ==",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
-					&node.RankedHanging{"B", 2, nil},
+				&node.RankedHanging{"A", 2, []node.Block{
+					&node.RankedHanging{"A", 2, nil},
 				}},
 			},
 		},
 		{
 			"==a\n  ==b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
-					&node.RankedHanging{"B", 2, []node.Block{
+					&node.RankedHanging{"A", 2, []node.Block{
 						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
 					}},
 				}},
@@ -1594,8 +1598,8 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"== ==a\n  b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
-					&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
+					&node.RankedHanging{"A", 2, []node.Block{
 						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 					}},
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
@@ -1605,8 +1609,8 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"== ==a\n     b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
-					&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
+					&node.RankedHanging{"A", 2, []node.Block{
 						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a b")}},
 					}},
 				}},
@@ -1615,8 +1619,8 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"== ==a\n      b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
-					&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
+					&node.RankedHanging{"A", 2, []node.Block{
 						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a b")}},
 					}},
 				}},
@@ -1626,35 +1630,35 @@ func TestRankedHanging(t *testing.T) {
 		{
 			">==",
 			[]node.Node{
-				&node.Walled{"C", []node.Block{
-					&node.RankedHanging{"B", 2, nil},
+				&node.Walled{"B", []node.Block{
+					&node.RankedHanging{"A", 2, nil},
 				}},
 			},
 		},
 		{
 			">==\n==",
 			[]node.Node{
-				&node.Walled{"C", []node.Block{
-					&node.RankedHanging{"B", 2, nil},
+				&node.Walled{"B", []node.Block{
+					&node.RankedHanging{"A", 2, nil},
 				}},
-				&node.RankedHanging{"B", 2, nil},
+				&node.RankedHanging{"A", 2, nil},
 			},
 		},
 		{
 			">==\n>==",
 			[]node.Node{
-				&node.Walled{"C", []node.Block{
-					&node.RankedHanging{"B", 2, nil},
-					&node.RankedHanging{"B", 2, nil},
+				&node.Walled{"B", []node.Block{
+					&node.RankedHanging{"A", 2, nil},
+					&node.RankedHanging{"A", 2, nil},
 				}},
 			},
 		},
 		{
 			">==\n>  ==",
 			[]node.Node{
-				&node.Walled{"C", []node.Block{
-					&node.RankedHanging{"B", 2, []node.Block{
-						&node.RankedHanging{"B", 2, nil},
+				&node.Walled{"B", []node.Block{
+					&node.RankedHanging{"A", 2, []node.Block{
+						&node.RankedHanging{"A", 2, nil},
 					}},
 				}},
 			},
@@ -1662,8 +1666,8 @@ func TestRankedHanging(t *testing.T) {
 		{
 			">==\n>  a",
 			[]node.Node{
-				&node.Walled{"C", []node.Block{
-					&node.RankedHanging{"B", 2, []node.Block{
+				&node.Walled{"B", []node.Block{
+					&node.RankedHanging{"A", 2, []node.Block{
 						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 					}},
 				}},
@@ -1672,8 +1676,8 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"> ==\n>   a",
 			[]node.Node{
-				&node.Walled{"C", []node.Block{
-					&node.RankedHanging{"B", 2, []node.Block{
+				&node.Walled{"B", []node.Block{
+					&node.RankedHanging{"A", 2, []node.Block{
 						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 					}},
 				}},
@@ -1684,15 +1688,15 @@ func TestRankedHanging(t *testing.T) {
 		{
 			" ==\n ==",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, nil},
-				&node.RankedHanging{"B", 2, nil},
+				&node.RankedHanging{"A", 2, nil},
+				&node.RankedHanging{"A", 2, nil},
 			},
 		},
 		{
 			" ==\n   ==",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
-					&node.RankedHanging{"B", 2, nil},
+				&node.RankedHanging{"A", 2, []node.Block{
+					&node.RankedHanging{"A", 2, nil},
 				}},
 			},
 		},
@@ -1701,7 +1705,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"==a\n\tb",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a b")}},
 				}},
 			},
@@ -1709,7 +1713,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"\t==a\n\tb",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
@@ -1718,7 +1722,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"\t==a\n\t  b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a b")}},
 				}},
 			},
@@ -1726,7 +1730,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"\t==a\n  \tb",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a b")}},
 				}},
 			},
@@ -1734,7 +1738,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"\t==a\n   \tb",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a b")}},
 				}},
 			},
@@ -1743,7 +1747,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"\t\t==a\n                 b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
@@ -1752,7 +1756,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"\t\t==a\n                  b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a b")}},
 				}},
 			},
@@ -1760,7 +1764,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"                 ==a\n\t\tb",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
@@ -1769,7 +1773,7 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"              ==a\n\t\tb",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
 					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a b")}},
 				}},
 			},
@@ -1779,8 +1783,8 @@ func TestRankedHanging(t *testing.T) {
 		{
 			"==\n  >b",
 			[]node.Node{
-				&node.RankedHanging{"B", 2, []node.Block{
-					&node.Walled{"C", []node.Block{
+				&node.RankedHanging{"A", 2, []node.Block{
+					&node.Walled{"B", []node.Block{
 						&node.BasicBlock{"TextBlock", []node.Inline{
 							node.Text("b"),
 						}},
@@ -1795,16 +1799,11 @@ func TestRankedHanging(t *testing.T) {
 			test(t, c.in, c.out, nil, []config.Element{
 				{
 					Name:      "A",
-					Type:      node.TypeHanging,
-					Delimiter: "=",
-				},
-				{
-					Name:      "B",
 					Type:      node.TypeRankedHanging,
 					Delimiter: "=",
 				},
 				{
-					Name:      "C",
+					Name:      "B",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
 				},
@@ -3194,6 +3193,208 @@ func TestEscaped(t *testing.T) {
 					Name:      "B",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
+				},
+			})
+		})
+	}
+}
+
+func TestPrecedence(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		// hanging
+		{
+			"*",
+			[]node.Node{&node.Hanging{"A", nil}},
+		},
+		{
+			"**",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Uniform{"MA", nil},
+				}},
+			},
+		},
+		{
+			"* *",
+			[]node.Node{
+				&node.Hanging{"A", []node.Block{
+					&node.Hanging{"A", nil},
+				}},
+			},
+		},
+
+		// across line
+		{
+			"a**\n*",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Uniform{"MA", nil},
+				}},
+				&node.Hanging{"A", nil},
+			},
+		},
+		{
+			"a**\n**b",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Uniform{"MA", []node.Inline{node.Text(" ")}},
+					node.Text("b"),
+				}},
+			},
+		},
+		{
+			"a**\n* *",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Uniform{"MA", nil},
+				}},
+				&node.Hanging{"A", []node.Block{
+					&node.Hanging{"A", nil},
+				}},
+			},
+		},
+
+		// fenced
+		{
+			"`",
+			[]node.Node{&node.Fenced{"B", nil, nil}},
+		},
+		{
+			"``",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Escaped{"MB", nil},
+				}},
+			},
+		},
+		{
+			"` `",
+			[]node.Node{
+				&node.Fenced{"B", [][]byte{[]byte(" `")}, nil},
+			},
+		},
+
+		// across line
+		{
+			"a``\n`",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"MB", nil},
+				}},
+				&node.Fenced{"B", nil, nil},
+			},
+		},
+		{
+			"a``\n``b",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"MB", []byte("")},
+					node.Text("b"),
+				}},
+			},
+		},
+		{
+			"a``\\\n``b",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"MB", []byte(" ``b")},
+				}},
+			},
+		},
+		{
+			"a``\\\n\\``b",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"MB", []byte("")},
+					node.Text("b"),
+				}},
+			},
+		},
+		{
+			"a``\n` `",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Escaped{"MB", nil},
+				}},
+				&node.Fenced{"B", [][]byte{[]byte(" `")}, nil},
+			},
+		},
+
+		// ranked hanging - should never have a same delimiter as any
+		// inline element as there is no way to escape inline precedence
+		{
+			"==",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Uniform{"MC", nil},
+				}},
+			},
+		},
+		{
+			"===",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Uniform{"MC", []node.Inline{
+						node.Text("="),
+					}},
+				}},
+			},
+		},
+		{
+			"= =",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("= ="),
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil, []config.Element{
+				{
+					Name:      "A",
+					Type:      node.TypeHanging,
+					Delimiter: "*",
+				},
+				{
+					Name:      "MA",
+					Type:      node.TypeUniform,
+					Delimiter: "*",
+				},
+
+				{
+					Name:      "B",
+					Type:      node.TypeFenced,
+					Delimiter: "`",
+				},
+				{
+					Name:      "MB",
+					Type:      node.TypeEscaped,
+					Delimiter: "`",
+				},
+
+				{
+					Name:      "C",
+					Type:      node.TypeRankedHanging,
+					Delimiter: "=",
+				},
+				{
+					Name:      "MC",
+					Type:      node.TypeUniform,
+					Delimiter: "=",
 				},
 			})
 		})
