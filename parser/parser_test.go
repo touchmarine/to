@@ -250,23 +250,21 @@ func TestTextBlock(t *testing.T) {
 			},
 		},
 
-		// block escape
+		// escape
 		{
 			"a\n\\__",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
-					node.Text("a "),
-					&node.Uniform{"MA", nil},
+					node.Text("a __"),
 				}},
 			},
 		},
-
-		// inline escape
 		{
 			"a\n\\\\__",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
-					node.Text("a __"),
+					node.Text("a \\"),
+					&node.Uniform{"MA", nil},
 				}},
 			},
 		},
@@ -3401,134 +3399,15 @@ func TestPrecedence(t *testing.T) {
 	}
 }
 
-func TestBlockEscape(t *testing.T) {
+func TestEscape(t *testing.T) {
 	cases := []struct {
 		in  string
 		out []node.Node
 	}{
 		{
 			`\`,
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", nil},
-			},
-		},
-		{
-			`\\`,
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\`)}},
-			},
-		},
-		{
-			`\a`,
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
-			},
-		},
-		{
-			`\>`,
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(">")}},
-			},
-		},
-		{
-			`\\>`,
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\>`)}},
-			},
-		},
-		{
-			"\\\n\\",
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", nil},
-			},
-		},
-		{
-			"\\a\n\\b",
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`a b`)}},
-			},
-		},
-		{
-			"\\``",
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{&node.Escaped{"MA", nil}}},
-			},
-		},
-		{
-			"\\\\``",
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
-					node.Text("``"),
-				}},
-			},
-		},
-
-		{
-			`\**`,
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{&node.Uniform{"MB", nil}}},
-			},
-		},
-
-		{
-			"`\\\\**\n\\**",
-			[]node.Node{
-				&node.Fenced{"A", [][]byte{[]byte("\\**"), []byte("\\**")}, nil},
-			},
-		},
-
-		// verbatim elements
-		{
-			`\.image`,
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(".image")}},
-			},
-		},
-		{
-			`.image\.image`,
-			[]node.Node{
-				&node.VerbatimLine{"B", []byte(`\.image`)},
-			},
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
-					Name:      "A",
-					Type:      node.TypeFenced,
-					Delimiter: "`",
-				},
-				{
-					Name:      "B",
-					Type:      node.TypeVerbatimLine,
-					Delimiter: ".image",
-				},
-				{
-					Name:      "MA",
-					Type:      node.TypeEscaped,
-					Delimiter: "`",
-				},
-				{
-					Name:      "MB",
-					Type:      node.TypeUniform,
-					Delimiter: "*",
-				},
-			})
-		})
-	}
-}
-
-func TestInlineEscape(t *testing.T) {
-	cases := []struct {
-		in  string
-		out []node.Node
-	}{
-		{
-			`\`,
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", nil},
 			},
 		},
 		{
@@ -3540,7 +3419,26 @@ func TestInlineEscape(t *testing.T) {
 		{
 			`\\\`,
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\`)}},
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\\`)}},
+			},
+		},
+		{
+			"\\\n\\",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\ \`)}},
+			},
+		},
+		{
+			"\\a\n\\b",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\a \b`)}},
+			},
+		},
+
+		{
+			`\a`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\a`)}},
 			},
 		},
 		{
@@ -3549,14 +3447,15 @@ func TestInlineEscape(t *testing.T) {
 				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\a`)}},
 			},
 		},
+
 		{
-			`\\**`,
+			`\**`,
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("**")}},
 			},
 		},
 		{
-			`\\\**`,
+			`\\**`,
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
 					node.Text(`\`),
@@ -3565,31 +3464,10 @@ func TestInlineEscape(t *testing.T) {
 			},
 		},
 		{
-			"\\\\``",
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("``")}},
-			},
-		},
-		{
-			"\\\\\\``",
+			`\\\**`,
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
-					node.Text(`\`),
-					&node.Escaped{"MB", nil},
-				}},
-			},
-		},
-		{
-			`\\<`,
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\<`)}},
-			},
-		},
-		{
-			`\\\<`,
-			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
-					node.Text(`\<`),
+					node.Text(`\**`),
 				}},
 			},
 		},
@@ -3604,24 +3482,43 @@ func TestInlineEscape(t *testing.T) {
 			`\**\**`,
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
-					&node.Uniform{"MA", []node.Inline{
-						node.Text("**"),
-					}},
+					node.Text("****"),
 				}},
 			},
 		},
+
 		{
-			"\\``\\``",
+			`\!`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("!")}},
+			},
+		},
+		{
+			`\\!`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\!`)}},
+			},
+		},
+		{
+			`\\\!`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\!`)}},
+			},
+		},
+
+		// in verbatim
+		{
+			"`\n\\\\",
+			[]node.Node{
+				&node.Fenced{"B", [][]byte{nil, []byte(`\\`)}, nil},
+			},
+		},
+		{
+			"``a\\\\",
 			[]node.Node{
 				&node.BasicBlock{"TextBlock", []node.Inline{
-					&node.Escaped{"MB", []byte("``")},
+					&node.Escaped{"MB", []byte(`a\\`)},
 				}},
-			},
-		},
-		{
-			"`\\\\**\n\\**",
-			[]node.Node{
-				&node.Fenced{"A", [][]byte{[]byte(`\**`), []byte(`\**`)}, nil},
 			},
 		},
 	}
@@ -3630,6 +3527,16 @@ func TestInlineEscape(t *testing.T) {
 		t.Run(c.in, func(t *testing.T) {
 			test(t, c.in, c.out, nil, []config.Element{
 				{
+					Name:      "A",
+					Type:      node.TypeHanging,
+					Delimiter: "*",
+				},
+				{
+					Name:      "B",
+					Type:      node.TypeFenced,
+					Delimiter: "`",
+				},
+				{
 					Name:      "MA",
 					Type:      node.TypeUniform,
 					Delimiter: "*",
@@ -3637,11 +3544,6 @@ func TestInlineEscape(t *testing.T) {
 				{
 					Name:      "MB",
 					Type:      node.TypeEscaped,
-					Delimiter: "`",
-				},
-				{
-					Name:      "A",
-					Type:      node.TypeFenced,
 					Delimiter: "`",
 				},
 			})

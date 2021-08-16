@@ -146,26 +146,27 @@ func (p *parser) parseBlock() node.Block {
 		defer p.trace("parseBlock")()
 	}
 
-	if p.ch == '\\' {
-		// escape block
-		p.next()
-	} else if _, ok := p.matchInline(); ok {
-	} else if el, ok := p.matchBlock(); ok {
-		switch el.Type {
-		case node.TypeVerbatimLine:
-			return p.parseVerbatimLine(el.Name, el.Delimiter)
-		case node.TypeWalled:
-			return p.parseWalled(el.Name)
-		case node.TypeVerbatimWalled:
-			return p.parseVerbatimWalled(el.Name)
-		case node.TypeHanging:
-			return p.parseHanging(el.Name, el.Delimiter)
-		case node.TypeRankedHanging:
-			return p.parseRankedHanging(el.Name, el.Delimiter)
-		case node.TypeFenced:
-			return p.parseFenced(el.Name)
-		default:
-			panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
+	if !p.isEscape() {
+		_, matchesInline := p.matchInline()
+		el, matchesBlock := p.matchBlock()
+
+		if !matchesInline && matchesBlock {
+			switch el.Type {
+			case node.TypeVerbatimLine:
+				return p.parseVerbatimLine(el.Name, el.Delimiter)
+			case node.TypeWalled:
+				return p.parseWalled(el.Name)
+			case node.TypeVerbatimWalled:
+				return p.parseVerbatimWalled(el.Name)
+			case node.TypeHanging:
+				return p.parseHanging(el.Name, el.Delimiter)
+			case node.TypeRankedHanging:
+				return p.parseRankedHanging(el.Name, el.Delimiter)
+			case node.TypeFenced:
+				return p.parseFenced(el.Name)
+			default:
+				panic(fmt.Sprintf("parser.parseBlock: unexpected node type %s (%s)", el.Type, el.Name))
+			}
 		}
 	}
 
@@ -634,38 +635,26 @@ func (p *parser) parseInline() (node.Inline, bool) {
 	return p.parseText()
 }
 
-func (p *parser) isInlineEscape() bool {
+func (p *parser) isEscape() bool {
 	if trace {
-		defer p.trace("isInlineEscape")()
+		defer p.trace("isEscape")()
 	}
 
-	if p.ch != '\\' {
-		if trace {
-			p.print("return false")
-		}
-		return false
-	}
+	t := p.ch == '\\' && isPunct(p.peek())
 
-	peek := p.peek()
-	if peek == 0 || peek == utf8.RuneError {
-		if trace {
-			p.print("return false")
-		}
-		return false
-	}
-
-	if peek == '\\' || peek == '/' {
-		if trace {
-			p.print("return true")
-		}
-		return true
-	}
-
-	_, ok := p.inlineElems[peek]
 	if trace {
-		p.printf("return %t", ok)
+		p.printf("return %t", t)
 	}
-	return ok
+
+	return t
+}
+
+// isPunct determines whether ch is an ASCII punctuation character.
+func isPunct(ch rune) bool {
+	return ch >= 0x21 && ch <= 0x2F ||
+		ch >= 0x3A && ch <= 0x40 ||
+		ch >= 0x5B && ch <= 0x60 ||
+		ch >= 0x7B && ch <= 0x7E
 }
 
 func (p *parser) parseUniform(name string) (node.Inline, bool) {
@@ -850,10 +839,7 @@ func (p *parser) parseText() (node.Inline, bool) {
 
 			afterNewline = true
 
-			if p.ch == '\\' {
-				// block escape
-				p.next()
-			} else {
+			if !p.isEscape() {
 				_, matchesInline := p.matchInline()
 				_, matchesBlock := p.matchBlock()
 
@@ -869,7 +855,7 @@ func (p *parser) parseText() (node.Inline, bool) {
 				afterNewline = false
 			}
 
-			if p.isInlineEscape() {
+			if p.isEscape() {
 				p.next()
 			} else {
 				if p.closingDelimiter() > 0 {
@@ -910,17 +896,13 @@ func (p *parser) matchInline() (config.Element, bool) {
 	}
 
 	el, ok := p.inlineElems[p.ch]
-	if ok && p.ch == p.peek() {
-		switch el.Type {
-		case node.TypeUniform, node.TypeEscaped:
-			if trace {
-				p.printf("return true (%s)", el.Name)
-			}
 
-			return el, true
-		default:
-			panic(fmt.Sprintf("parser.parseText: unexpected node type %s (%s)", el.Type, el.Name))
+	if ok && p.ch == p.peek() {
+		if trace {
+			p.printf("return true (%s)", el.Name)
 		}
+
+		return el, true
 	}
 
 	if trace {
