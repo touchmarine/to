@@ -180,9 +180,9 @@
 			}
 		},
 		{
-			"name": "BlockComment",
+			"name": "Attributes",
 			"type": "verbatimWalled",
-			"delimiter": "/",
+			"delimiter": "!",
 			"templates": {
 				"html": ""
 			}
@@ -210,14 +210,14 @@
 			"primaryElement": "Group",
 			"secondaryElement": "Link",
 			"templates": {
-				"html": "<a href=\"{{.SecondaryElement.Content}}\">{{range .PrimaryElement.InlineChildren}}{{render .}}{{end}}</a>\n"
+				"html": "<a href=\"{{.SecondaryElement.Content}}\">{{range .PrimaryElement.InlineChildren}}{{render .}}{{end}}</a>"
 			}
 		}
 	],
 	"stickies": [
 		{
-			"name": "StickyComment",
-			"element": "BlockComment",
+			"name": "StickyAttributes",
+			"element": "Attributes",
 			"templates": {
 				"html": "{{ $attrs := parseAttrs .StickyElement.Lines }}\n{{renderWithData .TargetElement.Self (mapAny \"Attrs\" $attrs)}}\n"
 			}
@@ -243,7 +243,7 @@
 			"element": "DescriptionList",
 			"after": true,
 			"templates": {
-				"html": "{{if eq .TargetElement.Self.Node \"StickyComment\"}}\n\t{{- /* has sticky comment nested so parse attributes from it */ -}}\n\n\t{{ $attrs := parseAttrs .TargetElement.StickyElement.Lines }}\n\t<dl {{- with $attrs}} {{htmlAttrs .}}{{end}}>\n\t\t{{- range .TargetElement.TargetElement.BlockChildren}}\n\t\t\t<dt>{{render .}}</dt>\n\t\t{{end -}}\n\t\t{{- range .StickyElement.BlockChildren}}\n\t\t\t<dd>{{render .}}</dd>\n\t\t{{end -}}\n\t</dl>\n{{else}}\n\t<dl>\n\t\t{{- range .TargetElement.BlockChildren}}\n\t\t\t<dt>{{render .}}</dt>\n\t\t{{end -}}\n\t\t{{- range .StickyElement.BlockChildren}}\n\t\t\t<dd>{{render .}}</dd>\n\t\t{{end -}}\n\t</dl>\n{{end}}\n"
+				"html": "{{if eq .TargetElement.Self.Node \"StickyAttributes\"}}\n\t{{- /* has sticky attributes nested so parse attributes from it */ -}}\n\n\t{{ $attrs := parseAttrs .TargetElement.StickyElement.Lines }}\n\t<dl {{- with $attrs}} {{htmlAttrs .}}{{end}}>\n\t\t{{- range .TargetElement.TargetElement.BlockChildren}}\n\t\t\t<dt>{{render .}}</dt>\n\t\t{{end -}}\n\t\t{{- range .StickyElement.BlockChildren}}\n\t\t\t<dd>{{render .}}</dd>\n\t\t{{end -}}\n\t</dl>\n{{else}}\n\t<dl>\n\t\t{{- range .TargetElement.BlockChildren}}\n\t\t\t<dt>{{render .}}</dt>\n\t\t{{end -}}\n\t\t{{- range .StickyElement.BlockChildren}}\n\t\t\t<dd>{{render .}}</dd>\n\t\t{{end -}}\n\t</dl>\n{{end}}\n"
 			}
 		}
 	],

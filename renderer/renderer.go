@@ -354,14 +354,7 @@ func (s *seqNumGrouper) print(msg string) {
 }
 
 func parseAttrs(lines []string) map[string]string {
-	var b strings.Builder
-	for _, l := range lines {
-		if strings.HasPrefix(l, "!") {
-			b.WriteString(l[1:])
-		}
-	}
-
-	reader := strings.NewReader(b.String())
+	reader := strings.NewReader(strings.Join(lines, " "))
 
 	var p attrParser
 	p.init(reader)

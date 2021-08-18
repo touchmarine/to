@@ -243,9 +243,9 @@
 			}
 		},
 		{
-			"name": "BlockComment",
+			"name": "Attributes",
 			"type": "verbatimWalled",
-			"delimiter": "/",
+			"delimiter": "!",
 			"templates": {
 				"html": ""
 			}
@@ -281,16 +281,14 @@
 			"primaryElement": "Group",
 			"secondaryElement": "Link",
 			"templates": {
-				"html": '''
-<a href="{{.SecondaryElement.Content}}">{{range .PrimaryElement.InlineChildren}}{{render .}}{{end}}</a>
-'''
+				"html": '''<a href="{{.SecondaryElement.Content}}">{{range .PrimaryElement.InlineChildren}}{{render .}}{{end}}</a>'''
 			}
 		}
 	],
 	"stickies": [
 		{
-			"name": "StickyComment",
-			"element": "BlockComment",
+			"name": "StickyAttributes",
+			"element": "Attributes",
 			"templates": {
 				"html": '''
 {{ $attrs := parseAttrs .StickyElement.Lines }}
@@ -338,8 +336,8 @@
 			"after": true,
 			"templates": {
 				"html": '''
-{{if eq .TargetElement.Self.Node "StickyComment"}}
-	{{- /* has sticky comment nested so parse attributes from it */ -}}
+{{if eq .TargetElement.Self.Node "StickyAttributes"}}
+	{{- /* has sticky attributes nested so parse attributes from it */ -}}
 
 	{{ $attrs := parseAttrs .TargetElement.StickyElement.Lines }}
 	<dl {{- with $attrs}} {{htmlAttrs .}}{{end}}>
