@@ -84,13 +84,13 @@ func TestFprint(t *testing.T) {
 		{">`a\n>b", "> `a\n> b\n> `"},
 
 		// verbatim walled
-		{"/", ""},
-		{"/a", "/a"},
-		{"/ a", "/ a"},
-		{"/\n/", ""},
-		{"/a\n/b", "/a\n/b"},
-		{"/ a\n/ b", "/ a\n/ b"},
-		{"/a\n/\n/b", "/a\n/\n/b"},
+		{"!", ""},
+		{"!a", "!a"},
+		{"! a", "! a"},
+		{"!\n!", ""},
+		{"!a\n!b", "!a\n!b"},
+		{"! a\n! b", "! a\n! b"},
+		{"!a\n!\n!b", "!a\n!\n!b"},
 
 		// fenced
 		{"`", ""},
@@ -112,10 +112,10 @@ func TestFprint(t *testing.T) {
 		{"-a\n -b\n -c", "- a\n\n  - b\n  - c"},
 
 		// sticky
-		{"/a\nb", "/a\nb"},
-		{"/a\n/b\nc", "/a\n/b\nc"},
-		{"a\n/b", "a\n\n/b"},
-		{"a\n/b\n/c", "a\n\n/b\n/c"},
+		{"!a\nb", "!a\nb"},
+		{"!a\n!b\nc", "!a\n!b\nc"},
+		{"a\n!b", "a\n\n!b"},
+		{"a\n!b\n!c", "a\n\n!b\n!c"},
 
 		{"a\n+b", "a\n+ b"},
 		{"a\n+b\n+c", "a\n+ b c"},
