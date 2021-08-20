@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/touchmarine/to/autolink"
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"log"
@@ -627,6 +628,8 @@ func (p *parser) parseInline() (node.Inline, bool) {
 			return p.parseUniform(el.Name)
 		case node.TypeEscaped:
 			return p.parseEscaped(el.Name)
+		case node.TypePrefixed:
+			return p.parsePrefixed(el.Name, el.Delimiter)
 		default:
 			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
 		}
@@ -809,6 +812,29 @@ var leftRightChars = map[rune]rune{
 	'>': '<',
 }
 
+func (p *parser) parsePrefixed(name, prefix string) (node.Inline, bool) {
+	if trace {
+		defer p.tracef("parsePrefixed (%s, prefix=%q)", name, prefix)()
+	}
+
+	var b bytes.Buffer
+
+	for i := 0; i < len(prefix); i++ {
+		b.WriteRune(p.ch)
+		p.next()
+	}
+
+	w := autolink.Match(p.src[p.offset:])
+	end := p.offset + w
+
+	for p.offset < end {
+		b.WriteRune(p.ch)
+		p.next()
+	}
+
+	return &node.Prefixed{name, b.Bytes()}, true
+}
+
 func (p *parser) parseText() (node.Inline, bool) {
 	if trace {
 		defer p.trace("parseText")()
@@ -893,6 +919,29 @@ func (p *parser) parseText() (node.Inline, bool) {
 func (p *parser) matchInline() (config.Element, bool) {
 	if trace {
 		defer p.trace("matchInline")()
+	}
+
+	if has, hasS := p.hasPrefix([]byte("http://")), p.hasPrefix([]byte("https://")); has || hasS {
+		prefix := ""
+		if has {
+			prefix = "http://"
+		} else if hasS {
+			prefix = "https://"
+		} else {
+			panic("parser: unexpected autolink scheme")
+		}
+
+		el := config.Element{
+			Name:      "Autolink",
+			Type:      node.TypePrefixed,
+			Delimiter: prefix,
+		}
+
+		if trace {
+			p.printf("return true (%s)", el.Name)
+		}
+
+		return el, true
 	}
 
 	el, ok := p.inlineElems[p.ch]
@@ -1060,8 +1109,7 @@ func (p *parser) next() {
 		switch r {
 		case utf8.RuneError: // encoding error
 			if w == 0 {
-				// EOF
-				p.ch = 0
+				panic("parser: cannot decode empty slice")
 			} else if w == 1 {
 				p.error(ErrInvalidUTF8Encoding)
 				p.ch = utf8.RuneError
@@ -1094,51 +1142,37 @@ func (p *parser) next() {
 
 func (p *parser) peek() rune {
 	if p.rdOffset < len(p.src) {
-		r, w := utf8.DecodeRune(p.src[p.rdOffset:])
+		return validRune(utf8.DecodeRune(p.src[p.rdOffset:]))
+	}
+	return 0
+}
 
-		switch r {
-		case utf8.RuneError:
-			if w == 0 {
-				// EOF
-				return 0
-			} else if w == 1 {
-				return utf8.RuneError
-			}
-		case '\u0000', '\uFEFF': // encoding error, NULL, or BOM
-			return utf8.RuneError
-		default:
-			return r
+func (p *parser) peek2() rune {
+	if p.peek() > 0 {
+		l := utf8.RuneLen(p.peek())
+
+		if p.rdOffset+l < len(p.src) {
+			return validRune(utf8.DecodeRune(p.src[p.rdOffset+l:]))
 		}
 	}
 
 	return 0
 }
 
-func (p *parser) peek2() rune {
-	if p.rdOffset < len(p.src) {
-		_, w := utf8.DecodeRune(p.src[p.rdOffset:])
+func validRune(r rune, w int) rune {
+	switch r {
+	case utf8.RuneError:
 		if w == 0 {
-			return 0
-		}
-
-		r, _ := utf8.DecodeRune(p.src[p.rdOffset+w:])
-
-		switch r {
-		case utf8.RuneError:
-			if w == 0 {
-				// EOF
-				return 0
-			} else if w == 1 {
-				return utf8.RuneError
-			}
-		case '\u0000', '\uFEFF': // encoding error, NULL, or BOM
+			panic("parser: cannot decode empty slice")
+		} else if w == 1 {
 			return utf8.RuneError
-		default:
-			return r
+		} else {
+			panic("parser: utf8 lib error")
 		}
+	case '\u0000', '\uFEFF': // NULL, or BOM
+		return utf8.RuneError
 	}
-
-	return 0
+	return r
 }
 
 func (p *parser) open(blocks ...rune) func() {

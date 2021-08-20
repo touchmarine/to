@@ -26,6 +26,9 @@ type Config struct {
 	Text          struct {
 		Templates map[string]string `json:"templates"`
 	}
+	Autolink struct {
+		Templates map[string]string `json:"templates"`
+	}
 	TextBlock struct {
 		Templates map[string]string `json:"templates"`
 	}
@@ -89,6 +92,14 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 		return nil, fmt.Errorf("Text %s template not found", name)
 	}
 	if _, err := target.New("Text").Parse(textTmpl); err != nil {
+		return nil, err
+	}
+
+	autolinkTmpl, ok := c.Autolink.Templates[name]
+	if !ok {
+		return nil, fmt.Errorf("Autolink %s template not found", name)
+	}
+	if _, err := target.New("Autolink").Parse(autolinkTmpl); err != nil {
 		return nil, err
 	}
 

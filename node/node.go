@@ -32,6 +32,7 @@ const (
 	TypeText
 	TypeUniform
 	TypeEscaped
+	TypePrefixed
 )
 
 func (t *Type) UnmarshalText(text []byte) error {
@@ -54,6 +55,8 @@ func (t *Type) UnmarshalText(text []byte) error {
 		*t = TypeUniform
 	case "escaped":
 		*t = TypeEscaped
+	case "prefixed":
+		*t = TypePrefixed
 	default:
 		return fmt.Errorf("unexpected node.Type value: %q", s)
 	}
@@ -334,6 +337,21 @@ func (e Escaped) Inline() {}
 
 func (e *Escaped) Content() []byte {
 	return e.Content0
+}
+
+type Prefixed struct {
+	Name     string
+	Content0 []byte
+}
+
+func (p Prefixed) Node() string {
+	return p.Name
+}
+
+func (Prefixed) Inline() {}
+
+func (p *Prefixed) Content() []byte {
+	return p.Content0
 }
 
 // Text represents text—an atomic, inline node.
