@@ -24,7 +24,7 @@
 			"delimiter": "http://",
 			"matcher": "url",
 			"templates": {
-				"html": "<a href=\"{{.Content}}\">{{.Content}}</a>"
+				"html": "<a href=\"http://{{.Content}}\">http://{{.Content}}</a>"
 			}
 		},
 		{
@@ -33,7 +33,7 @@
 			"delimiter": "https://",
 			"matcher": "url",
 			"templates": {
-				"html": "<a href=\"{{.Content}}\">{{.Content}}</a>"
+				"html": "<a href=\"https://{{.Content}}\">https://{{.Content}}</a>"
 			}
 		},
 		{
@@ -42,7 +42,7 @@
 			"delimiter": "www.",
 			"matcher": "url",
 			"templates": {
-				"html": "<a href=\"http://{{.Content}}\">{{.Content}}</a>"
+				"html": "<a href=\"http://www.{{.Content}}\">www.{{.Content}}</a>"
 			}
 		},
 		{

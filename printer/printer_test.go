@@ -157,6 +157,10 @@ func TestFprint(t *testing.T) {
 		{"a //b", "a //b//"},
 		{"a //b// c", "a //b// c"},
 
+		// prefixed
+		{"ahttp://", "a"},
+		{"ahttp://b", "ahttp://b"},
+
 		// composite
 		{"(())[[]]", ""},
 		{"((a))[[b]]", "((a))[[b]]"},
@@ -233,6 +237,7 @@ func TestFprint(t *testing.T) {
 		{`a\((a))[[b]]`, `a\((a))[[b]]`},
 		{`a((a))\[[b]]`, `a((a))\[[b]]`},
 		{`a\((a))\[[b]]`, `a\((a))\[[b]]`},
+		{`a\http://`, "ahttp:"},
 	}
 
 	for _, c := range cases {

@@ -6,7 +6,6 @@ import (
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"io"
-	"log"
 	"strings"
 	"unicode/utf8"
 )
@@ -398,8 +397,8 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 				panic("printer: node " + peek.Node() + " not found")
 			}
 
-			if len(e.Delimiter) != 1 {
-				panic("printer: delimiter size not 1 byte")
+			if len(e.Delimiter) < 1 {
+				panic("printer: invalid delimiter")
 			}
 
 			delimiter := e.Delimiter[0]
@@ -494,24 +493,20 @@ func (p *printer) delimiters() (string, string) {
 			}
 
 		case node.Inline:
-			r, w := utf8.DecodeRuneInString(delim)
-			// perfom the same check as parser
-			if r == utf8.RuneError {
-				panic("printer: invalid UTF-8 encoding in delimiter")
+			switch p.n.(type) {
+			case *node.Uniform, *node.Escaped:
+				r, _ := utf8.DecodeRuneInString(delim)
+				counterDelim := counterpart(r)
+
+				pre = delim + delim
+				post = string(counterDelim) + string(counterDelim)
+			case *node.Prefixed:
+				pre = delim
+			default:
+				panic(fmt.Sprintf("printer: unexpected node type %T (%s)", p.n, name))
 			}
 
-			if len(delim) > w {
-				log.Fatalf("inline delimiter %q too long", delim)
-			}
-
-			counterDelim := counterpart(r)
-
-			pre = delim + delim
-			post = string(counterDelim) + string(counterDelim)
-
-			switch m := p.n.(type) {
-			case *node.Uniform:
-			case *node.Escaped:
+			if m, isEscaped := p.n.(*node.Escaped); isEscaped {
 				content := m.Content()
 
 				if bytes.Contains(content, []byte(delim+delim)) {
@@ -519,8 +514,6 @@ func (p *printer) delimiters() (string, string) {
 					pre += "\\"
 					post = "\\" + post
 				}
-			default:
-				panic(fmt.Sprintf("printer: unexpected node type %T (%s)", p.n, name))
 			}
 
 		default:

@@ -3197,6 +3197,137 @@ func TestEscaped(t *testing.T) {
 	}
 }
 
+func TestPrefixed(t *testing.T) {
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			"^^",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Prefixed{"MA", nil},
+				}},
+			},
+		},
+		{
+			"a^^",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Prefixed{"MA", nil},
+				}},
+			},
+		},
+		{
+			"^^a",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Prefixed{"MA", nil},
+					node.Text("a"),
+				}},
+			},
+		},
+
+		// url matcher
+		{
+			"http://",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Prefixed{"MB", nil},
+				}},
+			},
+		},
+		{
+			"ahttp://",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("a"),
+					&node.Prefixed{"MB", nil},
+				}},
+			},
+		},
+		{
+			"http://a",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Prefixed{"MB", []byte("a")},
+				}},
+			},
+		},
+		{
+			"http://a.b",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Prefixed{"MB", []byte("a.b")},
+				}},
+			},
+		},
+		{
+			"http://a.b/c",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Prefixed{"MB", []byte("a.b/c")},
+				}},
+			},
+		},
+		{
+			"(http://a.b/c)",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("("),
+					&node.Prefixed{"MB", []byte("a.b/c")},
+					node.Text(")"),
+				}},
+			},
+		},
+
+		// escape
+		{
+			`\^^`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("^^"),
+				}},
+			},
+		},
+		{
+			`\http://`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("http://"),
+				}},
+			},
+		},
+		{
+			`\http`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text(`\http`),
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil, []config.Element{
+				{
+					Name:      "MA",
+					Type:      node.TypePrefixed,
+					Delimiter: "^^",
+				},
+				{
+					Name:      "MB",
+					Type:      node.TypePrefixed,
+					Delimiter: "http://",
+					Matcher:   "url",
+				},
+			})
+		})
+	}
+}
+
 func TestPrecedence(t *testing.T) {
 	cases := []struct {
 		in  string

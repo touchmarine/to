@@ -39,12 +39,13 @@ func ParseCustom(src []byte, elements []config.Element) ([]node.Block, []error) 
 
 // parser holds the parsing state.
 type parser struct {
-	errors     []error
-	src        []byte                    // source
-	blockMap   map[string]config.Element // registered block elements byt delimiter
-	blockKeys  []string                  // length-sorted (longest first)blockMap keys
-	inlineMap  map[string]config.Element // registered inline elements by delimiter
-	matcherMap matcher.Map               // registered matchers by name
+	errors         []error
+	src            []byte                    // source
+	blockMap       map[string]config.Element // registered block elements byt delimiter
+	blockKeys      []string                  // length-sorted (longest first)blockMap keys
+	inlineMap      map[string]config.Element // registered inline elements by delimiter
+	specialEscapes []string                  // delimiters that do not start with a punctuation
+	matcherMap     matcher.Map               // registered matchers by name
 
 	// parsing
 	ch       rune // current character
@@ -80,6 +81,11 @@ func (p *parser) register(elems []config.Element) {
 
 		case node.CategoryInline:
 			p.inlineMap[e.Delimiter] = e
+
+			r, _ := utf8.DecodeRuneInString(e.Delimiter)
+			if !isPunct(r) {
+				p.specialEscapes = append(p.specialEscapes, e.Delimiter)
+			}
 
 		default:
 			panic("parser: unexpected node category " + c.String())
@@ -613,12 +619,7 @@ func (p *parser) parseInline() (node.Inline, bool) {
 		case node.TypeEscaped:
 			return p.parseEscaped(el.Name)
 		case node.TypePrefixed:
-			matcher := p.matcherMap[el.Matcher]
-			if matcher == nil {
-				panic("nil matcher")
-			}
-
-			return p.parsePrefixed(el.Name, el.Delimiter, matcher)
+			return p.parsePrefixed(el.Name, el.Delimiter, el.Matcher)
 		default:
 			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
 		}
@@ -632,13 +633,31 @@ func (p *parser) isEscape() bool {
 		defer p.trace("isEscape")()
 	}
 
-	t := p.ch == '\\' && isPunct(p.peek())
+	if p.ch == '\\' {
+		if isPunct(p.peek()) {
+			if trace {
+				p.print("return true")
+			}
 
-	if trace {
-		p.printf("return %t", t)
+			return true
+		} else {
+			for _, escape := range p.specialEscapes {
+				if p.hasPrefix([]byte("\\" + escape)) {
+					if trace {
+						p.print("return true")
+					}
+
+					return true
+				}
+			}
+		}
 	}
 
-	return t
+	if trace {
+		p.print("return false")
+	}
+
+	return false
 }
 
 // isPunct determines whether ch is an ASCII punctuation character.
@@ -801,23 +820,30 @@ var leftRightChars = map[rune]rune{
 	'>': '<',
 }
 
-func (p *parser) parsePrefixed(name, prefix string, matcher matcher.Matcher) (node.Inline, bool) {
+func (p *parser) parsePrefixed(name, prefix string, matcher string) (node.Inline, bool) {
 	if trace {
-		defer p.tracef("parsePrefixed (%s, prefix=%q)", name, prefix)()
+		defer p.tracef("parsePrefixed (%s, prefix=%q, matcher=%q)", name, prefix, matcher)()
 	}
-
-	var b bytes.Buffer
 
 	// consume prefix
 	for i := 0; i < len(prefix); i++ {
-		b.WriteRune(p.ch)
 		p.next()
 	}
 
-	w := matcher.Match(p.src[p.offset:])
+	if matcher == "" {
+		return &node.Prefixed{name, nil}, true
+	}
+
+	m, ok := p.matcherMap[matcher]
+	if !ok {
+		panic("parser: matcher " + matcher + " not found")
+	}
+
+	w := m.Match(p.src[p.offset:])
 	end := p.offset + w
 
 	// consume match
+	var b bytes.Buffer
 	for p.offset < end {
 		b.WriteRune(p.ch)
 		p.next()
