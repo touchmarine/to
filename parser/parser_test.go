@@ -3282,6 +3282,68 @@ func TestPrefixed(t *testing.T) {
 			},
 		},
 
+		// nested url matcher
+		{
+			"**http://",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Uniform{"MC", []node.Inline{
+						&node.Prefixed{"MB", nil},
+					}},
+				}},
+			},
+		},
+		{
+			"**http**://",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Uniform{"MC", []node.Inline{
+						node.Text("http"),
+					}},
+					node.Text("://"),
+				}},
+			},
+		},
+		{
+			"**http://**",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Uniform{"MC", []node.Inline{
+						&node.Prefixed{"MB", nil},
+					}},
+				}},
+			},
+		},
+		{
+			"http**://",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("http"),
+					&node.Uniform{"MC", []node.Inline{
+						node.Text("://"),
+					}},
+				}},
+			},
+		},
+		{
+			"http://**", // domain cannot contain "*"
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Prefixed{"MB", nil},
+					&node.Uniform{"MC", nil},
+				}},
+			},
+		},
+		{
+			"http://a.b/**",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Prefixed{"MB", []byte("a.b/")},
+					&node.Uniform{"MC", nil},
+				}},
+			},
+		},
+
 		// escape
 		{
 			`\^^`,
@@ -3322,6 +3384,16 @@ func TestPrefixed(t *testing.T) {
 					Type:      node.TypePrefixed,
 					Delimiter: "http://",
 					Matcher:   "url",
+				},
+				{
+					Name:      "MC",
+					Type:      node.TypeUniform,
+					Delimiter: "*",
+				},
+				{
+					Name:      "MD",
+					Type:      node.TypeUniform,
+					Delimiter: "_",
 				},
 			})
 		})
