@@ -1,10 +1,19 @@
-package autolink
+package url
 
 import (
 	"unicode"
 	"unicode/utf8"
 )
 
+// Match matches an URL after the scheme. It matches a valid domain and if it is
+// present a relative reference (path + query + fragment). Trailing puncutation
+// and trailing unmatched parentheses are not part of the URL.
+//
+// A valid domain consists of segments of alphanumeric characters, underscores
+// "_", and hypens "-" separated by periods ".". No underscores may be present
+// in the last two segments of the domain.
+//
+// https://github.github.com/gfm/#valid-domain
 func Match(p []byte) int {
 	end := 0
 
@@ -19,19 +28,13 @@ func Match(p []byte) int {
 	refLen := naiveRelativeRef(p[domainLen:])
 	end += refLen
 
-	// remove trailing punct and unmatched parens from autolink
+	// remove trailing punct and unmatched parens from url
 	end = preciseRelativeRefEnd(p[:end])
 
 	return end
 }
 
 // validDomain returns the length of a valid domain.
-//
-// A valid domain consists of segments of alphanumeric characters, underscores
-// "_", and hypens "-" separated by periods ".". No underscores may be present
-// in the last two segments of the domain.
-//
-// https://github.github.com/gfm/#valid-domain
 func validDomain(p []byte) int {
 	u1, u2 := false, false // underscores in last two segments
 
@@ -58,7 +61,8 @@ func validDomain(p []byte) int {
 	return i
 }
 
-// naiveRelativeRef naively determines the length of a relative reference (path + query + fragment).
+// naiveRelativeRef naively determines the length of a relative reference (path
+// + query + fragment).
 func naiveRelativeRef(p []byte) int {
 	i := 0
 	for ; i < len(p); i++ {
@@ -71,7 +75,7 @@ func naiveRelativeRef(p []byte) int {
 	return i
 }
 
-// preciseRelativeRefEnd takes an entire naive autolink and removes trailing
+// preciseRelativeRefEnd takes an entire naive url and removes trailing
 // punctuation and unmatched trailing parentheses.
 func preciseRelativeRefEnd(p []byte) int {
 	end := len(p)

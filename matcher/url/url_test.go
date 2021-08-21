@@ -1,11 +1,11 @@
-package autolink_test
+package url_test
 
 import (
-	"github.com/touchmarine/to/matcher/autolink"
+	"github.com/touchmarine/to/matcher/url"
 	"testing"
 )
 
-func TestAutoLink(t *testing.T) {
+func TestMatchURL(t *testing.T) {
 	cases := []struct {
 		in  string
 		out string
@@ -77,7 +77,7 @@ func TestAutoLink(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			size := autolink.Match([]byte(c.in))
+			size := url.Match([]byte(c.in))
 
 			got := c.in[:size]
 			want := c.out

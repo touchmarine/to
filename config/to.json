@@ -19,21 +19,30 @@
 	},
 	"elements": [
 		{
-			"name": "AutolinkHTTP",
+			"name": "HTTP",
 			"type": "prefixed",
 			"delimiter": "http://",
-			"matcher": "autolink",
+			"matcher": "url",
 			"templates": {
 				"html": "<a href=\"{{.Content}}\">{{.Content}}</a>"
 			}
 		},
 		{
-			"name": "AutolinkHTTPS",
+			"name": "HTTPS",
 			"type": "prefixed",
 			"delimiter": "https://",
-			"matcher": "autolink",
+			"matcher": "url",
 			"templates": {
 				"html": "<a href=\"{{.Content}}\">{{.Content}}</a>"
+			}
+		},
+		{
+			"name": "WWW",
+			"type": "prefixed",
+			"delimiter": "www.",
+			"matcher": "url",
+			"templates": {
+				"html": "<a href=\"http://{{.Content}}\">{{.Content}}</a>"
 			}
 		},
 		{

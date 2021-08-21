@@ -1,7 +1,7 @@
 package matcher
 
 import (
-	"github.com/touchmarine/to/matcher/autolink"
+	"github.com/touchmarine/to/matcher/url"
 )
 
 // Matcher recognizes patterns.
@@ -25,6 +25,6 @@ type Map map[string]Matcher
 // Defaults retuns a Map of default matchers.
 func Defaults() Map {
 	return Map{
-		"autolink": MatcherFunc(autolink.Match),
+		"url": MatcherFunc(url.Match),
 	}
 }
