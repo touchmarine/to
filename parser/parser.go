@@ -7,6 +7,7 @@ import (
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/matcher"
 	"github.com/touchmarine/to/node"
+	"sort"
 	"strings"
 	"unicode/utf8"
 )
@@ -38,11 +39,12 @@ func ParseCustom(src []byte, elements []config.Element) ([]node.Block, []error) 
 
 // parser holds the parsing state.
 type parser struct {
-	errors      []error
-	src         []byte                    // source
-	blockElems  []config.Element          // registered block elements
-	inlineElems map[string]config.Element // registered inline elements by delimiter
-	matcherMap  matcher.Map               // registered matchers
+	errors     []error
+	src        []byte                    // source
+	blockMap   map[string]config.Element // registered block elements byt delimiter
+	blockKeys  []string                  // length-sorted (longest first)blockMap keys
+	inlineMap  map[string]config.Element // registered inline elements by delimiter
+	matcherMap matcher.Map               // registered matchers by name
 
 	// parsing
 	ch       rune // current character
@@ -60,22 +62,43 @@ type parser struct {
 }
 
 func (p *parser) register(elems []config.Element) {
-	if p.inlineElems == nil {
-		p.inlineElems = make(map[string]config.Element)
+	if p.blockMap == nil {
+		p.blockMap = make(map[string]config.Element)
+	}
+	if p.inlineMap == nil {
+		p.inlineMap = make(map[string]config.Element)
 	}
 
 	for _, e := range elems {
 		switch c := node.TypeCategory(e.Type); c {
 		case node.CategoryBlock:
-			p.blockElems = append(p.blockElems, e)
+			if e.Type == node.TypeRankedHanging {
+				p.blockMap[e.Delimiter+e.Delimiter] = e
+			} else {
+				p.blockMap[e.Delimiter] = e
+			}
 
 		case node.CategoryInline:
-			p.inlineElems[e.Delimiter] = e
+			p.inlineMap[e.Delimiter] = e
 
 		default:
 			panic("parser: unexpected node category " + c.String())
 		}
 	}
+
+	keys := make([]string, len(p.blockMap))
+	i := 0
+	for k, _ := range p.blockMap {
+		keys[i] = k
+		i++
+	}
+
+	// sort keys by length
+	sort.Slice(keys, func(i, j int) bool {
+		return len(keys[i]) > len(keys[j])
+	})
+
+	p.blockKeys = keys
 }
 
 func (p *parser) Matchers(m matcher.Map) {
@@ -152,37 +175,25 @@ func (p *parser) matchBlock() (config.Element, bool) {
 		defer p.trace("matchBlock")()
 	}
 
-	var block config.Element
-	var found bool
+	// iterate through length-sorted (longest first) delimiters to prevent
+	// clashes, e.g., "==" has precedence over "="
+	for _, d := range p.blockKeys {
+		e := p.blockMap[d]
 
-	for _, el := range p.blockElems {
-		var delim string
-		if el.Type == node.TypeRankedHanging {
-			delim = el.Delimiter + el.Delimiter
-		} else {
-			delim = el.Delimiter
-		}
-
-		if p.hasPrefix([]byte(delim)) {
-			block = el
-			found = true
-
-			if peek := p.peek(); el.Type == node.TypeHanging && p.ch == peek ||
-				el.Type == node.TypeRankedHanging && p.ch != peek {
-				// ambigous hanging and ranked-try searching for
-				// the other pair otherwise use this one
-				continue
+		if p.hasPrefix([]byte(d)) {
+			if trace {
+				p.printf("return true (%s)", e.Name)
 			}
 
-			break
+			return e, true
 		}
 	}
 
 	if trace {
-		p.printf("return %t (%s)", found, block.Name)
+		p.print("return false")
 	}
 
-	return block, found
+	return config.Element{}, false
 }
 
 // hasPrefix determines whether b matches source from offset.
@@ -901,7 +912,7 @@ func (p *parser) matchInline() (config.Element, bool) {
 		defer p.trace("matchInline")()
 	}
 
-	for d, e := range p.inlineElems {
+	for d, e := range p.inlineMap {
 		runes := utf8.RuneCountInString(d)
 
 		if runes > 0 && e.Type == node.TypePrefixed {
