@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/touchmarine/to/autolink"
 	"github.com/touchmarine/to/config"
+	"github.com/touchmarine/to/matcher"
 	"github.com/touchmarine/to/node"
-	"log"
 	"strings"
 	"unicode/utf8"
 )
@@ -31,6 +30,7 @@ func Parse(src []byte) ([]node.Block, []error) {
 
 func ParseCustom(src []byte, elements []config.Element) ([]node.Block, []error) {
 	var p parser
+	p.Matchers(matcher.Defaults())
 	p.register(elements)
 	p.init(src)
 	return p.parse(nil), p.errors
@@ -39,9 +39,10 @@ func ParseCustom(src []byte, elements []config.Element) ([]node.Block, []error) 
 // parser holds the parsing state.
 type parser struct {
 	errors      []error
-	src         []byte                  // source
-	blockElems  []config.Element        // registered block elements
-	inlineElems map[rune]config.Element // registered inline elements by delimiter
+	src         []byte                    // source
+	blockElems  []config.Element          // registered block elements
+	inlineElems map[string]config.Element // registered inline elements by delimiter
+	matcherMap  matcher.Map               // registered matchers
 
 	// parsing
 	ch       rune // current character
@@ -60,58 +61,30 @@ type parser struct {
 
 func (p *parser) register(elems []config.Element) {
 	if p.inlineElems == nil {
-		p.inlineElems = make(map[rune]config.Element)
+		p.inlineElems = make(map[string]config.Element)
 	}
 
-	for _, el := range elems {
-		switch categ := node.TypeCategory(el.Type); categ {
+	for _, e := range elems {
+		switch c := node.TypeCategory(e.Type); c {
 		case node.CategoryBlock:
-			p.blockElems = append(p.blockElems, el)
-
-			//if els, ok := p.blockElems[el.Delimiter]; ok {
-			//	if len(els) == 1 {
-			//		e := els[0])
-
-			//		if (el.Type == node.TypeHanging || el.Type == node.TypeRankedHanging) &&
-			//		(e.Type == node.TypeHanging || e.Type == node.TypeRankedHanging) &&
-			//		el.Type != e.Type {
-			//			// hanging and ranked can use the same delimiter
-			//			p.blockElems = append(p.blockElems, el)
-			//			continue
-			//		}
-			//	}
-
-			//	log.Fatalf(
-			//		"parser: block delimiter %q is already registered",
-			//		el.Delimiter,
-			//	)
-			//} else {
-			//	p.blockElems[el.Delimiter] = []config.Element{el}
-			//}
+			p.blockElems = append(p.blockElems, e)
 
 		case node.CategoryInline:
-			delim, _ := utf8.DecodeRuneInString(el.Delimiter)
-			if delim == utf8.RuneError {
-				log.Fatal("parser: invalid UTF-8 encoding in delimiter")
-			}
-
-			if _, ok := p.inlineElems[delim]; ok {
-				log.Fatalf(
-					"parser: inline delimiter %q is already registered",
-					delim,
-				)
-			}
-
-			p.inlineElems[delim] = el
+			p.inlineElems[e.Delimiter] = e
 
 		default:
-			panic(fmt.Sprintf(
-				"parser: unexpected node category %s (element=%q, delimiter=%q)",
-				categ.String(),
-				el.Name,
-				el.Delimiter,
-			))
+			panic("parser: unexpected node category " + c.String())
 		}
+	}
+}
+
+func (p *parser) Matchers(m matcher.Map) {
+	if p.matcherMap == nil {
+		p.matcherMap = make(matcher.Map)
+	}
+
+	for k, v := range m {
+		p.matcherMap[k] = v
 	}
 }
 
@@ -629,7 +602,12 @@ func (p *parser) parseInline() (node.Inline, bool) {
 		case node.TypeEscaped:
 			return p.parseEscaped(el.Name)
 		case node.TypePrefixed:
-			return p.parsePrefixed(el.Name, el.Delimiter)
+			matcher := p.matcherMap[el.Matcher]
+			if matcher == nil {
+				panic("nil matcher")
+			}
+
+			return p.parsePrefixed(el.Name, el.Delimiter, matcher)
 		default:
 			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
 		}
@@ -812,21 +790,23 @@ var leftRightChars = map[rune]rune{
 	'>': '<',
 }
 
-func (p *parser) parsePrefixed(name, prefix string) (node.Inline, bool) {
+func (p *parser) parsePrefixed(name, prefix string, matcher matcher.Matcher) (node.Inline, bool) {
 	if trace {
 		defer p.tracef("parsePrefixed (%s, prefix=%q)", name, prefix)()
 	}
 
 	var b bytes.Buffer
 
+	// consume prefix
 	for i := 0; i < len(prefix); i++ {
 		b.WriteRune(p.ch)
 		p.next()
 	}
 
-	w := autolink.Match(p.src[p.offset:])
+	w := matcher.Match(p.src[p.offset:])
 	end := p.offset + w
 
+	// consume match
 	for p.offset < end {
 		b.WriteRune(p.ch)
 		p.next()
@@ -921,37 +901,28 @@ func (p *parser) matchInline() (config.Element, bool) {
 		defer p.trace("matchInline")()
 	}
 
-	if has, hasS := p.hasPrefix([]byte("http://")), p.hasPrefix([]byte("https://")); has || hasS {
-		prefix := ""
-		if has {
-			prefix = "http://"
-		} else if hasS {
-			prefix = "https://"
+	for d, e := range p.inlineElems {
+		runes := utf8.RuneCountInString(d)
+
+		if runes > 0 && e.Type == node.TypePrefixed {
+			if p.hasPrefix([]byte(e.Delimiter)) {
+				if trace {
+					p.printf("return true (%s)", e.Name)
+				}
+
+				return e, true
+			}
+		} else if runes == 1 {
+			if d == string(p.ch) && p.ch == p.peek() {
+				if trace {
+					p.printf("return true (%s)", e.Name)
+				}
+
+				return e, true
+			}
 		} else {
-			panic("parser: unexpected autolink scheme")
+			panic("parser: unvalid inline delimiter " + d)
 		}
-
-		el := config.Element{
-			Name:      "Autolink",
-			Type:      node.TypePrefixed,
-			Delimiter: prefix,
-		}
-
-		if trace {
-			p.printf("return true (%s)", el.Name)
-		}
-
-		return el, true
-	}
-
-	el, ok := p.inlineElems[p.ch]
-
-	if ok && p.ch == p.peek() {
-		if trace {
-			p.printf("return true (%s)", el.Name)
-		}
-
-		return el, true
 	}
 
 	if trace {

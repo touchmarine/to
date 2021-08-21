@@ -19,6 +19,24 @@
 	},
 	"elements": [
 		{
+			"name": "AutolinkHTTP",
+			"type": "prefixed",
+			"delimiter": "http://",
+			"matcher": "autolink",
+			"templates": {
+				"html": "<a href=\"{{.Content}}\">{{.Content}}</a>"
+			}
+		},
+		{
+			"name": "AutolinkHTTPS",
+			"type": "prefixed",
+			"delimiter": "https://",
+			"matcher": "autolink",
+			"templates": {
+				"html": "<a href=\"{{.Content}}\">{{.Content}}</a>"
+			}
+		},
+		{
 			"name": "Blockquote",
 			"type": "walled",
 			"delimiter": ">",

@@ -1,7 +1,7 @@
 package autolink_test
 
 import (
-	"github.com/touchmarine/to/autolink"
+	"github.com/touchmarine/to/matcher/autolink"
 	"testing"
 )
 
