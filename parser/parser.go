@@ -611,17 +611,19 @@ func (p *parser) parseInline() (node.Inline, bool) {
 		defer p.trace("parseInline")()
 	}
 
-	el, ok := p.matchInline()
-	if ok {
-		switch el.Type {
-		case node.TypeUniform:
-			return p.parseUniform(el.Name)
-		case node.TypeEscaped:
-			return p.parseEscaped(el.Name)
-		case node.TypePrefixed:
-			return p.parsePrefixed(el.Name, el.Delimiter, el.Matcher)
-		default:
-			panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
+	if !p.isEscape() {
+		el, ok := p.matchInline()
+		if ok {
+			switch el.Type {
+			case node.TypeUniform:
+				return p.parseUniform(el.Name)
+			case node.TypeEscaped:
+				return p.parseEscaped(el.Name)
+			case node.TypePrefixed:
+				return p.parsePrefixed(el.Name, el.Delimiter, el.Matcher)
+			default:
+				panic(fmt.Sprintf("parser.parseInline: unexpected node type %s (%s)", el.Type, el.Name))
+			}
 		}
 	}
 

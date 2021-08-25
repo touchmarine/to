@@ -3760,6 +3760,182 @@ func TestEscape(t *testing.T) {
 	}
 }
 
+func TestLineBreak(t *testing.T) {
+	// test one-character prefixed element, the character being the escape
+	// "\"
+
+	cases := []struct {
+		in  string
+		out []node.Node
+	}{
+		{
+			`\`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{&node.Prefixed{"MA", nil}}},
+			},
+		},
+		{
+			`\\`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\`)}},
+			},
+		},
+		{
+			`\\\`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text(`\`),
+					&node.Prefixed{"MA", nil},
+				}},
+			},
+		},
+		{
+			`\\\\`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\\`)}},
+			},
+		},
+		{
+			"\\\n\\",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Prefixed{"MA", nil},
+					node.Text(" "),
+					&node.Prefixed{"MA", nil},
+				}},
+			},
+		},
+		{
+			"\\a\n\\b",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Prefixed{"MA", nil},
+					node.Text("a "),
+					&node.Prefixed{"MA", nil},
+					node.Text("b"),
+				}},
+			},
+		},
+
+		{
+			`\a`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Prefixed{"MA", nil},
+					node.Text("a"),
+				}},
+			},
+		},
+		{
+			`\\a`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\a`)}},
+			},
+		},
+
+		{
+			`\**`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("**")}},
+			},
+		},
+		{
+			`\\**`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text(`\`),
+					&node.Uniform{"MB", nil},
+				}},
+			},
+		},
+		{
+			`\\\**`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text(`\**`),
+				}},
+			},
+		},
+
+		{
+			`a\**`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a**")}},
+			},
+		},
+		{
+			`\**\**`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					node.Text("****"),
+				}},
+			},
+		},
+
+		{
+			`\!`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("!")}},
+			},
+		},
+		{
+			`\\!`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\!`)}},
+			},
+		},
+		{
+			`\\\!`,
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{node.Text(`\!`)}},
+			},
+		},
+
+		// in verbatim
+		{
+			"`\n\\\\",
+			[]node.Node{
+				&node.Fenced{"A", [][]byte{nil, []byte(`\\`)}, nil},
+			},
+		},
+		{
+			"``a\\\\",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Escaped{"MC", []byte(`a\\`)},
+				}},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			test(t, c.in, c.out, nil, []config.Element{
+				{
+					Name:      "A",
+					Type:      node.TypeFenced,
+					Delimiter: "`",
+				},
+				{
+					Name:      "MA",
+					Type:      node.TypePrefixed,
+					Delimiter: `\`,
+				},
+				{
+					Name:      "MB",
+					Type:      node.TypeUniform,
+					Delimiter: "*",
+				},
+				{
+					Name:      "MC",
+					Type:      node.TypeEscaped,
+					Delimiter: "`",
+				},
+			})
+		})
+	}
+}
+
 func TestInvalidUTF8Encoding(t *testing.T) {
 	const fcb = "\x80" // first continuation byte
 

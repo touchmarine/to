@@ -19,6 +19,14 @@
 	},
 	"elements": [
 		{
+			"name": "LineBreak",
+			"type": "prefixed",
+			"delimiter": "\\",
+			"templates": {
+				"html": "<br>"
+			}
+		},
+		{
 			"name": "HTTP",
 			"type": "prefixed",
 			"delimiter": "http://",
@@ -56,7 +64,7 @@
 		{
 			"name": "Callout",
 			"type": "walled",
-			"delimiter": "^",
+			"delimiter": "*",
 			"templates": {
 				"html": "<div\n\tstyle=\"margin-left: 1em;padding-left:1em;border-left:2px solid blue;\"\n\t{{- with .Attrs}} {{htmlAttrs .}}{{end}}\n>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{end -}}\n</div>"
 			}
@@ -64,7 +72,7 @@
 		{
 			"name": "Term",
 			"type": "hanging",
-			"delimiter": "*",
+			"delimiter": "^
 			"templates": {
 				"html": "{{range .BlockChildren}}{{render .}}{{end}}"
 			}

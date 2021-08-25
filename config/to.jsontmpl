@@ -27,6 +27,14 @@
 	},
 	"elements": [
 		{
+			"name": "LineBreak",
+			"type": "prefixed",
+			"delimiter": "\\",
+			"templates": {
+				"html": "<br>"
+			}
+		},
+		{
 			"name": "HTTP",
 			"type": "prefixed",
 			"delimiter": "http://",
@@ -69,7 +77,7 @@
 		{
 			"name": "Callout",
 			"type": "walled",
-			"delimiter": "^",
+			"delimiter": "*",
 			"templates": {
 				"html": '''
 <div
@@ -85,7 +93,7 @@
 		{
 			"name": "Term",
 			"type": "hanging",
-			"delimiter": "*",
+			"delimiter": "^
 			"templates": {
 				"html": "{{range .BlockChildren}}{{render .}}{{end}}"
 			}
