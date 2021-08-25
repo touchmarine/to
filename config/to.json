@@ -22,6 +22,7 @@
 			"name": "LineBreak",
 			"type": "prefixed",
 			"delimiter": "\\",
+			"doNotRemove": true,
 			"templates": {
 				"html": "<br>"
 			}
@@ -72,7 +73,7 @@
 		{
 			"name": "Term",
 			"type": "hanging",
-			"delimiter": "^
+			"delimiter": "^",
 			"templates": {
 				"html": "{{range .BlockChildren}}{{render .}}{{end}}"
 			}
@@ -161,6 +162,7 @@
 			"name": "TableOfContents",
 			"type": "hanging",
 			"delimiter": ".toc",
+			"doNotRemove": true,
 			"templates": {
 				"html": "<div {{- with .Attrs}} {{htmlAttrs .}}{{end}}>\n\t<p>{{range .BlockChildren}}{{render .}}{{end}}</p>\n\n\t{{block \"grouper\" groupBySeqNum .Aggregates.Headings}}\n\t\t<ul>\n\t\t\t{{range .}}\n\t\t\t\t{{if isSeqNumGroup .}}\n\t\t\t\t\t{{template \"grouper\" .}}\n\t\t\t\t{{else}}\n\t\t\t\t\t<li>\n\t\t\t\t\t\t<a href=\"#{{.ID}}\">{{.SeqNum}} {{.Text}}</a>\n\t\t\t\t\t</li>\n\t\t\t\t{{end}}\n\t\t\t{{end}}\n\t\t</ul>\n\t{{end}}\n</div>"
 			}

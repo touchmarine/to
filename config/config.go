@@ -153,11 +153,12 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 
 // template encode:https://play.golang.org/p/ayrY0opKeEv
 type Element struct {
-	Name      string            `json:"name"`
-	Type      node.Type         `json:"type"`
-	Delimiter string            `json:"delimiter"`
-	Matcher   string            `json:"matcher"`
-	Templates map[string]string `json:"templates"`
+	Name        string            `json:"name"`
+	Type        node.Type         `json:"type"`
+	Delimiter   string            `json:"delimiter"`
+	Matcher     string            `json:"matcher"`
+	DoNotRemove bool              `json:"doNotRemove"`
+	Templates   map[string]string `json:"templates"`
 }
 
 // Composite is a group of two inline elements, the PrimaryElement and the

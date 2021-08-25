@@ -30,6 +30,7 @@
 			"name": "LineBreak",
 			"type": "prefixed",
 			"delimiter": "\\",
+			"doNotRemove": true,
 			"templates": {
 				"html": "<br>"
 			}
@@ -93,7 +94,7 @@
 		{
 			"name": "Term",
 			"type": "hanging",
-			"delimiter": "^
+			"delimiter": "^",
 			"templates": {
 				"html": "{{range .BlockChildren}}{{render .}}{{end}}"
 			}
@@ -207,6 +208,7 @@
 			"name": "TableOfContents",
 			"type": "hanging",
 			"delimiter": ".toc",
+			"doNotRemove": true,
 			"templates": {
 				"html": '''
 <div {{- with .Attrs}} {{htmlAttrs .}}{{end}}>

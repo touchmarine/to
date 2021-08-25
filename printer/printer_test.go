@@ -29,37 +29,37 @@ func TestFprint(t *testing.T) {
 		{".imagea ", ".image a"},
 
 		// hanging
-		{"*", ""},
-		{"*a", "* a"},
-		{"*\n a", "* a"},
-		{"*a\n b", "* a b"},
-		{"*a\n *b", "* a\n\n  * b"},
-		{"*a\n\n *b", "* a\n\n  * b"},
-		{"*a\n \n *b", "* a\n\n  * b"},
-		{"*a\n\n\n *b", "* a\n\n  * b"},
+		{"^", ""},
+		{"^a", "^ a"},
+		{"^\n a", "^ a"},
+		{"^a\n b", "^ a b"},
+		{"^a\n ^b", "^ a\n\n  ^ b"},
+		{"^a\n\n ^b", "^ a\n\n  ^ b"},
+		{"^a\n \n ^b", "^ a\n\n  ^ b"},
+		{"^a\n\n\n ^b", "^ a\n\n  ^ b"},
 
-		{"=*", ""},
-		{"=*a", "= * a"},
-		{"=\n *", ""},
-		{"=\n *a", "= * a"},
+		{"=^", ""},
+		{"=^a", "= ^ a"},
+		{"=\n ^", ""},
+		{"=\n ^a", "= ^ a"},
 
-		{".image*", ".image *"},
-		{".image*a", ".image *a"},
+		{".image^", ".image ^"},
+		{".image^a", ".image ^a"},
 
-		{">*", ""},
-		{">*a", "> * a"},
-		{">\n>*", ""},
-		{">\n>*a", "> * a"},
+		{">^", ""},
+		{">^a", "> ^ a"},
+		{">\n>^", ""},
+		{">\n>^a", "> ^ a"},
 
-		{"`*", "`*\n`"},
-		{"`*a", "`*a\n`"},
-		{"`\n *", "`\n *\n`"},
-		{"`\n *a", "`\n *a\n`"},
+		{"`^", "`^\n`"},
+		{"`^a", "`^a\n`"},
+		{"`\n ^", "`\n ^\n`"},
+		{"`\n ^a", "`\n ^a\n`"},
 
-		{"-*", ""},
-		{"-*a", "- * a"},
-		{"-\n *", ""},
-		{"-\n *a", "- * a"},
+		{"-^", ""},
+		{"-^a", "- ^ a"},
+		{"-\n ^", ""},
+		{"-\n ^a", "- ^ a"},
 
 		// ranked hanging
 		{"=", ""},
@@ -126,14 +126,14 @@ func TestFprint(t *testing.T) {
 		{"a\n\nb", "a\n\nb"},
 		{"a\n\n\nb", "a\n\nb"},
 		{"a\n \nb", "a\n\nb"},
-		{"a\n*b", "a\n\n* b"},
-		{"*a\nb", "* a\n\nb"},
-		{"*a\n*b", "* a\n* b"},
-		{"*a\n>b", "* a\n\n> b"},
+		{"a\n^b", "a\n\n^ b"},
+		{"^a\nb", "^ a\n\nb"},
+		{"^a\n^b", "^ a\n^ b"},
+		{"^a\n>b", "^ a\n\n> b"},
 		{">a\n\n>b", "> a\n\n> b"},
 		{">a\n \n>b", "> a\n\n> b"},
 		{">a\n\n\n>b", "> a\n\n> b"},
-		{">a\n*b", "> a\n\n* b"},
+		{">a\n^b", "> a\n\n^ b"},
 
 		// uniform
 		{"a__", "a"},
@@ -172,62 +172,6 @@ func TestFprint(t *testing.T) {
 		{"((``a))[[b]]", "((``a))[[b]]``))"},
 		{"((``a``))[[b]]", "((``a``))[[b]]"},
 
-		// escape
-		{`\`, `\`},
-		{`\\`, `\`},
-		{`\\\`, `\\\`},
-		{`\\\\`, `\\\`},
-
-		{"a", "a"},
-		{`\a`, `\a`},
-		{`\\a`, `\a`},
-		{`\\\a`, `\\\a`},
-		{`\\\\a`, `\\\a`},
-
-		{`a\`, `a\`},
-		{`a\\`, `a\`},
-		{`a\\\`, `a\\\`},
-		{`a\\\\`, `a\\\`},
-
-		{"*a", "* a"},
-		{`\*`, `\*`},
-		{`\\*`, `\\*`},
-		{`\\\*`, `\\*`},
-		{`\\\\*`, `\\\*`},
-
-		{"\\*\n\\*", `\* *`},
-
-		{"**a", "**a**"},
-		{`\**`, `\**`},
-		{`\\**`, `\`},
-		{`\\**a`, `\\**a**`},
-		{`\\\**`, `\\\**`},
-		{`\\\**a`, `\\\**a`},
-		{`\\\\**a`, `\\\\**a**`},
-
-		{`a\**`, `a\**`},
-		{`a\\**`, `a\`},
-		{`a\\\**`, `a\\\**`},
-		{`a\\\\**`, `a\\\`},
-
-		{`a\***`, `a*`},
-		{`a\***b`, `a\***b**`},
-		{`a\*\**`, `a\*\**`},
-		{`a\*\*\*`, `a\*\**`},
-		{`a\*\*\**`, `a\*\*\**`},
-		{`a\*\*\*\*`, `a\*\*\**`},
-
-		// nested escape
-		{">*a", "> * a"},
-		{`>\*`, `> \*`},
-		{`>\\*`, `> \\*`},
-		{`>\\\*`, `> \\*`},
-		{`>\\\\*`, `> \\\*`},
-
-		// escaped in verbatim
-		{"`\n\\\\", "`\n\\\\\n`"},
-		{"``a\\\\", "``a\\\\``"},
-
 		// escape common elements
 		{"a\\``", "a\\``"},
 		{`a\[[`, `a\[[`},
@@ -244,28 +188,323 @@ func TestFprint(t *testing.T) {
 		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
 
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
-			blocks, errs := parser.Parse([]byte(c.in))
-			if errs != nil {
-				t.Fatal(errs)
-			}
-
-			nodes := node.BlocksToNodes(blocks)
-
-			conf := config.Default
-			nodes = transformer.Paragraph(nodes)
-			nodes = transformer.Group(conf.Groups, nodes)
-			nodes = transformer.Sequence(nodes)
-			nodes = transformer.Composite(conf.Composites, nodes)
-			nodes = transformer.GroupStickies(conf.Stickies, nodes)
-
-			var b strings.Builder
-			printer.Fprint(&b, conf, nodes)
-
-			printed := b.String()
-
-			if printed != c.out {
-				t.Errorf("got %q, want %q", printed, c.out)
-			}
+			test(t, config.Default, []byte(c.in), c.out)
 		})
+	}
+}
+
+func TestEscape(t *testing.T) {
+	cases := []struct {
+		in  string
+		out string
+	}{
+		{`\`, `\`},      // \
+		{`\\`, `\`},     // \
+		{`\\\`, `\\\`},  // \\
+		{`\\\\`, `\\\`}, // \\
+
+		{"a", "a"},        // a
+		{`\a`, `\a`},      // \a
+		{`\\a`, `\a`},     // \a
+		{`\\\a`, `\\\a`},  // \\a
+		{`\\\\a`, `\\\a`}, // \\a
+
+		// punctuation
+		{"!", "!"},         // !
+		{`\!`, `!`},        // !
+		{`\\!`, `\\!`},     // \!
+		{`\\\!`, `\\!`},    // \!
+		{`\\\\!`, `\\\\!`}, // \\!
+
+		{`a\`, `a\`},      // a\
+		{`a\\`, `a\`},     // a\
+		{`a\\\`, `a\\\`},  // a\\
+		{`a\\\\`, `a\\\`}, // a\\
+
+		{"*a", "* a"},      // B(a)
+		{`\*`, `\*`},       // *
+		{`\\*`, `\\*`},     // \*
+		{`\\\*`, `\\*`},    // \*
+		{`\\\\*`, `\\\\*`}, // \\*
+
+		{"\\*\n\\*", `\* *`}, // * *
+
+		{"**a", "**a**"},         // I(a)
+		{`\**`, `\**`},           // **
+		{`\\**`, `\`},            // \
+		{`\\**a`, `\\**a**`},     // \I(a)
+		{`\\\**`, `\\\**`},       // \**
+		{`\\\**a`, `\\\**a`},     // \**a
+		{`\\\\**a`, `\\\\**a**`}, // \\I(A)
+
+		{`a\**`, `a\**`},     // a**
+		{`a\\**`, `a\`},      // a\
+		{`a\\\**`, `a\\\**`}, // a\**
+		{`a\\\\**`, `a\\\`},  // a\\
+
+		{`a\***`, `a*`},           // a*
+		{`a\***b`, `a\***b**`},    // a*I(b)
+		{`a\*\**`, `a\*\**`},      // a***
+		{`a\*\*\*`, `a\*\**`},     // a***
+		{`a\*\*\**`, `a\*\*\**`},  // a****
+		{`a\*\*\*\*`, `a\*\*\**`}, // a****
+
+		// nested
+		{">*a", "> * a"},      // B1(B2(a))
+		{`>\*`, `> \*`},       // B(*)
+		{`>\\*`, `> \\*`},     // B(\*)
+		{`>\\\*`, `> \\*`},    // B(\*)
+		{`>\\\\*`, `> \\\\*`}, // B(\\*)
+
+		// in verbatim
+		{"`\n\\\\", "`\n\\\\\n`"}, // B(\n\\)
+		{"``a\\\\", "``a\\\\``"},  // I(a\\)
+	}
+
+	for _, c := range cases {
+		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
+
+		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
+			conf := &config.Config{
+				Elements: []config.Element{
+					{
+						Name:      "A",
+						Type:      node.TypeHanging,
+						Delimiter: "*",
+					},
+					{
+						Name:      "B",
+						Type:      node.TypeWalled,
+						Delimiter: ">",
+					},
+					{
+						Name:      "C",
+						Type:      node.TypeFenced,
+						Delimiter: "`",
+					},
+					{
+						Name:      "MA",
+						Type:      node.TypeUniform,
+						Delimiter: "*",
+					},
+					{
+						Name:      "MB",
+						Type:      node.TypeEscaped,
+						Delimiter: "`",
+					},
+				},
+			}
+
+			test(t, conf, []byte(c.in), c.out)
+		})
+	}
+}
+
+func TestEscapeWithClash(t *testing.T) {
+	// registered line break with delimiter "\" -> escape clash
+
+	cases := []struct {
+		in  string
+		out string
+	}{
+		{`\`, `\`},       // BR
+		{`\\`, `\\`},     // \
+		{`\\\`, `\\\`},   // \BR
+		{`\\\\`, `\\\\`}, // \\
+
+		{"a", "a"},         // a
+		{`\a`, `\a`},       // BRa
+		{`\\a`, `\\a`},     // \a
+		{`\\\a`, `\\\a`},   // \BRa
+		{`\\\\a`, `\\\\a`}, // \\a
+
+		// punctuation
+		{"!", "!"},         // !
+		{`\!`, `!`},        // !
+		{`\\!`, `\\!`},     // \!
+		{`\\\!`, `\\!`},    // \!
+		{`\\\\!`, `\\\\!`}, // \\!
+
+		{`a\`, `a\`},       // aBR
+		{`a\\`, `a\\`},     // a\
+		{`a\\\`, `a\\\`},   // a\BR
+		{`a\\\\`, `a\\\\`}, // a\\
+
+		{"*a", "* a"},      // B(a)
+		{`\*`, `\*`},       // *
+		{`\\*`, `\\*`},     // \*
+		{`\\\*`, `\\*`},    // \*
+		{`\\\\*`, `\\\\*`}, // \\*
+
+		{"\\*\n\\*", `\* *`}, // * *
+
+		{"**a", "**a**"},         // I(a)
+		{`\**`, `\**`},           // **
+		{`\\**`, `\\`},           // \
+		{`\\**a`, `\\**a**`},     // \I(a)
+		{`\\\**`, `\\\**`},       // \**
+		{`\\\**a`, `\\\**a`},     // \**a
+		{`\\\\**a`, `\\\\**a**`}, // \\I(A)
+
+		{`a\**`, `a\**`},     // a**
+		{`a\\**`, `a\\`},     // a\
+		{`a\\\**`, `a\\\**`}, // a\**
+		{`a\\\\**`, `a\\\\`}, // a\\
+
+		{`a\***`, `a*`},           // a*
+		{`a\***b`, `a\***b**`},    // a*I(b)
+		{`a\*\**`, `a\*\**`},      // a***
+		{`a\*\*\*`, `a\*\**`},     // a***
+		{`a\*\*\**`, `a\*\*\**`},  // a****
+		{`a\*\*\*\*`, `a\*\*\**`}, // a****
+
+		// closing delimiter
+		// TODO: out doesn't represent the same elements as in
+		// in  -> strong(break)
+		// out -> strong()
+		{`**\`, `**\**`}, // I(BR)
+
+		// nested
+		{">*a", "> * a"},      // B1(B2(a))
+		{`>\*`, `> \*`},       // B(*)
+		{`>\\*`, `> \\*`},     // B(\*)
+		{`>\\\*`, `> \\*`},    // B(\*)
+		{`>\\\\*`, `> \\\\*`}, // B(\\*)
+
+		// in verbatim
+		{"`\n\\\\", "`\n\\\\\n`"}, // B(\n\\)
+		{"``a\\\\", "``a\\\\``"},  // I(a\\)
+	}
+
+	for _, c := range cases {
+		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
+
+		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
+			conf := &config.Config{
+				Elements: []config.Element{
+					{
+						Name:      "A",
+						Type:      node.TypeHanging,
+						Delimiter: "*",
+					},
+					{
+						Name:      "B",
+						Type:      node.TypeWalled,
+						Delimiter: ">",
+					},
+					{
+						Name:      "C",
+						Type:      node.TypeFenced,
+						Delimiter: "`",
+					},
+					{
+						Name:      "MA",
+						Type:      node.TypeUniform,
+						Delimiter: "*",
+					},
+					{
+						Name:      "MB",
+						Type:      node.TypeEscaped,
+						Delimiter: "`",
+					},
+					{
+						Name:        "MC",
+						Type:        node.TypePrefixed,
+						Delimiter:   `\`,
+						DoNotRemove: true,
+					},
+				},
+			}
+
+			test(t, conf, []byte(c.in), c.out)
+		})
+	}
+}
+
+func TestDoNotRemove(t *testing.T) {
+	cases := []struct {
+		in  string
+		out string
+	}{
+		{".toc", ".toc"},
+		{".toc ", ".toc"},
+
+		{">.toc ", ">.toc"},
+		{">>.toc ", ">>.toc"},
+
+		{".c", ""},
+		{".c.toc ", ".c.toc"},
+
+		{`\`, `\`},
+		{`a\`, `a\`},
+
+		{"**", ""},
+		{`**\`, `**\**`}, // TODO: same as todo in EscapeWithClash
+	}
+
+	for _, c := range cases {
+		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
+
+		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
+			conf := &config.Config{
+				Elements: []config.Element{
+					{
+						Name:        "A",
+						Type:        node.TypeHanging,
+						Delimiter:   ".toc",
+						DoNotRemove: true,
+					},
+					{
+						Name:      "B",
+						Type:      node.TypeWalled,
+						Delimiter: ">",
+					},
+					{
+						Name:      "C",
+						Type:      node.TypeHanging,
+						Delimiter: ".c",
+					},
+					{
+						Name:        "MA",
+						Type:        node.TypePrefixed,
+						Delimiter:   `\`,
+						DoNotRemove: true,
+					},
+					{
+						Name:      "MB",
+						Type:      node.TypeUniform,
+						Delimiter: "*",
+					},
+				},
+			}
+
+			test(t, conf, []byte(c.in), c.out)
+		})
+	}
+}
+
+func test(t *testing.T, conf *config.Config, in []byte, out string) {
+	t.Helper()
+
+	blocks, errs := parser.ParseCustom(in, conf.Elements)
+	if errs != nil {
+		t.Fatal(errs)
+	}
+
+	nodes := node.BlocksToNodes(blocks)
+
+	nodes = transformer.Paragraph(nodes)
+	nodes = transformer.Group(conf.Groups, nodes)
+	nodes = transformer.Sequence(nodes)
+	nodes = transformer.Composite(conf.Composites, nodes)
+	nodes = transformer.GroupStickies(conf.Stickies, nodes)
+
+	var b strings.Builder
+	printer.Fprint(&b, conf, nodes)
+
+	printed := b.String()
+
+	if printed != out {
+		t.Errorf("got %q, want %q", printed, out)
 	}
 }

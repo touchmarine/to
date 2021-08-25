@@ -31,6 +31,7 @@ type printer struct {
 	parent node.Node
 
 	n   node.Node
+	e   config.Element
 	pos int
 
 	prefixes []string
@@ -161,7 +162,7 @@ func (p *printer) printNode() {
 		defer p.tracef("printNode (%d)", p.pos)()
 	}
 
-	if isEmpty(p.n) {
+	if !p.shouldKeep(p.n) {
 		if trace {
 			p.print("return, empty")
 		}
@@ -193,7 +194,9 @@ func (p *printer) printNode() {
 			switch p.n.(type) {
 			case *node.Fenced, *node.VerbatimWalled:
 			default:
-				b.WriteString(" ")
+				if !isEmpty(p.n) {
+					b.WriteString(" ")
+				}
 			}
 
 			defer func(size int) {
@@ -317,10 +320,7 @@ func (p *printer) needBlockEscape() bool {
 
 		content := text.Content()
 
-		if len(content) > 1 && content[0] == '\\' {
-			return !p.hasInlineDelimiterPrefix(content[1:]) &&
-				p.hasBlockDelimiterPrefix(content[1:])
-		} else if len(content) > 0 {
+		if len(content) > 0 {
 			return !p.hasInlineDelimiterPrefix(content) &&
 				p.hasBlockDelimiterPrefix(content)
 		} else {
@@ -333,9 +333,18 @@ func (p *printer) needBlockEscape() bool {
 
 func (p *printer) hasBlockDelimiterPrefix(content []byte) bool {
 	for _, e := range p.conf.Elements {
-		if node.TypeCategory(e.Type) == node.CategoryBlock &&
-			bytes.HasPrefix(content, []byte(e.Delimiter)) {
-			return true
+		if node.TypeCategory(e.Type) == node.CategoryBlock {
+			// same logic as in parser/parser.go
+			delimiter := ""
+			if e.Type == node.TypeRankedHanging {
+				delimiter = e.Delimiter + e.Delimiter
+			} else {
+				delimiter = e.Delimiter
+			}
+
+			if bytes.HasPrefix(content, []byte(delimiter)) {
+				return true
+			}
 		}
 	}
 
@@ -366,7 +375,11 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 			// consecutive backslashes
 
 			b.WriteString(`\`)
-		} else if ch == '\\' && i == len(content)-1 && p.peek() != nil && !isEmpty(p.peek()) {
+		} else if ch == '\\' && i+1 < len(content) && isPunct(content[i+1]) {
+			// escape backslash so it doesn't escape punctuation
+
+			b.WriteString(`\`)
+		} else if ch == '\\' && i == len(content)-1 && p.peek() != nil && p.shouldKeep(p.peek()) {
 			// backslash at the end of text content with a non-empty
 			// inline element behind it
 
@@ -378,7 +391,7 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 			b.WriteString(`\`)
 		} else if ch == '\\' && i+1 < len(content) && p.hasInlineDelimiterPrefix(content[i+1:]) {
 			b.WriteString(`\`)
-		} else if i == len(content)-1 && p.peek() != nil && !isEmpty(p.peek()) {
+		} else if i == len(content)-1 && p.peek() != nil && p.shouldKeep(p.peek()) {
 			peek := p.peek()
 
 			_, isInline := peek.(node.Inline)
@@ -426,12 +439,31 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 	b.WriteTo(w)
 }
 
+// isPunct determines whether ch is an ASCII punctuation character.
+func isPunct(ch byte) bool {
+	// same as in parser/parser.go
+	return ch >= 0x21 && ch <= 0x2F ||
+		ch >= 0x3A && ch <= 0x40 ||
+		ch >= 0x5B && ch <= 0x60 ||
+		ch >= 0x7B && ch <= 0x7E
+}
+
 func (p *printer) hasInlineDelimiterPrefix(content []byte) bool {
 	for _, e := range p.conf.Elements {
 		if node.TypeCategory(e.Type) == node.CategoryInline {
-			delimiter := []byte(e.Delimiter + e.Delimiter)
+			// same logic as in parser/parser.go
+			delimiter := ""
+			runes := utf8.RuneCountInString(e.Delimiter)
 
-			if bytes.HasPrefix(content, delimiter) {
+			if runes > 0 && e.Type == node.TypePrefixed {
+				delimiter = e.Delimiter
+			} else if runes == 1 {
+				delimiter = e.Delimiter + e.Delimiter
+			} else {
+				panic("parser: unvalid inline delimiter " + e.Delimiter)
+			}
+
+			if bytes.HasPrefix(content, []byte(delimiter)) {
 				return true
 			}
 		}
@@ -536,6 +568,57 @@ func (p *printer) atBOL() bool {
 func (p *printer) isInline() bool {
 	_, ok := p.n.(node.Inline)
 	return ok
+}
+
+func (p *printer) shouldKeep(n node.Node) bool {
+	return doNotRemove(p.conf.Elements, n) || !isEmpty(n)
+}
+
+// doNotRemove returns true if n or any of its children has set DoNotRemove.
+func doNotRemove(elements []config.Element, n node.Node) bool {
+	for _, e := range elements {
+		if e.Name == n.Node() && e.DoNotRemove {
+			return true
+		}
+	}
+
+	switch n.(type) {
+	case node.BlockChildren, node.InlineChildren, node.Content, node.Lines,
+		node.Composited, node.Boxed:
+	default:
+		panic(fmt.Sprintf("printer: unexpected node type %T", n))
+	}
+
+	if m, ok := n.(node.Boxed); ok {
+		unboxed := m.Unbox()
+		if unboxed == nil {
+			return false
+		}
+
+		return doNotRemove(elements, unboxed)
+	}
+
+	if m, ok := n.(node.Composited); ok {
+		return doNotRemove(elements, m.Primary())
+	}
+
+	if m, ok := n.(node.BlockChildren); ok {
+		for _, c := range m.BlockChildren() {
+			if doNotRemove(elements, c) {
+				return true
+			}
+		}
+	}
+
+	if m, ok := n.(node.InlineChildren); ok {
+		for _, c := range m.InlineChildren() {
+			if doNotRemove(elements, c) {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (p *printer) tracef(format string, v ...interface{}) func() {
