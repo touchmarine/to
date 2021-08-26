@@ -21,6 +21,7 @@ func Fprint(w io.Writer, conf *config.Config, nodes []node.Node) {
 		pos: -1,
 	}
 
+	p.init()
 	p.printNodes()
 }
 
@@ -28,16 +29,50 @@ type printer struct {
 	conf   *config.Config
 	w      io.Writer
 	nodes  []node.Node
-	parent node.Node
+	parent *printer
 
 	n   node.Node
 	e   config.Element
 	pos int
 
-	prefixes []string
+	prefixes         []string
+	closingDelimiter string            // inline closing delimiter
+	replacementMap   map[string]string // replacement map for marker elements
 
 	// tracing
 	indent int
+}
+
+func (p *printer) init() {
+	// add marker elements to replacment map
+	// marker elemetns are prefixed inline element with no matcher aka.
+	// elements that have no content
+	for _, e := range p.conf.Elements {
+		if e.Type == node.TypePrefixed && e.Matcher == "" {
+			// marker, e.g., "\" line break, without content
+
+			if p.replacementMap == nil {
+				p.replacementMap = make(map[string]string)
+			}
+
+			p.replacementMap[e.Name] = e.Delimiter
+		}
+	}
+}
+
+func (p *printer) closingDelimiters() []string {
+	var d []string
+
+	current := p
+	for current != nil {
+		if current.closingDelimiter != "" {
+			d = append(d, current.closingDelimiter)
+		}
+
+		current = current.parent
+	}
+
+	return d
 }
 
 func (p *printer) printChildren(w io.Writer, nodes []node.Node) {
@@ -53,15 +88,17 @@ func (p *printer) printChildren(w io.Writer, nodes []node.Node) {
 		conf:   p.conf,
 		w:      w,
 		nodes:  nodes,
-		parent: p.n,
+		parent: p,
 
 		pos: -1,
 
-		prefixes: p.prefixes,
+		prefixes:         p.prefixes,
+		closingDelimiter: p.closingDelimiter,
 
 		indent: p.indent,
 	}
 
+	n.init()
 	n.printNodes()
 }
 
@@ -78,8 +115,13 @@ func (p *printer) printNodes() {
 		p.printNode()
 
 		if peek := p.peek(); peek != nil && !p.isInline() {
-			_, isInSticky := p.parent.(*node.Sticky)
-			_, isInGroup := p.parent.(*node.Group)
+			var parentNode node.Node
+			if p.parent != nil {
+				parentNode = p.parent.n
+			}
+
+			_, isInSticky := parentNode.(*node.Sticky)
+			_, isInGroup := parentNode.(*node.Group)
 
 			if isInSticky || isInGroup {
 				p.newline(p.w)
@@ -194,7 +236,10 @@ func (p *printer) printNode() {
 			switch p.n.(type) {
 			case *node.Fenced, *node.VerbatimWalled:
 			default:
-				if !isEmpty(p.n) {
+				if node.ExtractTextWithReplacements(p.n, p.replacementMap) != "" {
+					// not empty as in we will print
+					// something after this. p.shouldKeep()
+					// would return true for `.tos`
 					b.WriteString(" ")
 				}
 			}
@@ -226,9 +271,22 @@ func (p *printer) printNode() {
 	case node.Inline:
 		b.WriteString(pre)
 
-		defer func() {
-			b.WriteString(post)
-		}()
+		if post != "" {
+			p.closingDelimiter = post
+
+			defer func() {
+				if p.hasEscapeClashingElementAtEnd() {
+					// otherwise `**\` would return `**\**`
+
+					p.newline(&b)
+					p.prefix(&b, true)
+				}
+
+				b.WriteString(post)
+
+				p.closingDelimiter = ""
+			}()
+		}
 	default:
 		panic(fmt.Sprintf("printer: unexpected node type %T", p.n))
 	}
@@ -239,7 +297,12 @@ func (p *printer) printNode() {
 
 	switch m := p.n.(type) {
 	case node.Text:
-		p.printText(&b, m)
+		if p.closingDelimiter != "" {
+			// escape last characters in text according to delimiter
+			p.printText(newDelimiterEscapeWriter(&b, p.closingDelimiter), m)
+		} else {
+			p.printText(&b, m)
+		}
 	case node.BlockChildren:
 		p.printChildren(&b, node.BlocksToNodes(m.BlockChildren()))
 	case node.InlineChildren:
@@ -260,6 +323,115 @@ func (p *printer) printNode() {
 	}
 
 	return
+}
+
+type delimiterEscapeWriter struct {
+	delimiterEscaper
+}
+
+func newDelimiterEscapeWriter(w io.Writer, delimiter string) delimiterEscapeWriter {
+	_, size := utf8.DecodeRuneInString(delimiter)
+	if size != 1 {
+		panic(fmt.Sprintf("printer: unexpected delimiter %q", delimiter))
+	}
+
+	dch := delimiter[0]
+
+	return delimiterEscapeWriter{
+		delimiterEscaper{
+			w:         w,
+			delimiter: delimiter,
+			dch:       dch,
+		},
+	}
+}
+
+func (e delimiterEscapeWriter) Write(p []byte) (int, error) {
+	e.init(p)
+	return e.write()
+}
+
+type delimiterEscaper struct {
+	w         io.Writer
+	delimiter string
+	dch       byte // delimiter character to escape
+
+	src    []byte
+	offset int
+	ch     byte
+}
+
+func (e *delimiterEscaper) init(src []byte) {
+	e.src = src
+	e.offset = -1
+	e.ch = 0
+	e.next()
+}
+
+func (e *delimiterEscaper) next() {
+	if e.offset+1 < len(e.src) {
+		e.offset++
+		e.ch = e.src[e.offset]
+		return
+	}
+
+	e.offset = len(e.src)
+	e.ch = 0
+}
+
+func (e *delimiterEscaper) peek() byte {
+	if e.offset+1 < len(e.src) {
+		return e.src[e.offset+1]
+	}
+
+	return 0
+}
+
+// TODO: Don't need this complex writer-escaper. Just do what this function does
+// at the end of p.printText().
+func (e *delimiterEscaper) write() (int, error) {
+	nn := 0 // number of bytes written *from p* to satisfy io.Writer interface
+
+	for ; e.ch > 0; e.next() {
+		// escape characters at end of text that would otherwise escape
+		// the closing delimiter
+		if len(e.src) > 1 && e.offset == len(e.src)-2 && e.ch != '\\' && e.peek() == '\\' {
+			// unescaped "\" at end of text
+			n, err := e.w.Write([]byte{e.ch})
+			nn += n
+			if err != nil {
+				return nn, err
+			}
+
+			e.next()
+
+			_, err = e.w.Write([]byte(`\`))
+			if err != nil {
+				return nn, err
+			}
+		} else if len(e.src) == 1 && e.ch == '\\' ||
+			len(e.src) > 0 && e.offset == len(e.src)-1 && (e.ch == e.dch) {
+			// unescaped "\" at end of text (similar to above) or
+			// closing delimiter character at end of text
+			_, err := e.w.Write([]byte(`\`))
+			if err != nil {
+				return nn, err
+			}
+		}
+
+		n, err := e.w.Write([]byte{e.ch})
+		nn += n
+		if err != nil {
+			return nn, err
+		}
+	}
+
+	if nn < len(e.src) {
+		// satisfy io.Writer interface
+		return nn, fmt.Errorf("written less than got")
+	}
+
+	return nn, nil
 }
 
 func (p *printer) printLines(w io.Writer, lines [][]byte, spacing bool) {
@@ -351,6 +523,20 @@ func (p *printer) hasBlockDelimiterPrefix(content []byte) bool {
 	return false
 }
 
+// hasEscapeClashingElementAtEnd returns true if the last inline child has the
+// escape character as a delimiter.
+func (p *printer) hasEscapeClashingElementAtEnd() bool {
+	m, ok := p.n.(node.InlineChildren)
+	if !ok {
+		return false
+	}
+
+	last := m.InlineChildren()[len(m.InlineChildren())-1]
+
+	e, found := p.conf.Element(last.Node())
+	return found && e.Type == node.TypePrefixed && e.Delimiter == "\\"
+}
+
 func (p *printer) printText(w io.Writer, t node.Text) {
 	if trace {
 		defer p.trace("printText")()
@@ -374,14 +560,27 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 		if ch == '\\' && i+1 < len(content) && content[i+1] == '\\' {
 			// consecutive backslashes
 
+			if trace {
+				p.print("escape-A")
+			}
+
 			b.WriteString(`\`)
 		} else if ch == '\\' && i+1 < len(content) && isPunct(content[i+1]) {
-			// escape backslash so it doesn't escape punctuation
+			// escape backslash so it doesn't escape the following
+			// punctuation
+
+			if trace {
+				p.print("escape-B")
+			}
 
 			b.WriteString(`\`)
 		} else if ch == '\\' && i == len(content)-1 && p.peek() != nil && p.shouldKeep(p.peek()) {
-			// backslash at the end of text content with a non-empty
-			// inline element behind it
+			// escape backslash so it doesn't escape the following
+			// non-emtpy inline element
+
+			if trace {
+				p.print("escape-C")
+			}
 
 			_, isInline := p.peek().(node.Inline)
 			if !isInline {
@@ -390,8 +589,36 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 
 			b.WriteString(`\`)
 		} else if ch == '\\' && i+1 < len(content) && p.hasInlineDelimiterPrefix(content[i+1:]) {
+			// escape backslash so it doesn't escape the following
+			// inline delimiter
+			//
+			// needed for non-punctuation delimiters that aren't
+			// caught by escape-B; as such don't need to check
+			// the closing delimiters as non-punctuation can only be
+			// prefixed elements
+
+			if trace {
+				p.print("escape-D")
+			}
+
+			b.WriteString(`\`)
+		} else if p.hasInlineDelimiterPrefix(content[i:]) || p.hasClosingDelimiterPrefix(content[i:]) {
+			// escape inline delimiter
+
+			if trace {
+				p.print("escape-E")
+			}
+
 			b.WriteString(`\`)
 		} else if i == len(content)-1 && p.peek() != nil && p.shouldKeep(p.peek()) {
+			// last character and the following non-empty element
+			// delimiter's first character may form an inline
+			// delimiter
+
+			if trace {
+				p.print("escape-F")
+			}
+
 			peek := p.peek()
 
 			_, isInline := peek.(node.Inline)
@@ -417,16 +644,10 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 			delimiter := e.Delimiter[0]
 
 			if ch == delimiter {
-				// current character and first character of the
-				// next element's delimiter form an inline
-				// element delimiter
+				// escape inline delimiter
 
 				b.WriteString(`\`)
 			}
-		} else if p.hasInlineDelimiterPrefix(content[i:]) {
-			// matches inline delimiter
-
-			b.WriteString(`\`)
 		}
 
 		b.WriteByte(ch)
@@ -472,13 +693,23 @@ func (p *printer) hasInlineDelimiterPrefix(content []byte) bool {
 	return false
 }
 
+func (p *printer) hasClosingDelimiterPrefix(content []byte) bool {
+	for _, delimiter := range p.closingDelimiters() {
+		if bytes.HasPrefix(content, []byte(delimiter)) {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (p *printer) delimiters() (string, string) {
 	var pre, post string
 
 	switch name := p.n.Node(); name {
 	case "Text", "TextBlock", "Paragraph":
 	default:
-		el, ok := p.conf.Element(name)
+		e, ok := p.conf.Element(name)
 		if !ok {
 			_, isComposite := p.conf.Composite(name)
 			_, isSticky := p.conf.Sticky(name)
@@ -490,14 +721,12 @@ func (p *printer) delimiters() (string, string) {
 			}
 		}
 
-		delim := el.Delimiter
-
 		switch p.n.(type) {
 		case node.Block:
 			switch m := p.n.(type) {
 			case *node.Fenced:
-				pre = delim
-				post = delim
+				pre = e.Delimiter
+				post = e.Delimiter
 
 				lines := m.Lines()
 
@@ -506,7 +735,7 @@ func (p *printer) delimiters() (string, string) {
 					content = bytes.Join(lines[1:], []byte("\n"))
 				}
 
-				if bytes.Contains(content, []byte(delim)) {
+				if bytes.Contains(content, []byte(e.Delimiter)) {
 					// needs escape
 					pre += "\\"
 					post = "\\" + post
@@ -515,33 +744,33 @@ func (p *printer) delimiters() (string, string) {
 				rank := m.Rank()
 
 				for i := 0; i < rank; i++ {
-					pre += delim
+					pre += e.Delimiter
 				}
 			case *node.BasicBlock, *node.VerbatimLine, *node.Walled, *node.VerbatimWalled,
 				*node.Hanging, *node.RankedHanging, *node.Group, *node.Sticky:
-				pre = delim
+				pre = e.Delimiter
 			default:
-				panic(fmt.Sprintf("printer: unexpected node type %T (%s)", p.n, name))
+				panic(fmt.Sprintf("printer: unexpected node type %T", p.n))
 			}
 
 		case node.Inline:
 			switch p.n.(type) {
 			case *node.Uniform, *node.Escaped:
-				r, _ := utf8.DecodeRuneInString(delim)
+				r, _ := utf8.DecodeRuneInString(e.Delimiter)
 				counterDelim := counterpart(r)
 
-				pre = delim + delim
+				pre = e.Delimiter + e.Delimiter
 				post = string(counterDelim) + string(counterDelim)
 			case *node.Prefixed:
-				pre = delim
+				pre = e.Delimiter
 			default:
-				panic(fmt.Sprintf("printer: unexpected node type %T (%s)", p.n, name))
+				panic(fmt.Sprintf("printer: unexpected node type %T", p.n))
 			}
 
 			if m, isEscaped := p.n.(*node.Escaped); isEscaped {
 				content := m.Content()
 
-				if bytes.Contains(content, []byte(delim+delim)) {
+				if bytes.Contains(content, []byte(e.Delimiter+e.Delimiter)) {
 					// needs escape
 					pre += "\\"
 					post = "\\" + post
@@ -549,12 +778,7 @@ func (p *printer) delimiters() (string, string) {
 			}
 
 		default:
-			panic(fmt.Sprintf(
-				"parser: unexpected node type %T (element=%q, delimiter=%q)",
-				p.n,
-				name,
-				delim,
-			))
+			panic(fmt.Sprintf("parser: unexpected node type %T", p.n))
 		}
 	}
 
@@ -562,7 +786,7 @@ func (p *printer) delimiters() (string, string) {
 }
 
 func (p *printer) atBOL() bool {
-	return isTextBlock(p.parent) && p.pos == 0
+	return p.parent != nil && isTextBlock(p.parent.n) && p.pos == 0
 }
 
 func (p *printer) isInline() bool {

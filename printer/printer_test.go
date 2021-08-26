@@ -167,7 +167,7 @@ func TestFprint(t *testing.T) {
 		{"a((b))[[c]]", "a((b))[[c]]"},
 		{"(( a ))[[b]]", "(( a ))[[b]]"},
 		{"((a))[[ b ]]", "((a))[[ b ]]"},
-		{"((((c))[[d]]a))[[b]]", "((((c))[[d]]a))[[b]]"},
+		{"((((c))[[d]]a))[[b]]", "((((c))[[d]]a))[[b]]"}, // G(G(c)L(d)a)L(b)
 
 		{"((``a))[[b]]", "((``a))[[b]]``))"},
 		{"((``a``))[[b]]", "((``a``))[[b]]"},
@@ -227,6 +227,7 @@ func TestEscape(t *testing.T) {
 		{`\\\*`, `\\*`},    // \*
 		{`\\\\*`, `\\\\*`}, // \\*
 
+		// text block
 		{"\\*\n\\*", `\* *`}, // * *
 
 		{"**a", "**a**"},         // I(a)
@@ -249,12 +250,54 @@ func TestEscape(t *testing.T) {
 		{`a\*\*\**`, `a\*\*\**`},  // a****
 		{`a\*\*\*\*`, `a\*\*\**`}, // a****
 
+		// prefixed, non-punctuation delimiter
+		{"http://a", "http://a"},         // I(a)
+		{`\http://`, `\http://`},         // http://
+		{`\\http://`, `\`},               // \
+		{`\\http://a`, `\\http://a`},     // \I(a)
+		{`\\\http://`, `\\\http://`},     // \http://
+		{`\\\http://a`, `\\\http://a`},   // \http://a
+		{`\\\\http://a`, `\\\\http://a`}, // \\I(A)
+
+		{`a\http://`, `a\http://`},     // ahttp://
+		{`a\\http://`, `a\`},           // a\
+		{`a\\\http://`, `a\\\http://`}, // a\http://
+		{`a\\\\http://`, `a\\\`},       // a\\
+
+		// closing delimiter
+		{`**\`, `**\\**`},             // I(\)
+		{`**\*`, `**\***`},            // I(*)
+		{`**\**`, `**\*\***`},         // I(**)
+		{`**\*\**`, `**\*\*\***`},     // I(***)
+		{`**\*\*\**`, `**\*\*\*\***`}, // I(****)
+
+		{`***a`, `***a**`},     // I(*a)
+		{`***\*a`, `**\**a**`}, // I(**a)
+
+		// left/right closing delimiter
+		{`{{\`, `{{\\}}`},             // I(\)
+		{`{{\}`, `{{\}}}`},            // I(})
+		{`{{\}}`, `{{\}\}}}`},         // I(}})
+		{`{{\}\}}`, `{{\}\}\}}}`},     // I(}}})
+		{`{{\}\}\}}`, `{{\}\}\}\}}}`}, // I(}}}})
+
+		{`{{**\`, `{{**\\**}}`},            // I1(I2(\))
+		{`{{**\}`, `{{**}**}}`},            // I1(I2(}))
+		{`{{**\}}`, `{{**\}}**}}`},         // I1(I2(}}))
+		{`{{**\}\}}`, `{{**\}\}}**}}`},     // I1(I2(}}}))
+		{`{{**\}\}\}}`, `{{**\}\}\}}**}}`}, // I1(I2(}}}}))
+
+		{`{{**\\}}`, `{{**\\**}}`}, // I1(I2(\))
+
 		// nested
 		{">*a", "> * a"},      // B1(B2(a))
 		{`>\*`, `> \*`},       // B(*)
 		{`>\\*`, `> \\*`},     // B(\*)
 		{`>\\\*`, `> \\*`},    // B(\*)
 		{`>\\\\*`, `> \\\\*`}, // B(\\*)
+
+		// nested closing delimiter
+		{`>**\`, `> **\\**`}, // B(I(\))
 
 		// in verbatim
 		{"`\n\\\\", "`\n\\\\\n`"}, // B(\n\\)
@@ -292,6 +335,19 @@ func TestEscape(t *testing.T) {
 						Type:      node.TypeEscaped,
 						Delimiter: "`",
 					},
+					// use "{" as it doesn't need escaping
+					// in -run test regex as "(" or "["
+					{
+						Name:      "MC",
+						Type:      node.TypeUniform,
+						Delimiter: "{",
+					},
+					{
+						Name:      "MD",
+						Type:      node.TypePrefixed,
+						Delimiter: "http://",
+						Matcher:   "url",
+					},
 				},
 			}
 
@@ -300,6 +356,9 @@ func TestEscape(t *testing.T) {
 	}
 }
 
+// TODO: Might want to parametrize TestEscape* tests and define non-standard
+// outs only when they are different. It would be easier to compare the
+// differences.
 func TestEscapeWithClash(t *testing.T) {
 	// registered line break with delimiter "\" -> escape clash
 
@@ -336,6 +395,7 @@ func TestEscapeWithClash(t *testing.T) {
 		{`\\\*`, `\\*`},    // \*
 		{`\\\\*`, `\\\\*`}, // \\*
 
+		// text block
 		{"\\*\n\\*", `\* *`}, // * *
 
 		{"**a", "**a**"},         // I(a)
@@ -358,11 +418,44 @@ func TestEscapeWithClash(t *testing.T) {
 		{`a\*\*\**`, `a\*\*\**`},  // a****
 		{`a\*\*\*\*`, `a\*\*\**`}, // a****
 
+		// prefixed, non-punctuation delimiter
+		{"http://a", "http://a"},         // I(a)
+		{`\http://`, `\http://`},         // http://
+		{`\\http://`, `\\`},              // \
+		{`\\http://a`, `\\http://a`},     // \I(a)
+		{`\\\http://`, `\\\http://`},     // \http://
+		{`\\\http://a`, `\\\http://a`},   // \http://a
+		{`\\\\http://a`, `\\\\http://a`}, // \\I(A)
+
+		{`a\http://`, `a\http://`},     // ahttp://
+		{`a\\http://`, `a\\`},          // a\
+		{`a\\\http://`, `a\\\http://`}, // a\http://
+		{`a\\\\http://`, `a\\\\`},      // a\\
+
 		// closing delimiter
-		// TODO: out doesn't represent the same elements as in
-		// in  -> strong(break)
-		// out -> strong()
-		{`**\`, `**\**`}, // I(BR)
+		{`**\`, "**\\\n**"},           // I(BR)
+		{`**\*`, `**\***`},            // I(*)
+		{`**\**`, `**\*\***`},         // I(**)
+		{`**\*\**`, `**\*\*\***`},     // I(***)
+		{`**\*\*\**`, `**\*\*\*\***`}, // I(****)
+
+		{`***a`, `***a**`},     // I(*a)
+		{`***\*a`, `**\**a**`}, // I(**a)
+
+		// left/right closing delimiter
+		{`{{\`, "{{\\\n}}"},           // I(BR)
+		{`{{\}`, `{{\}}}`},            // I(})
+		{`{{\}}`, `{{\}\}}}`},         // I(}})
+		{`{{\}\}}`, `{{\}\}\}}}`},     // I(}}})
+		{`{{\}\}\}}`, `{{\}\}\}\}}}`}, // I(}}}})
+
+		{`{{**\`, "{{**\\\n**}}"},          // I1(I2(BR))
+		{`{{**\}`, `{{**}**}}`},            // I1(I2(}))
+		{`{{**\}}`, `{{**\}}**}}`},         // I1(I2(}}))
+		{`{{**\}\}}`, `{{**\}\}}**}}`},     // I1(I2(}}}))
+		{`{{**\}\}\}}`, `{{**\}\}\}}**}}`}, // I1(I2(}}}}))
+
+		{`{{**\\}}`, `{{**\\**}}`}, // I1(I2(\))
 
 		// nested
 		{">*a", "> * a"},      // B1(B2(a))
@@ -370,6 +463,10 @@ func TestEscapeWithClash(t *testing.T) {
 		{`>\\*`, `> \\*`},     // B(\*)
 		{`>\\\*`, `> \\*`},    // B(\*)
 		{`>\\\\*`, `> \\\\*`}, // B(\\*)
+
+		// nested closing delimiter
+		{`>{{\`, "> {{\\\n> }}"},       // B(I(BR))
+		{`>{{**\`, "> {{**\\\n> **}}"}, // B(I1(I2(BR)))
 
 		// in verbatim
 		{"`\n\\\\", "`\n\\\\\n`"}, // B(\n\\)
@@ -413,6 +510,19 @@ func TestEscapeWithClash(t *testing.T) {
 						Delimiter:   `\`,
 						DoNotRemove: true,
 					},
+					// use "{" as it doesn't need escaping
+					// in -run test regex as "(" or "["
+					{
+						Name:      "MD",
+						Type:      node.TypeUniform,
+						Delimiter: "{",
+					},
+					{
+						Name:      "ME",
+						Type:      node.TypePrefixed,
+						Delimiter: "http://",
+						Matcher:   "url",
+					},
 				},
 			}
 
@@ -439,7 +549,7 @@ func TestDoNotRemove(t *testing.T) {
 		{`a\`, `a\`},
 
 		{"**", ""},
-		{`**\`, `**\**`}, // TODO: same as todo in EscapeWithClash
+		{`**\`, "**\\\n**"},
 	}
 
 	for _, c := range cases {

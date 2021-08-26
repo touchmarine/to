@@ -470,12 +470,29 @@ func (s *SeqNumBox) SeqNum() string {
 }
 
 func ExtractText(n Node) string {
+	return ExtractTextWithReplacements(n, nil)
+}
+
+// ExtractTextWithReplacments is like ExtractText but replaces the node text
+// with the replacement value.
+//
+// replacementMap = map[nodeName]text
+func ExtractTextWithReplacements(n Node, replacementMap map[string]string) string {
 	var b strings.Builder
 
 	switch n.(type) {
 	case BlockChildren, InlineChildren, Content, Lines, Composited, Boxed:
 	default:
-		panic(fmt.Sprintf("ExtractText: unexpected node type %T", n))
+		panic(fmt.Sprintf("ExtractTextWithReplacements: unexpected node type %T", n))
+	}
+
+	for name, text := range replacementMap {
+		if name == n.Node() {
+			// found replacement
+
+			b.WriteString(text)
+			return b.String()
+		}
 	}
 
 	if m, ok := n.(Boxed); ok {
@@ -483,11 +500,11 @@ func ExtractText(n Node) string {
 		if unboxed == nil {
 			return ""
 		}
-		return ExtractText(unboxed)
+		return ExtractTextWithReplacements(unboxed, replacementMap)
 	}
 
 	if m, ok := n.(Composited); ok {
-		return ExtractText(m.Primary())
+		return ExtractTextWithReplacements(m.Primary(), replacementMap)
 	}
 
 	if m, ok := n.(BlockChildren); ok {
@@ -496,13 +513,13 @@ func ExtractText(n Node) string {
 				b.WriteString("\n")
 			}
 
-			b.WriteString(ExtractText(c))
+			b.WriteString(ExtractTextWithReplacements(c, replacementMap))
 		}
 	}
 
 	if m, ok := n.(InlineChildren); ok {
 		for _, c := range m.InlineChildren() {
-			b.WriteString(ExtractText(c))
+			b.WriteString(ExtractTextWithReplacements(c, replacementMap))
 		}
 	} else if m, ok := n.(Content); ok {
 		b.Write(m.Content())
