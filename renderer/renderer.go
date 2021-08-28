@@ -17,6 +17,7 @@ var FuncMap = template.FuncMap{
 	"map":           mapString,
 	"get":           get,
 	"set":           set,
+	"hasKey":        hasKey,
 	"head":          head,
 	"body":          body,
 	"groupBySeqNum": groupBySeqNum,
@@ -220,13 +221,18 @@ func get(m map[string]string, key string) (string, error) {
 	return "", nil
 }
 
-func set(m map[string]string, key string, value string) (map[string]string, error) {
+func set(m map[string]string, key, value string) (map[string]string, error) {
 	if m == nil {
 		return nil, fmt.Errorf("nil map")
 	}
 
 	m[key] = value
 	return m, nil
+}
+
+func hasKey(m map[string]string, key string) bool {
+	_, ok := m[key]
+	return ok
 }
 
 func head(lines []string) string {

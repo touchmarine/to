@@ -80,10 +80,9 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 			grouped := g.group(node.BlocksToNodes(m.BlockChildren()))
 			m.SetBlockChildren(node.NodesToBlocks(grouped))
 		} else {
-			_, isBlock := n.(node.BlockChildren)
+			_, isBlockChildren := n.(node.BlockChildren)
 			_, isGroup := n.(*node.Group)
-			_, isSticky := n.(*node.Sticky)
-			if isBlock && !(isGroup && n.Node() == "Paragraph") && !isSticky {
+			if isBlockChildren && !(isGroup && n.Node() == "Paragraph") {
 				panic(fmt.Sprintf("transformer: node %T does not implement SettableBlockChildren", n))
 			}
 		}

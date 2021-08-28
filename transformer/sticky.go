@@ -52,12 +52,13 @@ func (g *stickyGrouper) peek() node.Node {
 
 func (g *stickyGrouper) groupStickies() {
 	for g.next() {
-		switch m := g.node.(type) {
+		g.groupChildren(g.node)
+
+	group:
+		switch g.node.(type) {
 		case node.Boxed:
 			g.unbox()
-
-			// go back to process the unboxed node
-			g.pos--
+			goto group
 
 		case node.Block:
 			peek := g.peek()
@@ -66,41 +67,61 @@ func (g *stickyGrouper) groupStickies() {
 				sticky, isSticky := g.stickyByElement(g.node.Node())
 				stickyPeek, isPeekSticky := g.stickyByElement(peek.Node())
 
+				var stickyNode *node.Sticky
 				if isSticky && !sticky.After && !isPeekSticky {
-					// sticky before
-
-					g.sticky(sticky.Name, false)
-
-					// go back so a possible before and
-					// after sticky can be detected
-					g.pos--
+					// before
+					stickyNode = g.createSticky(sticky.Name, false)
 				} else if !isSticky && isPeekSticky && stickyPeek.After {
-					// sticky after
-
-					g.sticky(stickyPeek.Name, true)
+					// after
+					stickyNode = g.createSticky(stickyPeek.Name, true)
 				}
-			}
 
-		case node.SettableBlockChildren:
-			stickied := GroupStickies(g.stickies, node.BlocksToNodes(m.BlockChildren()))
-			m.SetBlockChildren(node.NodesToBlocks(stickied))
+				if stickyNode != nil {
+					// group peek children here as we move
+					// peek into sticky right after and get
+					// caught in an infinite loop otherwise
+					// as it would group the same sticky
+					// again and again
+					g.groupChildren(peek)
 
-		case node.BlockChildren:
-			if _, isGroup := g.node.(*node.Group); !(isGroup && g.node.Node() == "Paragraph") {
-				panic(fmt.Sprintf("transformer: node %T does not implement SettableBlockChildren", g.node))
+					g.setNode(stickyNode)
+					g.removePeek()
+
+					if !stickyNode.After {
+						// check for a sticky after the
+						// new before sticky
+						goto group
+					}
+				}
 			}
 		}
 	}
 }
 
-// sticky groups the current and the following node into a Sticky node.
-func (g *stickyGrouper) sticky(name string, after bool) {
-	children := g.nodes[g.pos : g.pos+2]
-	n := &node.Sticky{name, after, node.NodesToBlocks(children)}
+func (g *stickyGrouper) groupChildren(n node.Node) {
+	if m, ok := n.(node.SettableBlockChildren); ok {
+		stickied := GroupStickies(g.stickies, node.BlocksToNodes(m.BlockChildren()))
+		m.SetBlockChildren(node.NodesToBlocks(stickied))
+	} else {
+		_, isBlockChildren := n.(node.BlockChildren)
+		_, isGroup := n.(*node.Group)
+		if isBlockChildren && !(isGroup && n.Node() == "Paragraph") {
+			panic(fmt.Sprintf("transformer: node %T does not implement SettableBlockChildren", n))
+		}
+	}
+}
 
-	// set sticky to current node and remove the next node
+func (g *stickyGrouper) createSticky(name string, after bool) *node.Sticky {
+	children := g.nodes[g.pos : g.pos+2]
+	return &node.Sticky{name, after, node.NodesToBlocks(children)}
+}
+
+func (g *stickyGrouper) setNode(n node.Node) {
 	g.node = n
-	g.nodes[g.pos] = n // insert sticky
+	g.nodes[g.pos] = n
+}
+
+func (g *stickyGrouper) removePeek() {
 	g.nodes = append(g.nodes[:g.pos+1], g.nodes[g.pos+2:]...)
 }
 

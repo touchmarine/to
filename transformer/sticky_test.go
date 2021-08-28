@@ -175,6 +175,58 @@ func TestGroupStickies(t *testing.T) {
 				&node.VerbatimWalled{"B", [][]byte{[]byte("e")}},
 			},
 		},
+
+		// nested
+		{
+			"nested",
+			[]node.Node{
+				&node.Walled{"C", []node.Block{
+					&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
+					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+					&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
+				}},
+			},
+			[]node.Node{
+				&node.Walled{"C", []node.Block{
+					&node.Sticky{"SB", true, []node.Block{
+						&node.Sticky{"SA", false, []node.Block{
+							&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
+							&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+						}},
+						&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
+					}},
+				}},
+			},
+		},
+		{
+			"double sticky",
+			[]node.Node{
+				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
+				&node.Group{"G", []node.Block{
+					&node.Hanging{"GI", []node.Block{
+						&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
+						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+						&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
+					}},
+				}},
+			},
+			[]node.Node{
+				&node.Sticky{"SA", true, []node.Block{
+					&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
+					&node.Group{"G", []node.Block{
+						&node.Hanging{"GI", []node.Block{
+							&node.Sticky{"SB", true, []node.Block{
+								&node.Sticky{"SA", false, []node.Block{
+									&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
+									&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+								}},
+								&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
+							}},
+						}},
+					}},
+				}},
+			},
+		},
 	}
 
 	for _, c := range cases {

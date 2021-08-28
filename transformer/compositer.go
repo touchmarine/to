@@ -86,15 +86,15 @@ func (c *compositer) composite() {
 
 		case node.InlineChildren:
 			panic(fmt.Sprintf("transformer: node %T does not implement SettableInlineChildren", c.node))
+		}
 
-		case node.SettableBlockChildren:
+		if m, ok := c.node.(node.SettableBlockChildren); ok {
 			composited := Composite(c.composites, node.BlocksToNodes(m.BlockChildren()))
 			m.SetBlockChildren(node.NodesToBlocks(composited))
-
-		case node.BlockChildren:
+		} else {
+			_, isBlockChildren := c.node.(node.BlockChildren)
 			_, isGroup := c.node.(*node.Group)
-			_, isSticky := c.node.(*node.Sticky)
-			if !(isGroup && c.node.Node() == "Paragraph") && !isSticky {
+			if isBlockChildren && !(isGroup && c.node.Node() == "Paragraph") {
 				panic(fmt.Sprintf("transformer: node %T does not implement SettableBlockChildren", c.node))
 			}
 		}

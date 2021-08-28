@@ -428,6 +428,10 @@ func (s *Sticky) BlockChildren() []Block {
 	return s.Children
 }
 
+func (s *Sticky) SetBlockChildren(children []Block) {
+	s.Children = children
+}
+
 type Composite struct {
 	Name       string
 	Primary0   Inline
