@@ -3560,6 +3560,30 @@ func TestPrecedence(t *testing.T) {
 				}},
 			},
 		},
+
+		// longer block delimiter
+		{
+			"-",
+			[]node.Node{&node.Hanging{"D", nil}},
+		},
+		{
+			"- -",
+			[]node.Node{&node.Hanging{"D", []node.Block{
+				&node.Hanging{"D", nil},
+			}}},
+		},
+		{
+			"--",
+			[]node.Node{
+				&node.BasicBlock{"TextBlock", []node.Inline{
+					&node.Uniform{"MD", nil},
+				}},
+			},
+		},
+		{
+			"---",
+			[]node.Node{&node.VerbatimLine{"DLong", nil}},
+		},
 	}
 
 	for _, c := range cases {
@@ -3596,6 +3620,22 @@ func TestPrecedence(t *testing.T) {
 					Name:      "MC",
 					Type:      node.TypeUniform,
 					Delimiter: "=",
+				},
+
+				{
+					Name:      "D",
+					Type:      node.TypeHanging,
+					Delimiter: "-",
+				},
+				{
+					Name:      "DLong",
+					Type:      node.TypeVerbatimLine,
+					Delimiter: "---",
+				},
+				{
+					Name:      "MD",
+					Type:      node.TypeUniform,
+					Delimiter: "-",
 				},
 			})
 		})

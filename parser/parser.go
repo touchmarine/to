@@ -41,8 +41,8 @@ func ParseCustom(src []byte, elements []config.Element) ([]node.Block, []error) 
 type parser struct {
 	errors         []error
 	src            []byte                    // source
-	blockMap       map[string]config.Element // registered block elements byt delimiter
-	blockKeys      []string                  // length-sorted (longest first)blockMap keys
+	blockMap       map[string]config.Element // registered elements by delimiter
+	blockKeys      []string                  // length-sorted (longest first) blockMap keys
 	inlineMap      map[string]config.Element // registered inline elements by delimiter
 	specialEscapes []string                  // delimiters that do not start with a punctuation
 	matcherMap     matcher.Map               // registered matchers by name
@@ -80,12 +80,24 @@ func (p *parser) register(elems []config.Element) {
 			}
 
 		case node.CategoryInline:
-			p.inlineMap[e.Delimiter] = e
-
 			r, _ := utf8.DecodeRuneInString(e.Delimiter)
 			if !isPunct(r) {
 				p.specialEscapes = append(p.specialEscapes, e.Delimiter)
 			}
+
+			runes := utf8.RuneCountInString(e.Delimiter)
+
+			delimiter := ""
+			if runes > 0 && e.Type == node.TypePrefixed {
+				delimiter = e.Delimiter
+			} else if runes == 1 {
+				delimiter = e.Delimiter + e.Delimiter
+			} else {
+				panic("parser: unvalid inline delimiter " + e.Delimiter)
+			}
+
+			p.blockMap[delimiter] = e
+			p.inlineMap[delimiter] = e
 
 		default:
 			panic("parser: unexpected node category " + c.String())
@@ -99,6 +111,7 @@ func (p *parser) register(elems []config.Element) {
 		i++
 	}
 
+	// TODO: blocks before inlines if same length
 	// sort keys by length
 	sort.Slice(keys, func(i, j int) bool {
 		return len(keys[i]) > len(keys[j])
@@ -150,10 +163,8 @@ func (p *parser) parseBlock() node.Block {
 	}
 
 	if !p.isEscape() {
-		_, matchesInline := p.matchInline()
 		el, matchesBlock := p.matchBlock()
-
-		if !matchesInline && matchesBlock {
+		if matchesBlock {
 			switch el.Type {
 			case node.TypeVerbatimLine:
 				return p.parseVerbatimLine(el.Name, el.Delimiter)
@@ -176,6 +187,11 @@ func (p *parser) parseBlock() node.Block {
 	return p.parseTextBlock()
 }
 
+// matchBlock determines which, if any, block is at the current offset.
+//
+// If multiple blocks match, matchBlock selects the one with the longest
+// delimiter. If an inline element is more specific (longer delimiter) than all
+// the matched blocks , matchBlock returns false.
 func (p *parser) matchBlock() (config.Element, bool) {
 	if trace {
 		defer p.trace("matchBlock")()
@@ -184,14 +200,24 @@ func (p *parser) matchBlock() (config.Element, bool) {
 	// iterate through length-sorted (longest first) delimiters to prevent
 	// clashes, e.g., "==" has precedence over "="
 	for _, d := range p.blockKeys {
-		e := p.blockMap[d]
-
 		if p.hasPrefix([]byte(d)) {
-			if trace {
-				p.printf("return true (%s)", e.Name)
-			}
+			e := p.blockMap[d]
 
-			return e, true
+			if node.TypeCategory(e.Type) == node.CategoryBlock {
+				if trace {
+					p.printf("return true (%s)", e.Name)
+				}
+
+				return e, true
+			} else if node.TypeCategory(e.Type) == node.CategoryInline {
+				if trace {
+					p.print("return false, inline")
+				}
+
+				return config.Element{}, false
+			} else {
+				panic("unexpected element type category " + node.TypeCategory(e.Type).String())
+			}
 		}
 	}
 
@@ -739,10 +765,8 @@ func (p *parser) parseEscaped(name string) (node.Inline, bool) {
 
 			afterNewline = true
 
-			_, matchesInline := p.matchInline()
 			_, matchesBlock := p.matchBlock()
-
-			if !matchesInline && matchesBlock || !p.continues(p.blocks) {
+			if matchesBlock || !p.continues(p.blocks) {
 				cont = false
 				break
 			}
@@ -885,10 +909,8 @@ func (p *parser) parseText() (node.Inline, bool) {
 			afterNewline = true
 
 			if !p.isEscape() {
-				_, matchesInline := p.matchInline()
 				_, matchesBlock := p.matchBlock()
-
-				if !matchesInline && matchesBlock || !p.continues(p.blocks) {
+				if matchesBlock || !p.continues(p.blocks) {
 					cont = false
 					break
 				}
@@ -941,26 +963,12 @@ func (p *parser) matchInline() (config.Element, bool) {
 	}
 
 	for d, e := range p.inlineMap {
-		runes := utf8.RuneCountInString(d)
-
-		if runes > 0 && e.Type == node.TypePrefixed {
-			if p.hasPrefix([]byte(e.Delimiter)) {
-				if trace {
-					p.printf("return true (%s)", e.Name)
-				}
-
-				return e, true
+		if p.hasPrefix([]byte(d)) {
+			if trace {
+				p.printf("return true (%s)", e.Name)
 			}
-		} else if runes == 1 {
-			if d == string(p.ch) && p.ch == p.peek() {
-				if trace {
-					p.printf("return true (%s)", e.Name)
-				}
 
-				return e, true
-			}
-		} else {
-			panic("parser: unvalid inline delimiter " + d)
+			return e, true
 		}
 	}
 
