@@ -100,6 +100,49 @@ func TestSequence(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			"sticky",
+			[]node.Node{
+				&node.Sticky{"SA", false, []node.Block{
+					&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
+					&node.RankedHanging{"NumberedHeading", 2, nil},
+				}},
+			},
+			[]node.Node{
+				&node.Sticky{"SA", false, []node.Block{
+					&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
+					&node.SeqNumBox{
+						&node.RankedHanging{"NumberedHeading", 2, nil},
+						[]int{1},
+					},
+				}},
+			},
+		},
+		{
+			"double sticky",
+			[]node.Node{
+				&node.Sticky{"SB", true, []node.Block{
+					&node.Sticky{"SA", false, []node.Block{
+						&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
+						&node.RankedHanging{"NumberedHeading", 2, nil},
+					}},
+					&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
+				}},
+			},
+			[]node.Node{
+				&node.Sticky{"SB", true, []node.Block{
+					&node.Sticky{"SA", false, []node.Block{
+						&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
+						&node.SeqNumBox{
+							&node.RankedHanging{"NumberedHeading", 2, nil},
+							[]int{1},
+						},
+					}},
+					&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
+				}},
+			},
+		},
 	}
 
 	for _, c := range cases {

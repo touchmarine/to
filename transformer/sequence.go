@@ -21,11 +21,11 @@ func (s *sequencer) sequence(nodes []node.Node) []node.Node {
 	for i := 0; i < len(nodes); i++ {
 		n := nodes[i]
 
-		if m, ok := n.(*node.Sticky); ok {
-			n = m.Target()
-		}
-
-		if m, ok := n.(node.Ranked); ok {
+		switch m := n.(type) {
+		case *node.Sticky:
+			sequenced := s.sequence(node.BlocksToNodes(m.BlockChildren()))
+			m.SetBlockChildren(node.NodesToBlocks(sequenced))
+		case node.Ranked:
 			name := n.Node()
 			rank := m.Rank()
 
@@ -35,6 +35,7 @@ func (s *sequencer) sequence(nodes []node.Node) []node.Node {
 			nodes[i] = &node.SeqNumBox{n, seqNums}
 		}
 	}
+
 	return nodes
 }
 

@@ -461,6 +461,8 @@ func (s SeqNumBox) Node() string {
 	return fmt.Sprintf("SeqNumBox(%s%s)", s.Nod.Node(), s.SeqNum())
 }
 
+func (s SeqNumBox) Block() {}
+
 func (s *SeqNumBox) Unbox() Node {
 	return s.Nod
 }
