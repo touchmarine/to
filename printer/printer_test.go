@@ -38,6 +38,8 @@ func TestFprint(t *testing.T) {
 		{"^a\n \n ^b", "^ a\n\n  ^ b"},
 		{"^a\n\n\n ^b", "^ a\n\n  ^ b"},
 
+		{"^!a\n !b", "^ !a\n  !b"},
+
 		{"=^", ""},
 		{"=^a", "= ^ a"},
 		{"=\n ^", ""},

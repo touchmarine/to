@@ -127,7 +127,7 @@ func (p *printer) printNodes() {
 				p.newline(p.w)
 			} else {
 				p.newline(p.w)
-				p.prefix(p.w, false)
+				p.prefix(p.w, noTrailingSpacing)
 				p.newline(p.w)
 			}
 		}
@@ -223,7 +223,7 @@ func (p *printer) printNode() {
 	}()
 
 	if !p.isInline() && p.pos > 0 {
-		p.prefix(&b, true)
+		p.prefix(&b, trailingSpacing)
 	}
 
 	pre, post := p.delimiters()
@@ -262,7 +262,7 @@ func (p *printer) printNode() {
 				switch p.n.(type) {
 				case *node.Fenced:
 					p.newline(&b)
-					p.prefix(&b, true)
+					p.prefix(&b, trailingSpacing)
 				}
 
 				b.WriteString(post)
@@ -279,7 +279,7 @@ func (p *printer) printNode() {
 					// otherwise `**\` would return `**\**`
 
 					p.newline(&b)
-					p.prefix(&b, true)
+					p.prefix(&b, trailingSpacing)
 				}
 
 				b.WriteString(post)
@@ -309,7 +309,7 @@ func (p *printer) printNode() {
 		p.printChildren(&b, node.InlinesToNodes(m.InlineChildren()))
 	case node.Lines:
 		_, isVerbatim := p.n.(*node.VerbatimWalled)
-		p.printLines(&b, m.Lines(), !isVerbatim)
+		p.printLines(&b, m.Lines(), isVerbatim)
 	case node.Content:
 		c := m.Content()
 
@@ -434,7 +434,7 @@ func (e *delimiterEscaper) write() (int, error) {
 	return nn, nil
 }
 
-func (p *printer) printLines(w io.Writer, lines [][]byte, spacing bool) {
+func (p *printer) printLines(w io.Writer, lines [][]byte, isVerbatim bool) {
 	if trace {
 		defer p.trace("printLines")()
 	}
@@ -442,7 +442,11 @@ func (p *printer) printLines(w io.Writer, lines [][]byte, spacing bool) {
 	for i, ln := range lines {
 		if i > 0 {
 			p.newline(w)
-			p.prefix(w, spacing)
+			if isVerbatim {
+				p.prefix(w, noSpacing)
+			} else {
+				p.prefix(w, trailingSpacing)
+			}
 		}
 
 		if len(ln) > 0 {
@@ -451,19 +455,31 @@ func (p *printer) printLines(w io.Writer, lines [][]byte, spacing bool) {
 	}
 }
 
+type prefixSpacing int
+
+const (
+	noSpacing prefixSpacing = iota
+	trailingSpacing
+	noTrailingSpacing
+)
+
 // prefix writes the current prefix to w. It adds a trailing space if spacing
-// is true and removes any trailing spacing if spacing is false.
-func (p *printer) prefix(w io.Writer, spacing bool) {
+// is trailingSpacing and removes any trailing spacing if spacing is
+// noTrailingSpacing.
+func (p *printer) prefix(w io.Writer, spacing prefixSpacing) {
 	if len(p.prefixes) == 0 {
 		return
 	}
 
 	prefix := strings.Join(p.prefixes, " ")
 
-	if spacing {
+	switch spacing {
+	case noSpacing:
+	case trailingSpacing:
 		prefix += " "
-	} else {
+	case noTrailingSpacing:
 		prefix = strings.Trim(prefix, " \t")
+
 	}
 
 	if trace {
