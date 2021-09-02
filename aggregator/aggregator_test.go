@@ -153,6 +153,52 @@ func TestAggregate(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			"in sticky",
+			[]node.Node{
+				&node.Sticky{"SA", false, []node.Block{
+					&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
+					&node.SeqNumBox{
+						&node.RankedHanging{"NumberedHeading", 2, nil},
+						[]int{1},
+					},
+				}},
+			},
+			map[string][]aggregator.Item{
+				"Headings": []aggregator.Item{
+					{
+						Element: "NumberedHeading",
+						SeqNums: []int{1},
+						SeqNum:  "1",
+					},
+				},
+			},
+		},
+		{
+			"in double sticky",
+			[]node.Node{
+				&node.Sticky{"SB", true, []node.Block{
+					&node.Sticky{"SA", false, []node.Block{
+						&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
+						&node.SeqNumBox{
+							&node.RankedHanging{"NumberedHeading", 2, nil},
+							[]int{1},
+						},
+					}},
+					&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
+				}},
+			},
+			map[string][]aggregator.Item{
+				"Headings": []aggregator.Item{
+					{
+						Element: "NumberedHeading",
+						SeqNums: []int{1},
+						SeqNum:  "1",
+					},
+				},
+			},
+		},
 	}
 
 	for _, c := range cases {

@@ -31,7 +31,10 @@ func (a *aggregator) aggregate(nodes []node.Node) map[string][]Item {
 	for _, n := range nodes {
 		var item Item
 
-		if m, ok := n.(node.Boxed); ok {
+		switch m := n.(type) {
+		case *node.Sticky:
+			a.aggregate(node.BlocksToNodes(m.BlockChildren()))
+		case node.Boxed:
 			switch k := n.(type) {
 			case *node.SeqNumBox:
 				item.SeqNums = k.SeqNums
