@@ -5,6 +5,7 @@ import (
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/stringifier"
+	"strings"
 	"testing"
 	"unicode"
 )
@@ -4121,7 +4122,8 @@ func TestBOM(t *testing.T) {
 // Note on custom element naming:
 // Use uppercase characters and prefix inline elements with M.
 func test(t *testing.T, in string, out []node.Node, expectedErrors []error, elements []config.Element) {
-	nodes, errs := parser.ParseCustom([]byte(in), elements)
+	r := strings.NewReader(in)
+	nodes, errs := parser.Parse(r, elements)
 
 	if expectedErrors == nil {
 		for _, err := range errs {

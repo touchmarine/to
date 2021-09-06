@@ -13,7 +13,6 @@ import (
 	"github.com/touchmarine/to/stringifier"
 	"github.com/touchmarine/to/transformer"
 	"html/template"
-	"io"
 	"log"
 	"os"
 )
@@ -37,21 +36,7 @@ func main() {
 		nodes []node.Node
 	)
 
-	src, err := io.ReadAll(os.Stdin)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if *confPath == "" {
-		conf = config.Default
-
-		blocks, perr := parser.Parse(src)
-		if perr != nil {
-			log.Fatal(perr)
-		}
-
-		nodes = node.BlocksToNodes(blocks)
-	} else {
+	if *confPath != "" {
 		f, err := os.Open(*confPath)
 		if err != nil {
 			log.Fatal(err)
@@ -60,14 +45,16 @@ func main() {
 		if err := json.NewDecoder(f).Decode(&conf); err != nil {
 			log.Fatal(err)
 		}
-
-		blocks, perr := parser.ParseCustom(src, conf.Elements)
-		if perr != nil {
-			log.Fatal(perr)
-		}
-
-		nodes = node.BlocksToNodes(blocks)
+	} else {
+		conf = config.Default
 	}
+
+	blocks, perr := parser.Parse(os.Stdin, conf.Elements)
+	if perr != nil {
+		log.Fatal(perr)
+	}
+
+	nodes = node.BlocksToNodes(blocks)
 
 	nodes = transformer.Paragraph(nodes)
 	nodes = transformer.Group(conf.Groups, nodes)

@@ -7,6 +7,7 @@ import (
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/matcher"
 	"github.com/touchmarine/to/node"
+	"io"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -25,11 +26,7 @@ func init() {
 	}
 }
 
-func Parse(src []byte) ([]node.Block, []error) {
-	return ParseCustom(src, config.Default.Elements)
-}
-
-func ParseCustom(src []byte, elements []config.Element) ([]node.Block, []error) {
+func Parse(src io.Reader, elements []config.Element) ([]node.Block, []error) {
 	var p parser
 	p.Matchers(matcher.Defaults())
 	p.register(elements)
@@ -1005,8 +1002,13 @@ func (p *parser) closingDelimiter() rune {
 	return 0
 }
 
-func (p *parser) init(src []byte) {
-	p.src = src
+func (p *parser) init(src io.Reader) {
+	b, err := io.ReadAll(src)
+	if err != nil {
+		panic(fmt.Errorf("parser: ReadAll failed: %s", err))
+	}
+
+	p.src = b
 
 	p.next()
 	if p.ch == '\uFEFF' {

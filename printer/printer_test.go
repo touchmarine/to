@@ -1,6 +1,7 @@
 package printer_test
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
@@ -598,7 +599,8 @@ func TestDoNotRemove(t *testing.T) {
 func test(t *testing.T, conf *config.Config, in []byte, out string) {
 	t.Helper()
 
-	blocks, errs := parser.ParseCustom(in, conf.Elements)
+	r := bytes.NewReader(in)
+	blocks, errs := parser.Parse(r, conf.Elements)
 	if errs != nil {
 		t.Fatal(errs)
 	}
