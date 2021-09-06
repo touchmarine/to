@@ -1,4 +1,4 @@
-package transformer
+package sticky
 
 import (
 	"fmt"
@@ -6,18 +6,23 @@ import (
 	"github.com/touchmarine/to/node"
 )
 
-// GroupStickies recognizes sticky patterns and creates Sticky nodes. Note that
+type Transformer struct {
+	Stickies []config.Sticky
+}
+
+// Transform recognizes sticky patterns and creates Sticky nodes. Note that
 // it mutates the given nodes.
 //
-// GroupStickies recognizes only immediately placed sticky elements. Out of
+// Transform recognizes only immediately placed sticky elements. Out of
 // multiple consecutive sticky elements, only the one closest to a non-sticky
 // element is grouped. One element can have one sticky element before it and one
 // after it.
-func GroupStickies(stickies []config.Sticky, nodes []node.Node) []node.Node {
+func (t Transformer) Transform(nodes []node.Node) []node.Node {
 	s := stickyGrouper{
-		stickies: stickies,
-		nodes:    nodes,
-		pos:      -1,
+		transformer: &t,
+		stickies:    t.Stickies,
+		nodes:       nodes,
+		pos:         -1,
 	}
 
 	s.groupStickies()
@@ -25,8 +30,9 @@ func GroupStickies(stickies []config.Sticky, nodes []node.Node) []node.Node {
 }
 
 type stickyGrouper struct {
-	stickies []config.Sticky
-	nodes    []node.Node
+	transformer *Transformer
+	stickies    []config.Sticky
+	nodes       []node.Node
 
 	node node.Node
 	pos  int
@@ -100,7 +106,7 @@ func (g *stickyGrouper) groupStickies() {
 
 func (g *stickyGrouper) groupChildren(n node.Node) {
 	if m, ok := n.(node.SettableBlockChildren); ok {
-		stickied := GroupStickies(g.stickies, node.BlocksToNodes(m.BlockChildren()))
+		stickied := g.transformer.Transform(node.BlocksToNodes(m.BlockChildren()))
 		m.SetBlockChildren(node.NodesToBlocks(stickied))
 	} else {
 		_, isBlockChildren := n.(node.BlockChildren)

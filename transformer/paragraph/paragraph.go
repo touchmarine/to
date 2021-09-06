@@ -1,4 +1,4 @@
-package transformer
+package paragraph
 
 import (
 	"fmt"
@@ -6,7 +6,9 @@ import (
 	"log"
 )
 
-func Paragraph(nodes []node.Node) []node.Node {
+const trace = false
+
+func Transform(nodes []node.Node) []node.Node {
 	for i := 0; i < len(nodes); i++ {
 		n := nodes[i]
 
@@ -22,7 +24,7 @@ func Paragraph(nodes []node.Node) []node.Node {
 		}
 
 		if m, ok := n.(node.SettableBlockChildren); ok {
-			breaked := Paragraph(node.BlocksToNodes(m.BlockChildren()))
+			breaked := Transform(node.BlocksToNodes(m.BlockChildren()))
 			m.SetBlockChildren(node.NodesToBlocks(breaked))
 		} else {
 			if _, ok := n.(node.BlockChildren); ok {

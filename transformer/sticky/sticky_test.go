@@ -1,14 +1,14 @@
-package transformer_test
+package sticky_test
 
 import (
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/stringifier"
-	"github.com/touchmarine/to/transformer"
+	"github.com/touchmarine/to/transformer/sticky"
 	"testing"
 )
 
-func TestGroupStickies(t *testing.T) {
+func TestTransform(t *testing.T) {
 	cases := []struct {
 		name string
 		in   []node.Node
@@ -233,7 +233,7 @@ func TestGroupStickies(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			stickied := make([]node.Node, len(c.in))
 			copy(stickied, c.in)
-			stickied = transformer.GroupStickies([]config.Sticky{
+			transformer := sticky.Transformer{[]config.Sticky{
 				{
 					Name:    "SA",
 					Element: "A",
@@ -243,7 +243,8 @@ func TestGroupStickies(t *testing.T) {
 					Element: "B",
 					After:   true,
 				},
-			}, stickied)
+			}}
+			stickied = transformer.Transform(stickied)
 
 			got := stringifier.Stringify(stickied...)
 			want := stringifier.Stringify(c.out...)

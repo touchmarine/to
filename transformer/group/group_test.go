@@ -1,14 +1,14 @@
-package transformer_test
+package group_test
 
 import (
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/stringifier"
-	"github.com/touchmarine/to/transformer"
+	"github.com/touchmarine/to/transformer/group"
 	"testing"
 )
 
-func TestGroup(t *testing.T) {
+func TestTransform(t *testing.T) {
 	cases := []struct {
 		name string
 		in   []node.Node
@@ -253,7 +253,8 @@ func TestGroup(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			groupedNodes := make([]node.Node, len(c.in))
 			copy(groupedNodes, c.in)
-			groupedNodes = transformer.Group(config.Default.Groups, groupedNodes)
+			transformer := group.Transformer{config.Default.Groups}
+			groupedNodes = transformer.Transform(groupedNodes)
 
 			got := stringifier.Stringify(groupedNodes...)
 			want := stringifier.Stringify(c.out...)

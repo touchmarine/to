@@ -1,13 +1,13 @@
-package transformer_test
+package paragraph_test
 
 import (
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/stringifier"
-	"github.com/touchmarine/to/transformer"
+	"github.com/touchmarine/to/transformer/paragraph"
 	"testing"
 )
 
-func TestParagraph(t *testing.T) {
+func TestTransform(t *testing.T) {
 	cases := []struct {
 		name string
 		in   []node.Node
@@ -103,7 +103,7 @@ func TestParagraph(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			paraNodes := make([]node.Node, len(c.in))
 			copy(paraNodes, c.in)
-			paraNodes = transformer.Paragraph(paraNodes)
+			paraNodes = paragraph.Transform(paraNodes)
 
 			got := stringifier.Stringify(paraNodes...)
 			want := stringifier.Stringify(c.out...)

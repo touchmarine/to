@@ -1,14 +1,14 @@
-package transformer_test
+package composite_test
 
 import (
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/stringifier"
-	"github.com/touchmarine/to/transformer"
+	"github.com/touchmarine/to/transformer/composite"
 	"testing"
 )
 
-func TestCompositer(t *testing.T) {
+func TestTransform(t *testing.T) {
 	cases := []struct {
 		name string
 		in   []node.Node
@@ -166,7 +166,8 @@ func TestCompositer(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			composited := make([]node.Node, len(c.in))
 			copy(composited, c.in)
-			composited = transformer.Composite(config.Default.Composites, composited)
+			transformer := composite.Transformer{config.Default.Composites}
+			composited = transformer.Transform(composited)
 
 			got := stringifier.Stringify(composited...)
 			want := stringifier.Stringify(c.out...)

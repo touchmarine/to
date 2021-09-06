@@ -1,4 +1,4 @@
-package transformer
+package composite
 
 import (
 	"fmt"
@@ -6,16 +6,21 @@ import (
 	"github.com/touchmarine/to/node"
 )
 
-// Composite recognizes composite patterns and creates Composite nodes. Note
+type Transformer struct {
+	Composites []config.Composite
+}
+
+// Transform recognizes composite patterns and creates Composite nodes. Note
 // that it mutates the given nodes.
 //
-// Composite recognizes only one form of patterns: PrimaryElement followed
+// Transform recognizes only one form of patterns: PrimaryElement followed
 // immediately by the SecondaryElement.
-func Composite(composites []config.Composite, nodes []node.Node) []node.Node {
+func (t Transformer) Transform(nodes []node.Node) []node.Node {
 	c := compositer{
-		composites: composites,
-		nodes:      nodes,
-		pos:        -1,
+		transformer: &t,
+		composites:  t.Composites,
+		nodes:       nodes,
+		pos:         -1,
 	}
 
 	c.composite()
@@ -23,8 +28,9 @@ func Composite(composites []config.Composite, nodes []node.Node) []node.Node {
 }
 
 type compositer struct {
-	composites []config.Composite
-	nodes      []node.Node
+	transformer *Transformer
+	composites  []config.Composite
+	nodes       []node.Node
 
 	node node.Node
 	pos  int
@@ -81,7 +87,7 @@ func (c *compositer) composite() {
 			}
 
 		case node.SettableInlineChildren:
-			composited := Composite(c.composites, node.InlinesToNodes(m.InlineChildren()))
+			composited := c.transformer.Transform(node.InlinesToNodes(m.InlineChildren()))
 			m.SetInlineChildren(node.NodesToInlines(composited))
 
 		case node.InlineChildren:
@@ -89,7 +95,7 @@ func (c *compositer) composite() {
 		}
 
 		if m, ok := c.node.(node.SettableBlockChildren); ok {
-			composited := Composite(c.composites, node.BlocksToNodes(m.BlockChildren()))
+			composited := c.transformer.Transform(node.BlocksToNodes(m.BlockChildren()))
 			m.SetBlockChildren(node.NodesToBlocks(composited))
 		} else {
 			_, isBlockChildren := c.node.(node.BlockChildren)

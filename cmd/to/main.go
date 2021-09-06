@@ -55,14 +55,7 @@ func main() {
 	}
 
 	nodes = node.BlocksToNodes(blocks)
-
-	nodes = transformer.Paragraph(nodes)
-	nodes = transformer.Group(conf.Groups, nodes)
-	nodes = transformer.Composite(conf.Composites, nodes)
-	// must be after Composite otherwise Composites do not work inside
-	// Stickies
-	nodes = transformer.GroupStickies(conf.Stickies, nodes)
-	nodes = transformer.Sequence(nodes)
+	nodes = transformer.Apply(nodes, transformer.Defaults(conf))
 
 	if *stringify {
 		stringifier.StringifyTo(os.Stdout, nodes...)

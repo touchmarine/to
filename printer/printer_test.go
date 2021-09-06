@@ -606,12 +606,7 @@ func test(t *testing.T, conf *config.Config, in []byte, out string) {
 	}
 
 	nodes := node.BlocksToNodes(blocks)
-
-	nodes = transformer.Paragraph(nodes)
-	nodes = transformer.Group(conf.Groups, nodes)
-	nodes = transformer.Sequence(nodes)
-	nodes = transformer.Composite(conf.Composites, nodes)
-	nodes = transformer.GroupStickies(conf.Stickies, nodes)
+	nodes = transformer.Apply(nodes, transformer.Defaults(conf))
 
 	var b strings.Builder
 	printer.Fprint(&b, conf, nodes)

@@ -1,20 +1,20 @@
-package transformer
+package sequence
 
 import (
 	"fmt"
 	"github.com/touchmarine/to/node"
 )
 
-type sequencer struct {
-	seqMap map[string]map[int]int
-}
-
-func Sequence(nodes []node.Node) []node.Node {
+func Transform(nodes []node.Node) []node.Node {
 	s := &sequencer{
 		seqMap: make(map[string]map[int]int),
 	}
 	nodes = s.sequence(nodes)
 	return nodes
+}
+
+type sequencer struct {
+	seqMap map[string]map[int]int
 }
 
 func (s *sequencer) sequence(nodes []node.Node) []node.Node {

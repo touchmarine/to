@@ -1,4 +1,4 @@
-package transformer
+package group
 
 import (
 	"fmt"
@@ -7,14 +7,20 @@ import (
 	"strings"
 )
 
+const trace = false
+
+type Transformer struct {
+	Groups []config.Group
+}
+
+func (t Transformer) Transform(nodes []node.Node) []node.Node {
+	g := grouper{t.Groups, 0}
+	return g.group(nodes)
+}
+
 type grouper struct {
 	groups []config.Group
 	indent int
-}
-
-func Group(groups []config.Group, nodes []node.Node) []node.Node {
-	g := grouper{groups, 0}
-	return g.group(nodes)
 }
 
 func (g *grouper) group(nodes []node.Node) []node.Node {

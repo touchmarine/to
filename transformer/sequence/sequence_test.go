@@ -1,13 +1,13 @@
-package transformer_test
+package sequence_test
 
 import (
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/stringifier"
-	"github.com/touchmarine/to/transformer"
+	"github.com/touchmarine/to/transformer/sequence"
 	"testing"
 )
 
-func TestSequence(t *testing.T) {
+func TestTransform(t *testing.T) {
 	cases := []struct {
 		name string
 		in   []node.Node
@@ -149,7 +149,7 @@ func TestSequence(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			a := make([]node.Node, len(c.in))
 			copy(a, c.in)
-			a = transformer.Sequence(a)
+			a = sequence.Transform(a)
 
 			got := stringifier.Stringify(a...)
 			want := stringifier.Stringify(c.out...)
