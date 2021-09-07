@@ -8,6 +8,7 @@ import (
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
+	"github.com/touchmarine/to/transformer/composite"
 	"html/template"
 )
 
@@ -68,31 +69,16 @@ func (c *Config) PrinterElements() printer.ElementMap {
 	return m
 }
 
-func (c *Config) Composite(name string) (Composite, bool) {
-	for _, comp := range c.Composites {
-		if comp.Name == name {
-			return comp, true
+func (c *Config) TransformerComposites() composite.Map {
+	m := composite.Map{}
+	for _, e := range c.Composites {
+		m[e.PrimaryElement] = composite.Composite{
+			Name:             e.Name,
+			PrimaryElement:   e.PrimaryElement,
+			SecondaryElement: e.SecondaryElement,
 		}
 	}
-	return Composite{}, false
-}
-
-func (c *Config) Sticky(name string) (Sticky, bool) {
-	for _, sticky := range c.Stickies {
-		if sticky.Name == name {
-			return sticky, true
-		}
-	}
-	return Sticky{}, false
-}
-
-func (c *Config) Group(name string) (Group, bool) {
-	for _, grp := range c.Groups {
-		if grp.Name == name {
-			return grp, true
-		}
-	}
-	return Group{}, false
+	return m
 }
 
 func (c *Config) ParseTemplates(target *template.Template, name string) (*template.Template, error) {
@@ -171,7 +157,6 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 	return target, nil
 }
 
-// template encode:https://play.golang.org/p/ayrY0opKeEv
 type Element struct {
 	Name        string            `json:"name"`
 	Type        node.Type         `json:"type"`

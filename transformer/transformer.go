@@ -22,7 +22,7 @@ func (t TransformerFunc) Transform(nodes []node.Node) []node.Node {
 
 func Defaults(conf *config.Config) []Transformer {
 	grouper := group.Transformer{conf.Groups}
-	compositer := composite.Transformer{conf.Composites}
+	compositer := composite.Transformer{conf.TransformerComposites()}
 	stickyer := sticky.Transformer{conf.Stickies}
 
 	return []Transformer{

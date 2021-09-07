@@ -2,12 +2,20 @@ package composite
 
 import (
 	"fmt"
-	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 )
 
+// Map maps Composites to PrimaryElements.
+type Map map[string]Composite
+
+type Composite struct {
+	Name             string
+	PrimaryElement   string
+	SecondaryElement string
+}
+
 type Transformer struct {
-	Composites []config.Composite
+	CompositeMap Map
 }
 
 // Transform recognizes composite patterns and creates Composite nodes. Note
@@ -17,10 +25,10 @@ type Transformer struct {
 // immediately by the SecondaryElement.
 func (t Transformer) Transform(nodes []node.Node) []node.Node {
 	c := compositer{
-		transformer: &t,
-		composites:  t.Composites,
-		nodes:       nodes,
-		pos:         -1,
+		transformer:  &t,
+		compositeMap: t.CompositeMap,
+		nodes:        nodes,
+		pos:          -1,
 	}
 
 	c.composite()
@@ -28,9 +36,9 @@ func (t Transformer) Transform(nodes []node.Node) []node.Node {
 }
 
 type compositer struct {
-	transformer *Transformer
-	composites  []config.Composite
-	nodes       []node.Node
+	transformer  *Transformer
+	compositeMap Map
+	nodes        []node.Node
 
 	node node.Node
 	pos  int
@@ -76,7 +84,7 @@ func (c *compositer) composite() {
 					panic("transformer: mixed node types, expected Inline")
 				}
 
-				comp, ok := c.compositeByPrimaryElement(c.node.Node())
+				comp, ok := c.compositeMap[c.node.Node()]
 				if ok && peek.Node() == comp.SecondaryElement {
 					n := &node.Composite{comp.Name, m, inlinePeek}
 
@@ -114,13 +122,4 @@ func (c *compositer) unbox() {
 	}
 
 	c.node = boxed.Unbox()
-}
-
-func (c *compositer) compositeByPrimaryElement(element string) (config.Composite, bool) {
-	for _, comp := range c.composites {
-		if comp.PrimaryElement == element {
-			return comp, true
-		}
-	}
-	return config.Composite{}, false
 }

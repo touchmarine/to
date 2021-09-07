@@ -1,7 +1,6 @@
 package composite_test
 
 import (
-	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/stringifier"
 	"github.com/touchmarine/to/transformer/composite"
@@ -166,8 +165,14 @@ func TestTransform(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			composited := make([]node.Node, len(c.in))
 			copy(composited, c.in)
-			transformer := composite.Transformer{config.Default.Composites}
-			composited = transformer.Transform(composited)
+			compositer := composite.Transformer{composite.Map{
+				"Group": {
+					Name:             "NamedLink",
+					PrimaryElement:   "Group",
+					SecondaryElement: "Link",
+				},
+			}}
+			composited = compositer.Transform(composited)
 
 			got := stringifier.Stringify(composited...)
 			want := stringifier.Stringify(c.out...)
