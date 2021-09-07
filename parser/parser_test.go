@@ -273,18 +273,18 @@ func TestTextBlock(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeHanging,
 					Delimiter: "*",
 				},
-				{
+				"B": {
 					Name:      "B",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
 				},
-				{
+				"MA": {
 					Name:      "MA",
 					Type:      node.TypeUniform,
 					Delimiter: "_",
@@ -603,8 +603,8 @@ func TestWalled(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
@@ -887,18 +887,18 @@ func TestVerbatimWalled(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeVerbatimWalled,
 					Delimiter: "/",
 				},
-				{
+				"B": {
 					Name:      "B",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
 				},
-				{
+				"C": {
 					Name:      "C",
 					Type:      node.TypeHanging,
 					Delimiter: "*",
@@ -1455,13 +1455,13 @@ func TestHanging(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeHanging,
 					Delimiter: "*",
 				},
-				{
+				"B": {
 					Name:      "B",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
@@ -1795,13 +1795,13 @@ func TestRankedHanging(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeRankedHanging,
 					Delimiter: "=",
 				},
-				{
+				"B": {
 					Name:      "B",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
@@ -1876,13 +1876,13 @@ func TestVerbatimLine(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeVerbatimLine,
 					Delimiter: ".image",
 				},
-				{
+				"B": {
 					Name:      "B",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
@@ -2116,18 +2116,18 @@ func TestHangingMulti(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeHanging,
 					Delimiter: "1.",
 				},
-				{
+				"B": {
 					Name:      "B",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
 				},
-				{
+				"C": {
 					Name:      "C",
 					Type:      node.TypeHanging,
 					Delimiter: "-",
@@ -2422,18 +2422,18 @@ func TestFenced(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeFenced,
 					Delimiter: "`",
 				},
-				{
+				"B": {
 					Name:      "B",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
 				},
-				{
+				"C": {
 					Name:      "C",
 					Type:      node.TypeHanging,
 					Delimiter: "*",
@@ -2566,8 +2566,8 @@ func TestSpacing(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
@@ -2881,28 +2881,28 @@ func TestUniform(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"MA": {
 					Name:      "MA",
 					Type:      node.TypeUniform,
 					Delimiter: "_",
 				},
-				{
+				"MB": {
 					Name:      "MB",
 					Type:      node.TypeUniform,
 					Delimiter: "(",
 				},
-				{
+				"MC": {
 					Name:      "MC",
 					Type:      node.TypeUniform,
 					Delimiter: "*",
 				},
-				{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
 				},
-				{
+				"B": {
 					Name:      "B",
 					Type:      node.TypeHanging,
 					Delimiter: "*",
@@ -3167,28 +3167,28 @@ func TestEscaped(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"MA": {
 					Name:      "MA",
 					Type:      node.TypeEscaped,
 					Delimiter: "`",
 				},
-				{
+				"MB": {
 					Name:      "MB",
 					Type:      node.TypeEscaped,
 					Delimiter: "[",
 				},
-				{
+				"MC": {
 					Name:      "MC",
 					Type:      node.TypeUniform,
 					Delimiter: "_",
 				},
-				{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeHanging,
 					Delimiter: "*",
 				},
-				{
+				"B": {
 					Name:      "B",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
@@ -3374,24 +3374,24 @@ func TestPrefixed(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"MA": {
 					Name:      "MA",
 					Type:      node.TypePrefixed,
 					Delimiter: "^^",
 				},
-				{
+				"MB": {
 					Name:      "MB",
 					Type:      node.TypePrefixed,
 					Delimiter: "http://",
 					Matcher:   "url",
 				},
-				{
+				"MC": {
 					Name:      "MC",
 					Type:      node.TypeUniform,
 					Delimiter: "*",
 				},
-				{
+				"MD": {
 					Name:      "MD",
 					Type:      node.TypeUniform,
 					Delimiter: "_",
@@ -3538,19 +3538,13 @@ func TestPrecedence(t *testing.T) {
 		{
 			"==",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
-					&node.Uniform{"MC", nil},
-				}},
+				&node.RankedHanging{"C", 2, nil},
 			},
 		},
 		{
 			"===",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
-					&node.Uniform{"MC", []node.Inline{
-						node.Text("="),
-					}},
-				}},
+				&node.RankedHanging{"C", 3, nil},
 			},
 		},
 		{
@@ -3589,51 +3583,46 @@ func TestPrecedence(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeHanging,
 					Delimiter: "*",
 				},
-				{
+				"MA": {
 					Name:      "MA",
 					Type:      node.TypeUniform,
 					Delimiter: "*",
 				},
 
-				{
+				"B": {
 					Name:      "B",
 					Type:      node.TypeFenced,
 					Delimiter: "`",
 				},
-				{
+				"MB": {
 					Name:      "MB",
 					Type:      node.TypeEscaped,
 					Delimiter: "`",
 				},
 
-				{
+				"C": {
 					Name:      "C",
 					Type:      node.TypeRankedHanging,
 					Delimiter: "=",
 				},
-				{
-					Name:      "MC",
-					Type:      node.TypeUniform,
-					Delimiter: "=",
-				},
 
-				{
+				"D": {
 					Name:      "D",
 					Type:      node.TypeHanging,
 					Delimiter: "-",
 				},
-				{
+				"DLong": {
 					Name:      "DLong",
 					Type:      node.TypeVerbatimLine,
 					Delimiter: "---",
 				},
-				{
+				"MD": {
 					Name:      "MD",
 					Type:      node.TypeUniform,
 					Delimiter: "-",
@@ -3775,23 +3764,23 @@ func TestEscape(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeHanging,
 					Delimiter: "*",
 				},
-				{
+				"B": {
 					Name:      "B",
 					Type:      node.TypeFenced,
 					Delimiter: "`",
 				},
-				{
+				"MA": {
 					Name:      "MA",
 					Type:      node.TypeUniform,
 					Delimiter: "*",
 				},
-				{
+				"MB": {
 					Name:      "MB",
 					Type:      node.TypeEscaped,
 					Delimiter: "`",
@@ -3951,23 +3940,23 @@ func TestLineBreak(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			test(t, c.in, c.out, nil, []config.Element{
-				{
+			test(t, c.in, c.out, nil, parser.ElementMap{
+				"A": {
 					Name:      "A",
 					Type:      node.TypeFenced,
 					Delimiter: "`",
 				},
-				{
+				"MA": {
 					Name:      "MA",
 					Type:      node.TypePrefixed,
 					Delimiter: `\`,
 				},
-				{
+				"MB": {
 					Name:      "MB",
 					Type:      node.TypeUniform,
 					Delimiter: "*",
 				},
-				{
+				"MC": {
 					Name:      "MC",
 					Type:      node.TypeEscaped,
 					Delimiter: "`",
@@ -4078,7 +4067,7 @@ func TestBOM(t *testing.T) {
 				}},
 			},
 			nil,
-			config.Default.Elements,
+			config.Default.ParserElements(),
 		)
 	})
 
@@ -4121,9 +4110,9 @@ func TestBOM(t *testing.T) {
 //
 // Note on custom element naming:
 // Use uppercase characters and prefix inline elements with M.
-func test(t *testing.T, in string, out []node.Node, expectedErrors []error, elements []config.Element) {
+func test(t *testing.T, in string, out []node.Node, expectedErrors []error, elementMap parser.ElementMap) {
 	r := strings.NewReader(in)
-	nodes, errs := parser.Parse(r, elements)
+	nodes, errs := parser.Parse(r, elementMap)
 
 	if expectedErrors == nil {
 		for _, err := range errs {

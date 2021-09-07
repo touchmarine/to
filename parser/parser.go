@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/matcher"
 	"github.com/touchmarine/to/node"
 	"io"
@@ -26,10 +25,19 @@ func init() {
 	}
 }
 
-func Parse(src io.Reader, elements []config.Element) ([]node.Block, []error) {
+type ElementMap map[string]Element
+
+type Element struct {
+	Name      string
+	Type      node.Type
+	Delimiter string
+	Matcher   string
+}
+
+func Parse(src io.Reader, elementMap ElementMap) ([]node.Block, []error) {
 	var p parser
-	p.Matchers(matcher.Defaults())
-	p.register(elements)
+	p.matchers(matcher.Defaults())
+	p.elements(elementMap)
 	p.init(src)
 	return p.parse(nil), p.errors
 }
@@ -37,12 +45,12 @@ func Parse(src io.Reader, elements []config.Element) ([]node.Block, []error) {
 // parser holds the parsing state.
 type parser struct {
 	errors         []error
-	src            []byte                    // source
-	blockMap       map[string]config.Element // registered elements by delimiter
-	blockKeys      []string                  // length-sorted (longest first) blockMap keys
-	inlineMap      map[string]config.Element // registered inline elements by delimiter
-	specialEscapes []string                  // delimiters that do not start with a punctuation
-	matcherMap     matcher.Map               // registered matchers by name
+	src            []byte             // source
+	blockMap       map[string]Element // registered elements by delimiter
+	blockKeys      []string           // length-sorted (longest first) blockMap keys
+	inlineMap      map[string]Element // registered inline elements by delimiter
+	specialEscapes []string           // delimiters that do not start with a punctuation
+	matcherMap     matcher.Map        // registered matchers by name
 
 	// parsing
 	ch       rune // current character
@@ -59,15 +67,15 @@ type parser struct {
 	indent int // trace indentation
 }
 
-func (p *parser) register(elems []config.Element) {
+func (p *parser) elements(elementMap ElementMap) {
 	if p.blockMap == nil {
-		p.blockMap = make(map[string]config.Element)
+		p.blockMap = make(map[string]Element)
 	}
 	if p.inlineMap == nil {
-		p.inlineMap = make(map[string]config.Element)
+		p.inlineMap = make(map[string]Element)
 	}
 
-	for _, e := range elems {
+	for _, e := range elementMap {
 		switch c := node.TypeCategory(e.Type); c {
 		case node.CategoryBlock:
 			if e.Type == node.TypeRankedHanging {
@@ -108,7 +116,6 @@ func (p *parser) register(elems []config.Element) {
 		i++
 	}
 
-	// TODO: blocks before inlines if same length
 	// sort keys by length
 	sort.Slice(keys, func(i, j int) bool {
 		return len(keys[i]) > len(keys[j])
@@ -117,7 +124,7 @@ func (p *parser) register(elems []config.Element) {
 	p.blockKeys = keys
 }
 
-func (p *parser) Matchers(m matcher.Map) {
+func (p *parser) matchers(m matcher.Map) {
 	if p.matcherMap == nil {
 		p.matcherMap = make(matcher.Map)
 	}
@@ -189,7 +196,7 @@ func (p *parser) parseBlock() node.Block {
 // If multiple blocks match, matchBlock selects the one with the longest
 // delimiter. If an inline element is more specific (longer delimiter) than all
 // the matched blocks , matchBlock returns false.
-func (p *parser) matchBlock() (config.Element, bool) {
+func (p *parser) matchBlock() (Element, bool) {
 	if trace {
 		defer p.trace("matchBlock")()
 	}
@@ -211,7 +218,7 @@ func (p *parser) matchBlock() (config.Element, bool) {
 					p.print("return false, inline")
 				}
 
-				return config.Element{}, false
+				return Element{}, false
 			} else {
 				panic("unexpected element type category " + node.TypeCategory(e.Type).String())
 			}
@@ -222,7 +229,7 @@ func (p *parser) matchBlock() (config.Element, bool) {
 		p.print("return false")
 	}
 
-	return config.Element{}, false
+	return Element{}, false
 }
 
 // hasPrefix determines whether b matches source from offset.
@@ -954,7 +961,7 @@ func (p *parser) parseText() (node.Inline, bool) {
 	return node.Text(txt), cont
 }
 
-func (p *parser) matchInline() (config.Element, bool) {
+func (p *parser) matchInline() (Element, bool) {
 	if trace {
 		defer p.trace("matchInline")()
 	}
@@ -973,7 +980,7 @@ func (p *parser) matchInline() (config.Element, bool) {
 		p.print("return false")
 	}
 
-	return config.Element{}, false
+	return Element{}, false
 }
 
 // closingDelimiter returns the closing delimiter if found, otherwise 0.

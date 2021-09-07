@@ -3,7 +3,6 @@ package printer
 import (
 	"bytes"
 	"fmt"
-	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"io"
 	"strings"
@@ -12,11 +11,21 @@ import (
 
 const trace = false
 
-func Fprint(w io.Writer, conf *config.Config, nodes []node.Node) {
+type ElementMap map[string]Element
+
+type Element struct {
+	Name        string
+	Type        node.Type
+	Delimiter   string
+	Matcher     string
+	DoNotRemove bool
+}
+
+func Fprint(w io.Writer, elementMap ElementMap, nodes []node.Node) {
 	p := &printer{
-		conf:  conf,
-		w:     w,
-		nodes: nodes,
+		w:          w,
+		elementMap: elementMap,
+		nodes:      nodes,
 
 		pos: -1,
 	}
@@ -26,13 +35,13 @@ func Fprint(w io.Writer, conf *config.Config, nodes []node.Node) {
 }
 
 type printer struct {
-	conf   *config.Config
-	w      io.Writer
-	nodes  []node.Node
-	parent *printer
+	w          io.Writer
+	elementMap ElementMap
+	nodes      []node.Node
+	parent     *printer
 
 	n   node.Node
-	e   config.Element
+	e   Element
 	pos int
 
 	prefixes         []string
@@ -47,7 +56,7 @@ func (p *printer) init() {
 	// add marker elements to replacment map
 	// marker elemetns are prefixed inline element with no matcher aka.
 	// elements that have no content
-	for _, e := range p.conf.Elements {
+	for _, e := range p.elementMap {
 		if e.Type == node.TypePrefixed && e.Matcher == "" {
 			// marker, e.g., "\" line break, without content
 
@@ -85,10 +94,10 @@ func (p *printer) printChildren(w io.Writer, nodes []node.Node) {
 	}
 
 	n := &printer{
-		conf:   p.conf,
-		w:      w,
-		nodes:  nodes,
-		parent: p,
+		w:          w,
+		elementMap: p.elementMap,
+		nodes:      nodes,
+		parent:     p,
 
 		pos: -1,
 
@@ -520,7 +529,7 @@ func (p *printer) needBlockEscape() bool {
 }
 
 func (p *printer) hasBlockDelimiterPrefix(content []byte) bool {
-	for _, e := range p.conf.Elements {
+	for _, e := range p.elementMap {
 		if node.TypeCategory(e.Type) == node.CategoryBlock {
 			// same logic as in parser/parser.go
 			delimiter := ""
@@ -549,7 +558,7 @@ func (p *printer) hasEscapeClashingElementAtEnd() bool {
 
 	last := m.InlineChildren()[len(m.InlineChildren())-1]
 
-	e, found := p.conf.Element(last.Node())
+	e, found := p.elementMap[last.Node()]
 	return found && e.Type == node.TypePrefixed && e.Delimiter == "\\"
 }
 
@@ -648,7 +657,7 @@ func (p *printer) printText(w io.Writer, t node.Text) {
 				peek = composited.Primary()
 			}
 
-			e, isElement := p.conf.Element(peek.Node())
+			e, isElement := p.elementMap[peek.Node()]
 			if !isElement {
 				panic("printer: node " + peek.Node() + " not found")
 			}
@@ -686,7 +695,7 @@ func isPunct(ch byte) bool {
 }
 
 func (p *printer) hasInlineDelimiterPrefix(content []byte) bool {
-	for _, e := range p.conf.Elements {
+	for _, e := range p.elementMap {
 		if node.TypeCategory(e.Type) == node.CategoryInline {
 			// same logic as in parser/parser.go
 			delimiter := ""
@@ -725,16 +734,9 @@ func (p *printer) delimiters() (string, string) {
 	switch name := p.n.Node(); name {
 	case "Text", "TextBlock", "Paragraph":
 	default:
-		e, ok := p.conf.Element(name)
-		if !ok {
-			_, isComposite := p.conf.Composite(name)
-			_, isSticky := p.conf.Sticky(name)
-			_, isGroup := p.conf.Group(name)
-			if isComposite || isSticky || isGroup {
-				return "", ""
-			} else {
-				panic("printer: unexpected element " + name)
-			}
+		e, found := p.elementMap[name]
+		if !found {
+			break
 		}
 
 		switch p.n.(type) {
@@ -811,15 +813,14 @@ func (p *printer) isInline() bool {
 }
 
 func (p *printer) shouldKeep(n node.Node) bool {
-	return doNotRemove(p.conf.Elements, n) || !isEmpty(n)
+	return doNotRemove(p.elementMap, n) || !isEmpty(n)
 }
 
 // doNotRemove returns true if n or any of its children has set DoNotRemove.
-func doNotRemove(elements []config.Element, n node.Node) bool {
-	for _, e := range elements {
-		if e.Name == n.Node() && e.DoNotRemove {
-			return true
-		}
+func doNotRemove(elementMap ElementMap, n node.Node) bool {
+	if e, found := elementMap[n.Node()]; found && e.DoNotRemove {
+		return true
+
 	}
 
 	switch n.(type) {
@@ -835,16 +836,16 @@ func doNotRemove(elements []config.Element, n node.Node) bool {
 			return false
 		}
 
-		return doNotRemove(elements, unboxed)
+		return doNotRemove(elementMap, unboxed)
 	}
 
 	if m, ok := n.(node.Composited); ok {
-		return doNotRemove(elements, m.Primary())
+		return doNotRemove(elementMap, m.Primary())
 	}
 
 	if m, ok := n.(node.BlockChildren); ok {
 		for _, c := range m.BlockChildren() {
-			if doNotRemove(elements, c) {
+			if doNotRemove(elementMap, c) {
 				return true
 			}
 		}
@@ -852,7 +853,7 @@ func doNotRemove(elements []config.Element, n node.Node) bool {
 
 	if m, ok := n.(node.InlineChildren); ok {
 		for _, c := range m.InlineChildren() {
-			if doNotRemove(elements, c) {
+			if doNotRemove(elementMap, c) {
 				return true
 			}
 		}

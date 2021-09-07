@@ -600,7 +600,7 @@ func test(t *testing.T, conf *config.Config, in []byte, out string) {
 	t.Helper()
 
 	r := bytes.NewReader(in)
-	blocks, errs := parser.Parse(r, conf.Elements)
+	blocks, errs := parser.Parse(r, conf.ParserElements())
 	if errs != nil {
 		t.Fatal(errs)
 	}
@@ -609,7 +609,7 @@ func test(t *testing.T, conf *config.Config, in []byte, out string) {
 	nodes = transformer.Apply(nodes, transformer.Defaults(conf))
 
 	var b strings.Builder
-	printer.Fprint(&b, conf, nodes)
+	printer.Fprint(&b, conf.PrinterElements(), nodes)
 
 	printed := b.String()
 

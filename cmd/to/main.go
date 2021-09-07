@@ -49,9 +49,9 @@ func main() {
 		conf = config.Default
 	}
 
-	blocks, perr := parser.Parse(os.Stdin, conf.Elements)
-	if perr != nil {
-		log.Fatal(perr)
+	blocks, errs := parser.Parse(os.Stdin, conf.ParserElements())
+	if errs != nil {
+		log.Fatal(errs)
 	}
 
 	nodes = node.BlocksToNodes(blocks)
@@ -62,7 +62,7 @@ func main() {
 	}
 
 	if format == "fmt" {
-		printer.Fprint(os.Stdout, conf, nodes)
+		printer.Fprint(os.Stdout, conf.PrinterElements(), nodes)
 	} else {
 		aggregates := aggregator.Aggregate(conf.Aggregates, nodes)
 

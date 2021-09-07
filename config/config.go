@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/touchmarine/to/node"
+	"github.com/touchmarine/to/parser"
+	"github.com/touchmarine/to/printer"
 	"html/template"
 )
 
@@ -39,13 +41,31 @@ type Config struct {
 	Aggregates []Aggregate `json:"aggregates"`
 }
 
-func (c *Config) Element(name string) (Element, bool) {
-	for _, el := range c.Elements {
-		if el.Name == name {
-			return el, true
+func (c *Config) ParserElements() parser.ElementMap {
+	m := parser.ElementMap{}
+	for _, e := range c.Elements {
+		m[e.Name] = parser.Element{
+			Name:      e.Name,
+			Type:      e.Type,
+			Delimiter: e.Delimiter,
+			Matcher:   e.Matcher,
 		}
 	}
-	return Element{}, false
+	return m
+}
+
+func (c *Config) PrinterElements() printer.ElementMap {
+	m := printer.ElementMap{}
+	for _, e := range c.Elements {
+		m[e.Name] = printer.Element{
+			Name:        e.Name,
+			Type:        e.Type,
+			Delimiter:   e.Delimiter,
+			Matcher:     e.Matcher,
+			DoNotRemove: e.DoNotRemove,
+		}
+	}
+	return m
 }
 
 func (c *Config) Composite(name string) (Composite, bool) {
