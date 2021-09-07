@@ -9,6 +9,7 @@ import (
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
 	"github.com/touchmarine/to/transformer/composite"
+	"github.com/touchmarine/to/transformer/group"
 	"html/template"
 )
 
@@ -76,6 +77,17 @@ func (c *Config) TransformerComposites() composite.Map {
 			Name:             e.Name,
 			PrimaryElement:   e.PrimaryElement,
 			SecondaryElement: e.SecondaryElement,
+		}
+	}
+	return m
+}
+
+func (c *Config) TransformerGroups() group.Map {
+	m := group.Map{}
+	for _, g := range c.Groups {
+		m[g.Element] = group.Group{
+			Name:    g.Name,
+			Element: g.Element,
 		}
 	}
 	return m

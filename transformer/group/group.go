@@ -2,25 +2,32 @@ package group
 
 import (
 	"fmt"
-	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"strings"
 )
 
 const trace = false
 
+// Map maps Groups by Elements.
+type Map map[string]Group
+
+type Group struct {
+	Name    string
+	Element string
+}
+
 type Transformer struct {
-	Groups []config.Group
+	GroupMap Map
 }
 
 func (t Transformer) Transform(nodes []node.Node) []node.Node {
-	g := grouper{t.Groups, 0}
+	g := grouper{t.GroupMap, 0}
 	return g.group(nodes)
 }
 
 type grouper struct {
-	groups []config.Group
-	indent int
+	groupMap Map
+	indent   int
 }
 
 func (g *grouper) group(nodes []node.Node) []node.Node {
@@ -28,7 +35,7 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 		defer g.trace("group")()
 	}
 
-	var grp config.Group
+	var grp Group
 	var open string
 	var pos int
 
@@ -38,7 +45,7 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 
 		if open == "" {
 			var ok bool
-			if grp, ok = g.elementGroup(name); ok {
+			if grp, ok = g.groupMap[name]; ok {
 				if trace {
 					g.printf("open  %s for %s (i=%d) [1]", grp.Name, name, i)
 				}
@@ -69,7 +76,7 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 			}
 
 			var ok bool
-			if grp, ok = g.elementGroup(name); ok {
+			if grp, ok = g.groupMap[name]; ok {
 				if trace {
 					g.printf("open  %s for %s (i=%d) [2]", grp.Name, name, i)
 				}
@@ -118,15 +125,6 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 	}
 
 	return nodes
-}
-
-func (g *grouper) elementGroup(element string) (config.Group, bool) {
-	for _, grp := range g.groups {
-		if grp.Element == element {
-			return grp, true
-		}
-	}
-	return config.Group{}, false
 }
 
 func (g *grouper) tracef(format string, v ...interface{}) func() {

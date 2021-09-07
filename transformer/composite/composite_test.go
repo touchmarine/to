@@ -16,17 +16,17 @@ func TestTransform(t *testing.T) {
 		{
 			"basic",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
-					&node.Uniform{"Group", nil},
-					&node.Escaped{"Link", nil},
+				&node.BasicBlock{"A", []node.Inline{
+					&node.Uniform{"B", nil},
+					&node.Escaped{"C", nil},
 				}},
 			},
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
+				&node.BasicBlock{"A", []node.Inline{
 					&node.Composite{
-						"NamedLink",
-						&node.Uniform{"Group", nil},
-						&node.Escaped{"Link", nil},
+						"CA",
+						&node.Uniform{"B", nil},
+						&node.Escaped{"C", nil},
 					},
 				}},
 			},
@@ -34,21 +34,21 @@ func TestTransform(t *testing.T) {
 		{
 			"filled",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
-					&node.Uniform{"Group", []node.Inline{
+				&node.BasicBlock{"A", []node.Inline{
+					&node.Uniform{"B", []node.Inline{
 						node.Text("a"),
 					}},
-					&node.Escaped{"Link", []byte("b")},
+					&node.Escaped{"C", []byte("b")},
 				}},
 			},
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
+				&node.BasicBlock{"A", []node.Inline{
 					&node.Composite{
-						"NamedLink",
-						&node.Uniform{"Group", []node.Inline{
+						"CA",
+						&node.Uniform{"B", []node.Inline{
 							node.Text("a"),
 						}},
-						&node.Escaped{"Link", []byte("b")},
+						&node.Escaped{"C", []byte("b")},
 					},
 				}},
 			},
@@ -56,23 +56,23 @@ func TestTransform(t *testing.T) {
 		{
 			"nested",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
-					&node.Uniform{"Group", []node.Inline{
-						&node.Uniform{"Group", nil},
-						&node.Escaped{"Link", nil},
+				&node.BasicBlock{"A", []node.Inline{
+					&node.Uniform{"B", []node.Inline{
+						&node.Uniform{"B", nil},
+						&node.Escaped{"C", nil},
 					}},
-					&node.Escaped{"Link", nil},
+					&node.Escaped{"C", nil},
 				}},
 			},
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
+				&node.BasicBlock{"A", []node.Inline{
 					&node.Composite{
-						"NamedLink",
-						&node.Uniform{"Group", []node.Inline{
-							&node.Uniform{"Group", nil},
-							&node.Escaped{"Link", nil},
+						"CA",
+						&node.Uniform{"B", []node.Inline{
+							&node.Uniform{"B", nil},
+							&node.Escaped{"C", nil},
 						}},
-						&node.Escaped{"Link", nil},
+						&node.Escaped{"C", nil},
 					},
 				}},
 			},
@@ -80,24 +80,24 @@ func TestTransform(t *testing.T) {
 		{
 			"consecutive",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
-					&node.Uniform{"Group", nil},
-					&node.Escaped{"Link", nil},
-					&node.Uniform{"Group", nil},
-					&node.Escaped{"Link", nil},
+				&node.BasicBlock{"A", []node.Inline{
+					&node.Uniform{"B", nil},
+					&node.Escaped{"C", nil},
+					&node.Uniform{"B", nil},
+					&node.Escaped{"C", nil},
 				}},
 			},
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
+				&node.BasicBlock{"A", []node.Inline{
 					&node.Composite{
-						"NamedLink",
-						&node.Uniform{"Group", nil},
-						&node.Escaped{"Link", nil},
+						"CA",
+						&node.Uniform{"B", nil},
+						&node.Escaped{"C", nil},
 					},
 					&node.Composite{
-						"NamedLink",
-						&node.Uniform{"Group", nil},
-						&node.Escaped{"Link", nil},
+						"CA",
+						&node.Uniform{"B", nil},
+						&node.Escaped{"C", nil},
 					},
 				}},
 			},
@@ -105,28 +105,28 @@ func TestTransform(t *testing.T) {
 		{
 			"two lines",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
-					&node.Uniform{"Group", nil},
-					&node.Escaped{"Link", nil},
+				&node.BasicBlock{"A", []node.Inline{
+					&node.Uniform{"B", nil},
+					&node.Escaped{"C", nil},
 				}},
-				&node.BasicBlock{"TextBlock", []node.Inline{
-					&node.Uniform{"Group", nil},
-					&node.Escaped{"Link", nil},
+				&node.BasicBlock{"A", []node.Inline{
+					&node.Uniform{"B", nil},
+					&node.Escaped{"C", nil},
 				}},
 			},
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{
+				&node.BasicBlock{"A", []node.Inline{
 					&node.Composite{
-						"NamedLink",
-						&node.Uniform{"Group", nil},
-						&node.Escaped{"Link", nil},
+						"CA",
+						&node.Uniform{"B", nil},
+						&node.Escaped{"C", nil},
 					},
 				}},
-				&node.BasicBlock{"TextBlock", []node.Inline{
+				&node.BasicBlock{"A", []node.Inline{
 					&node.Composite{
-						"NamedLink",
-						&node.Uniform{"Group", nil},
-						&node.Escaped{"Link", nil},
+						"CA",
+						&node.Uniform{"B", nil},
+						&node.Escaped{"C", nil},
 					},
 				}},
 			},
@@ -137,9 +137,9 @@ func TestTransform(t *testing.T) {
 				&node.Walled{
 					"Blockquote",
 					[]node.Block{
-						&node.BasicBlock{"TextBlock", []node.Inline{
-							&node.Uniform{"Group", nil},
-							&node.Escaped{"Link", nil},
+						&node.BasicBlock{"A", []node.Inline{
+							&node.Uniform{"B", nil},
+							&node.Escaped{"C", nil},
 						}},
 					},
 				},
@@ -148,11 +148,11 @@ func TestTransform(t *testing.T) {
 				&node.Walled{
 					"Blockquote",
 					[]node.Block{
-						&node.BasicBlock{"TextBlock", []node.Inline{
+						&node.BasicBlock{"A", []node.Inline{
 							&node.Composite{
-								"NamedLink",
-								&node.Uniform{"Group", nil},
-								&node.Escaped{"Link", nil},
+								"CA",
+								&node.Uniform{"B", nil},
+								&node.Escaped{"C", nil},
 							},
 						}},
 					},
@@ -166,10 +166,10 @@ func TestTransform(t *testing.T) {
 			composited := make([]node.Node, len(c.in))
 			copy(composited, c.in)
 			compositer := composite.Transformer{composite.Map{
-				"Group": {
-					Name:             "NamedLink",
-					PrimaryElement:   "Group",
-					SecondaryElement: "Link",
+				"B": {
+					Name:             "CA",
+					PrimaryElement:   "B",
+					SecondaryElement: "C",
 				},
 			}}
 			composited = compositer.Transform(composited)
