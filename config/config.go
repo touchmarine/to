@@ -10,6 +10,7 @@ import (
 	"github.com/touchmarine/to/printer"
 	"github.com/touchmarine/to/transformer/composite"
 	"github.com/touchmarine/to/transformer/group"
+	"github.com/touchmarine/to/transformer/sticky"
 	"html/template"
 )
 
@@ -88,6 +89,18 @@ func (c *Config) TransformerGroups() group.Map {
 		m[g.Element] = group.Group{
 			Name:    g.Name,
 			Element: g.Element,
+		}
+	}
+	return m
+}
+
+func (c *Config) TransformerStickies() sticky.Map {
+	m := sticky.Map{}
+	for _, s := range c.Stickies {
+		m[s.Element] = sticky.Sticky{
+			Name:    s.Name,
+			Element: s.Element,
+			After:   s.After,
 		}
 	}
 	return m

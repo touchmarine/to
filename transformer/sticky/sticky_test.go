@@ -1,7 +1,6 @@
 package sticky_test
 
 import (
-	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/stringifier"
 	"github.com/touchmarine/to/transformer/sticky"
@@ -233,18 +232,18 @@ func TestTransform(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			stickied := make([]node.Node, len(c.in))
 			copy(stickied, c.in)
-			transformer := sticky.Transformer{[]config.Sticky{
-				{
+			stickier := sticky.Transformer{sticky.Map{
+				"A": {
 					Name:    "SA",
 					Element: "A",
 				},
-				{
+				"B": {
 					Name:    "SB",
 					Element: "B",
 					After:   true,
 				},
 			}}
-			stickied = transformer.Transform(stickied)
+			stickied = stickier.Transform(stickied)
 
 			got := stringifier.Stringify(stickied...)
 			want := stringifier.Stringify(c.out...)

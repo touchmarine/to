@@ -2,12 +2,20 @@ package sticky
 
 import (
 	"fmt"
-	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 )
 
+// Map maps Stickies to Elements.
+type Map map[string]Sticky
+
+type Sticky struct {
+	Name    string `json:"name"`
+	Element string `json:"element"`
+	After   bool   `json:"after"`
+}
+
 type Transformer struct {
-	Stickies []config.Sticky
+	StickyMap Map
 }
 
 // Transform recognizes sticky patterns and creates Sticky nodes. Note that
@@ -20,7 +28,7 @@ type Transformer struct {
 func (t Transformer) Transform(nodes []node.Node) []node.Node {
 	s := stickyGrouper{
 		transformer: &t,
-		stickies:    t.Stickies,
+		stickyMap:   t.StickyMap,
 		nodes:       nodes,
 		pos:         -1,
 	}
@@ -31,7 +39,7 @@ func (t Transformer) Transform(nodes []node.Node) []node.Node {
 
 type stickyGrouper struct {
 	transformer *Transformer
-	stickies    []config.Sticky
+	stickyMap   Map
 	nodes       []node.Node
 
 	node node.Node
@@ -70,8 +78,8 @@ func (g *stickyGrouper) groupStickies() {
 			peek := g.peek()
 
 			if _, isBlock := peek.(node.Block); isBlock {
-				sticky, isSticky := g.stickyByElement(g.node.Node())
-				stickyPeek, isPeekSticky := g.stickyByElement(peek.Node())
+				sticky, isSticky := g.stickyMap[g.node.Node()]
+				stickyPeek, isPeekSticky := g.stickyMap[peek.Node()]
 
 				var stickyNode *node.Sticky
 				if isSticky && !sticky.After && !isPeekSticky {
@@ -142,13 +150,4 @@ func (g *stickyGrouper) unbox() {
 
 	g.node = unboxed
 	g.nodes[g.pos] = unboxed
-}
-
-func (g *stickyGrouper) stickyByElement(element string) (config.Sticky, bool) {
-	for _, sticky := range g.stickies {
-		if sticky.Element == element {
-			return sticky, true
-		}
-	}
-	return config.Sticky{}, false
 }
