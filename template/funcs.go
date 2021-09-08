@@ -1,20 +1,18 @@
-package renderer
+package template
 
 import (
 	"bufio"
 	"errors"
 	"fmt"
 	"github.com/touchmarine/to/aggregator/seqnum"
-	"github.com/touchmarine/to/node"
 	"html/template"
 	"io"
-	"strconv"
 	"strings"
 )
 
 const trace = false
 
-var FuncMap = template.FuncMap{
+var Functions = template.FuncMap{
 	"mapAny":                  mapAny,
 	"map":                     mapString,
 	"get":                     get,
@@ -27,156 +25,6 @@ var FuncMap = template.FuncMap{
 	"parseAttrs":              parseAttrs,
 	"htmlAttrs":               htmlAttrs,
 	"trimSpacing":             trimSpacing,
-}
-
-func New(tmpl *template.Template, data map[string]interface{}) *Renderer {
-	return &Renderer{tmpl, data}
-}
-
-type Renderer struct {
-	tmpl *template.Template
-	data map[string]interface{}
-}
-
-func (r *Renderer) RenderWithCustomRoot(out io.Writer, nodes []node.Node) {
-	if err := r.tmpl.ExecuteTemplate(out, "root", nodes); err != nil {
-		panic(err)
-	}
-}
-
-func (r *Renderer) Render(out io.Writer, nodes []node.Node, tmplData map[string]interface{}) {
-	for i, n := range nodes {
-		if i > 0 {
-			out.Write([]byte("\n"))
-		}
-
-		switch n.(type) {
-		case node.BlockChildren, node.InlineChildren, node.Content,
-			node.Lines, node.Composited, node.Ranked, node.Boxed:
-		default:
-			panic(fmt.Sprintf("render: unexpected node %T", n))
-		}
-
-		data := make(map[string]interface{})
-
-		if boxed, isBoxed := n.(node.Boxed); isBoxed {
-			unboxed := boxed.Unbox()
-			if unboxed == nil {
-				continue
-			}
-
-			fillData(data, n)
-
-			n = unboxed
-		}
-
-		fillData(data, n)
-
-		for k, v := range r.data {
-			data[k] = v
-		}
-
-		// data from renderWithData template function
-		for k, v := range tmplData {
-			data[k] = v
-		}
-
-		name := n.Node()
-		if err := r.tmpl.ExecuteTemplate(out, name, data); err != nil {
-			panic(err)
-		}
-	}
-}
-
-func fillData(data map[string]interface{}, n node.Node) {
-	data["Self"] = n
-	data["TextContent"] = node.ExtractText(n)
-
-	if m, ok := n.(node.BlockChildren); ok {
-		data["BlockChildren"] = m.BlockChildren()
-	}
-
-	if m, ok := n.(node.InlineChildren); ok {
-		data["InlineChildren"] = m.InlineChildren()
-	}
-
-	if m, ok := n.(node.Content); ok {
-		data["Content"] = string(m.Content())
-	}
-
-	if m, ok := n.(node.Lines); ok {
-		lines := btosSlice(m.Lines())
-
-		data["Lines"] = lines
-		data["Text"] = strings.Join(lines, "\n")
-	}
-
-	if m, ok := n.(node.Composited); ok {
-		primary, secondary := make(map[string]interface{}), make(map[string]interface{})
-		fillData(primary, m.Primary())
-		fillData(secondary, m.Secondary())
-
-		data["PrimaryElement"] = primary
-		data["SecondaryElement"] = secondary
-	}
-
-	if m, ok := n.(*node.Sticky); ok {
-		sticky, target := make(map[string]interface{}), make(map[string]interface{})
-		fillData(sticky, m.Sticky())
-		fillData(target, m.Target())
-
-		data["StickyElement"] = sticky
-		data["TargetElement"] = target
-	}
-
-	if m, ok := n.(node.Ranked); ok {
-		data["Rank"] = strconv.FormatUint(uint64(m.Rank()), 10)
-	}
-
-	if _, ok := n.(node.Boxed); ok {
-		switch k := n.(type) {
-		case *node.SequentialNumberBox:
-			data["SequentialNumbers"] = k.SequentialNumbers
-			data["SequentialNumber"] = k.SequentialNumber()
-		default:
-			panic(fmt.Sprintf("render: unexpected Boxed node %T", n))
-		}
-	}
-}
-
-func (r *Renderer) FuncMap() template.FuncMap {
-	return template.FuncMap{
-		"render":         r.renderFunc,
-		"renderWithData": r.renderWithDataFunc,
-	}
-}
-
-func (r *Renderer) renderFunc(v interface{}) template.HTML {
-	return r.renderWithDataFunc(v, nil)
-}
-
-func (r *Renderer) renderWithDataFunc(v interface{}, data map[string]interface{}) template.HTML {
-	var b strings.Builder
-
-	switch n := v.(type) {
-	case []node.Node:
-		r.Render(&b, n, data)
-	case node.Node:
-		r.Render(&b, []node.Node{n}, data)
-	default:
-		panic(fmt.Sprintf("render: unexpected node %T", v))
-	}
-
-	return template.HTML(b.String())
-}
-
-// btosSlice returns a slice of strings from a slice of bytes.
-func btosSlice(p [][]byte) []string {
-	var lines []string
-	for _, line := range p {
-		lines = append(lines, string(line))
-	}
-	return lines
 }
 
 func mapAny(v ...interface{}) (map[string]interface{}, error) {
@@ -420,7 +268,7 @@ func (p *attrParser) peek() byte {
 	} else if l == 1 {
 		return b[0]
 	} else {
-		panic("renderer: unexpected byte length")
+		panic("template: unexpected byte length")
 	}
 }
 
@@ -467,10 +315,10 @@ func (p *attrParser) parseAttr() (string, string) {
 						value.WriteByte(peek)
 
 						if !p.next() { // skip escape backslash
-							panic("renderer: no escape backslash")
+							panic("template: no escape backslash")
 						}
 						if !p.next() { // skip escaped char
-							panic("renderer: no escaped char")
+							panic("template: no escaped char")
 						}
 
 						continue
@@ -478,7 +326,7 @@ func (p *attrParser) parseAttr() (string, string) {
 				} else if quote == '\'' {
 					// inside single quotes "'" (raw content)
 				} else {
-					panic("renderer: quote is neither '\"' or \"'\"")
+					panic("template: quote is neither '\"' or \"'\"")
 				}
 
 				value.WriteByte(p.ch)
@@ -499,10 +347,10 @@ func (p *attrParser) parseAttr() (string, string) {
 				quote = peek
 
 				if !p.next() {
-					panic("renderer: no equals char")
+					panic("template: no equals char")
 				}
 				if !p.next() {
-					panic("renderer: no opening quote")
+					panic("template: no opening quote")
 				}
 
 				continue

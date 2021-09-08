@@ -9,8 +9,8 @@ import (
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
-	"github.com/touchmarine/to/renderer"
 	"github.com/touchmarine/to/stringifier"
+	totemplate "github.com/touchmarine/to/template"
 	"github.com/touchmarine/to/transformer"
 	"html/template"
 	"log"
@@ -71,12 +71,11 @@ func main() {
 		}
 
 		tmpl := template.New(format)
-		rndr := renderer.New(tmpl, data)
-
-		tmpl.Funcs(renderer.FuncMap)
-		tmpl.Funcs(rndr.FuncMap())
-
+		tmpl.Funcs(totemplate.Functions)
+		tmpl.Funcs(totemplate.RenderFunctions(tmpl, data))
 		template.Must(conf.ParseTemplates(tmpl, format))
-		rndr.RenderWithCustomRoot(os.Stdout, nodes)
+		if err := tmpl.ExecuteTemplate(os.Stdout, "root", nodes); err != nil {
+			panic(err)
+		}
 	}
 }
