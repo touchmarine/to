@@ -19,7 +19,7 @@ func TestTransform(t *testing.T) {
 				&node.RankedHanging{"NumberedHeading", 2, nil},
 			},
 			[]node.Node{
-				&node.SeqNumBox{
+				&node.SequentialNumberBox{
 					&node.RankedHanging{"NumberedHeading", 2, nil},
 					[]int{1},
 				},
@@ -33,11 +33,11 @@ func TestTransform(t *testing.T) {
 				&node.RankedHanging{"NumberedHeading", 2, nil},
 			},
 			[]node.Node{
-				&node.SeqNumBox{
+				&node.SequentialNumberBox{
 					&node.RankedHanging{"NumberedHeading", 2, nil},
 					[]int{1},
 				},
-				&node.SeqNumBox{
+				&node.SequentialNumberBox{
 					&node.RankedHanging{"NumberedHeading", 2, nil},
 					[]int{2},
 				},
@@ -50,11 +50,11 @@ func TestTransform(t *testing.T) {
 				&node.RankedHanging{"NumberedHeading", 3, nil},
 			},
 			[]node.Node{
-				&node.SeqNumBox{
+				&node.SequentialNumberBox{
 					&node.RankedHanging{"NumberedHeading", 2, nil},
 					[]int{1},
 				},
-				&node.SeqNumBox{
+				&node.SequentialNumberBox{
 					&node.RankedHanging{"NumberedHeading", 3, nil},
 					[]int{1, 1},
 				},
@@ -66,7 +66,7 @@ func TestTransform(t *testing.T) {
 				&node.RankedHanging{"NumberedHeading", 3, nil},
 			},
 			[]node.Node{
-				&node.SeqNumBox{
+				&node.SequentialNumberBox{
 					&node.RankedHanging{"NumberedHeading", 3, nil},
 					[]int{0, 1},
 				},
@@ -82,19 +82,19 @@ func TestTransform(t *testing.T) {
 				&node.RankedHanging{"NumberedHeading", 3, nil},
 			},
 			[]node.Node{
-				&node.SeqNumBox{
+				&node.SequentialNumberBox{
 					&node.RankedHanging{"NumberedHeading", 2, nil},
 					[]int{1},
 				},
-				&node.SeqNumBox{
+				&node.SequentialNumberBox{
 					&node.RankedHanging{"NumberedHeading", 3, nil},
 					[]int{1, 1},
 				},
-				&node.SeqNumBox{
+				&node.SequentialNumberBox{
 					&node.RankedHanging{"NumberedHeading", 2, nil},
 					[]int{2},
 				},
-				&node.SeqNumBox{
+				&node.SequentialNumberBox{
 					&node.RankedHanging{"NumberedHeading", 3, nil},
 					[]int{2, 1},
 				},
@@ -112,7 +112,7 @@ func TestTransform(t *testing.T) {
 			[]node.Node{
 				&node.Sticky{"SA", false, []node.Block{
 					&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-					&node.SeqNumBox{
+					&node.SequentialNumberBox{
 						&node.RankedHanging{"NumberedHeading", 2, nil},
 						[]int{1},
 					},
@@ -134,7 +134,7 @@ func TestTransform(t *testing.T) {
 				&node.Sticky{"SB", true, []node.Block{
 					&node.Sticky{"SA", false, []node.Block{
 						&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-						&node.SeqNumBox{
+						&node.SequentialNumberBox{
 							&node.RankedHanging{"NumberedHeading", 2, nil},
 							[]int{1},
 						},

@@ -55,7 +55,7 @@ func main() {
 	}
 
 	nodes = node.BlocksToNodes(blocks)
-	nodes = transformer.Apply(nodes, transformer.Defaults(conf))
+	nodes = transformer.Apply(nodes, conf.DefaultTransformers())
 
 	if *stringify {
 		stringifier.StringifyTo(os.Stdout, nodes...)
@@ -64,10 +64,10 @@ func main() {
 	if format == "fmt" {
 		printer.Fprint(os.Stdout, conf.PrinterElements(), nodes)
 	} else {
-		aggregates := aggregator.Aggregate(conf.Aggregates, nodes)
+		aggregates := aggregator.Apply(nodes, conf.DefaultAggregators())
 
 		data := map[string]interface{}{
-			"Aggregates": aggregates,
+			"aggregates": aggregates,
 		}
 
 		tmpl := template.New(format)

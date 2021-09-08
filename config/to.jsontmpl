@@ -162,7 +162,7 @@
 			"templates": {
 				"html": '''
 <h{{.Rank}} id="{{.TextContent}}" {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
-	<span style="float:left">{{.SeqNum}}&nbsp;</span>
+	<span style="float:left">{{.SequentialNumber}}&nbsp;</span>
 
 	{{- range .BlockChildren}}
 		{{render .}}
@@ -214,14 +214,14 @@
 <div {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
 	<p>{{range .BlockChildren}}{{render .}}{{end}}</p>
 
-	{{block "grouper" groupBySeqNum .Aggregates.Headings}}
+	{{block "grouper" groupBySequentialNumber .aggregates.sequentialNumbers.numberedHeadings}}
 		<ul>
 			{{range .}}
-				{{if isSeqNumGroup .}}
+				{{if isSequentialNumberGroup .}}
 					{{template "grouper" .}}
 				{{else}}
 					<li>
-						<a href="#{{.ID}}">{{.SeqNum}} {{.Text}}</a>
+						<a href="#{{.ID}}">{{.SequentialNumber}} {{.Text}}</a>
 					</li>
 				{{end}}
 			{{end}}
@@ -459,10 +459,11 @@
 			}
 		}
 	],
-	"aggregates": [
-		{
-			"name": "Headings",
-			"elements": ["NumberedHeading"]
+	"aggregates": {
+		"sequentialNumbers": {
+			"numberedHeadings": {
+				"elements": ["NumberedHeading"]
+			}
 		}
-	]
+	}
 }

@@ -3,7 +3,7 @@ package renderer
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/touchmarine/to/aggregator"
+	"github.com/touchmarine/to/aggregator/seqnum"
 	"strings"
 	"testing"
 )
@@ -68,121 +68,121 @@ func TestBody(t *testing.T) {
 	}
 }
 
-func TestGroupBySeqNum(t *testing.T) {
+func TestGroupBySequentialNumber(t *testing.T) {
 	cases := []struct {
 		name string
-		in   []aggregator.Item
-		out  seqNumGroup
+		in   seqnum.Aggregate
+		out  sequentialNumberGroup
 	}{
 		{
 			"single",
-			[]aggregator.Item{
+			seqnum.Aggregate{
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
 			},
-			seqNumGroup{
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+			sequentialNumberGroup{
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
 			},
 		},
 		{
 			"1 depth",
-			[]aggregator.Item{
+			seqnum.Aggregate{
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{2},
-					SeqNum:  "2",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{2},
+					SequentialNumber:  "2",
 				},
 			},
-			seqNumGroup{
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+			sequentialNumberGroup{
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{2},
-					SeqNum:  "2",
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{2},
+					SequentialNumber:  "2",
 				},
 			},
 		},
 		{
 			"2 depths",
-			[]aggregator.Item{
+			seqnum.Aggregate{
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1, 1},
-					SeqNum:  "1.1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1, 1},
+					SequentialNumber:  "1.1",
 				},
 			},
-			seqNumGroup{
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+			sequentialNumberGroup{
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
-				seqNumGroup{
-					seqNumItem{
-						Element: "NumberedHeading",
-						SeqNums: []int{1, 1},
-						SeqNum:  "1.1",
+				sequentialNumberGroup{
+					sequentialNumberParticle{
+						Element:           "NumberedHeading",
+						SequentialNumbers: []int{1, 1},
+						SequentialNumber:  "1.1",
 					},
 				},
 			},
 		},
 		{
 			"3 depths",
-			[]aggregator.Item{
+			seqnum.Aggregate{
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1, 1},
-					SeqNum:  "1.1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1, 1},
+					SequentialNumber:  "1.1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1, 1, 1},
-					SeqNum:  "1.1.1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1, 1, 1},
+					SequentialNumber:  "1.1.1",
 				},
 			},
-			seqNumGroup{
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+			sequentialNumberGroup{
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
-				seqNumGroup{
-					seqNumItem{
-						Element: "NumberedHeading",
-						SeqNums: []int{1, 1},
-						SeqNum:  "1.1",
+				sequentialNumberGroup{
+					sequentialNumberParticle{
+						Element:           "NumberedHeading",
+						SequentialNumbers: []int{1, 1},
+						SequentialNumber:  "1.1",
 					},
-					seqNumGroup{
-						seqNumItem{
-							Element: "NumberedHeading",
-							SeqNums: []int{1, 1, 1},
-							SeqNum:  "1.1.1",
+					sequentialNumberGroup{
+						sequentialNumberParticle{
+							Element:           "NumberedHeading",
+							SequentialNumbers: []int{1, 1, 1},
+							SequentialNumber:  "1.1.1",
 						},
 					},
 				},
@@ -190,199 +190,199 @@ func TestGroupBySeqNum(t *testing.T) {
 		},
 		{
 			"decrease depth",
-			[]aggregator.Item{
+			seqnum.Aggregate{
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1, 1},
-					SeqNum:  "1.1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1, 1},
+					SequentialNumber:  "1.1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
 			},
-			seqNumGroup{
-				seqNumGroup{
-					seqNumItem{
-						Element: "NumberedHeading",
-						SeqNums: []int{1, 1},
-						SeqNum:  "1.1",
+			sequentialNumberGroup{
+				sequentialNumberGroup{
+					sequentialNumberParticle{
+						Element:           "NumberedHeading",
+						SequentialNumbers: []int{1, 1},
+						SequentialNumber:  "1.1",
 					},
 				},
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
 			},
 		},
 		{
 			"decrease depth 1",
-			[]aggregator.Item{
+			seqnum.Aggregate{
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1, 1},
-					SeqNum:  "1.1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1, 1},
+					SequentialNumber:  "1.1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{2},
-					SeqNum:  "2",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{2},
+					SequentialNumber:  "2",
 				},
 			},
-			seqNumGroup{
-				seqNumGroup{
-					seqNumItem{
-						Element: "NumberedHeading",
-						SeqNums: []int{1, 1},
-						SeqNum:  "1.1",
+			sequentialNumberGroup{
+				sequentialNumberGroup{
+					sequentialNumberParticle{
+						Element:           "NumberedHeading",
+						SequentialNumbers: []int{1, 1},
+						SequentialNumber:  "1.1",
 					},
 				},
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{2},
-					SeqNum:  "2",
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{2},
+					SequentialNumber:  "2",
 				},
 			},
 		},
 		{
 			"decrease depth 2",
-			[]aggregator.Item{
+			seqnum.Aggregate{
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1, 1},
-					SeqNum:  "1.1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1, 1},
+					SequentialNumber:  "1.1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{2, 1},
-					SeqNum:  "2.1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{2, 1},
+					SequentialNumber:  "2.1",
 				},
 			},
-			seqNumGroup{
-				seqNumGroup{
-					seqNumItem{
-						Element: "NumberedHeading",
-						SeqNums: []int{1, 1},
-						SeqNum:  "1.1",
+			sequentialNumberGroup{
+				sequentialNumberGroup{
+					sequentialNumberParticle{
+						Element:           "NumberedHeading",
+						SequentialNumbers: []int{1, 1},
+						SequentialNumber:  "1.1",
 					},
 				},
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
-				seqNumGroup{
-					seqNumItem{
-						Element: "NumberedHeading",
-						SeqNums: []int{2, 1},
-						SeqNum:  "2.1",
+				sequentialNumberGroup{
+					sequentialNumberParticle{
+						Element:           "NumberedHeading",
+						SequentialNumbers: []int{2, 1},
+						SequentialNumber:  "2.1",
 					},
 				},
 			},
 		},
 		{
 			"increase depth",
-			[]aggregator.Item{
+			seqnum.Aggregate{
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1, 1},
-					SeqNum:  "1.1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1, 1},
+					SequentialNumber:  "1.1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{2},
-					SeqNum:  "2",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{2},
+					SequentialNumber:  "2",
 				},
 			},
-			seqNumGroup{
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+			sequentialNumberGroup{
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
-				seqNumGroup{
-					seqNumItem{
-						Element: "NumberedHeading",
-						SeqNums: []int{1, 1},
-						SeqNum:  "1.1",
+				sequentialNumberGroup{
+					sequentialNumberParticle{
+						Element:           "NumberedHeading",
+						SequentialNumbers: []int{1, 1},
+						SequentialNumber:  "1.1",
 					},
 				},
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{2},
-					SeqNum:  "2",
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{2},
+					SequentialNumber:  "2",
 				},
 			},
 		},
 		{
 			"increase depth",
-			[]aggregator.Item{
+			seqnum.Aggregate{
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{1, 1},
-					SeqNum:  "1.1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1, 1},
+					SequentialNumber:  "1.1",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{2},
-					SeqNum:  "2",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{2},
+					SequentialNumber:  "2",
 				},
 				{
-					Element: "NumberedHeading",
-					SeqNums: []int{2, 1},
-					SeqNum:  "2.1",
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{2, 1},
+					SequentialNumber:  "2.1",
 				},
 			},
-			seqNumGroup{
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{1},
-					SeqNum:  "1",
+			sequentialNumberGroup{
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{1},
+					SequentialNumber:  "1",
 				},
-				seqNumGroup{
-					seqNumItem{
-						Element: "NumberedHeading",
-						SeqNums: []int{1, 1},
-						SeqNum:  "1.1",
+				sequentialNumberGroup{
+					sequentialNumberParticle{
+						Element:           "NumberedHeading",
+						SequentialNumbers: []int{1, 1},
+						SequentialNumber:  "1.1",
 					},
 				},
-				seqNumItem{
-					Element: "NumberedHeading",
-					SeqNums: []int{2},
-					SeqNum:  "2",
+				sequentialNumberParticle{
+					Element:           "NumberedHeading",
+					SequentialNumbers: []int{2},
+					SequentialNumber:  "2",
 				},
-				seqNumGroup{
-					seqNumItem{
-						Element: "NumberedHeading",
-						SeqNums: []int{2, 1},
-						SeqNum:  "2.1",
+				sequentialNumberGroup{
+					sequentialNumberParticle{
+						Element:           "NumberedHeading",
+						SequentialNumbers: []int{2, 1},
+						SequentialNumber:  "2.1",
 					},
 				},
 			},
@@ -391,7 +391,7 @@ func TestGroupBySeqNum(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			a := groupBySeqNum(c.in)
+			a := groupBySequentialNumber(c.in)
 
 			got := jsonMarshal(t, a)
 			want := jsonMarshal(t, c.out)

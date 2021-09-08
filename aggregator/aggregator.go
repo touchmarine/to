@@ -1,75 +1,65 @@
+// package aggregator contains functions and types related to aggregators.
+//
+// Aggregators traverse nodes and aggregate (collect) data we are interested in.
+// For example, we use the sequential number aggregator to generate table of
+// contents by aggregating heading nodes and attaching their sequential numbers
+// to them.
+//
+// In our context:
+// - aggregate=result
+// - aggregator=implementation
 package aggregator
 
 import (
-	"fmt"
-	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 )
 
-type Item struct {
-	Element string
-	ID      string
-	Text    string
-	SeqNums []int
-	SeqNum  string
+// AggregatorMap=map["aggregatorName"]["aggregateName"]Aggregator
+type AggregatorMap map[string]map[string]Aggregator
+
+// Aggregator is an object that aggregates (collects) nodes.
+type Aggregator interface {
+	Aggregate(nodes []node.Node) Aggregate
 }
 
-type aggregator struct {
-	aggs []config.Aggregate
-	m    map[string][]Item
+// AggregatorFunc is a convenience type that implements the Aggregator interface
+// for the given function.
+type AggregatorFunc func([]node.Node) Aggregate
+
+// Aggregate implements the Aggregator interface.
+func (a AggregatorFunc) Aggregate(nodes []node.Node) Aggregate {
+	return a(nodes)
 }
 
-func Aggregate(aggregates []config.Aggregate, nodes []node.Node) map[string][]Item {
-	a := aggregator{
-		aggs: aggregates,
-		m:    make(map[string][]Item),
-	}
-	return a.aggregate(nodes)
+// AggregateMap=map["aggregatorName"]map["aggregateName"]Aggregate
+//
+// For example:
+// 	aggregatorName="sequentialNumbers",
+// 	aggregateName="numberedHeadings" and
+// 	[]Aggregate is the result.
+type AggregateMap map[string]map[string]Aggregate
+
+// Aggregate is an aggregate of Particles.
+type Aggregate interface {
+	Particles() []Particle
 }
 
-func (a *aggregator) aggregate(nodes []node.Node) map[string][]Item {
-	for _, n := range nodes {
-		var item Item
+// Particle is an element of the aggregate.
+type Particle interface {
+	Particle()
+}
 
-		switch m := n.(type) {
-		case *node.Sticky:
-			a.aggregate(node.BlocksToNodes(m.BlockChildren()))
-		case node.Boxed:
-			switch k := n.(type) {
-			case *node.SeqNumBox:
-				item.SeqNums = k.SeqNums
-				item.SeqNum = k.SeqNum()
-			default:
-				panic(fmt.Sprintf("aggregate: unexpected Boxed node %T", n))
-			}
-
-			n = m.Unbox()
+// Apply applies the given aggregators to the given nodes.
+func Apply(nodes []node.Node, aggregatorMap AggregatorMap) AggregateMap {
+	m := AggregateMap{}
+	for namea, ma := range aggregatorMap {
+		if m[namea] == nil {
+			m[namea] = map[string]Aggregate{}
 		}
 
-		name := n.Node()
-
-		if a.isAggregate(name) {
-			item.Element = name
-			txt := node.ExtractText(n)
-			item.ID = txt
-			item.Text = txt
-
-			for _, ag := range a.aggs {
-				a.m[ag.Name] = append(a.m[ag.Name], item)
-			}
+		for nameb, aggregator := range ma {
+			m[namea][nameb] = aggregator.Aggregate(nodes)
 		}
 	}
-
-	return a.m
-}
-
-func (a *aggregator) isAggregate(name string) bool {
-	for _, ag := range a.aggs {
-		for _, el := range ag.Elements {
-			if el == name {
-				return true
-			}
-		}
-	}
-	return false
+	return m
 }

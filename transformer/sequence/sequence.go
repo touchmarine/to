@@ -32,7 +32,7 @@ func (s *sequencer) sequence(nodes []node.Node) []node.Node {
 			s.increment(name, rank)
 			seqNums := s.seqNums(name, rank)
 
-			nodes[i] = &node.SeqNumBox{n, seqNums}
+			nodes[i] = &node.SequentialNumberBox{n, seqNums}
 		}
 	}
 

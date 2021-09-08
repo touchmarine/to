@@ -452,24 +452,24 @@ func (c *Composite) Secondary() Inline {
 	return c.Secondary0
 }
 
-type SeqNumBox struct {
-	Nod     Node
-	SeqNums []int
+type SequentialNumberBox struct {
+	Nod               Node
+	SequentialNumbers []int
 }
 
-func (s SeqNumBox) Node() string {
-	return fmt.Sprintf("SeqNumBox(%s%s)", s.Nod.Node(), s.SeqNum())
+func (s SequentialNumberBox) Node() string {
+	return fmt.Sprintf("SequentialNumberBox(%s%s)", s.Nod.Node(), s.SequentialNumber())
 }
 
-func (s SeqNumBox) Block() {}
+func (s SequentialNumberBox) Block() {}
 
-func (s *SeqNumBox) Unbox() Node {
+func (s *SequentialNumberBox) Unbox() Node {
 	return s.Nod
 }
 
-func (s *SeqNumBox) SeqNum() string {
+func (s *SequentialNumberBox) SequentialNumber() string {
 	var a []string
-	for _, n := range s.SeqNums {
+	for _, n := range s.SequentialNumbers {
 		a = append(a, strconv.FormatUint(uint64(n), 10))
 	}
 	return strings.Join(a, ".")

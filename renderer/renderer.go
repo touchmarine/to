@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/touchmarine/to/aggregator"
+	"github.com/touchmarine/to/aggregator/seqnum"
 	"github.com/touchmarine/to/node"
 	"html/template"
 	"io"
@@ -12,19 +12,21 @@ import (
 	"strings"
 )
 
+const trace = false
+
 var FuncMap = template.FuncMap{
-	"mapAny":        mapAny,
-	"map":           mapString,
-	"get":           get,
-	"set":           set,
-	"hasKey":        hasKey,
-	"head":          head,
-	"body":          body,
-	"groupBySeqNum": groupBySeqNum,
-	"isSeqNumGroup": isSeqNumGroup,
-	"parseAttrs":    parseAttrs,
-	"htmlAttrs":     htmlAttrs,
-	"trimSpacing":   trimSpacing,
+	"mapAny":                  mapAny,
+	"map":                     mapString,
+	"get":                     get,
+	"set":                     set,
+	"hasKey":                  hasKey,
+	"head":                    head,
+	"body":                    body,
+	"groupBySequentialNumber": groupBySequentialNumber,
+	"isSequentialNumberGroup": isSequentialNumberGroup,
+	"parseAttrs":              parseAttrs,
+	"htmlAttrs":               htmlAttrs,
+	"trimSpacing":             trimSpacing,
 }
 
 func New(tmpl *template.Template, data map[string]interface{}) *Renderer {
@@ -133,9 +135,9 @@ func fillData(data map[string]interface{}, n node.Node) {
 
 	if _, ok := n.(node.Boxed); ok {
 		switch k := n.(type) {
-		case *node.SeqNumBox:
-			data["SeqNums"] = k.SeqNums
-			data["SeqNum"] = k.SeqNum()
+		case *node.SequentialNumberBox:
+			data["SequentialNumbers"] = k.SequentialNumbers
+			data["SequentialNumber"] = k.SequentialNumber()
 		default:
 			panic(fmt.Sprintf("render: unexpected Boxed node %T", n))
 		}
@@ -249,46 +251,44 @@ func body(lines []string) string {
 	return ""
 }
 
-type seqNumNode interface {
-	seqNumNode()
+type sequentialNumberNode interface {
+	sequentialNumberNode()
 }
 
-type seqNumGroup []seqNumNode
+type sequentialNumberGroup []sequentialNumberNode
 
-func (g seqNumGroup) seqNumNode() {}
+func (sequentialNumberGroup) sequentialNumberNode() {}
 
-type seqNumItem aggregator.Item
+type sequentialNumberParticle seqnum.Particle
 
-func (i seqNumItem) seqNumNode() {}
+func (sequentialNumberParticle) sequentialNumberNode() {}
 
-func isSeqNumGroup(v interface{}) bool {
-	_, ok := v.(seqNumGroup)
+func isSequentialNumberGroup(v interface{}) bool {
+	_, ok := v.(sequentialNumberGroup)
 	return ok
 }
 
-const trace = false
-
-func groupBySeqNum(items []aggregator.Item) seqNumGroup {
-	s := seqNumGrouper{}
-	return s.groupBySeqNum(items)
+func groupBySequentialNumber(aggregate seqnum.Aggregate) sequentialNumberGroup {
+	s := sequentialNumberGrouper{}
+	return s.groupBySequentialNumber(aggregate)
 }
 
-// seqNumGrouper groups aggregator items by their sequence number.
-type seqNumGrouper struct {
+// sequentialNumberGrouper groups seqnum.Aggregate by their sequence number.
+type sequentialNumberGrouper struct {
 	lowest int
 	indent int
 }
 
-func (s *seqNumGrouper) groupBySeqNum(items []aggregator.Item) seqNumGroup {
+func (s *sequentialNumberGrouper) groupBySequentialNumber(aggregate seqnum.Aggregate) sequentialNumberGroup {
 	if trace {
-		defer s.trace("groupBySeqNum")()
+		defer s.trace("groupBySequentialNumber")()
 	}
 
-	var group seqNumGroup
+	var group sequentialNumberGroup
 
 	var depth int
-	if len(items) > 0 {
-		depth = len(items[0].SeqNums)
+	if len(aggregate) > 0 {
+		depth = len(aggregate[0].SequentialNumbers)
 	}
 
 	if trace {
@@ -302,12 +302,12 @@ func (s *seqNumGrouper) groupBySeqNum(items []aggregator.Item) seqNumGroup {
 		s.lowest = depth
 	}
 
-	for i := 0; i < len(items); i++ {
-		item := items[i]
-		cur := len(item.SeqNums) // current depth
+	for i := 0; i < len(aggregate); i++ {
+		particle := aggregate[i]
+		cur := len(particle.SequentialNumbers) // current depth
 
 		if trace {
-			s.printf("item %s", item.SeqNum)
+			s.printf("particle %s", particle.SequentialNumber)
 		}
 
 		if cur > depth {
@@ -315,7 +315,7 @@ func (s *seqNumGrouper) groupBySeqNum(items []aggregator.Item) seqNumGroup {
 				s.printf("%d > depth:", cur)
 			}
 
-			g := s.groupBySeqNum(items[i:])
+			g := s.groupBySequentialNumber(aggregate[i:])
 			i += len(g) - 1
 			group = append(group, g)
 		} else if cur == depth {
@@ -323,16 +323,16 @@ func (s *seqNumGrouper) groupBySeqNum(items []aggregator.Item) seqNumGroup {
 				s.printf("%d == depth, add to group", cur)
 			}
 
-			group = append(group, seqNumItem(item))
+			group = append(group, sequentialNumberParticle(particle))
 		} else if cur < depth {
 			if trace {
 				s.printf("%d < depth:", cur)
 			}
 
 			if cur < s.lowest {
-				g := s.groupBySeqNum(items[i:])
+				g := s.groupBySequentialNumber(aggregate[i:])
 				i += len(g) - 1
-				group = append(seqNumGroup{group}, g...)
+				group = append(sequentialNumberGroup{group}, g...)
 			}
 			break
 		}
@@ -341,7 +341,7 @@ func (s *seqNumGrouper) groupBySeqNum(items []aggregator.Item) seqNumGroup {
 	return group
 }
 
-func (s *seqNumGrouper) trace(msg string) func() {
+func (s *sequentialNumberGrouper) trace(msg string) func() {
 	s.printf("%s (", msg)
 	s.indent++
 
@@ -351,11 +351,11 @@ func (s *seqNumGrouper) trace(msg string) func() {
 	}
 }
 
-func (s *seqNumGrouper) printf(format string, v ...interface{}) {
+func (s *sequentialNumberGrouper) printf(format string, v ...interface{}) {
 	s.print(fmt.Sprintf(format, v...))
 }
 
-func (s *seqNumGrouper) print(msg string) {
+func (s *sequentialNumberGrouper) print(msg string) {
 	fmt.Println(strings.Repeat("\t", s.indent) + msg)
 }
 

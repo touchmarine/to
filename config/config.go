@@ -5,11 +5,16 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"github.com/touchmarine/to/aggregator"
+	"github.com/touchmarine/to/aggregator/seqnum"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
+	"github.com/touchmarine/to/transformer"
 	"github.com/touchmarine/to/transformer/composite"
 	"github.com/touchmarine/to/transformer/group"
+	"github.com/touchmarine/to/transformer/paragraph"
+	"github.com/touchmarine/to/transformer/sequence"
 	"github.com/touchmarine/to/transformer/sticky"
 	"html/template"
 )
@@ -41,7 +46,13 @@ type Config struct {
 	Composites []Composite `json:"composites"`
 	Stickies   []Sticky    `json:"stickies"`
 	Groups     []Group     `json:"groups"`
-	Aggregates []Aggregate `json:"aggregates"`
+	Aggregates Aggregates  `json:"aggregates"`
+}
+
+type Aggregates struct {
+	SequentialNumbers map[string]struct {
+		Elements []string `json:"elements"`
+	} `json:"sequentialNumbers"`
 }
 
 func (c *Config) ParserElements() parser.ElementMap {
@@ -221,11 +232,28 @@ type Group struct {
 	Templates map[string]string `json:"templates"`
 }
 
-// Aggregate is an aggregate of Elements.
-//
-// One current usage is generating table of contents based on an aggregate of
-// headings.
-type Aggregate struct {
-	Name     string   `json:"name"`
-	Elements []string `json"elements"`
+func (c *Config) DefaultTransformers() []transformer.Transformer {
+	grouper := group.Transformer{c.TransformerGroups()}
+	compositer := composite.Transformer{c.TransformerComposites()}
+	stickier := sticky.Transformer{c.TransformerStickies()}
+
+	return []transformer.Transformer{
+		transformer.Func(paragraph.Transform),
+		grouper,
+		compositer,
+		stickier,
+		transformer.Func(sequence.Transform),
+	}
+}
+
+func (c *Config) DefaultAggregators() map[string]map[string]aggregator.Aggregator {
+	m := map[string]map[string]aggregator.Aggregator{}
+	for n, a := range c.Aggregates.SequentialNumbers {
+		if m["sequentialNumbers"] == nil {
+			m["sequentialNumbers"] = map[string]aggregator.Aggregator{}
+		}
+
+		m["sequentialNumbers"][n] = seqnum.Aggregator{a.Elements}
+	}
+	return m
 }

@@ -123,7 +123,7 @@
 			"type": "rankedHanging",
 			"delimiter": "#",
 			"templates": {
-				"html": "<h{{.Rank}} id=\"{{.TextContent}}\" {{- with .Attrs}} {{htmlAttrs .}}{{end}}>\n\t<span style=\"float:left\">{{.SeqNum}}&nbsp;</span>\n\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{end -}}\n</h{{.Rank}}>"
+				"html": "<h{{.Rank}} id=\"{{.TextContent}}\" {{- with .Attrs}} {{htmlAttrs .}}{{end}}>\n\t<span style=\"float:left\">{{.SequentialNumber}}&nbsp;</span>\n\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{end -}}\n</h{{.Rank}}>"
 			}
 		},
 		{
@@ -164,7 +164,7 @@
 			"delimiter": ".toc",
 			"doNotRemove": true,
 			"templates": {
-				"html": "<div {{- with .Attrs}} {{htmlAttrs .}}{{end}}>\n\t<p>{{range .BlockChildren}}{{render .}}{{end}}</p>\n\n\t{{block \"grouper\" groupBySeqNum .Aggregates.Headings}}\n\t\t<ul>\n\t\t\t{{range .}}\n\t\t\t\t{{if isSeqNumGroup .}}\n\t\t\t\t\t{{template \"grouper\" .}}\n\t\t\t\t{{else}}\n\t\t\t\t\t<li>\n\t\t\t\t\t\t<a href=\"#{{.ID}}\">{{.SeqNum}} {{.Text}}</a>\n\t\t\t\t\t</li>\n\t\t\t\t{{end}}\n\t\t\t{{end}}\n\t\t</ul>\n\t{{end}}\n</div>"
+				"html": "<div {{- with .Attrs}} {{htmlAttrs .}}{{end}}>\n\t<p>{{range .BlockChildren}}{{render .}}{{end}}</p>\n\n\t{{block \"grouper\" groupBySequentialNumber .aggregates.sequentialNumbers.numberedHeadings}}\n\t\t<ul>\n\t\t\t{{range .}}\n\t\t\t\t{{if isSequentialNumberGroup .}}\n\t\t\t\t\t{{template \"grouper\" .}}\n\t\t\t\t{{else}}\n\t\t\t\t\t<li>\n\t\t\t\t\t\t<a href=\"#{{.ID}}\">{{.SequentialNumber}} {{.Text}}</a>\n\t\t\t\t\t</li>\n\t\t\t\t{{end}}\n\t\t\t{{end}}\n\t\t</ul>\n\t{{end}}\n</div>"
 			}
 		},
 
@@ -321,10 +321,11 @@
 			}
 		}
 	],
-	"aggregates": [
-		{
-			"name": "Headings",
-			"elements": ["NumberedHeading"]
+	"aggregates": {
+		"sequentialNumbers": {
+			"numberedHeadings": {
+				"elements": ["NumberedHeading"]
+			}
 		}
-	]
+	}
 }

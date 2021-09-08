@@ -181,7 +181,7 @@ func (p *printer) unbox() bool {
 		}()
 
 		switch m.(type) {
-		case *node.SeqNumBox:
+		case *node.SequentialNumberBox:
 			n = m.Unbox()
 			if n == nil {
 				if trace {

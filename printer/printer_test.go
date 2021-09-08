@@ -606,7 +606,7 @@ func test(t *testing.T, conf *config.Config, in []byte, out string) {
 	}
 
 	nodes := node.BlocksToNodes(blocks)
-	nodes = transformer.Apply(nodes, transformer.Defaults(conf))
+	nodes = transformer.Apply(nodes, conf.DefaultTransformers())
 
 	var b strings.Builder
 	printer.Fprint(&b, conf.PrinterElements(), nodes)
