@@ -1,23 +1,17 @@
 {
-	"rootTemplates": {
-		"html": '''
+	"root": {
+		"templates": {
+			"html": '''
 <html>
 <body>
 {{render .}}
 </body>
 </html>'''
+		}	
 	},
 	"Text": {
 		"templates": {
 			"html": "{{.Content}}"
-		}
-	},
-	"TextBlock": {
-		"templates": {
-			"html": '''
-{{- range .InlineChildren}}
-	{{- render .}}
-{{- end}}'''
 		}
 	},
 	"Paragraph": {
@@ -26,6 +20,17 @@
 		}
 	},
 	"elements": [
+		{
+			"name": "TextBlock",
+			"type": "leaf",
+			"templates": {
+				"html": '''
+{{- range .InlineChildren}}
+	{{- render .}}
+{{end -}}
+'''
+			}
+		},
 		{
 			"name": "LineBreak",
 			"type": "prefixed",

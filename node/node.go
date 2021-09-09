@@ -21,7 +21,8 @@ type Type int
 // Types of nodes
 const (
 	// blocks
-	TypeVerbatimLine Type = iota
+	TypeLeaf Type = iota
+	TypeVerbatimLine
 	TypeWalled
 	TypeVerbatimWalled
 	TypeHanging
@@ -37,6 +38,8 @@ const (
 
 func (t *Type) UnmarshalText(text []byte) error {
 	switch s := strings.ToLower(string(text)); s {
+	case "leaf":
+		*t = TypeLeaf
 	case "verbatimline":
 		*t = TypeVerbatimLine
 	case "walled":
@@ -65,7 +68,7 @@ func (t *Type) UnmarshalText(text []byte) error {
 
 // TypeCategory is used by parser to determine node category based on type.
 func TypeCategory(typ Type) Category {
-	if typ > 5 {
+	if typ > 6 {
 		return CategoryInline
 	}
 	return CategoryBlock
@@ -178,23 +181,23 @@ func InlinesToNodes(inlines []Inline) []Node {
 	return nodes
 }
 
-type BasicBlock struct {
+type Leaf struct {
 	Name     string
 	Children []Inline
 }
 
-func (b BasicBlock) Node() string {
-	return b.Name
+func (l Leaf) Node() string {
+	return l.Name
 }
 
-func (b BasicBlock) Block() {}
+func (l Leaf) Block() {}
 
-func (b *BasicBlock) InlineChildren() []Inline {
-	return b.Children
+func (l *Leaf) InlineChildren() []Inline {
+	return l.Children
 }
 
-func (b *BasicBlock) SetInlineChildren(children []Inline) {
-	b.Children = children
+func (l *Leaf) SetInlineChildren(children []Inline) {
+	l.Children = children
 }
 
 type VerbatimLine struct {

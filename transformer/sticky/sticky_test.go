@@ -27,12 +27,12 @@ func TestTransform(t *testing.T) {
 			"before",
 			[]node.Node{
 				&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 			},
 			[]node.Node{
 				&node.Sticky{"SA", false, []node.Block{
 					&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 			},
 		},
@@ -52,24 +52,24 @@ func TestTransform(t *testing.T) {
 			[]node.Node{
 				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
 				&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("c")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("c")}},
 			},
 			[]node.Node{
 				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
 				&node.Sticky{"SA", false, []node.Block{
 					&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("c")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("c")}},
 				}},
 			},
 		},
 		{
 			"before in after position",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 				&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
 			},
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 				&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
 			},
 		},
@@ -87,12 +87,12 @@ func TestTransform(t *testing.T) {
 		{
 			"after",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 				&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
 			},
 			[]node.Node{
 				&node.Sticky{"SB", true, []node.Block{
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 					&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
 				}},
 			},
@@ -111,13 +111,13 @@ func TestTransform(t *testing.T) {
 		{
 			"after sticky 1",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 				&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
 				&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
 			},
 			[]node.Node{
 				&node.Sticky{"SB", true, []node.Block{
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 					&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
 				}},
 				&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
@@ -127,11 +127,11 @@ func TestTransform(t *testing.T) {
 			"after in before position",
 			[]node.Node{
 				&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 			},
 			[]node.Node{
 				&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 			},
 		},
 
@@ -140,14 +140,14 @@ func TestTransform(t *testing.T) {
 			"before and after",
 			[]node.Node{
 				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("b")}},
 				&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
 			},
 			[]node.Node{
 				&node.Sticky{"SB", true, []node.Block{
 					&node.Sticky{"SA", false, []node.Block{
 						&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+						&node.Leaf{"TextBlock", []node.Inline{node.Text("b")}},
 					}},
 					&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
 				}},
@@ -158,7 +158,7 @@ func TestTransform(t *testing.T) {
 			[]node.Node{
 				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
 				&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("c")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("c")}},
 				&node.VerbatimWalled{"B", [][]byte{[]byte("d")}},
 				&node.VerbatimWalled{"B", [][]byte{[]byte("e")}},
 			},
@@ -167,7 +167,7 @@ func TestTransform(t *testing.T) {
 				&node.Sticky{"SB", true, []node.Block{
 					&node.Sticky{"SA", false, []node.Block{
 						&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("c")}},
+						&node.Leaf{"TextBlock", []node.Inline{node.Text("c")}},
 					}},
 					&node.VerbatimWalled{"B", [][]byte{[]byte("d")}},
 				}},
@@ -181,7 +181,7 @@ func TestTransform(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"C", []node.Block{
 					&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("b")}},
 					&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
 				}},
 			},
@@ -190,7 +190,7 @@ func TestTransform(t *testing.T) {
 					&node.Sticky{"SB", true, []node.Block{
 						&node.Sticky{"SA", false, []node.Block{
 							&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-							&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+							&node.Leaf{"TextBlock", []node.Inline{node.Text("b")}},
 						}},
 						&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
 					}},
@@ -204,7 +204,7 @@ func TestTransform(t *testing.T) {
 				&node.Group{"G", []node.Block{
 					&node.Hanging{"GI", []node.Block{
 						&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+						&node.Leaf{"TextBlock", []node.Inline{node.Text("b")}},
 						&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
 					}},
 				}},
@@ -217,7 +217,7 @@ func TestTransform(t *testing.T) {
 							&node.Sticky{"SB", true, []node.Block{
 								&node.Sticky{"SA", false, []node.Block{
 									&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-									&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+									&node.Leaf{"TextBlock", []node.Inline{node.Text("b")}},
 								}},
 								&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
 							}},

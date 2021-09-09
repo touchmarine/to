@@ -16,36 +16,36 @@ func TestTransform(t *testing.T) {
 		{
 			"one textblock",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 			},
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 			},
 		},
 		{
 			"two textblocks",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("b")}},
 			},
 			[]node.Node{
 				&node.Group{"Paragraph", []node.Block{
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 				&node.Group{"Paragraph", []node.Block{
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("b")}},
 				}},
 			},
 		},
 		{
 			"before walled",
 			[]node.Node{
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 				&node.Walled{"Blockquote", nil},
 			},
 			[]node.Node{
 				&node.Group{"Paragraph", []node.Block{
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 				&node.Walled{"Blockquote", nil},
 			},
@@ -54,12 +54,12 @@ func TestTransform(t *testing.T) {
 			"after walled",
 			[]node.Node{
 				&node.Walled{"Blockquote", nil},
-				&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+				&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 			},
 			[]node.Node{
 				&node.Walled{"Blockquote", nil},
 				&node.Group{"Paragraph", []node.Block{
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 			},
 		},
@@ -69,12 +69,12 @@ func TestTransform(t *testing.T) {
 			"one nested textblock",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 			},
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 				}},
 			},
 		},
@@ -82,17 +82,17 @@ func TestTransform(t *testing.T) {
 			"two nested textblocks",
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
-					&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
+					&node.Leaf{"TextBlock", []node.Inline{node.Text("b")}},
 				}},
 			},
 			[]node.Node{
 				&node.Walled{"Blockquote", []node.Block{
 					&node.Group{"Paragraph", []node.Block{
-						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("a")}},
+						&node.Leaf{"TextBlock", []node.Inline{node.Text("a")}},
 					}},
 					&node.Group{"Paragraph", []node.Block{
-						&node.BasicBlock{"TextBlock", []node.Inline{node.Text("b")}},
+						&node.Leaf{"TextBlock", []node.Inline{node.Text("b")}},
 					}},
 				}},
 			},

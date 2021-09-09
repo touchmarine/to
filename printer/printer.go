@@ -11,6 +11,7 @@ import (
 
 const trace = false
 
+// ElementMap maps Elements to Names.
 type ElementMap map[string]Element
 
 type Element struct {
@@ -47,6 +48,7 @@ type printer struct {
 	prefixes         []string
 	closingDelimiter string            // inline closing delimiter
 	replacementMap   map[string]string // replacement map for marker elements
+	leaf             string            // leaf element name
 
 	// tracing
 	indent int
@@ -54,10 +56,12 @@ type printer struct {
 
 func (p *printer) init() {
 	// add marker elements to replacment map
-	// marker elemetns are prefixed inline element with no matcher aka.
+	// marker elements are prefixed inline element with no matcher aka.
 	// elements that have no content
-	for _, e := range p.elementMap {
-		if e.Type == node.TypePrefixed && e.Matcher == "" {
+	for name, e := range p.elementMap {
+		if e.Type == node.TypeLeaf {
+			delete(p.elementMap, name)
+		} else if e.Type == node.TypePrefixed && e.Matcher == "" {
 			// marker, e.g., "\" line break, without content
 
 			if p.replacementMap == nil {
@@ -300,7 +304,7 @@ func (p *printer) printNode() {
 		panic(fmt.Sprintf("printer: unexpected node type %T", p.n))
 	}
 
-	if isTextBlock(p.n) && p.needBlockEscape() {
+	if _, isLeaf := p.n.(*node.Leaf); isLeaf && p.needBlockEscape() {
 		b.WriteString(`\`)
 	}
 
@@ -499,12 +503,12 @@ func (p *printer) prefix(w io.Writer, spacing prefixSpacing) {
 }
 
 func (p *printer) needBlockEscape() bool {
-	textBlock, isBasicBlock := p.n.(*node.BasicBlock)
-	if !isBasicBlock || p.n.Node() != "TextBlock" {
-		panic("printer: expected TextBlock")
+	leaf, isLeaf := p.n.(*node.Leaf)
+	if !isLeaf {
+		panic("printer: expected leaf node")
 	}
 
-	children := textBlock.InlineChildren()
+	children := leaf.InlineChildren()
 	if len(children) == 0 {
 		return false
 	}
@@ -729,82 +733,87 @@ func (p *printer) hasClosingDelimiterPrefix(content []byte) bool {
 }
 
 func (p *printer) delimiters() (string, string) {
+	if _, isLeaf := p.n.(*node.Leaf); isLeaf || p.n.Node() == "Text" || p.n.Node() == "Paragraph" {
+		return "", ""
+	}
+
+	e, found := p.elementMap[p.n.Node()]
+	if !found {
+		return "", ""
+	}
+
 	var pre, post string
 
-	switch name := p.n.Node(); name {
-	case "Text", "TextBlock", "Paragraph":
-	default:
-		e, found := p.elementMap[name]
-		if !found {
-			break
-		}
+	switch p.n.(type) {
+	case node.Block:
+		switch m := p.n.(type) {
+		case *node.Fenced:
+			pre = e.Delimiter
+			post = e.Delimiter
 
-		switch p.n.(type) {
-		case node.Block:
-			switch m := p.n.(type) {
-			case *node.Fenced:
-				pre = e.Delimiter
-				post = e.Delimiter
+			lines := m.Lines()
 
-				lines := m.Lines()
-
-				var content []byte
-				if len(lines) > 1 {
-					content = bytes.Join(lines[1:], []byte("\n"))
-				}
-
-				if bytes.Contains(content, []byte(e.Delimiter)) {
-					// needs escape
-					pre += "\\"
-					post = "\\" + post
-				}
-			case node.Ranked:
-				rank := m.Rank()
-
-				for i := 0; i < rank; i++ {
-					pre += e.Delimiter
-				}
-			case *node.BasicBlock, *node.VerbatimLine, *node.Walled, *node.VerbatimWalled,
-				*node.Hanging, *node.RankedHanging, *node.Group, *node.Sticky:
-				pre = e.Delimiter
-			default:
-				panic(fmt.Sprintf("printer: unexpected node type %T", p.n))
+			var content []byte
+			if len(lines) > 1 {
+				content = bytes.Join(lines[1:], []byte("\n"))
 			}
 
-		case node.Inline:
-			switch p.n.(type) {
-			case *node.Uniform, *node.Escaped:
-				r, _ := utf8.DecodeRuneInString(e.Delimiter)
-				counterDelim := counterpart(r)
-
-				pre = e.Delimiter + e.Delimiter
-				post = string(counterDelim) + string(counterDelim)
-			case *node.Prefixed:
-				pre = e.Delimiter
-			default:
-				panic(fmt.Sprintf("printer: unexpected node type %T", p.n))
+			if bytes.Contains(content, []byte(e.Delimiter)) {
+				// needs escape
+				pre += "\\"
+				post = "\\" + post
 			}
+		case node.Ranked:
+			rank := m.Rank()
 
-			if m, isEscaped := p.n.(*node.Escaped); isEscaped {
-				content := m.Content()
-
-				if bytes.Contains(content, []byte(e.Delimiter+e.Delimiter)) {
-					// needs escape
-					pre += "\\"
-					post = "\\" + post
-				}
+			for i := 0; i < rank; i++ {
+				pre += e.Delimiter
 			}
-
+		case *node.VerbatimLine, *node.Walled,
+			*node.VerbatimWalled, *node.Hanging,
+			*node.RankedHanging, *node.Group, *node.Sticky:
+			pre = e.Delimiter
 		default:
-			panic(fmt.Sprintf("parser: unexpected node type %T", p.n))
+			panic(fmt.Sprintf("printer: unexpected node type %T", p.n))
 		}
+
+	case node.Inline:
+		switch p.n.(type) {
+		case *node.Uniform, *node.Escaped:
+			r, _ := utf8.DecodeRuneInString(e.Delimiter)
+			counterDelim := counterpart(r)
+
+			pre = e.Delimiter + e.Delimiter
+			post = string(counterDelim) + string(counterDelim)
+		case *node.Prefixed:
+			pre = e.Delimiter
+		default:
+			panic(fmt.Sprintf("printer: unexpected node type %T", p.n))
+		}
+
+		if m, isEscaped := p.n.(*node.Escaped); isEscaped {
+			content := m.Content()
+
+			if bytes.Contains(content, []byte(e.Delimiter+e.Delimiter)) {
+				// needs escape
+				pre += "\\"
+				post = "\\" + post
+			}
+		}
+
+	default:
+		panic(fmt.Sprintf("parser: unexpected node type %T", p.n))
 	}
 
 	return pre, post
 }
 
 func (p *printer) atBOL() bool {
-	return p.parent != nil && isTextBlock(p.parent.n) && p.pos == 0
+	if p.parent != nil {
+		_, isLeaf := p.parent.n.(*node.Leaf)
+		return isLeaf && p.pos == 0
+	}
+	return false
 }
 
 func (p *printer) isInline() bool {
@@ -891,11 +900,6 @@ func (p *printer) print(msg string) {
 
 func isEmpty(n node.Node) bool {
 	return node.ExtractText(n) == ""
-}
-
-func isTextBlock(n node.Node) bool {
-	_, ok := n.(*node.BasicBlock)
-	return ok && n.Node() == "TextBlock"
 }
 
 func trimLines(lines [][]byte) [][]byte {

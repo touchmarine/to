@@ -16,13 +16,13 @@ func TestTransform(t *testing.T) {
 		{
 			"basic",
 			[]node.Node{
-				&node.BasicBlock{"A", []node.Inline{
+				&node.Leaf{"A", []node.Inline{
 					&node.Uniform{"B", nil},
 					&node.Escaped{"C", nil},
 				}},
 			},
 			[]node.Node{
-				&node.BasicBlock{"A", []node.Inline{
+				&node.Leaf{"A", []node.Inline{
 					&node.Composite{
 						"CA",
 						&node.Uniform{"B", nil},
@@ -34,7 +34,7 @@ func TestTransform(t *testing.T) {
 		{
 			"filled",
 			[]node.Node{
-				&node.BasicBlock{"A", []node.Inline{
+				&node.Leaf{"A", []node.Inline{
 					&node.Uniform{"B", []node.Inline{
 						node.Text("a"),
 					}},
@@ -42,7 +42,7 @@ func TestTransform(t *testing.T) {
 				}},
 			},
 			[]node.Node{
-				&node.BasicBlock{"A", []node.Inline{
+				&node.Leaf{"A", []node.Inline{
 					&node.Composite{
 						"CA",
 						&node.Uniform{"B", []node.Inline{
@@ -56,7 +56,7 @@ func TestTransform(t *testing.T) {
 		{
 			"nested",
 			[]node.Node{
-				&node.BasicBlock{"A", []node.Inline{
+				&node.Leaf{"A", []node.Inline{
 					&node.Uniform{"B", []node.Inline{
 						&node.Uniform{"B", nil},
 						&node.Escaped{"C", nil},
@@ -65,7 +65,7 @@ func TestTransform(t *testing.T) {
 				}},
 			},
 			[]node.Node{
-				&node.BasicBlock{"A", []node.Inline{
+				&node.Leaf{"A", []node.Inline{
 					&node.Composite{
 						"CA",
 						&node.Uniform{"B", []node.Inline{
@@ -80,7 +80,7 @@ func TestTransform(t *testing.T) {
 		{
 			"consecutive",
 			[]node.Node{
-				&node.BasicBlock{"A", []node.Inline{
+				&node.Leaf{"A", []node.Inline{
 					&node.Uniform{"B", nil},
 					&node.Escaped{"C", nil},
 					&node.Uniform{"B", nil},
@@ -88,7 +88,7 @@ func TestTransform(t *testing.T) {
 				}},
 			},
 			[]node.Node{
-				&node.BasicBlock{"A", []node.Inline{
+				&node.Leaf{"A", []node.Inline{
 					&node.Composite{
 						"CA",
 						&node.Uniform{"B", nil},
@@ -105,24 +105,24 @@ func TestTransform(t *testing.T) {
 		{
 			"two lines",
 			[]node.Node{
-				&node.BasicBlock{"A", []node.Inline{
+				&node.Leaf{"A", []node.Inline{
 					&node.Uniform{"B", nil},
 					&node.Escaped{"C", nil},
 				}},
-				&node.BasicBlock{"A", []node.Inline{
+				&node.Leaf{"A", []node.Inline{
 					&node.Uniform{"B", nil},
 					&node.Escaped{"C", nil},
 				}},
 			},
 			[]node.Node{
-				&node.BasicBlock{"A", []node.Inline{
+				&node.Leaf{"A", []node.Inline{
 					&node.Composite{
 						"CA",
 						&node.Uniform{"B", nil},
 						&node.Escaped{"C", nil},
 					},
 				}},
-				&node.BasicBlock{"A", []node.Inline{
+				&node.Leaf{"A", []node.Inline{
 					&node.Composite{
 						"CA",
 						&node.Uniform{"B", nil},
@@ -137,7 +137,7 @@ func TestTransform(t *testing.T) {
 				&node.Walled{
 					"Blockquote",
 					[]node.Block{
-						&node.BasicBlock{"A", []node.Inline{
+						&node.Leaf{"A", []node.Inline{
 							&node.Uniform{"B", nil},
 							&node.Escaped{"C", nil},
 						}},
@@ -148,7 +148,7 @@ func TestTransform(t *testing.T) {
 				&node.Walled{
 					"Blockquote",
 					[]node.Block{
-						&node.BasicBlock{"A", []node.Inline{
+						&node.Leaf{"A", []node.Inline{
 							&node.Composite{
 								"CA",
 								&node.Uniform{"B", nil},

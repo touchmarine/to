@@ -32,8 +32,10 @@ func init() {
 }
 
 type Config struct {
-	RootTemplates map[string]string `json:"rootTemplates"`
-	Text          struct {
+	Root struct {
+		Templates map[string]string `json:"templates"`
+	} `json:"root"`
+	Text struct {
 		Templates map[string]string `json:"templates"`
 	}
 	TextBlock struct {
@@ -47,6 +49,45 @@ type Config struct {
 	Stickies   []Sticky    `json:"stickies"`
 	Groups     []Group     `json:"groups"`
 	Aggregates Aggregates  `json:"aggregates"`
+}
+
+type Element struct {
+	Name        string            `json:"name"`
+	Type        node.Type         `json:"type"`
+	Delimiter   string            `json:"delimiter"`
+	Matcher     string            `json:"matcher"`
+	DoNotRemove bool              `json:"doNotRemove"`
+	Templates   map[string]string `json:"templates"`
+}
+
+// Composite is a group of two inline elements, the PrimaryElement and the
+// SecondaryElement.
+//
+// The SecondaryElement immediately follows the PrimaryElement.
+type Composite struct {
+	Name             string            `json:"name"`
+	PrimaryElement   string            `json:"primaryElement"`
+	SecondaryElement string            `json:"secondaryElement"`
+	Templates        map[string]string `json:"templates"`
+}
+
+// Sticky is a group of two elements, the Element and an element the Element
+// sticks to.
+//
+// The Element sticks to the preceding element if After is true. Otherwise,
+// it sticks to the following element.
+type Sticky struct {
+	Name      string            `json:"name"`
+	Element   string            `json:"element"`
+	After     bool              `json:"after"`
+	Templates map[string]string `json:"templates"`
+}
+
+// Group is a group of consecutive Elements.
+type Group struct {
+	Name      string            `json:"name"`
+	Element   string            `json:"element"`
+	Templates map[string]string `json:"templates"`
 }
 
 type Aggregates struct {
@@ -118,7 +159,7 @@ func (c *Config) TransformerStickies() sticky.Map {
 }
 
 func (c *Config) ParseTemplates(target *template.Template, name string) (*template.Template, error) {
-	rootTmpl, ok := c.RootTemplates[name]
+	rootTmpl, ok := c.Root.Templates[name]
 	if !ok {
 		return nil, fmt.Errorf("root %s template not found", name)
 	}
@@ -131,14 +172,6 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 		return nil, fmt.Errorf("Text %s template not found", name)
 	}
 	if _, err := target.New("Text").Parse(textTmpl); err != nil {
-		return nil, err
-	}
-
-	textBlockTmpl, ok := c.TextBlock.Templates[name]
-	if !ok {
-		return nil, fmt.Errorf("TextBlock %s template not found", name)
-	}
-	if _, err := target.New("TextBlock").Parse(textBlockTmpl); err != nil {
 		return nil, err
 	}
 
@@ -191,45 +224,6 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 	}
 
 	return target, nil
-}
-
-type Element struct {
-	Name        string            `json:"name"`
-	Type        node.Type         `json:"type"`
-	Delimiter   string            `json:"delimiter"`
-	Matcher     string            `json:"matcher"`
-	DoNotRemove bool              `json:"doNotRemove"`
-	Templates   map[string]string `json:"templates"`
-}
-
-// Composite is a group of two inline elements, the PrimaryElement and the
-// SecondaryElement.
-//
-// The SecondaryElement immediately follows the PrimaryElement.
-type Composite struct {
-	Name             string            `json:"name"`
-	PrimaryElement   string            `json:"primaryElement"`
-	SecondaryElement string            `json:"secondaryElement"`
-	Templates        map[string]string `json:"templates"`
-}
-
-// Sticky is a group of two elements, the Element and an element the Element
-// sticks to.
-//
-// The Element sticks to the preceding element if After is true. Otherwise,
-// it sticks to the following element.
-type Sticky struct {
-	Name      string            `json:"name"`
-	Element   string            `json:"element"`
-	After     bool              `json:"after"`
-	Templates map[string]string `json:"templates"`
-}
-
-// Group is a group of consecutive Elements.
-type Group struct {
-	Name      string            `json:"name"`
-	Element   string            `json:"element"`
-	Templates map[string]string `json:"templates"`
 }
 
 func (c *Config) DefaultTransformers() []transformer.Transformer {

@@ -1,15 +1,12 @@
 {
-	"rootTemplates": {
-		"html": "<html>\n<body>\n{{render .}}\n</body>\n</html>"
+	"root": {
+		"templates": {
+			"html": "<html>\n<body>\n{{render .}}\n</body>\n</html>"
+		}	
 	},
 	"Text": {
 		"templates": {
 			"html": "{{.Content}}"
-		}
-	},
-	"TextBlock": {
-		"templates": {
-			"html": "{{- range .InlineChildren}}\n\t{{- render .}}\n{{- end}}"
 		}
 	},
 	"Paragraph": {
@@ -18,6 +15,13 @@
 		}
 	},
 	"elements": [
+		{
+			"name": "TextBlock",
+			"type": "leaf",
+			"templates": {
+				"html": "{{- range .InlineChildren}}\n\t{{- render .}}\n{{end -}}\n"
+			}
+		},
 		{
 			"name": "LineBreak",
 			"type": "prefixed",

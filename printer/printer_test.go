@@ -314,6 +314,10 @@ func TestEscape(t *testing.T) {
 			conf := &config.Config{
 				Elements: []config.Element{
 					{
+						Name: "T",
+						Type: node.TypeLeaf,
+					},
+					{
 						Name:      "A",
 						Type:      node.TypeHanging,
 						Delimiter: "*",

@@ -48,6 +48,7 @@ type parser struct {
 	src            []byte             // source
 	blockMap       map[string]Element // registered elements by delimiter
 	blockKeys      []string           // length-sorted (longest first) blockMap keys
+	leaf           string             // leaf element name
 	inlineMap      map[string]Element // registered inline elements by delimiter
 	specialEscapes []string           // delimiters that do not start with a punctuation
 	matcherMap     matcher.Map        // registered matchers by name
@@ -78,9 +79,12 @@ func (p *parser) elements(elementMap ElementMap) {
 	for _, e := range elementMap {
 		switch c := node.TypeCategory(e.Type); c {
 		case node.CategoryBlock:
-			if e.Type == node.TypeRankedHanging {
+			switch e.Type {
+			case node.TypeLeaf:
+				p.leaf = e.Name
+			case node.TypeRankedHanging:
 				p.blockMap[e.Delimiter+e.Delimiter] = e
-			} else {
+			default:
 				p.blockMap[e.Delimiter] = e
 			}
 
@@ -188,7 +192,7 @@ func (p *parser) parseBlock() node.Block {
 		}
 	}
 
-	return p.parseTextBlock()
+	return p.parseLeaf(p.leaf)
 }
 
 // matchBlock determines which, if any, block is at the current offset.
@@ -601,14 +605,13 @@ func (p *parser) parseVerbatimLine(name, delim string) node.Block {
 	return &node.VerbatimLine{name, content}
 }
 
-func (p *parser) parseTextBlock() node.Block {
+func (p *parser) parseLeaf(name string) node.Block {
 	if trace {
-		defer p.trace("parseTextBlock")()
+		defer p.tracef("parseLeaf %s", name)()
 	}
 
 	children, _ := p.parseInlines()
-
-	return &node.BasicBlock{"TextBlock", children}
+	return &node.Leaf{name, children}
 }
 
 func (p *parser) parseInlines() ([]node.Inline, bool) {

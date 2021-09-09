@@ -13,12 +13,12 @@ func Transform(nodes []node.Node) []node.Node {
 		n := nodes[i]
 
 		if len(nodes) > 1 {
-			if block, ok := n.(*node.BasicBlock); ok && n.Node() == "TextBlock" {
+			if leaf, isLeaf := n.(*node.Leaf); isLeaf {
 				if trace {
 					log.Printf("add paragraph")
 				}
 
-				p := &node.Group{"Paragraph", []node.Block{block}}
+				p := &node.Group{"Paragraph", []node.Block{leaf}}
 				nodes[i] = p
 			}
 		}
