@@ -59,7 +59,7 @@ func (p *printer) init() {
 	// marker elements are prefixed inline element with no matcher aka.
 	// elements that have no content
 	for name, e := range p.elementMap {
-		if e.Type == node.TypeLeaf {
+		if e.Type == node.TypeLeaf || e.Type == node.TypeText {
 			delete(p.elementMap, name)
 		} else if e.Type == node.TypePrefixed && e.Matcher == "" {
 			// marker, e.g., "\" line break, without content
@@ -309,7 +309,7 @@ func (p *printer) printNode() {
 	}
 
 	switch m := p.n.(type) {
-	case node.Text:
+	case *node.Text:
 		if p.closingDelimiter != "" {
 			// escape last characters in text according to delimiter
 			p.printText(newDelimiterEscapeWriter(&b, p.closingDelimiter), m)
@@ -515,7 +515,7 @@ func (p *printer) needBlockEscape() bool {
 
 	child := children[0]
 
-	if text, ok := child.(node.Text); ok {
+	if text, ok := child.(*node.Text); ok {
 		// we only need to check the first text node, any other node
 		// will have it's own non-block delimiter
 
@@ -566,7 +566,7 @@ func (p *printer) hasEscapeClashingElementAtEnd() bool {
 	return found && e.Type == node.TypePrefixed && e.Delimiter == "\\"
 }
 
-func (p *printer) printText(w io.Writer, t node.Text) {
+func (p *printer) printText(w io.Writer, t *node.Text) {
 	if trace {
 		defer p.trace("printText")()
 	}
@@ -710,7 +710,7 @@ func (p *printer) hasInlineDelimiterPrefix(content []byte) bool {
 			} else if runes == 1 {
 				delimiter = e.Delimiter + e.Delimiter
 			} else {
-				panic("parser: unvalid inline delimiter " + e.Delimiter)
+				panic("parser: invalid inline delimiter " + e.Delimiter)
 			}
 
 			if bytes.HasPrefix(content, []byte(delimiter)) {
@@ -733,7 +733,7 @@ func (p *printer) hasClosingDelimiterPrefix(content []byte) bool {
 }
 
 func (p *printer) delimiters() (string, string) {
-	if _, isLeaf := p.n.(*node.Leaf); isLeaf || p.n.Node() == "Text" || p.n.Node() == "Paragraph" {
+	if p.n.Node() == "Paragraph" {
 		return "", ""
 	}
 

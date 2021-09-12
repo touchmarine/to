@@ -9,11 +9,6 @@
 </html>'''
 		}	
 	},
-	"Text": {
-		"templates": {
-			"html": "{{.Content}}"
-		}
-	},
 	"Paragraph": {
 		"templates": {
 			"html": "<p>{{range .BlockChildren}}{{render .}}{{end}}</p>"
@@ -236,6 +231,13 @@
 			}
 		},
 
+		{
+			"name": "Text",
+			"type": "text",
+			"templates": {
+				"html": "{{.Content}}"
+			}
+		},
 		{
 			"name": "Group",
 			"type": "uniform",

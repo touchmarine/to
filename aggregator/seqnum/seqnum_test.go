@@ -47,7 +47,7 @@ func TestAggregate(t *testing.T) {
 				&node.SequentialNumberBox{
 					&node.RankedHanging{"A", 2, []node.Block{
 						&node.Leaf{"D", []node.Inline{
-							node.Text("a"),
+							&node.Text{"MT", []byte("a")},
 						}},
 					}},
 					[]int{1},
@@ -69,11 +69,11 @@ func TestAggregate(t *testing.T) {
 				&node.SequentialNumberBox{
 					&node.RankedHanging{"A", 2, []node.Block{
 						&node.Leaf{"D", []node.Inline{
-							node.Text("a"),
+							&node.Text{"MT", []byte("a")},
 							&node.Uniform{"Emphasis", []node.Inline{
-								node.Text("b"),
+								&node.Text{"MT", []byte("b")},
 							}},
-							node.Text("c"),
+							&node.Text{"MT", []byte("c")},
 						}},
 					}},
 					[]int{1},
@@ -95,10 +95,10 @@ func TestAggregate(t *testing.T) {
 				&node.SequentialNumberBox{
 					&node.RankedHanging{"A", 2, []node.Block{
 						&node.Leaf{"D", []node.Inline{
-							node.Text("a"),
+							&node.Text{"MT", []byte("a")},
 						}},
 						&node.Leaf{"D", []node.Inline{
-							node.Text("b"),
+							&node.Text{"MT", []byte("b")},
 						}},
 					}},
 					[]int{1},

@@ -25,49 +25,49 @@ func TestLeaf(t *testing.T) {
 		{
 			"a",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
 			"a\n",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
 			"a\nb",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 			},
 		},
 		{
 			"a\n\nb",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"a\n\n\nb",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"a\n\n\n\nb",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"a__\nb",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", []node.Inline{
-						node.Text(" b"),
+						&node.Text{"MT", []byte(" b")},
 					}},
 				}},
 			},
@@ -75,9 +75,9 @@ func TestLeaf(t *testing.T) {
 		{
 			"a\n>b",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				&node.Walled{"B", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -87,7 +87,7 @@ func TestLeaf(t *testing.T) {
 			">a\n>b",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -95,10 +95,10 @@ func TestLeaf(t *testing.T) {
 			">a\n\n>b",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 				&node.Walled{"B", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -106,10 +106,10 @@ func TestLeaf(t *testing.T) {
 			">a\n\n\n>b",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 				&node.Walled{"B", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -118,9 +118,9 @@ func TestLeaf(t *testing.T) {
 			">a\nb",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
@@ -128,9 +128,9 @@ func TestLeaf(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Walled{"B", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					}},
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -139,8 +139,8 @@ func TestLeaf(t *testing.T) {
 			">a\n>\n>b",
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -149,7 +149,7 @@ func TestLeaf(t *testing.T) {
 			"*a\n b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -157,10 +157,10 @@ func TestLeaf(t *testing.T) {
 			"*a\n*b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -168,10 +168,10 @@ func TestLeaf(t *testing.T) {
 			"*a\n\n*b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -179,10 +179,10 @@ func TestLeaf(t *testing.T) {
 			"*a\n\n\n*b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -191,9 +191,9 @@ func TestLeaf(t *testing.T) {
 			"*a\nb",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
@@ -201,9 +201,9 @@ func TestLeaf(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					}},
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -212,32 +212,32 @@ func TestLeaf(t *testing.T) {
 		{
 			"a \nb",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 			},
 		},
 		{
 			"a  \nb",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 			},
 		},
 		{
 			"a\n b",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 			},
 		},
 		{
 			"a\n  b",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 			},
 		},
 		{
 			"*a\n b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -245,7 +245,7 @@ func TestLeaf(t *testing.T) {
 			"*a\n  b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -255,7 +255,7 @@ func TestLeaf(t *testing.T) {
 			"a\n\\__",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a __"),
+					&node.Text{"MT", []byte("a __")},
 				}},
 			},
 		},
@@ -263,7 +263,7 @@ func TestLeaf(t *testing.T) {
 			"a\n\\\\__",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a \\"),
+					&node.Text{"MT", []byte("a \\")},
 					&node.Uniform{"MA", nil},
 				}},
 			},
@@ -292,6 +292,10 @@ func TestLeaf(t *testing.T) {
 					Type:      node.TypeUniform,
 					Delimiter: "_",
 				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
+				},
 			})
 		})
 	}
@@ -317,64 +321,64 @@ func TestLine(t *testing.T) {
 		{
 			"a",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
 			"a_*",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a_*")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a_*")}}},
 			},
 		},
 
 		{
 			"\na",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
 			"\n\na",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
 			" \na",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
 			"\t\na",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
 			"a\n",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
 			"a\nb",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 			},
 		},
 		{
 			"a\n\nb",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"a\n\n\nb",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 	}
@@ -385,6 +389,10 @@ func TestLine(t *testing.T) {
 				"T": {
 					Name: "T",
 					Type: node.TypeLeaf,
+				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
 				},
 			})
 		})
@@ -404,7 +412,7 @@ func TestWalled(t *testing.T) {
 			">\na",
 			[]node.Node{
 				&node.Walled{"A", nil},
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
@@ -419,7 +427,7 @@ func TestWalled(t *testing.T) {
 			">a",
 			[]node.Node{
 				&node.Walled{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 			},
 		},
@@ -433,7 +441,7 @@ func TestWalled(t *testing.T) {
 			">a\n>b",
 			[]node.Node{
 				&node.Walled{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -449,9 +457,9 @@ func TestWalled(t *testing.T) {
 			">a\n>>b",
 			[]node.Node{
 				&node.Walled{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					&node.Walled{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("b")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 					}},
 				}},
 			},
@@ -469,7 +477,7 @@ func TestWalled(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"A", []node.Block{
 					&node.Walled{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 					}},
 				}},
 			},
@@ -487,9 +495,9 @@ func TestWalled(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"A", []node.Block{
 					&node.Walled{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					}},
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -504,10 +512,10 @@ func TestWalled(t *testing.T) {
 			">a\n\n>b",
 			[]node.Node{
 				&node.Walled{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 				&node.Walled{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -515,10 +523,10 @@ func TestWalled(t *testing.T) {
 			">a\n \n>b",
 			[]node.Node{
 				&node.Walled{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 				&node.Walled{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -573,7 +581,7 @@ func TestWalled(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"A", []node.Block{
 					&node.Leaf{"T", []node.Inline{
-						node.Text("a b"),
+						&node.Text{"MT", []byte("a b")},
 					}},
 				}},
 			},
@@ -583,28 +591,28 @@ func TestWalled(t *testing.T) {
 			">\na",
 			[]node.Node{
 				&node.Walled{"A", nil},
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
 			">\n>\na",
 			[]node.Node{
 				&node.Walled{"A", nil},
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
 			">\n>\n>\na",
 			[]node.Node{
 				&node.Walled{"A", nil},
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
 			">\n>\n>\n>\na",
 			[]node.Node{
 				&node.Walled{"A", nil},
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 	}
@@ -620,6 +628,10 @@ func TestWalled(t *testing.T) {
 					Name:      "A",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
+				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
 				},
 			})
 		})
@@ -780,7 +792,7 @@ func TestVerbatimWalled(t *testing.T) {
 			"/a\nb",
 			[]node.Node{
 				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
@@ -795,7 +807,7 @@ func TestVerbatimWalled(t *testing.T) {
 			[]node.Node{
 				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
 				&node.Walled{"B", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -804,7 +816,7 @@ func TestVerbatimWalled(t *testing.T) {
 			[]node.Node{
 				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
 				&node.Hanging{"C", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -919,6 +931,10 @@ func TestVerbatimWalled(t *testing.T) {
 					Type:      node.TypeHanging,
 					Delimiter: "*",
 				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
+				},
 			})
 		})
 	}
@@ -945,7 +961,7 @@ func TestHanging(t *testing.T) {
 			"*a",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 			},
 		},
@@ -981,10 +997,10 @@ func TestHanging(t *testing.T) {
 			"*a\n\n*b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -992,16 +1008,16 @@ func TestHanging(t *testing.T) {
 			"*a\nb",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"*a\n b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1009,7 +1025,7 @@ func TestHanging(t *testing.T) {
 			"*a\n  b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1019,16 +1035,16 @@ func TestHanging(t *testing.T) {
 			" *a\n b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			" *a\n  b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1046,9 +1062,9 @@ func TestHanging(t *testing.T) {
 			"*a\n *b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					&node.Hanging{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("b")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 					}},
 				}},
 			},
@@ -1058,9 +1074,9 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					}},
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -1069,7 +1085,7 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 					}},
 				}},
 			},
@@ -1079,7 +1095,7 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 					}},
 				}},
 			},
@@ -1126,7 +1142,7 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					}},
 				}},
 			},
@@ -1136,7 +1152,7 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					}},
 				}},
 			},
@@ -1164,7 +1180,7 @@ func TestHanging(t *testing.T) {
 			"*a\n\tb",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1172,16 +1188,16 @@ func TestHanging(t *testing.T) {
 			"\t*a\n\tb",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"\t*a\n\t b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1189,7 +1205,7 @@ func TestHanging(t *testing.T) {
 			"\t*a\n \tb",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1197,7 +1213,7 @@ func TestHanging(t *testing.T) {
 			"\t*a\n  \tb",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1206,16 +1222,16 @@ func TestHanging(t *testing.T) {
 			"\t\t*a\n                b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"\t\t*a\n                 b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1223,16 +1239,16 @@ func TestHanging(t *testing.T) {
 			"                *a\n\t\tb",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"               *a\n\t\tb",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1282,7 +1298,7 @@ func TestHanging(t *testing.T) {
 			"a\n\n**\n\n*",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 				}},
 				&node.Hanging{"A", []node.Block{
 					&node.Hanging{"A", nil},
@@ -1298,7 +1314,7 @@ func TestHanging(t *testing.T) {
 					&node.Hanging{"A", nil},
 				}},
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 				}},
 			},
 		},
@@ -1308,7 +1324,7 @@ func TestHanging(t *testing.T) {
 				&node.Hanging{"A", []node.Block{
 					&node.Hanging{"A", nil},
 					&node.Leaf{"T", []node.Inline{
-						node.Text("a"),
+						&node.Text{"MT", []byte("a")},
 					}},
 				}},
 			},
@@ -1319,7 +1335,7 @@ func TestHanging(t *testing.T) {
 				&node.Hanging{"A", []node.Block{
 					&node.Hanging{"A", []node.Block{
 						&node.Leaf{"T", []node.Inline{
-							node.Text("a"),
+							&node.Text{"MT", []byte("a")},
 						}},
 					}},
 				}},
@@ -1331,12 +1347,12 @@ func TestHanging(t *testing.T) {
 				&node.Hanging{"A", []node.Block{
 					&node.Hanging{"A", []node.Block{
 						&node.Leaf{"T", []node.Inline{
-							node.Text("a"),
+							&node.Text{"MT", []byte("a")},
 						}},
 					}},
 				}},
 				&node.Leaf{"T", []node.Inline{
-					node.Text("b"),
+					&node.Text{"MT", []byte("b")},
 				}},
 			},
 		},
@@ -1348,7 +1364,7 @@ func TestHanging(t *testing.T) {
 				&node.Hanging{"A", []node.Block{
 					&node.Walled{"B", []node.Block{
 						&node.Leaf{"T", []node.Inline{
-							node.Text("b"),
+							&node.Text{"MT", []byte("b")},
 						}},
 					}},
 				}},
@@ -1360,7 +1376,7 @@ func TestHanging(t *testing.T) {
 				&node.Hanging{"A", []node.Block{
 					&node.Walled{"B", []node.Block{
 						&node.Leaf{"T", []node.Inline{
-							node.Text("a b"),
+							&node.Text{"MT", []byte("a b")},
 						}},
 					}},
 				}},
@@ -1376,16 +1392,16 @@ func TestHanging(t *testing.T) {
 			[]node.Node{&node.Hanging{"A", []node.Block{
 				&node.Hanging{"A", []node.Block{
 					&node.Leaf{"T", []node.Inline{
-						node.Text("a"),
+						&node.Text{"MT", []byte("a")},
 					}},
 					&node.Hanging{"A", []node.Block{
 						&node.Leaf{"T", []node.Inline{
-							node.Text("b"),
+							&node.Text{"MT", []byte("b")},
 						}},
 					}},
 				}},
 				&node.Leaf{"T", []node.Inline{
-					node.Text("c"),
+					&node.Text{"MT", []byte("c")},
 				}},
 			}}},
 		},
@@ -1396,7 +1412,7 @@ func TestHanging(t *testing.T) {
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
 						&node.Leaf{"T", []node.Inline{
-							node.Text("a"),
+							&node.Text{"MT", []byte("a")},
 						}},
 					}},
 				}},
@@ -1408,7 +1424,7 @@ func TestHanging(t *testing.T) {
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
 						&node.Leaf{"T", []node.Inline{
-							node.Text("a"),
+							&node.Text{"MT", []byte("a")},
 						}},
 					}},
 				}},
@@ -1432,9 +1448,9 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 						&node.Hanging{"A", []node.Block{
-							&node.Leaf{"T", []node.Inline{node.Text("b")}},
+							&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 						}},
 					}},
 				}},
@@ -1445,9 +1461,9 @@ func TestHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 						&node.Hanging{"A", []node.Block{
-							&node.Leaf{"T", []node.Inline{node.Text("b")}},
+							&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 						}},
 					}},
 				}},
@@ -1486,6 +1502,10 @@ func TestHanging(t *testing.T) {
 					Type:      node.TypeWalled,
 					Delimiter: ">",
 				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
+				},
 			})
 		})
 	}
@@ -1500,7 +1520,7 @@ func TestRankedHanging(t *testing.T) {
 			"=",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("="),
+					&node.Text{"MT", []byte("=")},
 				}},
 			},
 		},
@@ -1512,7 +1532,7 @@ func TestRankedHanging(t *testing.T) {
 			"= =",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("= ="),
+					&node.Text{"MT", []byte("= =")},
 				}},
 			},
 		},
@@ -1528,7 +1548,7 @@ func TestRankedHanging(t *testing.T) {
 			"==a",
 			[]node.Node{&node.RankedHanging{"A", 2, []node.Block{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 				}},
 			}}},
 		},
@@ -1544,25 +1564,25 @@ func TestRankedHanging(t *testing.T) {
 			"==a\nb",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"==a\n b",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"==a\n  b",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1570,7 +1590,7 @@ func TestRankedHanging(t *testing.T) {
 			"==a\n   b",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1580,16 +1600,16 @@ func TestRankedHanging(t *testing.T) {
 			" ==a\n  b",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			" ==a\n   b",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1607,9 +1627,9 @@ func TestRankedHanging(t *testing.T) {
 			"==a\n  ==b",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					&node.RankedHanging{"A", 2, []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("b")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 					}},
 				}},
 			},
@@ -1619,9 +1639,9 @@ func TestRankedHanging(t *testing.T) {
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
 					&node.RankedHanging{"A", 2, []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					}},
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -1630,7 +1650,7 @@ func TestRankedHanging(t *testing.T) {
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
 					&node.RankedHanging{"A", 2, []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 					}},
 				}},
 			},
@@ -1640,7 +1660,7 @@ func TestRankedHanging(t *testing.T) {
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
 					&node.RankedHanging{"A", 2, []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 					}},
 				}},
 			},
@@ -1687,7 +1707,7 @@ func TestRankedHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.RankedHanging{"A", 2, []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					}},
 				}},
 			},
@@ -1697,7 +1717,7 @@ func TestRankedHanging(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.RankedHanging{"A", 2, []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					}},
 				}},
 			},
@@ -1725,7 +1745,7 @@ func TestRankedHanging(t *testing.T) {
 			"==a\n\tb",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1733,16 +1753,16 @@ func TestRankedHanging(t *testing.T) {
 			"\t==a\n\tb",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"\t==a\n\t  b",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1750,7 +1770,7 @@ func TestRankedHanging(t *testing.T) {
 			"\t==a\n  \tb",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1758,7 +1778,7 @@ func TestRankedHanging(t *testing.T) {
 			"\t==a\n   \tb",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1767,16 +1787,16 @@ func TestRankedHanging(t *testing.T) {
 			"\t\t==a\n                 b",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"\t\t==a\n                  b",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1784,16 +1804,16 @@ func TestRankedHanging(t *testing.T) {
 			"                 ==a\n\t\tb",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"              ==a\n\t\tb",
 			[]node.Node{
 				&node.RankedHanging{"A", 2, []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1805,7 +1825,7 @@ func TestRankedHanging(t *testing.T) {
 				&node.RankedHanging{"A", 2, []node.Block{
 					&node.Walled{"B", []node.Block{
 						&node.Leaf{"T", []node.Inline{
-							node.Text("b"),
+							&node.Text{"MT", []byte("b")},
 						}},
 					}},
 				}},
@@ -1829,6 +1849,10 @@ func TestRankedHanging(t *testing.T) {
 					Name:      "B",
 					Type:      node.TypeWalled,
 					Delimiter: ">",
+				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
 				},
 			})
 		})
@@ -1870,7 +1894,7 @@ func TestVerbatimLine(t *testing.T) {
 			[]node.Node{
 				&node.VerbatimLine{"A", nil},
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 				}},
 			},
 		},
@@ -1915,6 +1939,10 @@ func TestVerbatimLine(t *testing.T) {
 					Type:      node.TypeWalled,
 					Delimiter: ">",
 				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
+				},
 			})
 		})
 	}
@@ -1929,7 +1957,7 @@ func TestHangingMulti(t *testing.T) {
 			"1",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("1"),
+					&node.Text{"MT", []byte("1")},
 				}},
 			},
 		},
@@ -1949,7 +1977,7 @@ func TestHangingMulti(t *testing.T) {
 			"1.a",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 			},
 		},
@@ -1964,25 +1992,25 @@ func TestHangingMulti(t *testing.T) {
 			"1.a\nb",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"1.a\n b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			"1.a\n  b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -1992,25 +2020,25 @@ func TestHangingMulti(t *testing.T) {
 			" 1.a\n b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			" 1.a\n  b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 		{
 			" 1.a\n   b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a b")}}},
 				}},
 			},
 		},
@@ -2028,9 +2056,9 @@ func TestHangingMulti(t *testing.T) {
 			"1.a\n  1.b",
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					&node.Hanging{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("b")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 					}},
 				}},
 			},
@@ -2077,7 +2105,7 @@ func TestHangingMulti(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					}},
 				}},
 			},
@@ -2087,7 +2115,7 @@ func TestHangingMulti(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Hanging{"A", []node.Block{
-						&node.Leaf{"T", []node.Inline{node.Text("a")}},
+						&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 					}},
 				}},
 			},
@@ -2110,7 +2138,7 @@ func TestHangingMulti(t *testing.T) {
 				&node.Hanging{"A", []node.Block{
 					&node.Walled{"B", []node.Block{
 						&node.Leaf{"T", []node.Inline{
-							node.Text("b"),
+							&node.Text{"MT", []byte("b")},
 						}},
 					}},
 				}},
@@ -2122,7 +2150,7 @@ func TestHangingMulti(t *testing.T) {
 				&node.Hanging{"A", []node.Block{
 					&node.Walled{"B", []node.Block{
 						&node.Leaf{"T", []node.Inline{
-							node.Text("a b"),
+							&node.Text{"MT", []byte("a b")},
 						}},
 					}},
 				}},
@@ -2134,7 +2162,7 @@ func TestHangingMulti(t *testing.T) {
 				&node.Hanging{"A", []node.Block{
 					&node.Walled{"B", []node.Block{
 						&node.Leaf{"T", []node.Inline{
-							node.Text("a b"),
+							&node.Text{"MT", []byte("a b")},
 						}},
 					}},
 				}},
@@ -2163,6 +2191,10 @@ func TestHangingMulti(t *testing.T) {
 					Name:      "C",
 					Type:      node.TypeHanging,
 					Delimiter: "-",
+				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
 				},
 			})
 		})
@@ -2281,7 +2313,7 @@ func TestFenced(t *testing.T) {
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", nil, nil},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("a")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 			},
 		},
 		{
@@ -2314,7 +2346,7 @@ func TestFenced(t *testing.T) {
 				&node.Walled{"B", []node.Block{
 					&node.Fenced{"A", [][]byte{nil, []byte("a")}, nil},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 
@@ -2474,6 +2506,10 @@ func TestFenced(t *testing.T) {
 					Type:      node.TypeHanging,
 					Delimiter: "*",
 				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
+				},
 			})
 		})
 	}
@@ -2522,7 +2558,7 @@ func TestSpacing(t *testing.T) {
 			"> a",
 			[]node.Node{
 				&node.Walled{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 			},
 		},
@@ -2558,7 +2594,7 @@ func TestSpacing(t *testing.T) {
 			">\ta",
 			[]node.Node{
 				&node.Walled{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 			},
 		},
@@ -2594,7 +2630,7 @@ func TestSpacing(t *testing.T) {
 			"> \ta",
 			[]node.Node{
 				&node.Walled{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("a")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a")}}},
 				}},
 			},
 		},
@@ -2612,6 +2648,10 @@ func TestSpacing(t *testing.T) {
 					Type:      node.TypeWalled,
 					Delimiter: ">",
 				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
+				},
 			})
 		})
 	}
@@ -2626,7 +2666,7 @@ func TestUniform(t *testing.T) {
 			"a__",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", nil},
 				}},
 			},
@@ -2635,7 +2675,7 @@ func TestUniform(t *testing.T) {
 			"a____",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", nil},
 				}},
 			},
@@ -2644,9 +2684,9 @@ func TestUniform(t *testing.T) {
 			"a__b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", []node.Inline{
-						node.Text("b"),
+						&node.Text{"MT", []byte("b")},
 					}},
 				}},
 			},
@@ -2655,9 +2695,9 @@ func TestUniform(t *testing.T) {
 			"a__b__",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", []node.Inline{
-						node.Text("b"),
+						&node.Text{"MT", []byte("b")},
 					}},
 				}},
 			},
@@ -2666,11 +2706,11 @@ func TestUniform(t *testing.T) {
 			"a__b__c",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", []node.Inline{
-						node.Text("b"),
+						&node.Text{"MT", []byte("b")},
 					}},
-					node.Text("c"),
+					&node.Text{"MT", []byte("c")},
 				}},
 			},
 		},
@@ -2697,7 +2737,7 @@ func TestUniform(t *testing.T) {
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
 					&node.Uniform{"MB", []node.Inline{
-						node.Text("a"),
+						&node.Text{"MT", []byte("a")},
 					}},
 				}},
 			},
@@ -2707,7 +2747,7 @@ func TestUniform(t *testing.T) {
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
 					&node.Uniform{"MB", []node.Inline{
-						node.Text("a"),
+						&node.Text{"MT", []byte("a")},
 					}},
 				}},
 			},
@@ -2717,9 +2757,9 @@ func TestUniform(t *testing.T) {
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
 					&node.Uniform{"MB", []node.Inline{
-						node.Text("a"),
+						&node.Text{"MT", []byte("a")},
 					}},
-					node.Text("b"),
+					&node.Text{"MT", []byte("b")},
 				}},
 			},
 		},
@@ -2729,9 +2769,9 @@ func TestUniform(t *testing.T) {
 			"a__\nb",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", []node.Inline{
-						node.Text(" b"),
+						&node.Text{"MT", []byte(" b")},
 					}},
 				}},
 			},
@@ -2740,11 +2780,11 @@ func TestUniform(t *testing.T) {
 			"a__\n>b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", nil},
 				}},
 				&node.Walled{"A", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -2753,10 +2793,10 @@ func TestUniform(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"A", []node.Block{
 					&node.Leaf{"T", []node.Inline{
-						node.Text("a"), &node.Uniform{"MA", nil},
+						&node.Text{"MT", []byte("a")}, &node.Uniform{"MA", nil},
 					}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 
@@ -2765,8 +2805,8 @@ func TestUniform(t *testing.T) {
 			"a__ \nb",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
-					&node.Uniform{"MA", []node.Inline{node.Text(" b")}},
+					&node.Text{"MT", []byte("a")},
+					&node.Uniform{"MA", []node.Inline{&node.Text{"MT", []byte(" b")}}},
 				}},
 			},
 		},
@@ -2774,8 +2814,8 @@ func TestUniform(t *testing.T) {
 			"a__  \nb",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
-					&node.Uniform{"MA", []node.Inline{node.Text(" b")}},
+					&node.Text{"MT", []byte("a")},
+					&node.Uniform{"MA", []node.Inline{&node.Text{"MT", []byte(" b")}}},
 				}},
 			},
 		},
@@ -2783,8 +2823,8 @@ func TestUniform(t *testing.T) {
 			"a__\n b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
-					&node.Uniform{"MA", []node.Inline{node.Text(" b")}},
+					&node.Text{"MT", []byte("a")},
+					&node.Uniform{"MA", []node.Inline{&node.Text{"MT", []byte(" b")}}},
 				}},
 			},
 		},
@@ -2792,8 +2832,8 @@ func TestUniform(t *testing.T) {
 			"a__\n  b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
-					&node.Uniform{"MA", []node.Inline{node.Text(" b")}},
+					&node.Text{"MT", []byte("a")},
+					&node.Uniform{"MA", []node.Inline{&node.Text{"MT", []byte(" b")}}},
 				}},
 			},
 		},
@@ -2802,8 +2842,8 @@ func TestUniform(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"B", []node.Block{
 					&node.Leaf{"T", []node.Inline{
-						node.Text("a"),
-						&node.Uniform{"MA", []node.Inline{node.Text(" b")}},
+						&node.Text{"MT", []byte("a")},
+						&node.Uniform{"MA", []node.Inline{&node.Text{"MT", []byte(" b")}}},
 					}},
 				}},
 			},
@@ -2813,8 +2853,8 @@ func TestUniform(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"B", []node.Block{
 					&node.Leaf{"T", []node.Inline{
-						node.Text("a"),
-						&node.Uniform{"MA", []node.Inline{node.Text(" b")}},
+						&node.Text{"MT", []byte("a")},
+						&node.Uniform{"MA", []node.Inline{&node.Text{"MT", []byte(" b")}}},
 					}},
 				}},
 			},
@@ -2825,7 +2865,7 @@ func TestUniform(t *testing.T) {
 			"a__**",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", []node.Inline{
 						&node.Uniform{"MC", nil},
 					}},
@@ -2836,10 +2876,10 @@ func TestUniform(t *testing.T) {
 			"a__**b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", []node.Inline{
 						&node.Uniform{"MC", []node.Inline{
-							node.Text("b"),
+							&node.Text{"MT", []byte("b")},
 						}},
 					}},
 				}},
@@ -2849,12 +2889,12 @@ func TestUniform(t *testing.T) {
 			"a__**b**c",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", []node.Inline{
 						&node.Uniform{"MC", []node.Inline{
-							node.Text("b"),
+							&node.Text{"MT", []byte("b")},
 						}},
-						node.Text("c"),
+						&node.Text{"MT", []byte("c")},
 					}},
 				}},
 			},
@@ -2863,13 +2903,13 @@ func TestUniform(t *testing.T) {
 			"a__**b__c",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", []node.Inline{
 						&node.Uniform{"MC", []node.Inline{
-							node.Text("b"),
+							&node.Text{"MT", []byte("b")},
 						}},
 					}},
-					node.Text("c"),
+					&node.Text{"MT", []byte("c")},
 				}},
 			},
 		},
@@ -2877,14 +2917,14 @@ func TestUniform(t *testing.T) {
 			"a__**b**c__d",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", []node.Inline{
 						&node.Uniform{"MC", []node.Inline{
-							node.Text("b"),
+							&node.Text{"MT", []byte("b")},
 						}},
-						node.Text("c"),
+						&node.Text{"MT", []byte("c")},
 					}},
-					node.Text("d"),
+					&node.Text{"MT", []byte("d")},
 				}},
 			},
 		},
@@ -2894,10 +2934,10 @@ func TestUniform(t *testing.T) {
 			"a__**\nb",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", []node.Inline{
 						&node.Uniform{"MC", []node.Inline{
-							node.Text(" b"),
+							&node.Text{"MT", []byte(" b")},
 						}},
 					}},
 				}},
@@ -2907,13 +2947,13 @@ func TestUniform(t *testing.T) {
 			"a__**b\nc**__d",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", []node.Inline{
 						&node.Uniform{"MC", []node.Inline{
-							node.Text("b c"),
+							&node.Text{"MT", []byte("b c")},
 						}},
 					}},
-					node.Text("d"),
+					&node.Text{"MT", []byte("d")},
 				}},
 			},
 		},
@@ -2951,6 +2991,10 @@ func TestUniform(t *testing.T) {
 					Type:      node.TypeHanging,
 					Delimiter: "*",
 				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
+				},
 			})
 		})
 	}
@@ -2965,7 +3009,7 @@ func TestEscaped(t *testing.T) {
 			"a``",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", nil},
 				}},
 			},
@@ -2974,7 +3018,7 @@ func TestEscaped(t *testing.T) {
 			"a```",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", []byte("`")},
 				}},
 			},
@@ -2983,7 +3027,7 @@ func TestEscaped(t *testing.T) {
 			"a````",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", nil},
 				}},
 			},
@@ -2992,9 +3036,9 @@ func TestEscaped(t *testing.T) {
 			"a`````",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", nil},
-					node.Text("`"),
+					&node.Text{"MT", []byte("`")},
 				}},
 			},
 		},
@@ -3002,7 +3046,7 @@ func TestEscaped(t *testing.T) {
 			"a``\\```",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", []byte("```")},
 				}},
 			},
@@ -3011,7 +3055,7 @@ func TestEscaped(t *testing.T) {
 			"a``\\`",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", []byte("`")},
 				}},
 			},
@@ -3020,7 +3064,7 @@ func TestEscaped(t *testing.T) {
 			"a``\\`\\``",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", []byte("`")},
 				}},
 			},
@@ -3029,7 +3073,7 @@ func TestEscaped(t *testing.T) {
 			"a``\\``\\``",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", []byte("``")},
 				}},
 			},
@@ -3038,7 +3082,7 @@ func TestEscaped(t *testing.T) {
 			"a``\\```\\``",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", []byte("```")},
 				}},
 			},
@@ -3049,7 +3093,7 @@ func TestEscaped(t *testing.T) {
 			"a[[",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MB", nil},
 				}},
 			},
@@ -3058,7 +3102,7 @@ func TestEscaped(t *testing.T) {
 			"a[[[",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MB", []byte("[")},
 				}},
 			},
@@ -3067,7 +3111,7 @@ func TestEscaped(t *testing.T) {
 			"a[[]]",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MB", nil},
 				}},
 			},
@@ -3077,7 +3121,7 @@ func TestEscaped(t *testing.T) {
 			"a\\````",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a`"),
+					&node.Text{"MT", []byte("a`")},
 					&node.Escaped{"MA", []byte("`")},
 				}},
 			},
@@ -3086,7 +3130,7 @@ func TestEscaped(t *testing.T) {
 			"a\\[[]]",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a[[]]"),
+					&node.Text{"MT", []byte("a[[]]")},
 				}},
 			},
 		},
@@ -3096,7 +3140,7 @@ func TestEscaped(t *testing.T) {
 			"a``\nb",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", []byte(" b")},
 				}},
 			},
@@ -3105,11 +3149,11 @@ func TestEscaped(t *testing.T) {
 			"a``\n>b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", nil},
 				}},
 				&node.Walled{"B", []node.Block{
-					&node.Leaf{"T", []node.Inline{node.Text("b")}},
+					&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 				}},
 			},
 		},
@@ -3118,10 +3162,10 @@ func TestEscaped(t *testing.T) {
 			[]node.Node{
 				&node.Walled{"B", []node.Block{
 					&node.Leaf{"T", []node.Inline{
-						node.Text("a"), &node.Escaped{"MA", nil},
+						&node.Text{"MT", []byte("a")}, &node.Escaped{"MA", nil},
 					}},
 				}},
-				&node.Leaf{"T", []node.Inline{node.Text("b")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("b")}}},
 			},
 		},
 
@@ -3130,7 +3174,7 @@ func TestEscaped(t *testing.T) {
 			"a`` \nb",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", []byte(" b")},
 				}},
 			},
@@ -3139,7 +3183,7 @@ func TestEscaped(t *testing.T) {
 			"a``  \nb",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", []byte(" b")},
 				}},
 			},
@@ -3148,7 +3192,7 @@ func TestEscaped(t *testing.T) {
 			"a``\n b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", []byte(" b")},
 				}},
 			},
@@ -3157,7 +3201,7 @@ func TestEscaped(t *testing.T) {
 			"a``\n  b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", []byte(" b")},
 				}},
 			},
@@ -3167,7 +3211,7 @@ func TestEscaped(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
 					&node.Leaf{"T", []node.Inline{
-						node.Text("a"),
+						&node.Text{"MT", []byte("a")},
 						&node.Escaped{"MA", []byte(" b")},
 					}},
 				}},
@@ -3178,7 +3222,7 @@ func TestEscaped(t *testing.T) {
 			[]node.Node{
 				&node.Hanging{"A", []node.Block{
 					&node.Leaf{"T", []node.Inline{
-						node.Text("a"),
+						&node.Text{"MT", []byte("a")},
 						&node.Escaped{"MA", []byte(" b")},
 					}},
 				}},
@@ -3190,7 +3234,7 @@ func TestEscaped(t *testing.T) {
 			"a``__``",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MA", []byte("__")},
 				}},
 			},
@@ -3199,10 +3243,10 @@ func TestEscaped(t *testing.T) {
 			"a__``__b``c",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MC", []node.Inline{
 						&node.Escaped{"MA", []byte("__b")},
-						node.Text("c"),
+						&node.Text{"MT", []byte("c")},
 					}},
 				}},
 			},
@@ -3241,6 +3285,10 @@ func TestEscaped(t *testing.T) {
 					Type:      node.TypeWalled,
 					Delimiter: ">",
 				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
+				},
 			})
 		})
 	}
@@ -3263,7 +3311,7 @@ func TestPrefixed(t *testing.T) {
 			"a^^",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Prefixed{"MA", nil},
 				}},
 			},
@@ -3273,7 +3321,7 @@ func TestPrefixed(t *testing.T) {
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
 					&node.Prefixed{"MA", nil},
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 				}},
 			},
 		},
@@ -3291,7 +3339,7 @@ func TestPrefixed(t *testing.T) {
 			"ahttp://",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Prefixed{"MB", nil},
 				}},
 			},
@@ -3324,9 +3372,9 @@ func TestPrefixed(t *testing.T) {
 			"(http://a.b/c)",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("("),
+					&node.Text{"MT", []byte("(")},
 					&node.Prefixed{"MB", []byte("a.b/c")},
-					node.Text(")"),
+					&node.Text{"MT", []byte(")")},
 				}},
 			},
 		},
@@ -3347,9 +3395,9 @@ func TestPrefixed(t *testing.T) {
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
 					&node.Uniform{"MC", []node.Inline{
-						node.Text("http"),
+						&node.Text{"MT", []byte("http")},
 					}},
-					node.Text("://"),
+					&node.Text{"MT", []byte("://")},
 				}},
 			},
 		},
@@ -3367,9 +3415,9 @@ func TestPrefixed(t *testing.T) {
 			"http**://",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("http"),
+					&node.Text{"MT", []byte("http")},
 					&node.Uniform{"MC", []node.Inline{
-						node.Text("://"),
+						&node.Text{"MT", []byte("://")},
 					}},
 				}},
 			},
@@ -3398,7 +3446,7 @@ func TestPrefixed(t *testing.T) {
 			`\^^`,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("^^"),
+					&node.Text{"MT", []byte("^^")},
 				}},
 			},
 		},
@@ -3406,7 +3454,7 @@ func TestPrefixed(t *testing.T) {
 			`\http://`,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("http://"),
+					&node.Text{"MT", []byte("http://")},
 				}},
 			},
 		},
@@ -3414,7 +3462,7 @@ func TestPrefixed(t *testing.T) {
 			`\http`,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text(`\http`),
+					&node.Text{"MT", []byte(`\http`)},
 				}},
 			},
 		},
@@ -3447,6 +3495,10 @@ func TestPrefixed(t *testing.T) {
 					Name:      "MD",
 					Type:      node.TypeUniform,
 					Delimiter: "_",
+				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
 				},
 			})
 		})
@@ -3485,7 +3537,7 @@ func TestPrecedence(t *testing.T) {
 			"a**\n*",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", nil},
 				}},
 				&node.Hanging{"A", nil},
@@ -3495,9 +3547,9 @@ func TestPrecedence(t *testing.T) {
 			"a**\n**b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
-					&node.Uniform{"MA", []node.Inline{node.Text(" ")}},
-					node.Text("b"),
+					&node.Text{"MT", []byte("a")},
+					&node.Uniform{"MA", []node.Inline{&node.Text{"MT", []byte(" ")}}},
+					&node.Text{"MT", []byte("b")},
 				}},
 			},
 		},
@@ -3505,7 +3557,7 @@ func TestPrecedence(t *testing.T) {
 			"a**\n* *",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Uniform{"MA", nil},
 				}},
 				&node.Hanging{"A", []node.Block{
@@ -3539,7 +3591,7 @@ func TestPrecedence(t *testing.T) {
 			"a``\n`",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MB", nil},
 				}},
 				&node.Fenced{"B", nil, nil},
@@ -3549,9 +3601,9 @@ func TestPrecedence(t *testing.T) {
 			"a``\n``b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MB", []byte("")},
-					node.Text("b"),
+					&node.Text{"MT", []byte("b")},
 				}},
 			},
 		},
@@ -3559,7 +3611,7 @@ func TestPrecedence(t *testing.T) {
 			"a``\\\n``b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MB", []byte(" ``b")},
 				}},
 			},
@@ -3568,9 +3620,9 @@ func TestPrecedence(t *testing.T) {
 			"a``\\\n\\``b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MB", []byte("")},
-					node.Text("b"),
+					&node.Text{"MT", []byte("b")},
 				}},
 			},
 		},
@@ -3578,7 +3630,7 @@ func TestPrecedence(t *testing.T) {
 			"a``\n` `",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 					&node.Escaped{"MB", nil},
 				}},
 				&node.Fenced{"B", [][]byte{[]byte(" `")}, nil},
@@ -3603,7 +3655,7 @@ func TestPrecedence(t *testing.T) {
 			"= =",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("= ="),
+					&node.Text{"MT", []byte("= =")},
 				}},
 			},
 		},
@@ -3683,6 +3735,10 @@ func TestPrecedence(t *testing.T) {
 					Type:      node.TypeUniform,
 					Delimiter: "-",
 				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
+				},
 			})
 		})
 	}
@@ -3696,64 +3752,64 @@ func TestEscape(t *testing.T) {
 		{
 			`\`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\`)}}},
 			},
 		},
 		{
 			`\\`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\`)}}},
 			},
 		},
 		{
 			`\\\`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\\`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\\`)}}},
 			},
 		},
 		{
 			`\\\\`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\\`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\\`)}}},
 			},
 		},
 		{
 			"\\\n\\",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\ \`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\ \`)}}},
 			},
 		},
 		{
 			"\\a\n\\b",
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\a \b`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\a \b`)}}},
 			},
 		},
 
 		{
 			`\a`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\a`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\a`)}}},
 			},
 		},
 		{
 			`\\a`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\a`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\a`)}}},
 			},
 		},
 
 		{
 			`\**`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("**")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("**")}}},
 			},
 		},
 		{
 			`\\**`,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text(`\`),
+					&node.Text{"MT", []byte(`\`)},
 					&node.Uniform{"MA", nil},
 				}},
 			},
@@ -3762,7 +3818,7 @@ func TestEscape(t *testing.T) {
 			`\\\**`,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text(`\**`),
+					&node.Text{"MT", []byte(`\**`)},
 				}},
 			},
 		},
@@ -3770,14 +3826,14 @@ func TestEscape(t *testing.T) {
 		{
 			`a\**`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a**")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a**")}}},
 			},
 		},
 		{
 			`\**\**`,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("****"),
+					&node.Text{"MT", []byte("****")},
 				}},
 			},
 		},
@@ -3785,19 +3841,19 @@ func TestEscape(t *testing.T) {
 		{
 			`\!`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("!")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("!")}}},
 			},
 		},
 		{
 			`\\!`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\!`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\!`)}}},
 			},
 		},
 		{
 			`\\\!`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\!`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\!`)}}},
 			},
 		},
 
@@ -3845,6 +3901,10 @@ func TestEscape(t *testing.T) {
 					Type:      node.TypeEscaped,
 					Delimiter: "`",
 				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
+				},
 			})
 		})
 	}
@@ -3867,14 +3927,14 @@ func TestLineBreak(t *testing.T) {
 		{
 			`\\`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\`)}}},
 			},
 		},
 		{
 			`\\\`,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text(`\`),
+					&node.Text{"MT", []byte(`\`)},
 					&node.Prefixed{"MA", nil},
 				}},
 			},
@@ -3882,7 +3942,7 @@ func TestLineBreak(t *testing.T) {
 		{
 			`\\\\`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\\`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\\`)}}},
 			},
 		},
 		{
@@ -3890,7 +3950,7 @@ func TestLineBreak(t *testing.T) {
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
 					&node.Prefixed{"MA", nil},
-					node.Text(" "),
+					&node.Text{"MT", []byte(" ")},
 					&node.Prefixed{"MA", nil},
 				}},
 			},
@@ -3900,9 +3960,9 @@ func TestLineBreak(t *testing.T) {
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
 					&node.Prefixed{"MA", nil},
-					node.Text("a "),
+					&node.Text{"MT", []byte("a ")},
 					&node.Prefixed{"MA", nil},
-					node.Text("b"),
+					&node.Text{"MT", []byte("b")},
 				}},
 			},
 		},
@@ -3912,28 +3972,28 @@ func TestLineBreak(t *testing.T) {
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
 					&node.Prefixed{"MA", nil},
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 				}},
 			},
 		},
 		{
 			`\\a`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\a`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\a`)}}},
 			},
 		},
 
 		{
 			`\**`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("**")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("**")}}},
 			},
 		},
 		{
 			`\\**`,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text(`\`),
+					&node.Text{"MT", []byte(`\`)},
 					&node.Uniform{"MB", nil},
 				}},
 			},
@@ -3942,7 +4002,7 @@ func TestLineBreak(t *testing.T) {
 			`\\\**`,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text(`\**`),
+					&node.Text{"MT", []byte(`\**`)},
 				}},
 			},
 		},
@@ -3950,14 +4010,14 @@ func TestLineBreak(t *testing.T) {
 		{
 			`a\**`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("a**")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("a**")}}},
 			},
 		},
 		{
 			`\**\**`,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("****"),
+					&node.Text{"MT", []byte("****")},
 				}},
 			},
 		},
@@ -3965,19 +4025,19 @@ func TestLineBreak(t *testing.T) {
 		{
 			`\!`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text("!")}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte("!")}}},
 			},
 		},
 		{
 			`\\!`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\!`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\!`)}}},
 			},
 		},
 		{
 			`\\\!`,
 			[]node.Node{
-				&node.Leaf{"T", []node.Inline{node.Text(`\!`)}},
+				&node.Leaf{"T", []node.Inline{&node.Text{"MT", []byte(`\!`)}}},
 			},
 		},
 
@@ -4025,6 +4085,10 @@ func TestLineBreak(t *testing.T) {
 					Type:      node.TypeEscaped,
 					Delimiter: "`",
 				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
+				},
 			})
 		})
 	}
@@ -4043,7 +4107,7 @@ func TestInvalidUTF8Encoding(t *testing.T) {
 			fcb + "a",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text(string(unicode.ReplacementChar) + "a"),
+					&node.Text{"MT", []byte(string(unicode.ReplacementChar) + "a")},
 				},
 				}},
 		},
@@ -4052,7 +4116,7 @@ func TestInvalidUTF8Encoding(t *testing.T) {
 			"a" + fcb + "b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a" + string(unicode.ReplacementChar) + "b"),
+					&node.Text{"MT", []byte("a" + string(unicode.ReplacementChar) + "b")},
 				},
 				}},
 		},
@@ -4061,7 +4125,7 @@ func TestInvalidUTF8Encoding(t *testing.T) {
 			"a" + fcb,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a" + string(unicode.ReplacementChar)),
+					&node.Text{"MT", []byte("a" + string(unicode.ReplacementChar))},
 				},
 				}},
 		},
@@ -4073,6 +4137,10 @@ func TestInvalidUTF8Encoding(t *testing.T) {
 				"T": {
 					Name: "T",
 					Type: node.TypeLeaf,
+				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
 				},
 			})
 		})
@@ -4092,7 +4160,7 @@ func TestNULL(t *testing.T) {
 			null + "a",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text(string(unicode.ReplacementChar) + "a"),
+					&node.Text{"MT", []byte(string(unicode.ReplacementChar) + "a")},
 				},
 				}},
 		},
@@ -4101,7 +4169,7 @@ func TestNULL(t *testing.T) {
 			"a" + null + "b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a" + string(unicode.ReplacementChar) + "b"),
+					&node.Text{"MT", []byte("a" + string(unicode.ReplacementChar) + "b")},
 				},
 				}},
 		},
@@ -4110,7 +4178,7 @@ func TestNULL(t *testing.T) {
 			"a" + null,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a" + string(unicode.ReplacementChar)),
+					&node.Text{"MT", []byte("a" + string(unicode.ReplacementChar))},
 				},
 				}},
 		},
@@ -4122,6 +4190,10 @@ func TestNULL(t *testing.T) {
 				"T": {
 					Name: "T",
 					Type: node.TypeLeaf,
+				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
 				},
 			})
 		})
@@ -4137,7 +4209,7 @@ func TestBOM(t *testing.T) {
 			bom+"a",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a"),
+					&node.Text{"MT", []byte("a")},
 				}},
 			},
 			nil,
@@ -4145,6 +4217,10 @@ func TestBOM(t *testing.T) {
 				"T": {
 					Name: "T",
 					Type: node.TypeLeaf,
+				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
 				},
 			},
 		)
@@ -4160,7 +4236,7 @@ func TestBOM(t *testing.T) {
 			"a" + bom + "b",
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a" + string(unicode.ReplacementChar) + "b"),
+					&node.Text{"MT", []byte("a" + string(unicode.ReplacementChar) + "b")},
 				}},
 			},
 		},
@@ -4169,7 +4245,7 @@ func TestBOM(t *testing.T) {
 			"a" + bom,
 			[]node.Node{
 				&node.Leaf{"T", []node.Inline{
-					node.Text("a" + string(unicode.ReplacementChar)),
+					&node.Text{"MT", []byte("a" + string(unicode.ReplacementChar))},
 				}},
 			},
 		},
@@ -4181,6 +4257,10 @@ func TestBOM(t *testing.T) {
 				"T": {
 					Name: "T",
 					Type: node.TypeLeaf,
+				},
+				"MT": {
+					Name: "MT",
+					Type: node.TypeText,
 				},
 			})
 		})

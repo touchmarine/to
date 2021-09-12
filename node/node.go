@@ -358,18 +358,21 @@ func (p *Prefixed) Content() []byte {
 }
 
 // Text represents text—an atomic, inline node.
-type Text []byte
+type Text struct {
+	Name     string
+	Content0 []byte
+}
 
 // Node returns the node's name.
 func (t Text) Node() string {
-	return "Text"
+	return t.Name
 }
 
 func (t Text) Inline() {}
 
 // Content returns the text.
-func (t Text) Content() []byte {
-	return t
+func (t *Text) Content() []byte {
+	return t.Content0
 }
 
 type Group struct {

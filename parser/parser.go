@@ -50,6 +50,7 @@ type parser struct {
 	blockKeys      []string           // length-sorted (longest first) blockMap keys
 	leaf           string             // leaf element name
 	inlineMap      map[string]Element // registered inline elements by delimiter
+	text           string             // text element name
 	specialEscapes []string           // delimiters that do not start with a punctuation
 	matcherMap     matcher.Map        // registered matchers by name
 
@@ -89,24 +90,29 @@ func (p *parser) elements(elementMap ElementMap) {
 			}
 
 		case node.CategoryInline:
-			r, _ := utf8.DecodeRuneInString(e.Delimiter)
-			if !isPunct(r) {
-				p.specialEscapes = append(p.specialEscapes, e.Delimiter)
+			switch e.Type {
+			case node.TypeText:
+				p.text = e.Name
+			default:
+				r, _ := utf8.DecodeRuneInString(e.Delimiter)
+				if !isPunct(r) {
+					p.specialEscapes = append(p.specialEscapes, e.Delimiter)
+				}
+
+				runes := utf8.RuneCountInString(e.Delimiter)
+
+				delimiter := ""
+				if runes > 0 && e.Type == node.TypePrefixed {
+					delimiter = e.Delimiter
+				} else if runes == 1 {
+					delimiter = e.Delimiter + e.Delimiter
+				} else {
+					panic("parser: invalid inline delimiter " + e.Delimiter)
+				}
+
+				p.blockMap[delimiter] = e
+				p.inlineMap[delimiter] = e
 			}
-
-			runes := utf8.RuneCountInString(e.Delimiter)
-
-			delimiter := ""
-			if runes > 0 && e.Type == node.TypePrefixed {
-				delimiter = e.Delimiter
-			} else if runes == 1 {
-				delimiter = e.Delimiter + e.Delimiter
-			} else {
-				panic("parser: unvalid inline delimiter " + e.Delimiter)
-			}
-
-			p.blockMap[delimiter] = e
-			p.inlineMap[delimiter] = e
 
 		default:
 			panic("parser: unexpected node category " + c.String())
@@ -660,7 +666,7 @@ func (p *parser) parseInline() (node.Inline, bool) {
 		}
 	}
 
-	return p.parseText()
+	return p.parseText(p.text)
 }
 
 func (p *parser) isEscape() bool {
@@ -885,9 +891,9 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (node.Inline
 	return &node.Prefixed{name, b.Bytes()}, true
 }
 
-func (p *parser) parseText() (node.Inline, bool) {
+func (p *parser) parseText(name string) (node.Inline, bool) {
 	if trace {
-		defer p.trace("parseText")()
+		defer p.tracef("parseText (%s)", name)()
 	}
 
 	cont := true
@@ -961,7 +967,7 @@ func (p *parser) parseText() (node.Inline, bool) {
 		defer p.printf("return %q", txt)
 	}
 
-	return node.Text(txt), cont
+	return &node.Text{name, txt}, cont
 }
 
 func (p *parser) matchInline() (Element, bool) {

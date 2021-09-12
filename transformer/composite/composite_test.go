@@ -36,7 +36,7 @@ func TestTransform(t *testing.T) {
 			[]node.Node{
 				&node.Leaf{"A", []node.Inline{
 					&node.Uniform{"B", []node.Inline{
-						node.Text("a"),
+						&node.Text{"MT", []byte("a")},
 					}},
 					&node.Escaped{"C", []byte("b")},
 				}},
@@ -46,7 +46,7 @@ func TestTransform(t *testing.T) {
 					&node.Composite{
 						"CA",
 						&node.Uniform{"B", []node.Inline{
-							node.Text("a"),
+							&node.Text{"MT", []byte("a")},
 						}},
 						&node.Escaped{"C", []byte("b")},
 					},

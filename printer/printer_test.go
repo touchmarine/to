@@ -355,6 +355,10 @@ func TestEscape(t *testing.T) {
 						Delimiter: "http://",
 						Matcher:   "url",
 					},
+					{
+						Name: "MT",
+						Type: node.TypeText,
+					},
 				},
 			}
 
@@ -529,6 +533,10 @@ func TestEscapeWithClash(t *testing.T) {
 						Type:      node.TypePrefixed,
 						Delimiter: "http://",
 						Matcher:   "url",
+					},
+					{
+						Name: "MT",
+						Type: node.TypeText,
 					},
 				},
 			}
