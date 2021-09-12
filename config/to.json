@@ -4,11 +4,6 @@
 			"html": "<html>\n<body>\n{{render .}}\n</body>\n</html>"
 		}	
 	},
-	"Paragraph": {
-		"templates": {
-			"html": "<p>{{range .BlockChildren}}{{render .}}{{end}}</p>"
-		}
-	},
 	"elements": [
 		{
 			"name": "TextBlock",
@@ -292,7 +287,15 @@
 	],
 	"groups": [
 		{
+			"name": "Paragraph",
+			"recognizer": "paragraph",
+			"templates": {
+				"html": "<p {{- with .Attrs}} {{htmlAttrs .}}{{end}}>{{range .BlockChildren}}{{render .}}{{end}}</p>"
+			}
+		},
+		{
 			"name": "NumberedListDot",
+			"recognizer": "element",
 			"element": "NumberedListItemDot",
 			"templates": {
 				"html": "<ol class=\"dot\" {{- with .Attrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{- end}}\n</ol>"
@@ -300,6 +303,7 @@
 		},
 		{
 			"name": "NumberedListParen",
+			"recognizer": "element",
 			"element": "NumberedListItemParen",
 			"templates": {
 				"html": "<ol class=\"paren\" {{- with .Attrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{- end}}\n</ol>"
@@ -307,6 +311,7 @@
 		},
 		{
 			"name": "ListDot",
+			"recognizer": "element",
 			"element": "ListItemDot",
 			"templates": {
 				"html": "<ul {{- with .Attrs}} {{htmlAttrs .}}{{end}}>\n\t{{- range .BlockChildren}}\n\t\t{{render .}}\n\t{{- end}}\n</ul>"
@@ -314,6 +319,7 @@
 		},
 		{
 			"name": "TermList",
+			"recognizer": "element",
 			"element": "Term",
 			"templates": {
 				"html": "{{- range .BlockChildren}}\n\t{{render .}}\n{{- end}}\n"
@@ -321,6 +327,7 @@
 		},
 		{
 			"name": "DescriptionList",
+			"recognizer": "element",
 			"element": "Description",
 			"templates": {
 				"html": "{{- range .BlockChildren}}\n\t{{render .}}\n{{- end}}\n"

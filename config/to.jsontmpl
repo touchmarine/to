@@ -9,11 +9,6 @@
 </html>'''
 		}	
 	},
-	"Paragraph": {
-		"templates": {
-			"html": "<p>{{range .BlockChildren}}{{render .}}{{end}}</p>"
-		}
-	},
 	"elements": [
 		{
 			"name": "TextBlock",
@@ -408,7 +403,15 @@
 	],
 	"groups": [
 		{
+			"name": "Paragraph",
+			"recognizer": "paragraph",
+			"templates": {
+				"html": "<p {{- with .Attrs}} {{htmlAttrs .}}{{end}}>{{range .BlockChildren}}{{render .}}{{end}}</p>"
+			}
+		},
+		{
 			"name": "NumberedListDot",
+			"recognizer": "element",
 			"element": "NumberedListItemDot",
 			"templates": {
 				"html": '''
@@ -421,6 +424,7 @@
 		},
 		{
 			"name": "NumberedListParen",
+			"recognizer": "element",
 			"element": "NumberedListItemParen",
 			"templates": {
 				"html": '''
@@ -433,6 +437,7 @@
 		},
 		{
 			"name": "ListDot",
+			"recognizer": "element",
 			"element": "ListItemDot",
 			"templates": {
 				"html": '''
@@ -445,6 +450,7 @@
 		},
 		{
 			"name": "TermList",
+			"recognizer": "element",
 			"element": "Term",
 			"templates": {
 				"html": '''
@@ -456,6 +462,7 @@
 		},
 		{
 			"name": "DescriptionList",
+			"recognizer": "element",
 			"element": "Description",
 			"templates": {
 				"html": '''

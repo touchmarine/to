@@ -108,7 +108,7 @@ func (c *compositer) composite() {
 		} else {
 			_, isBlockChildren := c.node.(node.BlockChildren)
 			_, isGroup := c.node.(*node.Group)
-			if isBlockChildren && !(isGroup && c.node.Node() == "Paragraph") {
+			if isBlockChildren && !isGroup {
 				panic(fmt.Sprintf("transformer: node %T does not implement SettableBlockChildren", c.node))
 			}
 		}

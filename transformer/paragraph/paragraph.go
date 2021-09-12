@@ -8,7 +8,11 @@ import (
 
 const trace = false
 
-func Transform(nodes []node.Node) []node.Node {
+type Transformer struct {
+	Name string
+}
+
+func (t Transformer) Transform(nodes []node.Node) []node.Node {
 	for i := 0; i < len(nodes); i++ {
 		n := nodes[i]
 
@@ -18,13 +22,13 @@ func Transform(nodes []node.Node) []node.Node {
 					log.Printf("add paragraph")
 				}
 
-				p := &node.Group{"Paragraph", []node.Block{leaf}}
+				p := &node.Group{t.Name, []node.Block{leaf}}
 				nodes[i] = p
 			}
 		}
 
 		if m, ok := n.(node.SettableBlockChildren); ok {
-			breaked := Transform(node.BlocksToNodes(m.BlockChildren()))
+			breaked := t.Transform(node.BlocksToNodes(m.BlockChildren()))
 			m.SetBlockChildren(node.NodesToBlocks(breaked))
 		} else {
 			if _, ok := n.(node.BlockChildren); ok {

@@ -733,10 +733,6 @@ func (p *printer) hasClosingDelimiterPrefix(content []byte) bool {
 }
 
 func (p *printer) delimiters() (string, string) {
-	if p.n.Node() == "Paragraph" {
-		return "", ""
-	}
-
 	e, found := p.elementMap[p.n.Node()]
 	if !found {
 		return "", ""

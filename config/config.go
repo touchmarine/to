@@ -35,9 +35,6 @@ type Config struct {
 	Root struct {
 		Templates map[string]string `json:"templates"`
 	} `json:"root"`
-	Paragraph struct {
-		Templates map[string]string `json:"templates"`
-	}
 	Elements   []Element   `json:"elements"`
 	Composites []Composite `json:"composites"`
 	Stickies   []Sticky    `json:"stickies"`
@@ -79,9 +76,10 @@ type Sticky struct {
 
 // Group is a group of consecutive Elements.
 type Group struct {
-	Name      string            `json:"name"`
-	Element   string            `json:"element"`
-	Templates map[string]string `json:"templates"`
+	Name       string            `json:"name"`
+	Recognizer string            `json:"recognizer"`
+	Element    string            `json:"element"`
+	Templates  map[string]string `json:"templates"`
 }
 
 type Aggregates struct {
@@ -129,12 +127,24 @@ func (c *Config) TransformerComposites() composite.Map {
 	return m
 }
 
-func (c *Config) TransformerGroups() group.Map {
+func (c *Config) GroupsByRecognizer(recognizer string) []Group {
+	var groups []Group
+	for _, g := range c.Groups {
+		if g.Recognizer == recognizer {
+			groups = append(groups, g)
+		}
+	}
+	return groups
+}
+
+func (c *Config) TransformerGroups(recognizer string) group.Map {
 	m := group.Map{}
 	for _, g := range c.Groups {
-		m[g.Element] = group.Group{
-			Name:    g.Name,
-			Element: g.Element,
+		if g.Recognizer == recognizer {
+			m[g.Element] = group.Group{
+				Name:    g.Name,
+				Element: g.Element,
+			}
 		}
 	}
 	return m
@@ -158,14 +168,6 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 		return nil, fmt.Errorf("root %s template not found", name)
 	}
 	if _, err := target.New("root").Parse(rootTmpl); err != nil {
-		return nil, err
-	}
-
-	paraTmpl, ok := c.Paragraph.Templates[name]
-	if !ok {
-		return nil, fmt.Errorf("Paragraph %s template not found", name)
-	}
-	if _, err := target.New("Paragraph").Parse(paraTmpl); err != nil {
 		return nil, err
 	}
 
@@ -213,17 +215,25 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 }
 
 func (c *Config) DefaultTransformers() []transformer.Transformer {
-	grouper := group.Transformer{c.TransformerGroups()}
+	var transformers []transformer.Transformer
+
+	paragraphGroups := c.GroupsByRecognizer("paragraph")
+	if len(paragraphGroups) > 0 {
+		paragrapher := paragraph.Transformer{paragraphGroups[0].Name}
+		transformers = append(transformers, paragrapher)
+	}
+
+	grouper := group.Transformer{c.TransformerGroups("element")}
 	compositer := composite.Transformer{c.TransformerComposites()}
 	stickier := sticky.Transformer{c.TransformerStickies()}
 
-	return []transformer.Transformer{
-		transformer.Func(paragraph.Transform),
+	transformers = append(transformers, []transformer.Transformer{
 		grouper,
 		compositer,
 		stickier,
 		transformer.Func(sequence.Transform),
-	}
+	}...)
+	return transformers
 }
 
 func (c *Config) DefaultAggregators() map[string]map[string]aggregator.Aggregator {

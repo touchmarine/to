@@ -95,7 +95,7 @@ func (g *grouper) group(nodes []node.Node) []node.Node {
 		} else {
 			_, isBlockChildren := n.(node.BlockChildren)
 			_, isGroup := n.(*node.Group)
-			if isBlockChildren && !(isGroup && n.Node() == "Paragraph") {
+			if isBlockChildren && !isGroup {
 				panic(fmt.Sprintf("transformer: node %T does not implement SettableBlockChildren", n))
 			}
 		}
