@@ -8,6 +8,7 @@ import (
 	"github.com/touchmarine/to/node"
 	"io"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -34,7 +35,7 @@ type Element struct {
 	Matcher   string
 }
 
-func Parse(src io.Reader, elementMap ElementMap) ([]node.Block, []error) {
+func Parse(src io.Reader, elementMap ElementMap) (*node.Node, []error) {
 	var p parser
 	p.matchers(matcher.Defaults())
 	p.elements(elementMap)
@@ -144,12 +145,15 @@ func (p *parser) matchers(m matcher.Map) {
 	}
 }
 
-func (p *parser) parse(reqdBlocks []rune) []node.Block {
+func (p *parser) parse(reqdBlocks []rune) *node.Node {
 	if trace {
 		defer p.trace("parse")()
 	}
 
-	var blocks []node.Block
+	container := &node.Node{
+		Type: node.TypeContainer,
+	}
+
 	for p.ch > 0 {
 		if isSpacing(p.ch) {
 			p.parseSpacing()
@@ -164,14 +168,14 @@ func (p *parser) parse(reqdBlocks []rune) []node.Block {
 				panic("parser: parseBlock() returned no block")
 			}
 
-			blocks = append(blocks, b)
+			container.AppendChild(b)
 		}
 	}
 
-	return blocks
+	return container
 }
 
-func (p *parser) parseBlock() node.Block {
+func (p *parser) parseBlock() *node.Node {
 	if trace {
 		defer p.trace("parseBlock")()
 	}
@@ -247,7 +251,7 @@ func (p *parser) hasPrefix(b []byte) bool {
 	return bytes.HasPrefix(p.src[p.offset:], b)
 }
 
-func (p *parser) parseWalled(name string) node.Block {
+func (p *parser) parseWalled(name string) *node.Node {
 	if trace {
 		defer p.tracef("parseWalled (%s)", name)()
 	}
@@ -260,10 +264,15 @@ func (p *parser) parseWalled(name string) node.Block {
 	reqdBlocks := p.blocks
 	children := p.parse(reqdBlocks)
 
-	return &node.Walled{name, children}
+	n := &node.Node{
+		Name: name,
+		Type: node.TypeWalled,
+	}
+	n.AppendChild(children)
+	return n
 }
 
-func (p *parser) parseVerbatimWalled(name string) node.Block {
+func (p *parser) parseVerbatimWalled(name string) *node.Node {
 	if trace {
 		defer p.tracef("parseVerbatimWalled (%s)", name)()
 	}
@@ -291,10 +300,23 @@ func (p *parser) parseVerbatimWalled(name string) node.Block {
 		lines = append(lines, line)
 	}
 
-	return &node.VerbatimWalled{name, lines}
+	return &node.Node{
+		Name: name,
+		Type: node.TypeVerbatimWalled,
+		Data: strings.Join(btosSlice(lines), "\n"),
+	}
 }
 
-func (p *parser) parseHanging(name, delim string) node.Block {
+// btosSlice converts [][]byte to []string.
+func btosSlice(p [][]byte) []string {
+	var lines []string
+	for _, line := range p {
+		lines = append(lines, string(line))
+	}
+	return lines
+}
+
+func (p *parser) parseHanging(name, delim string) *node.Node {
 	if trace {
 		defer p.tracef("parseHanging (%s, delim=%q)", name, delim)()
 	}
@@ -308,10 +330,15 @@ func (p *parser) parseHanging(name, delim string) node.Block {
 	}
 
 	children := p.parseHanging0()
-	return &node.Hanging{name, children}
+	n := &node.Node{
+		Name: name,
+		Type: node.TypeHanging,
+	}
+	n.AppendChild(children)
+	return n
 }
 
-func (p *parser) parseRankedHanging(name, delim string) node.Block {
+func (p *parser) parseRankedHanging(name, delim string) *node.Node {
 	if trace {
 		defer p.tracef("parseRankedHanging (%s, delim=%q)", name, delim)()
 	}
@@ -329,10 +356,16 @@ func (p *parser) parseRankedHanging(name, delim string) node.Block {
 	p.addLead([]rune(strings.Repeat(" ", rank))...)
 
 	children := p.parseHanging0()
-	return &node.RankedHanging{name, rank, children}
+	n := &node.Node{
+		Name: name,
+		Type: node.TypeRankedHanging,
+		Data: strconv.Itoa(rank),
+	}
+	n.AppendChild(children)
+	return n
 }
 
-func (p *parser) parseHanging0() []node.Block {
+func (p *parser) parseHanging0() *node.Node {
 	if trace {
 		defer p.trace("parseHanging0")()
 	}
@@ -454,7 +487,7 @@ func lastSpacingSeq(a []rune) []rune {
 	return a
 }
 
-func (p *parser) parseFenced(name string) node.Block {
+func (p *parser) parseFenced(name string) *node.Node {
 	if trace {
 		defer p.tracef("parseFenced (%s)", name)()
 	}
@@ -508,19 +541,21 @@ func (p *parser) parseFenced(name string) node.Block {
 		}
 	}
 
-	var closingText []byte
-
 	if p.continues(reqdBlocks) {
 		// closed by delimiter, not continues
 
-		closingText = p.consumeLine()
+		p.consumeLine()
 
 		p.next()
 		p.parseLead()
 		p.parseSpacing()
 	}
 
-	return &node.Fenced{name, lines, closingText}
+	return &node.Node{
+		Name: name,
+		Type: node.TypeFenced,
+		Data: strings.Join(btosSlice(lines), "\n"),
+	}
 }
 
 func (p *parser) consumeLine() []byte {
@@ -592,7 +627,7 @@ func countSpacing(s []rune) int {
 	return i
 }
 
-func (p *parser) parseVerbatimLine(name, delim string) node.Block {
+func (p *parser) parseVerbatimLine(name, delim string) *node.Node {
 	if trace {
 		defer p.tracef("parseVerbatimLine (%s, delim=%q)", name, delim)()
 	}
@@ -608,24 +643,35 @@ func (p *parser) parseVerbatimLine(name, delim string) node.Block {
 	p.parseLead()
 	p.parseSpacing()
 
-	return &node.VerbatimLine{name, content}
+	return &node.Node{
+		Name: name,
+		Type: node.TypeVerbatimLine,
+		Data: string(content),
+	}
 }
 
-func (p *parser) parseLeaf(name string) node.Block {
+func (p *parser) parseLeaf(name string) *node.Node {
 	if trace {
 		defer p.tracef("parseLeaf %s", name)()
 	}
 
 	children, _ := p.parseInlines()
-	return &node.Leaf{name, children}
+	n := &node.Node{
+		Name: name,
+		Type: node.TypeLeaf,
+	}
+	n.AppendChild(children)
+	return n
 }
 
-func (p *parser) parseInlines() ([]node.Inline, bool) {
+func (p *parser) parseInlines() (*node.Node, bool) {
 	if trace {
 		defer p.trace("parseInlines")()
 	}
 
-	var inlines []node.Inline
+	container := &node.Node{
+		Type: node.TypeContainer,
+	}
 
 	for p.ch > 0 {
 		if p.closingDelimiter() > 0 {
@@ -634,18 +680,18 @@ func (p *parser) parseInlines() ([]node.Inline, bool) {
 
 		inline, cont := p.parseInline()
 		if inline != nil {
-			inlines = append(inlines, inline)
+			container.AppendChild(inline)
 		}
 
 		if !cont {
-			return inlines, false
+			return container, false
 		}
 	}
 
-	return inlines, true
+	return container, true
 }
 
-func (p *parser) parseInline() (node.Inline, bool) {
+func (p *parser) parseInline() (*node.Node, bool) {
 	if trace {
 		defer p.trace("parseInline")()
 	}
@@ -709,7 +755,7 @@ func isPunct(ch rune) bool {
 		ch >= 0x7B && ch <= 0x7E
 }
 
-func (p *parser) parseUniform(name string) (node.Inline, bool) {
+func (p *parser) parseUniform(name string) (*node.Node, bool) {
 	if trace {
 		defer p.tracef("parseUniform (%s)", name)()
 		p.printDelims("inlines", p.inlines)
@@ -731,10 +777,15 @@ func (p *parser) parseUniform(name string) (node.Inline, bool) {
 		p.next()
 	}
 
-	return &node.Uniform{name, children}, cont
+	n := &node.Node{
+		Name: name,
+		Type: node.TypeUniform,
+	}
+	n.AppendChild(children)
+	return n, cont
 }
 
-func (p *parser) parseEscaped(name string) (node.Inline, bool) {
+func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 	if trace {
 		defer p.tracef("parseEscaped (%s)", name)()
 	}
@@ -822,7 +873,11 @@ func (p *parser) parseEscaped(name string) (node.Inline, bool) {
 		defer p.printf("return %q", txt)
 	}
 
-	return &node.Escaped{name, txt}, cont
+	return &node.Node{
+		Name: name,
+		Type: node.TypeEscaped,
+		Data: string(txt),
+	}, cont
 }
 
 // cmpRunes determines whether a and b have the same values.
@@ -859,7 +914,7 @@ var leftRightChars = map[rune]rune{
 	'>': '<',
 }
 
-func (p *parser) parsePrefixed(name, prefix string, matcher string) (node.Inline, bool) {
+func (p *parser) parsePrefixed(name, prefix string, matcher string) (*node.Node, bool) {
 	if trace {
 		defer p.tracef("parsePrefixed (%s, prefix=%q, matcher=%q)", name, prefix, matcher)()
 	}
@@ -870,7 +925,10 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (node.Inline
 	}
 
 	if matcher == "" {
-		return &node.Prefixed{name, nil}, true
+		return &node.Node{
+			Name: name,
+			Type: node.TypePrefixed,
+		}, true
 	}
 
 	m, ok := p.matcherMap[matcher]
@@ -888,10 +946,14 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (node.Inline
 		p.next()
 	}
 
-	return &node.Prefixed{name, b.Bytes()}, true
+	return &node.Node{
+		Name: name,
+		Type: node.TypePrefixed,
+		Data: string(b.Bytes()),
+	}, true
 }
 
-func (p *parser) parseText(name string) (node.Inline, bool) {
+func (p *parser) parseText(name string) (*node.Node, bool) {
 	if trace {
 		defer p.tracef("parseText (%s)", name)()
 	}
@@ -967,7 +1029,11 @@ func (p *parser) parseText(name string) (node.Inline, bool) {
 		defer p.printf("return %q", txt)
 	}
 
-	return &node.Text{name, txt}, cont
+	return &node.Node{
+		Name: name,
+		Type: node.TypeText,
+		Data: string(txt),
+	}, cont
 }
 
 func (p *parser) matchInline() (Element, bool) {

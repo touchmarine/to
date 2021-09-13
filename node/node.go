@@ -11,7 +11,8 @@ type Category int
 
 // Categories of nodes
 const (
-	CategoryBlock Category = iota
+	CategoryError Category = iota
+	CategoryBlock
 	CategoryInline
 )
 
@@ -20,8 +21,11 @@ type Type int
 
 // Types of nodes
 const (
+	TypeError Type = iota
+
 	// blocks
-	TypeLeaf Type = iota
+	TypeContainer
+	TypeLeaf
 	TypeVerbatimLine
 	TypeWalled
 	TypeVerbatimWalled
@@ -68,24 +72,53 @@ func (t *Type) UnmarshalText(text []byte) error {
 
 // TypeCategory is used by parser to determine node category based on type.
 func TypeCategory(typ Type) Category {
-	if typ > 6 {
+	if typ == 0 {
+		return CategoryError
+	} else if typ <= 8 {
+		return CategoryBlock
+	} else {
 		return CategoryInline
 	}
-	return CategoryBlock
 }
 
-// Node represents an element.
-type Node interface {
-	Node() string
+type Node struct {
+	Name string
+	Type Type
+	Data string
+
+	Parent      *Node
+	FirstChild  *Node
+	LastChild   *Node
+	PrevSibling *Node
+	NextSibling *Node
+}
+
+func (n Node) TypeCategory() Category {
+	return TypeCategory(n.Type)
+}
+
+func (n *Node) AppendChild(c *Node) {
+	if c.Parent != nil || c.PrevSibling != nil || c.NextSibling != nil {
+		panic("node: child already attached")
+	}
+
+	last := n.LastChild
+	if last != nil {
+		last.NextSibling = c
+	} else {
+		n.FirstChild = c
+	}
+
+	n.LastChild = c
+	c.Parent = n
+	c.PrevSibling = last
 }
 
 type Block interface {
-	Node
 	Block()
 }
 
 type Inline interface {
-	Node
 	Inline()
 }
 
@@ -139,46 +172,22 @@ type Boxed interface {
 
 // NodesToBlocks converts nodes to blocks.
 func NodesToBlocks(nodes []Node) []Block {
-	blocks := make([]Block, len(nodes))
-	for i, n := range nodes {
-		block, ok := n.(Block)
-		if !ok {
-			panic(fmt.Sprintf("node: node %s does not implement node.Block", n.Node()))
-		}
-		blocks[i] = block
-	}
-	return blocks
+	return nil
 }
 
 // NodesToInlines converts nodes to blocks.
 func NodesToInlines(nodes []Node) []Inline {
-	inlines := make([]Inline, len(nodes))
-	for i, n := range nodes {
-		inline, ok := n.(Inline)
-		if !ok {
-			panic(fmt.Sprintf("node: node %s does not implement node.Inline", n.Node()))
-		}
-		inlines[i] = inline
-	}
-	return inlines
+	return nil
 }
 
 // BlocksToNodes converts blocks to nodes.
 func BlocksToNodes(blocks []Block) []Node {
-	nodes := make([]Node, len(blocks))
-	for i, b := range blocks {
-		nodes[i] = Node(b)
-	}
-	return nodes
+	return nil
 }
 
 // InlinesToNodes converts inlines to nodes.
 func InlinesToNodes(inlines []Inline) []Node {
-	nodes := make([]Node, len(inlines))
-	for i, v := range inlines {
-		nodes[i] = Node(v)
-	}
-	return nodes
+	return nil
 }
 
 type Leaf struct {
@@ -464,7 +473,7 @@ type SequentialNumberBox struct {
 }
 
 func (s SequentialNumberBox) Node() string {
-	return fmt.Sprintf("SequentialNumberBox(%s%s)", s.Nod.Node(), s.SequentialNumber())
+	return fmt.Sprintf("SequentialNumberBox(%s%s)", s.Nod.Name, s.SequentialNumber())
 }
 
 func (s SequentialNumberBox) Block() {}
@@ -488,60 +497,107 @@ func ExtractText(n Node) string {
 // ExtractTextWithReplacments is like ExtractText but replaces the node text
 // with the replacement value.
 //
-// replacementMap = map[nodeName]text
+// replacementMap = map[node.Name]text
 func ExtractTextWithReplacements(n Node, replacementMap map[string]string) string {
 	var b strings.Builder
 
-	switch n.(type) {
-	case BlockChildren, InlineChildren, Content, Lines, Composited, Boxed:
-	default:
-		panic(fmt.Sprintf("ExtractTextWithReplacements: unexpected node type %T", n))
+	text, found := replacementMap[n.Name]
+	if found {
+		// found replacement
+		b.WriteString(text)
+		return b.String()
 	}
 
-	for name, text := range replacementMap {
-		if name == n.Node() {
-			// found replacement
+	//if m, ok := n.(Boxed); ok {
+	//	unboxed := m.Unbox()
+	//	if unboxed == nil {
+	//		return ""
+	//	}
+	//	return ExtractTextWithReplacements(unboxed, replacementMap)
+	//}
 
-			b.WriteString(text)
-			return b.String()
-		}
-	}
+	//if m, ok := n.(Composited); ok {
+	//	return ExtractTextWithReplacements(m.Primary(), replacementMap)
+	//}
 
-	if m, ok := n.(Boxed); ok {
-		unboxed := m.Unbox()
-		if unboxed == nil {
-			return ""
-		}
-		return ExtractTextWithReplacements(unboxed, replacementMap)
-	}
+	//if m, ok := n.(BlockChildren); ok {
+	//	for i, c := range m.BlockChildren() {
+	//		if i > 0 {
+	//			b.WriteString("\n")
+	//		}
 
-	if m, ok := n.(Composited); ok {
-		return ExtractTextWithReplacements(m.Primary(), replacementMap)
-	}
+	//		b.WriteString(ExtractTextWithReplacements(c, replacementMap))
+	//	}
+	//}
 
-	if m, ok := n.(BlockChildren); ok {
-		for i, c := range m.BlockChildren() {
-			if i > 0 {
-				b.WriteString("\n")
-			}
+	//if m, ok := n.(InlineChildren); ok {
+	//	for _, c := range m.InlineChildren() {
+	//		b.WriteString(ExtractTextWithReplacements(c, replacementMap))
+	//	}
+	//} else if m, ok := n.(Content); ok {
+	//	b.Write(m.Content())
+	//}
 
-			b.WriteString(ExtractTextWithReplacements(c, replacementMap))
-		}
-	}
-
-	if m, ok := n.(InlineChildren); ok {
-		for _, c := range m.InlineChildren() {
-			b.WriteString(ExtractTextWithReplacements(c, replacementMap))
-		}
-	} else if m, ok := n.(Content); ok {
-		b.Write(m.Content())
-	}
-
-	if m, ok := n.(Lines); ok {
-		for _, line := range m.Lines() {
-			b.Write(line)
-		}
-	}
+	//if m, ok := n.(Lines); ok {
+	//	for _, line := range m.Lines() {
+	//		b.Write(line)
+	//	}
+	//}
 
 	return b.String()
+
+	//var b strings.Builder
+
+	//switch n.(type) {
+	//case BlockChildren, InlineChildren, Content, Lines, Composited, Boxed:
+	//default:
+	//	panic(fmt.Sprintf("ExtractTextWithReplacements: unexpected node type %T", n))
+	//}
+
+	//for name, text := range replacementMap {
+	//	if name == n.Node() {
+	//		// found replacement
+
+	//		b.WriteString(text)
+	//		return b.String()
+	//	}
+	//}
+
+	//if m, ok := n.(Boxed); ok {
+	//	unboxed := m.Unbox()
+	//	if unboxed == nil {
+	//		return ""
+	//	}
+	//	return ExtractTextWithReplacements(unboxed, replacementMap)
+	//}
+
+	//if m, ok := n.(Composited); ok {
+	//	return ExtractTextWithReplacements(m.Primary(), replacementMap)
+	//}
+
+	//if m, ok := n.(BlockChildren); ok {
+	//	for i, c := range m.BlockChildren() {
+	//		if i > 0 {
+	//			b.WriteString("\n")
+	//		}
+
+	//		b.WriteString(ExtractTextWithReplacements(c, replacementMap))
+	//	}
+	//}
+
+	//if m, ok := n.(InlineChildren); ok {
+	//	for _, c := range m.InlineChildren() {
+	//		b.WriteString(ExtractTextWithReplacements(c, replacementMap))
+	//	}
+	//} else if m, ok := n.(Content); ok {
+	//	b.Write(m.Content())
+	//}
+
+	//if m, ok := n.(Lines); ok {
+	//	for _, line := range m.Lines() {
+	//		b.Write(line)
+	//	}
+	//}
+
+	//return b.String()
 }

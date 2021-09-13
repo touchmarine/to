@@ -8,13 +8,14 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[CategoryBlock-0]
-	_ = x[CategoryInline-1]
+	_ = x[CategoryError-0]
+	_ = x[CategoryBlock-1]
+	_ = x[CategoryInline-2]
 }
 
-const _Category_name = "CategoryBlockCategoryInline"
+const _Category_name = "CategoryErrorCategoryBlockCategoryInline"
 
-var _Category_index = [...]uint8{0, 13, 27}
+var _Category_index = [...]uint8{0, 13, 26, 40}
 
 func (i Category) String() string {
 	if i < 0 || i >= Category(len(_Category_index)-1) {

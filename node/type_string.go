@@ -8,22 +8,24 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[TypeLeaf-0]
-	_ = x[TypeVerbatimLine-1]
-	_ = x[TypeWalled-2]
-	_ = x[TypeVerbatimWalled-3]
-	_ = x[TypeHanging-4]
-	_ = x[TypeRankedHanging-5]
-	_ = x[TypeFenced-6]
-	_ = x[TypeText-7]
-	_ = x[TypeUniform-8]
-	_ = x[TypeEscaped-9]
-	_ = x[TypePrefixed-10]
+	_ = x[TypeError-0]
+	_ = x[TypeContainer-1]
+	_ = x[TypeLeaf-2]
+	_ = x[TypeVerbatimLine-3]
+	_ = x[TypeWalled-4]
+	_ = x[TypeVerbatimWalled-5]
+	_ = x[TypeHanging-6]
+	_ = x[TypeRankedHanging-7]
+	_ = x[TypeFenced-8]
+	_ = x[TypeText-9]
+	_ = x[TypeUniform-10]
+	_ = x[TypeEscaped-11]
+	_ = x[TypePrefixed-12]
 }
 
-const _Type_name = "TypeLeafTypeVerbatimLineTypeWalledTypeVerbatimWalledTypeHangingTypeRankedHangingTypeFencedTypeTextTypeUniformTypeEscapedTypePrefixed"
+const _Type_name = "TypeErrorTypeContainerTypeLeafTypeVerbatimLineTypeWalledTypeVerbatimWalledTypeHangingTypeRankedHangingTypeFencedTypeTextTypeUniformTypeEscapedTypePrefixed"
 
-var _Type_index = [...]uint8{0, 8, 24, 34, 52, 63, 80, 90, 98, 109, 120, 132}
+var _Type_index = [...]uint8{0, 9, 22, 30, 46, 56, 74, 85, 102, 112, 120, 131, 142, 154}
 
 func (i Type) String() string {
 	if i < 0 || i >= Type(len(_Type_index)-1) {
