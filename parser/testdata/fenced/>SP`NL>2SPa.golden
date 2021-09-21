@@ -1,0 +1,10 @@
+Container()(
+	Walled(B)(
+		Container()(
+			Fenced(A)(
+				
+ a
+			)
+		)
+	)
+)

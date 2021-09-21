@@ -1,0 +1,31 @@
+{
+	"MA": {
+		"name": "MA",
+		"type": "prefixed",
+		"delimiter": "^^"
+	},
+	"MB": {
+		"name": "MB",
+		"type": "prefixed",
+		"delimiter": "http://",
+		"matcher": "url"
+	},
+	"MC": {
+		"name": "MC",
+		"type": "uniform",
+		"delimiter": "*"
+	},
+	"MD": {
+		"name": "MD",
+		"type": "uniform",
+		"delimiter": "_"
+	},
+	"MT": {
+		"name": "MT",
+		"type": "text"
+	},
+	"T": {
+		"name": "T",
+		"type": "leaf"
+	}
+}

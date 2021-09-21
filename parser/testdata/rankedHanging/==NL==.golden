@@ -1,0 +1,8 @@
+Container()(
+	RankedHanging(A)(
+		Container()()
+	),
+	RankedHanging(A)(
+		Container()()
+	)
+)

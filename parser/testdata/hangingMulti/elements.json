@@ -1,0 +1,25 @@
+{
+	"A": {
+		"name": "A",
+		"type": "hanging",
+		"delimiter": "1."
+	},
+	"B": {
+		"name": "B",
+		"type": "walled",
+		"delimiter": "\u003e"
+	},
+	"C": {
+		"name": "C",
+		"type": "hanging",
+		"delimiter": "-"
+	},
+	"MT": {
+		"name": "MT",
+		"type": "text"
+	},
+	"T": {
+		"name": "T",
+		"type": "leaf"
+	}
+}

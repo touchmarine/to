@@ -1,0 +1,30 @@
+{
+	"A": {
+		"name": "A",
+		"type": "fenced",
+		"delimiter": "`"
+	},
+	"MA": {
+		"name": "MA",
+		"type": "prefixed",
+		"delimiter": "\\"
+	},
+	"MB": {
+		"name": "MB",
+		"type": "uniform",
+		"delimiter": "*"
+	},
+	"MC": {
+		"name": "MC",
+		"type": "escaped",
+		"delimiter": "`"
+	},
+	"MT": {
+		"name": "MT",
+		"type": "text"
+	},
+	"T": {
+		"name": "T",
+		"type": "leaf"
+	}
+}

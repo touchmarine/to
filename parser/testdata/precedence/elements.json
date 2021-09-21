@@ -1,0 +1,50 @@
+{
+	"A": {
+		"name": "A",
+		"type": "hanging",
+		"delimiter": "*"
+	},
+	"B": {
+		"name": "B",
+		"type": "fenced",
+		"delimiter": "`"
+	},
+	"C": {
+		"name": "C",
+		"type": "rankedHanging",
+		"delimiter": "="
+	},
+	"D": {
+		"name": "D",
+		"type": "hanging",
+		"delimiter": "-"
+	},
+	"DLong": {
+		"name": "DLong",
+		"type": "verbatimLine",
+		"delimiter": "---"
+	},
+	"MA": {
+		"name": "MA",
+		"type": "uniform",
+		"delimiter": "*"
+	},
+	"MB": {
+		"name": "MB",
+		"type": "escaped",
+		"delimiter": "`"
+	},
+	"MD": {
+		"name": "MD",
+		"type": "uniform",
+		"delimiter": "-"
+	},
+	"MT": {
+		"name": "MT",
+		"type": "text"
+	},
+	"T": {
+		"name": "T",
+		"type": "leaf"
+	}
+}

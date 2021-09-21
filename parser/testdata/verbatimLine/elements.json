@@ -1,0 +1,20 @@
+{
+	"A": {
+		"name": "A",
+		"type": "verbatimLine",
+		"delimiter": ".image"
+	},
+	"B": {
+		"name": "B",
+		"type": "walled",
+		"delimiter": "\u003e"
+	},
+	"MT": {
+		"name": "MT",
+		"type": "text"
+	},
+	"T": {
+		"name": "T",
+		"type": "leaf"
+	}
+}

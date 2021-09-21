@@ -1,0 +1,16 @@
+Container()(
+	Leaf(T)(
+		Container()(
+			Uniform(MC)(
+				Container()(
+					Text(MT)(
+						http
+					)
+				)
+			),
+			Text(MT)(
+				://
+			)
+		)
+	)
+)

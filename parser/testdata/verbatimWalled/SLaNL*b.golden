@@ -1,0 +1,16 @@
+Container()(
+	VerbatimWalled(A)(
+		a
+	),
+	Hanging(C)(
+		Container()(
+			Leaf(T)(
+				Container()(
+					Text(MT)(
+						b
+					)
+				)
+			)
+		)
+	)
+)

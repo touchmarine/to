@@ -1,0 +1,17 @@
+Container()(
+	Walled(B)(
+		Container()(
+			Fenced(A)(
+				
+a
+			)
+		)
+	),
+	Leaf(T)(
+		Container()(
+			Text(MT)(
+				b
+			)
+		)
+	)
+)

@@ -1,0 +1,21 @@
+Container()(
+	Walled(B)(
+		Container()(
+			Leaf(T)(
+				Container()(
+					Text(MT)(
+						a
+					),
+					Escaped(MA)()
+				)
+			)
+		)
+	),
+	Leaf(T)(
+		Container()(
+			Text(MT)(
+				b
+			)
+		)
+	)
+)

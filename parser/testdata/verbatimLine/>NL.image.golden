@@ -1,0 +1,6 @@
+Container()(
+	Walled(B)(
+		Container()()
+	),
+	VerbatimLine(A)()
+)

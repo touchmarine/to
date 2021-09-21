@@ -1,0 +1,35 @@
+{
+	"A": {
+		"name": "A",
+		"type": "hanging",
+		"delimiter": "*"
+	},
+	"B": {
+		"name": "B",
+		"type": "walled",
+		"delimiter": "\u003e"
+	},
+	"MA": {
+		"name": "MA",
+		"type": "escaped",
+		"delimiter": "`"
+	},
+	"MB": {
+		"name": "MB",
+		"type": "escaped",
+		"delimiter": "["
+	},
+	"MC": {
+		"name": "MC",
+		"type": "uniform",
+		"delimiter": "_"
+	},
+	"MT": {
+		"name": "MT",
+		"type": "text"
+	},
+	"T": {
+		"name": "T",
+		"type": "leaf"
+	}
+}

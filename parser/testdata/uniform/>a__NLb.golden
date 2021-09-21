@@ -1,0 +1,23 @@
+Container()(
+	Walled(A)(
+		Container()(
+			Leaf(T)(
+				Container()(
+					Text(MT)(
+						a
+					),
+					Uniform(MA)(
+						Container()()
+					)
+				)
+			)
+		)
+	),
+	Leaf(T)(
+		Container()(
+			Text(MT)(
+				b
+			)
+		)
+	)
+)

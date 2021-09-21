@@ -1,0 +1,24 @@
+Container()(
+	Hanging(A)(
+		Container()(
+			Leaf(T)(
+				Container()(
+					Text(MT)(
+						a
+					)
+				)
+			)
+		)
+	),
+	Hanging(A)(
+		Container()(
+			Leaf(T)(
+				Container()(
+					Text(MT)(
+						b
+					)
+				)
+			)
+		)
+	)
+)

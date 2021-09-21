@@ -1,0 +1,14 @@
+Container()(
+	Leaf(T)(
+		Container()(
+			Prefixed(MA)(),
+			Text(MT)(
+				a 
+			),
+			Prefixed(MA)(),
+			Text(MT)(
+				b
+			)
+		)
+	)
+)

@@ -1,0 +1,15 @@
+Container()(
+	Leaf(T)(
+		Container()(
+			Text(MT)(
+				a
+			),
+			Uniform(MA)(
+				Container()()
+			)
+		)
+	),
+	Hanging(A)(
+		Container()()
+	)
+)

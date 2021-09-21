@@ -1,0 +1,20 @@
+Container()(
+	RankedHanging(A)(
+		Container()(
+			Leaf(T)(
+				Container()(
+					Text(MT)(
+						a
+					)
+				)
+			)
+		)
+	),
+	Leaf(T)(
+		Container()(
+			Text(MT)(
+				b
+			)
+		)
+	)
+)

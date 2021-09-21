@@ -1,0 +1,13 @@
+Container()(
+	Walled(B)(
+		Container()(
+			RankedHanging(A)(
+				Container()(
+					RankedHanging(A)(
+						Container()()
+					)
+				)
+			)
+		)
+	)
+)

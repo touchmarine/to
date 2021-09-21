@@ -1,0 +1,10 @@
+Container()(
+	Hanging(C)(
+		Container()(
+			Fenced(A)(
+				
+a
+			)
+		)
+	)
+)

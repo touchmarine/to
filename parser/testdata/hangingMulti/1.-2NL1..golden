@@ -1,0 +1,12 @@
+Container()(
+	Hanging(A)(
+		Container()(
+			Hanging(C)(
+				Container()()
+			)
+		)
+	),
+	Hanging(A)(
+		Container()()
+	)
+)

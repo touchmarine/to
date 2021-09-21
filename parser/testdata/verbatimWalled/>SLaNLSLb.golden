@@ -1,0 +1,12 @@
+Container()(
+	Walled(B)(
+		Container()(
+			VerbatimWalled(A)(
+				a
+			)
+		)
+	),
+	VerbatimWalled(A)(
+		b
+	)
+)
