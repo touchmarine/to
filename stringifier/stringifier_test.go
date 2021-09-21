@@ -19,7 +19,9 @@ func TestStringify(t *testing.T) {
 				Type: node.TypeText,
 				Data: "a",
 			},
-			"MT(a)",
+			`Text(MT)(
+	a
+)`,
 		},
 	}
 

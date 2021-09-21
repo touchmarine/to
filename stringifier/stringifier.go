@@ -26,36 +26,50 @@ type stringifier struct {
 }
 
 func (s *stringifier) stringify(n *node.Node) {
-	switch n.TypeCategory() {
-	case node.CategoryBlock:
-		s.writef("%s(%s)(", n.Type, n.Name)
+	s.writef("%s(%s)(", n.Type.String()[len("Type"):], n.Name)
+	if !isEmpty(n) {
 		s.newline()
 		s.indent++
+	}
 
-		defer func() {
+	defer func() {
+		if !isEmpty(n) {
 			s.newline()
 			s.indent--
-			s.write(")")
-		}()
-	case node.CategoryInline:
-		s.writef("%s(%s)(", n.Type, n.Name)
-		defer func() {
-			s.write(")")
-		}()
-	default:
-		panic("stringifier: unexpected node category " + n.TypeCategory().String())
-	}
+		}
+		s.write(")")
+	}()
 
 	switch n.Type {
 	case node.TypeContainer, node.TypeLeaf, node.TypeWalled,
 		node.TypeHanging, node.TypeRankedHanging, node.TypeUniform:
+		i := 0
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if i > 0 {
+				s.write(",")
+				s.newline()
+			}
+
 			s.stringify(c)
+			i++
 		}
 	case node.TypeVerbatimLine, node.TypeText, node.TypeEscaped, node.TypePrefixed:
 		s.write(n.Data)
 	case node.TypeVerbatimWalled, node.TypeFenced:
 		s.write(n.Data)
+	default:
+		panic("stringifier: unexpected node type " + n.Type.String())
+	}
+}
+
+func isEmpty(n *node.Node) bool {
+	switch n.Type {
+	case node.TypeContainer, node.TypeLeaf, node.TypeWalled,
+		node.TypeHanging, node.TypeRankedHanging, node.TypeUniform:
+		return n.FirstChild == nil
+	case node.TypeVerbatimLine, node.TypeText, node.TypeEscaped, node.TypePrefixed,
+		node.TypeVerbatimWalled, node.TypeFenced:
+		return n.Data == ""
 	default:
 		panic("stringifier: unexpected node type " + n.Type.String())
 	}

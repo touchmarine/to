@@ -1215,6 +1215,8 @@ func (p *parser) next() {
 			} else if w == 1 {
 				p.error(ErrInvalidUTF8Encoding)
 				p.ch = utf8.RuneError
+			} else {
+				p.ch = r
 			}
 		case '\u0000': // NULL
 			p.error(ErrIllegalNULL)
@@ -1266,10 +1268,8 @@ func validRune(r rune, w int) rune {
 	case utf8.RuneError:
 		if w == 0 {
 			panic("parser: cannot decode empty slice")
-		} else if w == 1 {
-			return utf8.RuneError
 		} else {
-			panic("parser: utf8 lib error")
+			return utf8.RuneError
 		}
 	case '\u0000', '\uFEFF': // NULL, or BOM
 		return utf8.RuneError
