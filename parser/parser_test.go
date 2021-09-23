@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
-	"github.com/touchmarine/to/stringifier"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -75,7 +75,10 @@ func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
 	nodes, errs := parser.Parse(strings.NewReader(input), elements)
 	testErrors(t, testPath, errs)
 
-	res := stringifier.Stringify(nodes)
+	res, err := node.Stringify(nodes)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	goldenPath := testPath + ".golden"
 	if *update {

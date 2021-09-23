@@ -82,10 +82,11 @@ func TypeCategory(typ Type) Category {
 }
 
 type Node struct {
-	Name string
-	Type Type
-	Data string
+	Element string // element name
+	Type    Type
+	Data    interface{} // optional data, e.g., rank
 
+	Value       string
 	Parent      *Node
 	FirstChild  *Node
 	LastChild   *Node
@@ -113,6 +114,51 @@ func (n *Node) AppendChild(c *Node) {
 	c.Parent = n
 	c.PrevSibling = last
 }
+
+/*
+type Node interface {
+	Element() string // name of element
+	Type() Type
+	Data() interface{}
+	Position() Position
+	Attributes() Attributes
+}
+
+type Position struct {
+	Filename string
+	Start    int
+	End      int
+}
+
+type Point struct {
+	Offset int
+	Line   int
+	Column int
+}
+
+type Attributes map[string][]string
+
+type Parent interface {
+	Parent() *Node
+	FirstChild() *Node
+	LastChild() *Node
+	PreviousSibling() *Node
+	NextSibling() *Node
+}
+
+type ManipulatableParent interface {
+	Parent
+
+	InsertBefore(*Node, *Node)
+	AppendChild(*Node)
+	RemoveChild()
+}
+
+type Literal interface {
+	Node
+	Value() string
+}
+*/
 
 type Block interface {
 	Block()
@@ -473,7 +519,8 @@ type SequentialNumberBox struct {
 }
 
 func (s SequentialNumberBox) Node() string {
-	return fmt.Sprintf("SequentialNumberBox(%s%s)", s.Nod.Name, s.SequentialNumber())
+	//return fmt.Sprintf("SequentialNumberBox(%s%s)", s.Nod.Name, s.SequentialNumber())
+	return ""
 }
 
 func (s SequentialNumberBox) Block() {}
@@ -499,14 +546,15 @@ func ExtractText(n Node) string {
 //
 // replacementMap = map[node.Name]text
 func ExtractTextWithReplacements(n Node, replacementMap map[string]string) string {
-	var b strings.Builder
+	return ""
+	//var b strings.Builder
 
-	text, found := replacementMap[n.Name]
-	if found {
-		// found replacement
-		b.WriteString(text)
-		return b.String()
-	}
+	//text, found := replacementMap[n.Name]
+	//if found {
+	//	// found replacement
+	//	b.WriteString(text)
+	//	return b.String()
+	//}
 
 	//if m, ok := n.(Boxed); ok {
 	//	unboxed := m.Unbox()
@@ -544,7 +592,7 @@ func ExtractTextWithReplacements(n Node, replacementMap map[string]string) strin
 	//	}
 	//}
 
-	return b.String()
+	//return b.String()
 
 	//var b strings.Builder
 

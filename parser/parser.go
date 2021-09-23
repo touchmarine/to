@@ -8,7 +8,6 @@ import (
 	"github.com/touchmarine/to/node"
 	"io"
 	"sort"
-	"strconv"
 	"strings"
 	"unicode/utf8"
 )
@@ -265,8 +264,8 @@ func (p *parser) parseWalled(name string) *node.Node {
 	children := p.parse(reqdBlocks)
 
 	n := &node.Node{
-		Name: name,
-		Type: node.TypeWalled,
+		Element: name,
+		Type:    node.TypeWalled,
 	}
 	n.AppendChild(children)
 	return n
@@ -301,9 +300,9 @@ func (p *parser) parseVerbatimWalled(name string) *node.Node {
 	}
 
 	return &node.Node{
-		Name: name,
-		Type: node.TypeVerbatimWalled,
-		Data: strings.Join(btosSlice(lines), "\n"),
+		Element: name,
+		Type:    node.TypeVerbatimWalled,
+		Value:   strings.Join(btosSlice(lines), "\n"),
 	}
 }
 
@@ -331,8 +330,8 @@ func (p *parser) parseHanging(name, delim string) *node.Node {
 
 	children := p.parseHanging0()
 	n := &node.Node{
-		Name: name,
-		Type: node.TypeHanging,
+		Element: name,
+		Type:    node.TypeHanging,
 	}
 	n.AppendChild(children)
 	return n
@@ -357,9 +356,9 @@ func (p *parser) parseRankedHanging(name, delim string) *node.Node {
 
 	children := p.parseHanging0()
 	n := &node.Node{
-		Name: name,
-		Type: node.TypeRankedHanging,
-		Data: strconv.Itoa(rank),
+		Element: name,
+		Type:    node.TypeRankedHanging,
+		Data:    rank,
 	}
 	n.AppendChild(children)
 	return n
@@ -552,9 +551,9 @@ func (p *parser) parseFenced(name string) *node.Node {
 	}
 
 	return &node.Node{
-		Name: name,
-		Type: node.TypeFenced,
-		Data: strings.Join(btosSlice(lines), "\n"),
+		Element: name,
+		Type:    node.TypeFenced,
+		Value:   strings.Join(btosSlice(lines), "\n"),
 	}
 }
 
@@ -644,9 +643,9 @@ func (p *parser) parseVerbatimLine(name, delim string) *node.Node {
 	p.parseSpacing()
 
 	return &node.Node{
-		Name: name,
-		Type: node.TypeVerbatimLine,
-		Data: string(content),
+		Element: name,
+		Type:    node.TypeVerbatimLine,
+		Value:   string(content),
 	}
 }
 
@@ -657,8 +656,8 @@ func (p *parser) parseLeaf(name string) *node.Node {
 
 	children, _ := p.parseInlines()
 	n := &node.Node{
-		Name: name,
-		Type: node.TypeLeaf,
+		Element: name,
+		Type:    node.TypeLeaf,
 	}
 	n.AppendChild(children)
 	return n
@@ -778,8 +777,8 @@ func (p *parser) parseUniform(name string) (*node.Node, bool) {
 	}
 
 	n := &node.Node{
-		Name: name,
-		Type: node.TypeUniform,
+		Element: name,
+		Type:    node.TypeUniform,
 	}
 	n.AppendChild(children)
 	return n, cont
@@ -874,9 +873,9 @@ func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 	}
 
 	return &node.Node{
-		Name: name,
-		Type: node.TypeEscaped,
-		Data: string(txt),
+		Element: name,
+		Type:    node.TypeEscaped,
+		Value:   string(txt),
 	}, cont
 }
 
@@ -926,8 +925,8 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (*node.Node,
 
 	if matcher == "" {
 		return &node.Node{
-			Name: name,
-			Type: node.TypePrefixed,
+			Element: name,
+			Type:    node.TypePrefixed,
 		}, true
 	}
 
@@ -947,9 +946,9 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (*node.Node,
 	}
 
 	return &node.Node{
-		Name: name,
-		Type: node.TypePrefixed,
-		Data: string(b.Bytes()),
+		Element: name,
+		Type:    node.TypePrefixed,
+		Value:   string(b.Bytes()),
 	}, true
 }
 
@@ -1030,9 +1029,9 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 	}
 
 	return &node.Node{
-		Name: name,
-		Type: node.TypeText,
-		Data: string(txt),
+		Element: name,
+		Type:    node.TypeText,
+		Value:   string(txt),
 	}, cont
 }
 
