@@ -1,0 +1,24 @@
+Container()(
+	Walled(A)(
+		Container()(
+			Container(GP)(
+				Leaf(T)(
+					Container()(
+						Text(MT)(
+							a
+						)
+					)
+				)
+			),
+			Container(GP)(
+				Leaf(T)(
+					Container()(
+						Text(MT)(
+							b
+						)
+					)
+				)
+			)
+		)
+	)
+)

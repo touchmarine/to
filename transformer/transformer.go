@@ -5,18 +5,18 @@ import (
 )
 
 type Transformer interface {
-	Transform(nodes []node.Node) []node.Node
+	Transform(node *node.Node) *node.Node
 }
 
-type Func func([]node.Node) []node.Node
+type Func func(*node.Node) *node.Node
 
-func (f Func) Transform(nodes []node.Node) []node.Node {
-	return f(nodes)
+func (f Func) Transform(n *node.Node) *node.Node {
+	return f(n)
 }
 
-func Apply(nodes []node.Node, transformers []Transformer) []node.Node {
+func Apply(n *node.Node, transformers []Transformer) *node.Node {
 	for _, transformer := range transformers {
-		nodes = transformer.Transform(nodes)
+		n = transformer.Transform(n)
 	}
-	return nodes
+	return n
 }

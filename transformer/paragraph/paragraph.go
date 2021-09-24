@@ -1,41 +1,66 @@
 package paragraph
 
 import (
-	"fmt"
 	"github.com/touchmarine/to/node"
 	"log"
 )
 
 const trace = false
 
-type Transformer struct {
-	Name string
+func NewTransformer(paragraphName string) *transformer {
+	return &transformer{name: paragraphName}
 }
 
-func (t Transformer) Transform(nodes []node.Node) []node.Node {
-	for i := 0; i < len(nodes); i++ {
-		n := nodes[i]
+type transformer struct {
+	name    string       // paragraph name
+	targets []*node.Node // nodes to put in paragraph buffer
+}
 
-		if len(nodes) > 1 {
-			if leaf, isLeaf := n.(*node.Leaf); isLeaf {
-				if trace {
-					log.Printf("add paragraph")
-				}
-
-				p := &node.Group{t.Name, []node.Block{leaf}}
-				nodes[i] = p
+func (t transformer) Transform(n *node.Node) *node.Node {
+	walk(n, func(n *node.Node) bool {
+		if n.Type == node.TypeLeaf && (n.PrevSibling != nil || n.NextSibling != nil) {
+			if trace {
+				log.Printf("add target element %s", n.Element)
 			}
-		}
 
-		if m, ok := n.(node.SettableBlockChildren); ok {
-			breaked := t.Transform(node.BlocksToNodes(m.BlockChildren()))
-			m.SetBlockChildren(node.NodesToBlocks(breaked))
-		} else {
-			if _, ok := n.(node.BlockChildren); ok {
-				panic(fmt.Sprintf("transformer: node %T does not implement SettableBlockChildren", n))
+			t.targets = append(t.targets, n)
+			return false
+		}
+		return true
+	})
+
+	for _, target := range t.targets {
+		p := &node.Node{
+			Element: t.name,
+			Type:    node.TypeContainer,
+		}
+		target.Parent.InsertBefore(p, target)
+		target.Parent.RemoveChild(target)
+		p.AppendChild(target)
+	}
+
+	return n
+}
+
+func walk(n *node.Node, fn func(n *node.Node) bool) {
+	if fn(n) {
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c, fn)
+		}
+	}
+}
+
+/*
+func rewrite(n *node.Node, fn func(n *node.Node) (*node.Node, bool)) *node.Node {
+	new, cont := fn(n)
+	if cont {
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			x := rewrite(c, fn)
+			if x != nil {
+				c=x
 			}
 		}
 	}
-
-	return nodes
+	return new
 }
+*/

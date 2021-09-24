@@ -1,0 +1,15 @@
+{
+	"MT": {
+		"name": "MT",
+		"type": "text"
+	},
+	"T": {
+		"name": "T",
+		"type": "leaf"
+	},
+	"A": {
+		"name": "A",
+		"type": "walled",
+		"delimiter": ">"
+	}
+}

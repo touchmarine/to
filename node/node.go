@@ -86,7 +86,8 @@ type Node struct {
 	Type    Type
 	Data    interface{} // optional data, e.g., rank
 
-	Value       string
+	Value string
+
 	Parent      *Node
 	FirstChild  *Node
 	LastChild   *Node
@@ -98,9 +99,34 @@ func (n Node) TypeCategory() Category {
 	return TypeCategory(n.Type)
 }
 
+func (n *Node) InsertBefore(newChild, oldChild *Node) {
+	if newChild.Parent != nil || newChild.PrevSibling != nil || newChild.NextSibling != nil {
+		panic("node: InsertBefore called for an attached child Node")
+	}
+	var prev, next *Node
+	if oldChild != nil {
+		prev, next = oldChild.PrevSibling, oldChild
+	} else {
+		prev = n.LastChild
+	}
+	if prev != nil {
+		prev.NextSibling = newChild
+	} else {
+		n.FirstChild = newChild
+	}
+	if next != nil {
+		next.PrevSibling = newChild
+	} else {
+		n.LastChild = newChild
+	}
+	newChild.Parent = n
+	newChild.PrevSibling = prev
+	newChild.NextSibling = next
+}
+
 func (n *Node) AppendChild(c *Node) {
 	if c.Parent != nil || c.PrevSibling != nil || c.NextSibling != nil {
-		panic("node: child already attached")
+		panic("node: AppendChild called for an attached child Node")
 	}
 
 	last := n.LastChild
@@ -114,6 +140,64 @@ func (n *Node) AppendChild(c *Node) {
 	c.Parent = n
 	c.PrevSibling = last
 }
+
+func (n *Node) RemoveChild(c *Node) {
+	if c.Parent != n {
+		panic("node: RemoveChild called for a non-child Node")
+	}
+	if n.FirstChild == c {
+		n.FirstChild = c.NextSibling
+	}
+	if c.NextSibling != nil {
+		c.NextSibling.PrevSibling = c.PrevSibling
+	}
+	if n.LastChild == c {
+		n.LastChild = c.PrevSibling
+	}
+	if c.PrevSibling != nil {
+		c.PrevSibling.NextSibling = c.NextSibling
+	}
+	c.Parent = nil
+	c.PrevSibling = nil
+	c.NextSibling = nil
+}
+
+/*
+func (n *Node) Clone() *Node {
+	return &Node{
+		Element: n.Element,
+		Type:    n.Type,
+		Data:    n.Data,
+
+		Value: n.Value,
+	}
+}
+
+func (n *Node) FullClone() *Node {
+	m := &Node{
+		Element: n.Element,
+		Type: n.Type,
+		Data: n.Data,
+
+		Value: n.Value,
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		m.AppendChild(m.FullClone())
+	}
+	return m
+}
+
+func ReparentChildren(dst, src *Node) {
+	for {
+		c := src.FirstChild
+		if c == nil {
+			break
+		}
+		src.RemoveChild(c)
+		dst.AppendChild(c)
+	}
+}
+*/
 
 /*
 type Node interface {

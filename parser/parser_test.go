@@ -32,15 +32,13 @@ func TestGolden(t *testing.T) {
 
 	for _, e := range entries {
 		if e.IsDir() {
-			testDir(t, e.Name())
+			testDir(t, filepath.Join(testdata, e.Name()))
 		}
 	}
 }
 
-func testDir(t *testing.T, dirname string) {
-	curdir := filepath.Join(testdata, dirname)
-
-	ef, err := os.Open(filepath.Join(curdir, "elements.json"))
+func testDir(t *testing.T, dir string) {
+	ef, err := os.Open(filepath.Join(dir, "elements.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -51,7 +49,7 @@ func testDir(t *testing.T, dirname string) {
 		t.Fatal(err)
 	}
 
-	inputs, err := filepath.Glob(filepath.Join(curdir, "*.input"))
+	inputs, err := filepath.Glob(filepath.Join(dir, "*.input"))
 	if err != nil {
 		t.Fatal(err)
 	}
