@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/touchmarine/to/matcher"
-	"github.com/touchmarine/to/node"
 	"io"
 	"sort"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/touchmarine/to/matcher"
+	"github.com/touchmarine/to/node"
 )
 
 const trace = false

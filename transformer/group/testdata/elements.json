@@ -1,0 +1,22 @@
+{
+	"A": {
+		"name": "A",
+		"type": "hanging",
+		"delimiter": "-"
+	},
+	"B": {
+		"name": "B",
+		"type": "walled",
+		"delimiter": ">"
+	},
+	"C": {
+		"name": "C",
+		"type": "walled",
+		"delimiter": "*"
+	},
+	"D": {
+		"name": "D",
+		"type": "hanging",
+		"delimiter": "1."
+	}
+}

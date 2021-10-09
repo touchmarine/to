@@ -1,0 +1,18 @@
+Container()(
+	Container(GA)(
+		Hanging(A)(
+			Container()()
+		),
+		Hanging(A)(
+			Container()()
+		)
+	),
+	Walled(B)(
+		Container()()
+	),
+	Container(GA)(
+		Hanging(A)(
+			Container()()
+		)
+	)
+)

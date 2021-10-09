@@ -1,8 +1,9 @@
 package paragraph
 
 import (
-	"github.com/touchmarine/to/node"
 	"log"
+
+	"github.com/touchmarine/to/node"
 )
 
 const trace = false

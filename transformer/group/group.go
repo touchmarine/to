@@ -1,9 +1,9 @@
 package group
 
 import (
-	"fmt"
+	"log"
+
 	"github.com/touchmarine/to/node"
-	"strings"
 )
 
 const trace = false
@@ -20,9 +20,9 @@ type Transformer struct {
 	GroupMap Map
 }
 
-func (t Transformer) Transform(nodes []node.Node) []node.Node {
+func (t Transformer) Transform(n *node.Node) *node.Node {
 	g := grouper{t.GroupMap, 0}
-	return g.group(nodes)
+	return g.group(n)
 }
 
 type grouper struct {
@@ -30,131 +30,106 @@ type grouper struct {
 	indent   int
 }
 
-func (g *grouper) group(nodes []node.Node) []node.Node {
+type target struct {
+	name     string // group name
+	children []*node.Node
+}
+
+func (g *grouper) group(n *node.Node) *node.Node {
+	var targets []target
+
 	if trace {
-		defer g.trace("group")()
+		log.Printf("g.groupMap = %+v\n", g.groupMap)
 	}
 
-	var grp Group
-	var open string
-	var pos int
+	walkBreadthFirstStack(n, func(nodes []*node.Node) {
+		name, start, end := "", -1, 0
 
-	for i := 0; i < len(nodes); i++ {
-		n := nodes[i]
-		name := n.Node()
+		for i, n := range nodes {
+			group, found := g.groupMap[n.Element]
 
-		if open == "" {
-			var ok bool
-			if grp, ok = g.groupMap[name]; ok {
-				if trace {
-					g.printf("open  %s for %s (i=%d) [1]", grp.Name, name, i)
+			if name != "" {
+				// a group is open
+				if found && group.Name == name {
+					// group continues
+					end++
+					continue
+				} else {
+					// group ends
+					targets = append(targets, target{
+						name:     name,
+						children: nodes[start:end],
+					})
+					name, start, end = "", -1, 0
 				}
-
-				open = name
-				pos = i
-			}
-		} else if name != open {
-			end := i - 1
-
-			if trace {
-				g.printf("close %s for %s (i=%d, group=%d-%d)", grp.Name, open, i, pos, end)
 			}
 
-			children := node.NodesToBlocks(nodes[pos : end+1])
-			grpNode := &node.Group{grp.Name, children}
-
-			nod := grpNode
-
-			nodes[pos] = nod
-			if end-pos > 0 {
-				if trace {
-					g.printf("cut nodes %d-%d [1]", pos+1, end+1)
-				}
-
-				nodes = cut(nodes, pos+1, end+1)
-				i -= end - pos
-			}
-
-			var ok bool
-			if grp, ok = g.groupMap[name]; ok {
-				if trace {
-					g.printf("open  %s for %s (i=%d) [2]", grp.Name, name, i)
-				}
-
-				open = name
-				pos = i
-			} else {
-				open = ""
-				pos = 0
+			if found {
+				// start of a new group
+				name = group.Name
+				start = i
+				end = i + 1
 			}
 		}
 
-		if m, ok := n.(node.SettableBlockChildren); ok {
-			grouped := g.group(node.BlocksToNodes(m.BlockChildren()))
-			m.SetBlockChildren(node.NodesToBlocks(grouped))
-		} else {
-			_, isBlockChildren := n.(node.BlockChildren)
-			_, isGroup := n.(*node.Group)
-			if isBlockChildren && !isGroup {
-				panic(fmt.Sprintf("transformer: node %T does not implement SettableBlockChildren", n))
-			}
+		if name != "" {
+			targets = append(targets, target{
+				name:     name,
+				children: nodes[start:end],
+			})
+		}
+	})
+
+	if trace {
+		log.Printf("targets = %+v\n", targets)
+	}
+	for _, target := range targets {
+		group := &node.Node{
+			Element: target.name,
+			Type:    node.TypeContainer,
+		}
+
+		if len(target.children) > 0 {
+			target.children[0].Parent.InsertBefore(group, target.children[0])
+		}
+
+		for _, child := range target.children {
+			log.Printf("child = %+v\n", child)
+			//child.Parent.InsertBefore(group, child)
+			child.Parent.RemoveChild(child)
+			group.AppendChild(child)
 		}
 	}
 
-	if open != "" {
-		l := len(nodes)
-		end := l - 1
+	return n
+}
 
-		if trace {
-			g.printf("close %s for %s (i=%d, group=%d-%d) [last]", grp.Name, open, l, pos, end)
-		}
+func walkBreadthFirstStack(n *node.Node, fn func(nodes []*node.Node)) {
+	nodes := []*node.Node{n}
 
-		children := node.NodesToBlocks(nodes[pos:])
-		grpNode := &node.Group{grp.Name, children}
+	for s := n.NextSibling; s != nil; s = s.NextSibling {
+		nodes = append(nodes, s)
+	}
 
-		nod := grpNode
+	fn(nodes)
 
-		nodes[pos] = nod
-		if end-pos > 0 {
-			if trace {
-				g.printf("cut nodes %d-%d [2]", pos+1, end+1)
-			}
-
-			nodes = cut(nodes, pos+1, end+1)
+	for _, n := range nodes {
+		if n.FirstChild != nil {
+			walkBreadthFirstStack(n.FirstChild, fn)
 		}
 	}
-
-	return nodes
 }
 
-func (g *grouper) tracef(format string, v ...interface{}) func() {
-	return g.trace(fmt.Sprintf(format, v...))
-}
+/*
+func walkBreadthFirst(n *node.Node, fn func(n *node.Node)) {
+	for ; n != nil; n = n.NextSibling {
+		fn(n)
+	}
 
-func (g *grouper) trace(msg string) func() {
-	g.printf("%s (", msg)
-	g.indent++
-
-	return func() {
-		g.indent--
-		g.print(")")
+	for ; n != nil; n = n.NextSibling {
+		if n.FirstChild != nil {
+			walkBreadthFirst(n.FirstChild, fn)
+		}
 	}
 }
-
-func (g *grouper) printf(format string, v ...interface{}) {
-	g.print(fmt.Sprintf(format, v...))
-}
-
-func (g *grouper) print(msg string) {
-	fmt.Println(strings.Repeat("\t", g.indent) + msg)
-}
-
-// https://github.com/golang/go/wiki/SliceTricks
-func cut(a []node.Node, i, j int) []node.Node {
-	copy(a[i:], a[j:])
-	for k, n := len(a)-j+i, len(a); k < n; k++ {
-		a[k] = nil
-	}
-	a = a[:len(a)-j+i]
-	return a
-}
+*/
