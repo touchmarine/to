@@ -1,0 +1,25 @@
+{
+	"MA": {
+		"name": "MA",
+		"type": "uniform",
+		"delimiter": "("
+	},
+	"MB": {
+		"name": "MB",
+		"type": "escaped",
+		"delimiter": "["
+	},
+	"MT": {
+		"name": "MT",
+		"type": "text"
+	},
+	"A": {
+		"name": "Blockquote",
+		"type": "walled",
+		"delimiter": ">"
+	},
+	"T": {
+		"name": "T",
+		"type": "leaf"
+	}
+}

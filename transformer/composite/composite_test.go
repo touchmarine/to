@@ -1,185 +1,94 @@
 package composite_test
 
 import (
-	"github.com/touchmarine/to/node"
-	"github.com/touchmarine/to/stringifier"
-	"github.com/touchmarine/to/transformer/composite"
+	"encoding/json"
+	"flag"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/touchmarine/to/node"
+	"github.com/touchmarine/to/parser"
+	"github.com/touchmarine/to/transformer"
+	"github.com/touchmarine/to/transformer/composite"
 )
 
-func TestTransform(t *testing.T) {
-	cases := []struct {
-		name string
-		in   []node.Node
-		out  []node.Node
-	}{
-		{
-			"basic",
-			[]node.Node{
-				&node.Leaf{"A", []node.Inline{
-					&node.Uniform{"B", nil},
-					&node.Escaped{"C", nil},
-				}},
-			},
-			[]node.Node{
-				&node.Leaf{"A", []node.Inline{
-					&node.Composite{
-						"CA",
-						&node.Uniform{"B", nil},
-						&node.Escaped{"C", nil},
-					},
-				}},
-			},
-		},
-		{
-			"filled",
-			[]node.Node{
-				&node.Leaf{"A", []node.Inline{
-					&node.Uniform{"B", []node.Inline{
-						&node.Text{"MT", []byte("a")},
-					}},
-					&node.Escaped{"C", []byte("b")},
-				}},
-			},
-			[]node.Node{
-				&node.Leaf{"A", []node.Inline{
-					&node.Composite{
-						"CA",
-						&node.Uniform{"B", []node.Inline{
-							&node.Text{"MT", []byte("a")},
-						}},
-						&node.Escaped{"C", []byte("b")},
-					},
-				}},
-			},
-		},
-		{
-			"nested",
-			[]node.Node{
-				&node.Leaf{"A", []node.Inline{
-					&node.Uniform{"B", []node.Inline{
-						&node.Uniform{"B", nil},
-						&node.Escaped{"C", nil},
-					}},
-					&node.Escaped{"C", nil},
-				}},
-			},
-			[]node.Node{
-				&node.Leaf{"A", []node.Inline{
-					&node.Composite{
-						"CA",
-						&node.Uniform{"B", []node.Inline{
-							&node.Uniform{"B", nil},
-							&node.Escaped{"C", nil},
-						}},
-						&node.Escaped{"C", nil},
-					},
-				}},
-			},
-		},
-		{
-			"consecutive",
-			[]node.Node{
-				&node.Leaf{"A", []node.Inline{
-					&node.Uniform{"B", nil},
-					&node.Escaped{"C", nil},
-					&node.Uniform{"B", nil},
-					&node.Escaped{"C", nil},
-				}},
-			},
-			[]node.Node{
-				&node.Leaf{"A", []node.Inline{
-					&node.Composite{
-						"CA",
-						&node.Uniform{"B", nil},
-						&node.Escaped{"C", nil},
-					},
-					&node.Composite{
-						"CA",
-						&node.Uniform{"B", nil},
-						&node.Escaped{"C", nil},
-					},
-				}},
-			},
-		},
-		{
-			"two lines",
-			[]node.Node{
-				&node.Leaf{"A", []node.Inline{
-					&node.Uniform{"B", nil},
-					&node.Escaped{"C", nil},
-				}},
-				&node.Leaf{"A", []node.Inline{
-					&node.Uniform{"B", nil},
-					&node.Escaped{"C", nil},
-				}},
-			},
-			[]node.Node{
-				&node.Leaf{"A", []node.Inline{
-					&node.Composite{
-						"CA",
-						&node.Uniform{"B", nil},
-						&node.Escaped{"C", nil},
-					},
-				}},
-				&node.Leaf{"A", []node.Inline{
-					&node.Composite{
-						"CA",
-						&node.Uniform{"B", nil},
-						&node.Escaped{"C", nil},
-					},
-				}},
-			},
-		},
-		{
-			"nested line",
-			[]node.Node{
-				&node.Walled{
-					"Blockquote",
-					[]node.Block{
-						&node.Leaf{"A", []node.Inline{
-							&node.Uniform{"B", nil},
-							&node.Escaped{"C", nil},
-						}},
-					},
-				},
-			},
-			[]node.Node{
-				&node.Walled{
-					"Blockquote",
-					[]node.Block{
-						&node.Leaf{"A", []node.Inline{
-							&node.Composite{
-								"CA",
-								&node.Uniform{"B", nil},
-								&node.Escaped{"C", nil},
-							},
-						}},
-					},
-				},
-			},
-		},
+const testdata = "testdata"
+
+// use go test -update to create/update the golden files
+var update = flag.Bool("update", false, "update golden files")
+
+func TestGolden(t *testing.T) {
+	testDir(t, testdata)
+}
+
+func testDir(t *testing.T, dir string) {
+	ef, err := os.Open(filepath.Join(dir, "elements.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ef.Close()
+
+	var elements parser.ElementMap
+	if err := json.NewDecoder(ef).Decode(&elements); err != nil {
+		t.Fatal(err)
 	}
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			composited := make([]node.Node, len(c.in))
-			copy(composited, c.in)
-			compositer := composite.Transformer{composite.Map{
-				"B": {
-					Name:             "CA",
-					PrimaryElement:   "B",
-					SecondaryElement: "C",
-				},
-			}}
-			composited = compositer.Transform(composited)
+	inputs, err := filepath.Glob(filepath.Join(dir, "*.to"))
+	if err != nil {
+		t.Fatal(err)
+	}
 
-			got := stringifier.Stringify(composited...)
-			want := stringifier.Stringify(c.out...)
+	for _, in := range inputs {
+		basePath := in[:len(in)-len(".to")]
 
-			if got != want {
-				t.Errorf("\ngot\n%s\nwant\n%s", got, want)
-			}
+		t.Run(basePath[len(testdata)+1:], func(t *testing.T) {
+			runTest(t, elements, basePath)
 		})
 	}
+}
+
+func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
+	bi, err := os.ReadFile(testPath + ".to")
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := string(bi)
+
+	root, errs := parser.Parse(strings.NewReader(input), elements)
+	for _, e := range errs {
+		t.Errorf("got error %q", e)
+	}
+
+	root = transformer.Apply(root, []transformer.Transformer{composite.Transformer{composite.Map{
+		"MA": {
+			Name:             "CA",
+			PrimaryElement:   "MA",
+			SecondaryElement: "MB",
+		},
+	}}})
+
+	res, err := node.Stringify(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	goldenPath := testPath + ".golden"
+	if *update {
+		if err := os.WriteFile(goldenPath, []byte(res), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	bg, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	golden := string(bg)
+
+	if res != golden {
+		t.Errorf("\nfrom input:\n%s\ngot:\n%s\nwant:\n%s", input, res, golden)
+	}
+
 }

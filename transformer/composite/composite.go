@@ -1,9 +1,12 @@
 package composite
 
 import (
-	"fmt"
+	"log"
+
 	"github.com/touchmarine/to/node"
 )
+
+const trace = false
 
 // Map maps Composites to PrimaryElements.
 type Map map[string]Composite
@@ -23,103 +26,70 @@ type Transformer struct {
 //
 // Transform recognizes only one form of patterns: PrimaryElement followed
 // immediately by the SecondaryElement.
-func (t Transformer) Transform(nodes []node.Node) []node.Node {
-	c := compositer{
-		transformer:  &t,
-		compositeMap: t.CompositeMap,
-		nodes:        nodes,
-		pos:          -1,
+func (t Transformer) Transform(n *node.Node) *node.Node {
+	targets := t.search(n)
+	if trace {
+		log.Printf("targets = %+v\n", targets)
 	}
-
-	c.composite()
-	return c.nodes
-}
-
-type compositer struct {
-	transformer  *Transformer
-	compositeMap Map
-	nodes        []node.Node
-
-	node node.Node
-	pos  int
-}
-
-func (c *compositer) next() bool {
-	if c.pos+1 < len(c.nodes) {
-		c.pos++
-		c.node = c.nodes[c.pos]
-		return true
-	}
-
-	return false
-}
-
-func (c *compositer) peek() node.Node {
-	if c.pos+1 < len(c.nodes) {
-		return c.nodes[c.pos+1]
-	}
-
-	return nil
-}
-
-func (c *compositer) composite() {
-	for c.next() {
-	beginning:
-		switch m := c.node.(type) {
-		case node.Boxed:
-			c.unbox()
-
-			if c.node == nil {
-				continue
-			}
-
-			goto beginning
-
-		case node.Inline:
-			peek := c.peek()
-
-			if peek != nil {
-				inlinePeek, isInline := peek.(node.Inline)
-				if !isInline {
-					panic("transformer: mixed node types, expected Inline")
-				}
-
-				comp, ok := c.compositeMap[c.node.Node()]
-				if ok && peek.Node() == comp.SecondaryElement {
-					n := &node.Composite{comp.Name, m, inlinePeek}
-
-					// replace current node by Composite and remove peek
-					c.nodes[c.pos] = n
-					c.nodes = append(c.nodes[:c.pos+1], c.nodes[c.pos+2:]...)
-				}
-			}
-
-		case node.SettableInlineChildren:
-			composited := c.transformer.Transform(node.InlinesToNodes(m.InlineChildren()))
-			m.SetInlineChildren(node.NodesToInlines(composited))
-
-		case node.InlineChildren:
-			panic(fmt.Sprintf("transformer: node %T does not implement SettableInlineChildren", c.node))
+	for _, target := range targets {
+		composite := &node.Node{
+			Element: target.name,
+			Type:    node.TypeContainer,
 		}
 
-		if m, ok := c.node.(node.SettableBlockChildren); ok {
-			composited := c.transformer.Transform(node.BlocksToNodes(m.BlockChildren()))
-			m.SetBlockChildren(node.NodesToBlocks(composited))
-		} else {
-			_, isBlockChildren := c.node.(node.BlockChildren)
-			_, isGroup := c.node.(*node.Group)
-			if isBlockChildren && !isGroup {
-				panic(fmt.Sprintf("transformer: node %T does not implement SettableBlockChildren", c.node))
+		target.primary.Parent.InsertBefore(composite, target.primary)
+
+		target.primary.Parent.RemoveChild(target.primary)
+		composite.AppendChild(target.primary)
+		target.secondary.Parent.RemoveChild(target.secondary)
+		composite.AppendChild(target.secondary)
+	}
+
+	return n
+}
+
+type target struct {
+	name               string     // composite name
+	primary, secondary *node.Node // primary and secondary element
+}
+
+// search walks breadth-first and searches for a primary element followed
+// immediately by the secondary element
+func (t Transformer) search(n *node.Node) []target {
+	var targets []target
+
+	for s := n; s != nil; s = s.NextSibling {
+		if trace {
+			log.Printf("s = %+v\n", s)
+		}
+		if s.TypeCategory() == node.CategoryInline {
+			if s.NextSibling != nil && s.TypeCategory() == node.CategoryInline {
+				comp, ok := t.CompositeMap[s.Element]
+				if ok && s.NextSibling.Element == comp.SecondaryElement {
+					if trace {
+						log.Printf("comp.Name = %+v\n", comp.Name)
+					}
+
+					targets = append(targets, target{
+						name:      comp.Name,
+						primary:   s,
+						secondary: s.NextSibling,
+					})
+
+					// skip the secondary element
+					s = s.NextSibling
+				}
 			}
 		}
 	}
-}
 
-func (c *compositer) unbox() {
-	boxed, ok := c.node.(node.Boxed)
-	if !ok {
-		panic("transformer: unboxing node that does not implement Boxed")
+	// walk children
+	for s := n; s != nil; s = s.NextSibling {
+		if s.FirstChild != nil {
+			newTargets := t.search(s.FirstChild)
+			targets = append(targets, newTargets...)
+		}
 	}
 
-	c.node = boxed.Unbox()
+	return targets
 }

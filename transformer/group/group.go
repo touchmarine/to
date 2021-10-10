@@ -20,33 +20,23 @@ type Transformer struct {
 	GroupMap Map
 }
 
-func (t Transformer) Transform(n *node.Node) *node.Node {
-	g := grouper{t.GroupMap, 0}
-	return g.group(n)
-}
-
-type grouper struct {
-	groupMap Map
-	indent   int
-}
-
 type target struct {
 	name     string // group name
 	children []*node.Node
 }
 
-func (g *grouper) group(n *node.Node) *node.Node {
+func (t Transformer) Transform(n *node.Node) *node.Node {
 	var targets []target
 
 	if trace {
-		log.Printf("g.groupMap = %+v\n", g.groupMap)
+		log.Printf("t.GroupMap = %+v\n", t.GroupMap)
 	}
 
 	walkBreadthFirstStack(n, func(nodes []*node.Node) {
 		name, start, end := "", -1, 0
 
 		for i, n := range nodes {
-			group, found := g.groupMap[n.Element]
+			group, found := t.GroupMap[n.Element]
 
 			if name != "" {
 				// a group is open
@@ -94,8 +84,10 @@ func (g *grouper) group(n *node.Node) *node.Node {
 		}
 
 		for _, child := range target.children {
-			log.Printf("child = %+v\n", child)
-			//child.Parent.InsertBefore(group, child)
+			if trace {
+				log.Printf("child = %+v\n", child)
+			}
+
 			child.Parent.RemoveChild(child)
 			group.AppendChild(child)
 		}
@@ -119,17 +111,3 @@ func walkBreadthFirstStack(n *node.Node, fn func(nodes []*node.Node)) {
 		}
 	}
 }
-
-/*
-func walkBreadthFirst(n *node.Node, fn func(n *node.Node)) {
-	for ; n != nil; n = n.NextSibling {
-		fn(n)
-	}
-
-	for ; n != nil; n = n.NextSibling {
-		if n.FirstChild != nil {
-			walkBreadthFirst(n.FirstChild, fn)
-		}
-	}
-}
-*/
