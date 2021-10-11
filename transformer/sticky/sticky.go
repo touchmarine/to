@@ -1,9 +1,12 @@
 package sticky
 
 import (
-	"fmt"
+	"log"
+
 	"github.com/touchmarine/to/node"
 )
+
+const trace = false
 
 // Map maps Stickies to Elements.
 type Map map[string]Sticky
@@ -25,129 +28,75 @@ type Transformer struct {
 // multiple consecutive sticky elements, only the one closest to a non-sticky
 // element is grouped. One element can have one sticky element before it and one
 // after it.
-func (t Transformer) Transform(nodes []node.Node) []node.Node {
-	s := stickyGrouper{
-		transformer: &t,
-		stickyMap:   t.StickyMap,
-		nodes:       nodes,
-		pos:         -1,
+func (t Transformer) Transform(n *node.Node) *node.Node {
+	targets := t.search(n)
+	if trace {
+		log.Printf("targets = %+v\n", targets)
+	}
+	for _, target := range targets {
+		sticky := &node.Node{
+			Element: target.name,
+			Type:    node.TypeContainer,
+			Data:    target.position,
+		}
+
+		target.child1.Parent.InsertBefore(sticky, target.child1)
+
+		target.child1.Parent.RemoveChild(target.child1)
+		sticky.AppendChild(target.child1)
+		target.child2.Parent.RemoveChild(target.child2)
+		sticky.AppendChild(target.child2)
 	}
 
-	s.groupStickies()
-	return s.nodes
+	return n
 }
 
-type stickyGrouper struct {
-	transformer *Transformer
-	stickyMap   Map
-	nodes       []node.Node
-
-	node node.Node
-	pos  int
+type target struct {
+	name           string // sticky name
+	position       string // "before" | "after"
+	child1, child2 *node.Node
 }
 
-func (g *stickyGrouper) next() bool {
-	if g.pos+1 < len(g.nodes) {
-		g.pos++
-		g.node = g.nodes[g.pos]
-		return true
-	}
+// search walks breadth-first and searches for a before or after sticky.
+func (t Transformer) search(n *node.Node) []target {
+	var targets []target
 
-	return false
-}
+	for s := n; s != nil; s = s.NextSibling {
+		if trace {
+			log.Printf("s = %+v\n", s)
+		}
+		if s.TypeCategory() == node.CategoryBlock && s.NextSibling != nil && s.TypeCategory() == node.CategoryBlock {
+			thisSticky, isThisSticky := t.StickyMap[s.Element]
+			nextSticky, isNextSticky := t.StickyMap[s.NextSibling.Element]
 
-func (g *stickyGrouper) peek() node.Node {
-	if g.pos+1 < len(g.nodes) {
-		return g.nodes[g.pos+1]
-	}
+			var a target
+			if isThisSticky && !thisSticky.After && !isNextSticky {
+				// sticky before
+				a.name = thisSticky.Name
+				a.position = "before"
+			} else if !isThisSticky && isNextSticky && nextSticky.After {
+				// sticky after
+				a.name = nextSticky.Name
+				a.position = "after"
+			}
 
-	return nil
-}
+			if a.name != "" {
+				// found sticky
+				a.child1 = s
+				a.child2 = s.NextSibling
 
-func (g *stickyGrouper) groupStickies() {
-	for g.next() {
-		g.groupChildren(g.node)
-
-	group:
-		switch g.node.(type) {
-		case node.Boxed:
-			g.unbox()
-			goto group
-
-		case node.Block:
-			peek := g.peek()
-
-			if _, isBlock := peek.(node.Block); isBlock {
-				sticky, isSticky := g.stickyMap[g.node.Node()]
-				stickyPeek, isPeekSticky := g.stickyMap[peek.Node()]
-
-				var stickyNode *node.Sticky
-				if isSticky && !sticky.After && !isPeekSticky {
-					// before
-					stickyNode = g.createSticky(sticky.Name, false)
-				} else if !isSticky && isPeekSticky && stickyPeek.After {
-					// after
-					stickyNode = g.createSticky(stickyPeek.Name, true)
-				}
-
-				if stickyNode != nil {
-					// group peek children here as we move
-					// peek into sticky right after and get
-					// caught in an infinite loop otherwise
-					// as it would group the same sticky
-					// again and again
-					g.groupChildren(peek)
-
-					g.setNode(stickyNode)
-					g.removePeek()
-
-					if !stickyNode.After {
-						// check for a sticky after the
-						// new before sticky
-						goto group
-					}
-				}
+				targets = append(targets, a)
 			}
 		}
 	}
-}
 
-func (g *stickyGrouper) groupChildren(n node.Node) {
-	if m, ok := n.(node.SettableBlockChildren); ok {
-		stickied := g.transformer.Transform(node.BlocksToNodes(m.BlockChildren()))
-		m.SetBlockChildren(node.NodesToBlocks(stickied))
-	} else {
-		_, isBlockChildren := n.(node.BlockChildren)
-		_, isGroup := n.(*node.Group)
-		if isBlockChildren && !isGroup {
-			panic(fmt.Sprintf("transformer: node %T does not implement SettableBlockChildren", n))
+	// walk children
+	for s := n; s != nil; s = s.NextSibling {
+		if s.FirstChild != nil {
+			newTargets := t.search(s.FirstChild)
+			targets = append(targets, newTargets...)
 		}
 	}
-}
 
-func (g *stickyGrouper) createSticky(name string, after bool) *node.Sticky {
-	children := g.nodes[g.pos : g.pos+2]
-	return &node.Sticky{name, after, node.NodesToBlocks(children)}
-}
-
-func (g *stickyGrouper) setNode(n node.Node) {
-	g.node = n
-	g.nodes[g.pos] = n
-}
-
-func (g *stickyGrouper) removePeek() {
-	g.nodes = append(g.nodes[:g.pos+1], g.nodes[g.pos+2:]...)
-}
-
-// unbox unboxes the current node and replaces it with the unboxed node.
-func (g *stickyGrouper) unbox() {
-	boxed, ok := g.node.(node.Boxed)
-	if !ok {
-		panic("transformer: unboxing node that does not implement Boxed")
-	}
-
-	unboxed := boxed.Unbox()
-
-	g.node = unboxed
-	g.nodes[g.pos] = unboxed
+	return targets
 }

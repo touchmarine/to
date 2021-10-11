@@ -1,256 +1,98 @@
 package sticky_test
 
 import (
-	"github.com/touchmarine/to/node"
-	"github.com/touchmarine/to/stringifier"
-	"github.com/touchmarine/to/transformer/sticky"
+	"encoding/json"
+	"flag"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/touchmarine/to/node"
+	"github.com/touchmarine/to/parser"
+	"github.com/touchmarine/to/transformer"
+	"github.com/touchmarine/to/transformer/sticky"
 )
 
-func TestTransform(t *testing.T) {
-	cases := []struct {
-		name string
-		in   []node.Node
-		out  []node.Node
-	}{
-		// before
-		{
-			"before nothing",
-			[]node.Node{
-				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-			},
-			[]node.Node{
-				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-			},
-		},
-		{
-			"before",
-			[]node.Node{
-				&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-				&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("a")}}},
-			},
-			[]node.Node{
-				&node.Sticky{"SA", false, []node.Block{
-					&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-					&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("a")}}},
-				}},
-			},
-		},
-		{
-			"before sticky",
-			[]node.Node{
-				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-				&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-			},
-			[]node.Node{
-				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-				&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-			},
-		},
-		{
-			"before sticky 1",
-			[]node.Node{
-				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-				&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-				&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("c")}}},
-			},
-			[]node.Node{
-				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-				&node.Sticky{"SA", false, []node.Block{
-					&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-					&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("c")}}},
-				}},
-			},
-		},
-		{
-			"before in after position",
-			[]node.Node{
-				&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("a")}}},
-				&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-			},
-			[]node.Node{
-				&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("a")}}},
-				&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-			},
-		},
+const testdata = "testdata"
 
-		// after
-		{
-			"after nothing",
-			[]node.Node{
-				&node.VerbatimWalled{"B", [][]byte{[]byte("a")}},
-			},
-			[]node.Node{
-				&node.VerbatimWalled{"B", [][]byte{[]byte("a")}},
-			},
-		},
-		{
-			"after",
-			[]node.Node{
-				&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("a")}}},
-				&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
-			},
-			[]node.Node{
-				&node.Sticky{"SB", true, []node.Block{
-					&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("a")}}},
-					&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
-				}},
-			},
-		},
-		{
-			"after sticky",
-			[]node.Node{
-				&node.VerbatimWalled{"B", [][]byte{[]byte("a")}},
-				&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
-			},
-			[]node.Node{
-				&node.VerbatimWalled{"B", [][]byte{[]byte("a")}},
-				&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
-			},
-		},
-		{
-			"after sticky 1",
-			[]node.Node{
-				&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("a")}}},
-				&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
-				&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
-			},
-			[]node.Node{
-				&node.Sticky{"SB", true, []node.Block{
-					&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("a")}}},
-					&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
-				}},
-				&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
-			},
-		},
-		{
-			"after in before position",
-			[]node.Node{
-				&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
-				&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("a")}}},
-			},
-			[]node.Node{
-				&node.VerbatimWalled{"B", [][]byte{[]byte("b")}},
-				&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("a")}}},
-			},
-		},
+// use go test -update to create/update the golden files
+var update = flag.Bool("update", false, "update golden files")
 
-		// before and after
-		{
-			"before and after",
-			[]node.Node{
-				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-				&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("b")}}},
-				&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
-			},
-			[]node.Node{
-				&node.Sticky{"SB", true, []node.Block{
-					&node.Sticky{"SA", false, []node.Block{
-						&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-						&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("b")}}},
-					}},
-					&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
-				}},
-			},
-		},
-		{
-			"before and after 2",
-			[]node.Node{
-				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-				&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-				&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("c")}}},
-				&node.VerbatimWalled{"B", [][]byte{[]byte("d")}},
-				&node.VerbatimWalled{"B", [][]byte{[]byte("e")}},
-			},
-			[]node.Node{
-				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-				&node.Sticky{"SB", true, []node.Block{
-					&node.Sticky{"SA", false, []node.Block{
-						&node.VerbatimWalled{"A", [][]byte{[]byte("b")}},
-						&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("c")}}},
-					}},
-					&node.VerbatimWalled{"B", [][]byte{[]byte("d")}},
-				}},
-				&node.VerbatimWalled{"B", [][]byte{[]byte("e")}},
-			},
-		},
+func TestGolden(t *testing.T) {
+	testDir(t, testdata)
+}
 
-		// nested
-		{
-			"nested",
-			[]node.Node{
-				&node.Walled{"C", []node.Block{
-					&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-					&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("b")}}},
-					&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
-				}},
-			},
-			[]node.Node{
-				&node.Walled{"C", []node.Block{
-					&node.Sticky{"SB", true, []node.Block{
-						&node.Sticky{"SA", false, []node.Block{
-							&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-							&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("b")}}},
-						}},
-						&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
-					}},
-				}},
-			},
-		},
-		{
-			"double sticky",
-			[]node.Node{
-				&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-				&node.Group{"G", []node.Block{
-					&node.Hanging{"GI", []node.Block{
-						&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-						&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("b")}}},
-						&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
-					}},
-				}},
-			},
-			[]node.Node{
-				&node.Sticky{"SA", true, []node.Block{
-					&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-					&node.Group{"G", []node.Block{
-						&node.Hanging{"GI", []node.Block{
-							&node.Sticky{"SB", true, []node.Block{
-								&node.Sticky{"SA", false, []node.Block{
-									&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-									&node.Leaf{"TextBlock", []node.Inline{&node.Text{"MT", []byte("b")}}},
-								}},
-								&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
-							}},
-						}},
-					}},
-				}},
-			},
-		},
+func testDir(t *testing.T, dir string) {
+	ef, err := os.Open(filepath.Join(dir, "elements.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ef.Close()
+
+	var elements parser.ElementMap
+	if err := json.NewDecoder(ef).Decode(&elements); err != nil {
+		t.Fatal(err)
 	}
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			stickied := make([]node.Node, len(c.in))
-			copy(stickied, c.in)
-			stickier := sticky.Transformer{sticky.Map{
-				"A": {
-					Name:    "SA",
-					Element: "A",
-				},
-				"B": {
-					Name:    "SB",
-					Element: "B",
-					After:   true,
-				},
-			}}
-			stickied = stickier.Transform(stickied)
+	inputs, err := filepath.Glob(filepath.Join(dir, "*.to"))
+	if err != nil {
+		t.Fatal(err)
+	}
 
-			got := stringifier.Stringify(stickied...)
-			want := stringifier.Stringify(c.out...)
+	for _, in := range inputs {
+		basePath := in[:len(in)-len(".to")]
 
-			if got != want {
-				t.Errorf("\ngot\n%s\nwant\n%s", got, want)
-			}
+		t.Run(basePath[len(testdata)+1:], func(t *testing.T) {
+			runTest(t, elements, basePath)
 		})
 	}
+}
+
+func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
+	bi, err := os.ReadFile(testPath + ".to")
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := string(bi)
+
+	root, errs := parser.Parse(strings.NewReader(input), elements)
+	for _, e := range errs {
+		t.Errorf("got error %q", e)
+	}
+
+	root = transformer.Apply(root, []transformer.Transformer{sticky.Transformer{sticky.Map{
+		"A": {
+			Name:    "SA",
+			Element: "A",
+		},
+		"B": {
+			Name:    "SB",
+			Element: "B",
+			After:   true,
+		},
+	}}})
+
+	res, err := node.Stringify(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	goldenPath := testPath + ".golden"
+	if *update {
+		if err := os.WriteFile(goldenPath, []byte(res), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	bg, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	golden := string(bg)
+
+	if res != golden {
+		t.Errorf("\nfrom input:\n%s\ngot:\n%s\nwant:\n%s", input, res, golden)
+	}
+
 }

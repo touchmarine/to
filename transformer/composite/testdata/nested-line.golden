@@ -1,5 +1,5 @@
 Container()(
-	Walled(Blockquote)(
+	Walled(A)(
 		Container()(
 			Leaf(T)(
 				Container()(

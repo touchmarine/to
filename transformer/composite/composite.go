@@ -62,23 +62,21 @@ func (t Transformer) search(n *node.Node) []target {
 		if trace {
 			log.Printf("s = %+v\n", s)
 		}
-		if s.TypeCategory() == node.CategoryInline {
-			if s.NextSibling != nil && s.TypeCategory() == node.CategoryInline {
-				comp, ok := t.CompositeMap[s.Element]
-				if ok && s.NextSibling.Element == comp.SecondaryElement {
-					if trace {
-						log.Printf("comp.Name = %+v\n", comp.Name)
-					}
-
-					targets = append(targets, target{
-						name:      comp.Name,
-						primary:   s,
-						secondary: s.NextSibling,
-					})
-
-					// skip the secondary element
-					s = s.NextSibling
+		if s.TypeCategory() == node.CategoryInline && s.NextSibling != nil && s.TypeCategory() == node.CategoryInline {
+			comp, ok := t.CompositeMap[s.Element]
+			if ok && s.NextSibling.Element == comp.SecondaryElement {
+				if trace {
+					log.Printf("comp.Name = %+v\n", comp.Name)
 				}
+
+				targets = append(targets, target{
+					name:      comp.Name,
+					primary:   s,
+					secondary: s.NextSibling,
+				})
+
+				// skip the secondary element
+				s = s.NextSibling
 			}
 		}
 	}

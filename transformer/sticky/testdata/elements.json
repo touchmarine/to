@@ -1,0 +1,30 @@
+{
+	"A": {
+		"name": "A",
+		"type": "verbatimWalled",
+		"delimiter": "!"
+	},
+	"B": {
+		"name": "B",
+		"type": "verbatimWalled",
+		"delimiter": "+"
+	},
+	"C": {
+		"name": "C",
+		"type": "walled",
+		"delimiter": ">"
+	},
+	"D": {
+		"name": "D",
+		"type": "hanging",
+		"delimiter": "-"
+	},
+	"T": {
+		"name": "T",
+		"type": "leaf"
+	},
+	"MT": {
+		"name": "MT",
+		"type": "text"
+	}
+}
