@@ -1,0 +1,12 @@
+{
+	"A": {
+		"name": "A",
+		"type": "rankedHanging",
+		"delimiter": "#"
+	},
+	"B": {
+		"name": "B",
+		"type": "walled",
+		"delimiter": ">"
+	}
+}

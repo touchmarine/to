@@ -1,0 +1,7 @@
+Container()(
+	Container(sequentialNumber)<[0,1]>(
+		RankedHanging(A)<3>(
+			Container()()
+		)
+	)
+)

@@ -1,0 +1,12 @@
+Container()(
+	Container(sequentialNumber)<[1]>(
+		RankedHanging(A)<2>(
+			Container()()
+		)
+	),
+	Container(sequentialNumber)<[2]>(
+		RankedHanging(A)<2>(
+			Container()()
+		)
+	)
+)

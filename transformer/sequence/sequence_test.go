@@ -1,162 +1,88 @@
 package sequence_test
 
 import (
-	"github.com/touchmarine/to/node"
-	"github.com/touchmarine/to/stringifier"
-	"github.com/touchmarine/to/transformer/sequence"
+	"encoding/json"
+	"flag"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/touchmarine/to/node"
+	"github.com/touchmarine/to/parser"
+	"github.com/touchmarine/to/transformer"
+	"github.com/touchmarine/to/transformer/sequence"
 )
 
-func TestTransform(t *testing.T) {
-	cases := []struct {
-		name string
-		in   []node.Node
-		out  []node.Node
-	}{
-		{
-			"##",
-			[]node.Node{
-				&node.RankedHanging{"NumberedHeading", 2, nil},
-			},
-			[]node.Node{
-				&node.SequentialNumberBox{
-					&node.RankedHanging{"NumberedHeading", 2, nil},
-					[]int{1},
-				},
-			},
-		},
+const testdata = "testdata"
 
-		{
-			"##\n##",
-			[]node.Node{
-				&node.RankedHanging{"NumberedHeading", 2, nil},
-				&node.RankedHanging{"NumberedHeading", 2, nil},
-			},
-			[]node.Node{
-				&node.SequentialNumberBox{
-					&node.RankedHanging{"NumberedHeading", 2, nil},
-					[]int{1},
-				},
-				&node.SequentialNumberBox{
-					&node.RankedHanging{"NumberedHeading", 2, nil},
-					[]int{2},
-				},
-			},
-		},
-		{
-			"##\n###",
-			[]node.Node{
-				&node.RankedHanging{"NumberedHeading", 2, nil},
-				&node.RankedHanging{"NumberedHeading", 3, nil},
-			},
-			[]node.Node{
-				&node.SequentialNumberBox{
-					&node.RankedHanging{"NumberedHeading", 2, nil},
-					[]int{1},
-				},
-				&node.SequentialNumberBox{
-					&node.RankedHanging{"NumberedHeading", 3, nil},
-					[]int{1, 1},
-				},
-			},
-		},
-		{
-			"###",
-			[]node.Node{
-				&node.RankedHanging{"NumberedHeading", 3, nil},
-			},
-			[]node.Node{
-				&node.SequentialNumberBox{
-					&node.RankedHanging{"NumberedHeading", 3, nil},
-					[]int{0, 1},
-				},
-			},
-		},
+// use go test -update to create/update the golden files
+var update = flag.Bool("update", false, "update golden files")
 
-		{
-			"reset ##\n###\n##\n###",
-			[]node.Node{
-				&node.RankedHanging{"NumberedHeading", 2, nil},
-				&node.RankedHanging{"NumberedHeading", 3, nil},
-				&node.RankedHanging{"NumberedHeading", 2, nil},
-				&node.RankedHanging{"NumberedHeading", 3, nil},
-			},
-			[]node.Node{
-				&node.SequentialNumberBox{
-					&node.RankedHanging{"NumberedHeading", 2, nil},
-					[]int{1},
-				},
-				&node.SequentialNumberBox{
-					&node.RankedHanging{"NumberedHeading", 3, nil},
-					[]int{1, 1},
-				},
-				&node.SequentialNumberBox{
-					&node.RankedHanging{"NumberedHeading", 2, nil},
-					[]int{2},
-				},
-				&node.SequentialNumberBox{
-					&node.RankedHanging{"NumberedHeading", 3, nil},
-					[]int{2, 1},
-				},
-			},
-		},
+func TestGolden(t *testing.T) {
+	testDir(t, testdata)
+}
 
-		{
-			"sticky",
-			[]node.Node{
-				&node.Sticky{"SA", false, []node.Block{
-					&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-					&node.RankedHanging{"NumberedHeading", 2, nil},
-				}},
-			},
-			[]node.Node{
-				&node.Sticky{"SA", false, []node.Block{
-					&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-					&node.SequentialNumberBox{
-						&node.RankedHanging{"NumberedHeading", 2, nil},
-						[]int{1},
-					},
-				}},
-			},
-		},
-		{
-			"double sticky",
-			[]node.Node{
-				&node.Sticky{"SB", true, []node.Block{
-					&node.Sticky{"SA", false, []node.Block{
-						&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-						&node.RankedHanging{"NumberedHeading", 2, nil},
-					}},
-					&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
-				}},
-			},
-			[]node.Node{
-				&node.Sticky{"SB", true, []node.Block{
-					&node.Sticky{"SA", false, []node.Block{
-						&node.VerbatimWalled{"A", [][]byte{[]byte("a")}},
-						&node.SequentialNumberBox{
-							&node.RankedHanging{"NumberedHeading", 2, nil},
-							[]int{1},
-						},
-					}},
-					&node.VerbatimWalled{"B", [][]byte{[]byte("c")}},
-				}},
-			},
-		},
+func testDir(t *testing.T, dir string) {
+	ef, err := os.Open(filepath.Join(dir, "elements.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ef.Close()
+
+	var elements parser.ElementMap
+	if err := json.NewDecoder(ef).Decode(&elements); err != nil {
+		t.Fatal(err)
 	}
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			a := make([]node.Node, len(c.in))
-			copy(a, c.in)
-			a = sequence.Transform(a)
+	inputs, err := filepath.Glob(filepath.Join(dir, "*.to"))
+	if err != nil {
+		t.Fatal(err)
+	}
 
-			got := stringifier.Stringify(a...)
-			want := stringifier.Stringify(c.out...)
+	for _, in := range inputs {
+		basePath := in[:len(in)-len(".to")]
 
-			if got != want {
-				t.Errorf("\ngot\n%s\nwant\n%s", got, want)
-			}
+		t.Run(basePath[len(testdata)+1:], func(t *testing.T) {
+			runTest(t, elements, basePath)
 		})
 	}
+}
+
+func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
+	bi, err := os.ReadFile(testPath + ".to")
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := string(bi)
+
+	root, errs := parser.Parse(strings.NewReader(input), elements)
+	for _, e := range errs {
+		t.Errorf("got error %q", e)
+	}
+
+	root = transformer.Apply(root, []transformer.Transformer{sequence.Transformer{}})
+
+	res, err := node.Dump(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	goldenPath := testPath + ".golden"
+	if *update {
+		if err := os.WriteFile(goldenPath, []byte(res), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	bg, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	golden := string(bg)
+
+	if res != golden {
+		t.Errorf("\nfrom input:\n%s\ngot:\n%s\nwant:\n%s", input, res, golden)
+	}
+
 }
