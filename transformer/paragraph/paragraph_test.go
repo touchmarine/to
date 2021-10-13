@@ -122,7 +122,7 @@ func testError(t *testing.T, testPath string, err error) {
 	} else if errors.Is(statErr, fs.ErrNotExist) {
 		// no expected errors
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 	} else {
 		t.Fatal(statErr)

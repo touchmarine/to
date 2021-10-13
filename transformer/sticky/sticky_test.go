@@ -58,7 +58,7 @@ func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
 
 	root, err := parser.Parse(strings.NewReader(input), elements)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	root = transformer.Apply(root, []transformer.Transformer{sticky.Transformer{sticky.Map{
