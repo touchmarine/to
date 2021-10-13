@@ -65,7 +65,7 @@ func (t Transformer) search(n *node.Node) []target {
 		if trace {
 			log.Printf("s = %+v\n", s)
 		}
-		if s.TypeCategory() == node.CategoryBlock && s.NextSibling != nil && s.TypeCategory() == node.CategoryBlock {
+		if s.IsBlock() && s.NextSibling != nil && s.NextSibling.IsBlock() {
 			thisSticky, isThisSticky := t.StickyMap[s.Element]
 			nextSticky, isNextSticky := t.StickyMap[s.NextSibling.Element]
 

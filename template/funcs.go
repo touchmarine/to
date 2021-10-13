@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/touchmarine/to/aggregator/seqnum"
 	"html/template"
 	"io"
 	"strings"
+
+	"github.com/touchmarine/to/aggregator/seqnum"
 )
 
 const trace = false
@@ -155,7 +156,7 @@ func (s *sequentialNumberGrouper) groupBySequentialNumber(aggregate seqnum.Aggre
 		cur := len(particle.SequentialNumbers) // current depth
 
 		if trace {
-			s.printf("particle %s", particle.SequentialNumber)
+			s.printf("particle %s", particle.SequentialNumber())
 		}
 
 		if cur > depth {

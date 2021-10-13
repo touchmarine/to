@@ -62,7 +62,7 @@ func (t Transformer) search(n *node.Node) []target {
 		if trace {
 			log.Printf("s = %+v\n", s)
 		}
-		if s.TypeCategory() == node.CategoryInline && s.NextSibling != nil && s.TypeCategory() == node.CategoryInline {
+		if !s.IsBlock() && s.NextSibling != nil && !s.NextSibling.IsBlock() {
 			comp, ok := t.CompositeMap[s.Element]
 			if ok && s.NextSibling.Element == comp.SecondaryElement {
 				if trace {

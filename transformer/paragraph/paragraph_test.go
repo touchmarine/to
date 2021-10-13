@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
-	"github.com/touchmarine/to/node"
-	"github.com/touchmarine/to/parser"
-	"github.com/touchmarine/to/transformer"
-	"github.com/touchmarine/to/transformer/paragraph"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/touchmarine/to/node"
+	"github.com/touchmarine/to/parser"
+	"github.com/touchmarine/to/transformer"
+	"github.com/touchmarine/to/transformer/paragraph"
 )
 
 const testdata = "testdata"
@@ -57,8 +58,8 @@ func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
 	}
 	input := string(bi)
 
-	root, errs := parser.Parse(strings.NewReader(input), elements)
-	testErrors(t, testPath, errs)
+	root, err := parser.Parse(strings.NewReader(input), elements)
+	testError(t, testPath, err)
 
 	root = transformer.Apply(root, []transformer.Transformer{paragraph.NewTransformer("GP")})
 
@@ -86,18 +87,23 @@ func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
 
 }
 
-func testErrors(t *testing.T, testPath string, errs []error) {
+func testError(t *testing.T, testPath string, err error) {
 	errorPath := testPath + ".error"
-	if _, err := os.Stat(errorPath); err == nil {
+	if _, statErr := os.Stat(errorPath); statErr == nil {
 		// expected errors
-		b, err := os.ReadFile(errorPath)
-		if err != nil {
-			t.Fatal(err)
+		b, fileErr := os.ReadFile(errorPath)
+		if fileErr != nil {
+			t.Fatal(fileErr)
+		}
+
+		list, ok := err.(parser.ErrorList)
+		if !ok {
+			t.Fatalf("err not ErrorList (%T)", err)
 		}
 
 		expected := strings.Split(string(b), "\n")
 		left := expected
-		for _, e := range errs {
+		for _, e := range list {
 			if contains(left, e.Error()) {
 				left = left[1:]
 			} else {
@@ -113,13 +119,13 @@ func testErrors(t *testing.T, testPath string, errs []error) {
 
 			t.Errorf("want error %q", e)
 		}
-	} else if errors.Is(err, fs.ErrNotExist) {
+	} else if errors.Is(statErr, fs.ErrNotExist) {
 		// no expected errors
-		for _, e := range errs {
-			t.Errorf("got error %q", e)
+		if err != nil {
+			t.Error(err)
 		}
 	} else {
-		t.Fatal(err)
+		t.Fatal(statErr)
 	}
 }
 

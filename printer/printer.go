@@ -3,10 +3,11 @@ package printer
 import (
 	"bytes"
 	"fmt"
-	"github.com/touchmarine/to/node"
 	"io"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/touchmarine/to/node"
 )
 
 const trace = false
@@ -534,7 +535,7 @@ func (p *printer) needBlockEscape() bool {
 
 func (p *printer) hasBlockDelimiterPrefix(content []byte) bool {
 	for _, e := range p.elementMap {
-		if node.TypeCategory(e.Type) == node.CategoryBlock {
+		if node.IsBlock(e.Type) {
 			// same logic as in parser/parser.go
 			delimiter := ""
 			if e.Type == node.TypeRankedHanging {
@@ -700,7 +701,7 @@ func isPunct(ch byte) bool {
 
 func (p *printer) hasInlineDelimiterPrefix(content []byte) bool {
 	for _, e := range p.elementMap {
-		if node.TypeCategory(e.Type) == node.CategoryInline {
+		if !node.IsBlock(e.Type) {
 			// same logic as in parser/parser.go
 			delimiter := ""
 			runes := utf8.RuneCountInString(e.Delimiter)

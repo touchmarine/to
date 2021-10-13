@@ -2,7 +2,6 @@ package parser
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"sort"
@@ -35,17 +34,19 @@ type Element struct {
 	Matcher   string
 }
 
-func Parse(src io.Reader, elementMap ElementMap) (*node.Node, []error) {
+func Parse(src io.Reader, elementMap ElementMap) (*node.Node, error) {
 	var p parser
 	p.matchers(matcher.Defaults())
 	p.elements(elementMap)
 	p.init(src)
-	return p.parse(nil), p.errors
+	n := p.parse(nil)
+	p.errors.Sort()
+	return n, p.errors.Err()
 }
 
 // parser holds the parsing state.
 type parser struct {
-	errors         []error
+	errors         ErrorList
 	src            []byte             // source
 	blockMap       map[string]Element // registered elements by delimiter
 	blockKeys      []string           // length-sorted (longest first) blockMap keys
@@ -79,8 +80,7 @@ func (p *parser) elements(elementMap ElementMap) {
 	}
 
 	for _, e := range elementMap {
-		switch c := node.TypeCategory(e.Type); c {
-		case node.CategoryBlock:
+		if node.IsBlock(e.Type) {
 			switch e.Type {
 			case node.TypeLeaf:
 				p.leaf = e.Name
@@ -89,8 +89,7 @@ func (p *parser) elements(elementMap ElementMap) {
 			default:
 				p.blockMap[e.Delimiter] = e
 			}
-
-		case node.CategoryInline:
+		} else {
 			switch e.Type {
 			case node.TypeText:
 				p.text = e.Name
@@ -108,15 +107,15 @@ func (p *parser) elements(elementMap ElementMap) {
 				} else if runes == 1 {
 					delimiter = e.Delimiter + e.Delimiter
 				} else {
-					panic("parser: invalid inline delimiter " + e.Delimiter)
+					panic(fmt.Sprintf(
+						"parser: invalid inline delimiter %s (%s %s)",
+						e.Delimiter, e.Name, e.Type,
+					))
 				}
 
 				p.blockMap[delimiter] = e
 				p.inlineMap[delimiter] = e
 			}
-
-		default:
-			panic("parser: unexpected node category " + c.String())
 		}
 	}
 
@@ -221,20 +220,18 @@ func (p *parser) matchBlock() (Element, bool) {
 		if p.hasPrefix([]byte(d)) {
 			e := p.blockMap[d]
 
-			if node.TypeCategory(e.Type) == node.CategoryBlock {
+			if node.IsBlock(e.Type) {
 				if trace {
 					p.printf("return true (%s)", e.Name)
 				}
 
 				return e, true
-			} else if node.TypeCategory(e.Type) == node.CategoryInline {
+			} else {
 				if trace {
 					p.print("return false, inline")
 				}
 
 				return Element{}, false
-			} else {
-				panic("unexpected element type category " + node.TypeCategory(e.Type).String())
 			}
 		}
 	}
@@ -1192,9 +1189,9 @@ func isSpacing(r rune) bool {
 
 // Encoding errors
 var (
-	ErrInvalidUTF8Encoding = errors.New("invalid UTF-8 encoding")
-	ErrIllegalNULL         = errors.New("illegal character NULL")
-	ErrIllegalBOM          = errors.New("illegal byte order mark")
+	ErrInvalidUTF8Encoding = &Error{"invalid UTF-8 encoding"}
+	ErrIllegalNULL         = &Error{"illegal character NULL"}
+	ErrIllegalBOM          = &Error{"illegal byte order mark"}
 )
 
 // next reads the next character.
@@ -1358,8 +1355,8 @@ func (p *parser) openInline(delim rune) func() {
 	}
 }
 
-func (p *parser) error(err error) {
-	p.errors = append(p.errors, err)
+func (p *parser) error(err *Error) {
+	p.errors.Add(err)
 }
 
 func (p *parser) printDelims(name string, blocks []rune) {

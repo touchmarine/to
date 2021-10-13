@@ -2,18 +2,9 @@ package node
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
-)
-
-//go:generate stringer -type=Category
-type Category int
-
-// Categories of nodes
-const (
-	CategoryError Category = iota
-	CategoryBlock
-	CategoryInline
 )
 
 //go:generate stringer -type=Type
@@ -70,15 +61,11 @@ func (t *Type) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// TypeCategory is used by parser to determine node category based on type.
-func TypeCategory(typ Type) Category {
-	if typ == 0 {
-		return CategoryError
-	} else if typ <= 8 {
-		return CategoryBlock
-	} else {
-		return CategoryInline
+func IsBlock(t Type) bool {
+	if t == TypeError {
+		panic(fmt.Sprintf("node: invalid node (%s)", t))
 	}
+	return t < TypeText
 }
 
 type Node struct {
@@ -95,8 +82,13 @@ type Node struct {
 	NextSibling *Node
 }
 
-func (n Node) TypeCategory() Category {
-	return TypeCategory(n.Type)
+// String is used for debugging and can change at any time.
+func (n Node) String() string {
+	return fmt.Sprintf("%s(%s)", n.Type.String()[len("Type"):], n.Element)
+}
+
+func (n Node) IsBlock() bool {
+	return IsBlock(n.Type)
 }
 
 func (n *Node) InsertBefore(newChild, oldChild *Node) {
@@ -160,6 +152,40 @@ func (n *Node) RemoveChild(c *Node) {
 	c.Parent = nil
 	c.PrevSibling = nil
 	c.NextSibling = nil
+}
+
+func ExtractText(n *Node) string {
+	return ExtractTextWithReplacements(n, nil)
+}
+
+// ExtractTextWithReplacments is like ExtractText but replaces the node text
+// with the replacement value.
+//
+// replacementMap = map[node.Name]text
+func ExtractTextWithReplacements(n *Node, replacementMap map[string]string) string {
+	var b strings.Builder
+	extractTextWithReplacements(&b, n, replacementMap)
+	return b.String()
+}
+
+func extractTextWithReplacements(w io.StringWriter, n *Node, replacementMap map[string]string) {
+	if n.Value != "" && n.FirstChild != nil {
+		panic(fmt.Sprintf("node: node has both data and children (%+v)", n))
+	} else if text, found := replacementMap[n.Element]; found {
+		w.WriteString(text)
+	} else if n.Value != "" {
+		w.WriteString(n.Value)
+	} else if n.FirstChild != nil {
+		i := 0
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			if i > 0 && c.IsBlock() {
+				w.WriteString("\n")
+			}
+
+			extractTextWithReplacements(w, c, replacementMap)
+			i++
+		}
+	}
 }
 
 /*
@@ -619,117 +645,4 @@ func (s *SequentialNumberBox) SequentialNumber() string {
 		a = append(a, strconv.FormatUint(uint64(n), 10))
 	}
 	return strings.Join(a, ".")
-}
-
-func ExtractText(n Node) string {
-	return ExtractTextWithReplacements(n, nil)
-}
-
-// ExtractTextWithReplacments is like ExtractText but replaces the node text
-// with the replacement value.
-//
-// replacementMap = map[node.Name]text
-func ExtractTextWithReplacements(n Node, replacementMap map[string]string) string {
-	return ""
-	//var b strings.Builder
-
-	//text, found := replacementMap[n.Name]
-	//if found {
-	//	// found replacement
-	//	b.WriteString(text)
-	//	return b.String()
-	//}
-
-	//if m, ok := n.(Boxed); ok {
-	//	unboxed := m.Unbox()
-	//	if unboxed == nil {
-	//		return ""
-	//	}
-	//	return ExtractTextWithReplacements(unboxed, replacementMap)
-	//}
-
-	//if m, ok := n.(Composited); ok {
-	//	return ExtractTextWithReplacements(m.Primary(), replacementMap)
-	//}
-
-	//if m, ok := n.(BlockChildren); ok {
-	//	for i, c := range m.BlockChildren() {
-	//		if i > 0 {
-	//			b.WriteString("\n")
-	//		}
-
-	//		b.WriteString(ExtractTextWithReplacements(c, replacementMap))
-	//	}
-	//}
-
-	//if m, ok := n.(InlineChildren); ok {
-	//	for _, c := range m.InlineChildren() {
-	//		b.WriteString(ExtractTextWithReplacements(c, replacementMap))
-	//	}
-	//} else if m, ok := n.(Content); ok {
-	//	b.Write(m.Content())
-	//}
-
-	//if m, ok := n.(Lines); ok {
-	//	for _, line := range m.Lines() {
-	//		b.Write(line)
-	//	}
-	//}
-
-	//return b.String()
-
-	//var b strings.Builder
-
-	//switch n.(type) {
-	//case BlockChildren, InlineChildren, Content, Lines, Composited, Boxed:
-	//default:
-	//	panic(fmt.Sprintf("ExtractTextWithReplacements: unexpected node type %T", n))
-	//}
-
-	//for name, text := range replacementMap {
-	//	if name == n.Node() {
-	//		// found replacement
-
-	//		b.WriteString(text)
-	//		return b.String()
-	//	}
-	//}
-
-	//if m, ok := n.(Boxed); ok {
-	//	unboxed := m.Unbox()
-	//	if unboxed == nil {
-	//		return ""
-	//	}
-	//	return ExtractTextWithReplacements(unboxed, replacementMap)
-	//}
-
-	//if m, ok := n.(Composited); ok {
-	//	return ExtractTextWithReplacements(m.Primary(), replacementMap)
-	//}
-
-	//if m, ok := n.(BlockChildren); ok {
-	//	for i, c := range m.BlockChildren() {
-	//		if i > 0 {
-	//			b.WriteString("\n")
-	//		}
-
-	//		b.WriteString(ExtractTextWithReplacements(c, replacementMap))
-	//	}
-	//}
-
-	//if m, ok := n.(InlineChildren); ok {
-	//	for _, c := range m.InlineChildren() {
-	//		b.WriteString(ExtractTextWithReplacements(c, replacementMap))
-	//	}
-	//} else if m, ok := n.(Content); ok {
-	//	b.Write(m.Content())
-	//}
-
-	//if m, ok := n.(Lines); ok {
-	//	for _, line := range m.Lines() {
-	//		b.Write(line)
-	//	}
-	//}
-
-	//return b.String()
 }

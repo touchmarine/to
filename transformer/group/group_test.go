@@ -56,9 +56,9 @@ func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
 	}
 	input := string(bi)
 
-	root, errs := parser.Parse(strings.NewReader(input), elements)
-	for _, e := range errs {
-		t.Errorf("got error %q", e)
+	root, err := parser.Parse(strings.NewReader(input), elements)
+	if err != nil {
+		t.Error(err)
 	}
 
 	root = transformer.Apply(root, []transformer.Transformer{group.Transformer{group.Map{

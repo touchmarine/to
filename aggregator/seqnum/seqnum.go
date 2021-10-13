@@ -2,8 +2,12 @@ package seqnum
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/touchmarine/to/aggregator"
 	"github.com/touchmarine/to/node"
+	"github.com/touchmarine/to/transformer/sequence"
 )
 
 type Aggregate []Particle
@@ -12,11 +16,11 @@ func (a Aggregate) Particles() []aggregator.Particle {
 	return toAggregatorParticles(a)
 }
 
-func (a Aggregator) Aggregate(nodes []node.Node) aggregator.Aggregate {
+func (a Aggregator) Aggregate(n *node.Node) aggregator.Aggregate {
 	s := sequencer{
 		elements: a.Elements,
 	}
-	s.aggregate(nodes)
+	s.aggregate(n)
 	return aggregator.Aggregate(s.particles)
 }
 
@@ -25,10 +29,17 @@ type Particle struct {
 	ID                string
 	Text              string
 	SequentialNumbers []int
-	SequentialNumber  string
 }
 
 func (Particle) Particle() {}
+
+func (p Particle) SequentialNumber() string {
+	var a []string
+	for _, n := range p.SequentialNumbers {
+		a = append(a, strconv.FormatUint(uint64(n), 10))
+	}
+	return strings.Join(a, ".")
+}
 
 type Aggregator struct {
 	Elements []string
@@ -39,35 +50,37 @@ type sequencer struct {
 	particles Aggregate
 }
 
-func (s *sequencer) aggregate(nodes []node.Node) {
-	for _, n := range nodes {
-		var p Particle
-
-		switch m := n.(type) {
-		case *node.Sticky:
-			s.aggregate(node.BlocksToNodes(m.BlockChildren()))
-		case node.Boxed:
-			switch k := n.(type) {
-			case *node.SequentialNumberBox:
-				p.SequentialNumbers = k.SequentialNumbers
-				p.SequentialNumber = k.SequentialNumber()
-			default:
-				panic(fmt.Sprintf("seqnum: unexpected Boxed node %T", n))
+func (s *sequencer) aggregate(n *node.Node) {
+	walk(n, func(n *node.Node) bool {
+		if n.Element == sequence.Element && n.Data != nil {
+			sequentialNumbers, ok := n.Data.([]int)
+			if !ok {
+				panic(fmt.Sprintf("aggregator: unexpected node Data type %#v (%s)", n.Data, n))
 			}
 
-			n = m.Unbox()
+			for child := n.FirstChild; child != nil; child = child.NextSibling {
+				// walk first level children
+				for _, e := range s.elements {
+					if e == child.Element {
+						text := node.ExtractText(n)
+						s.particles = append(s.particles, Particle{
+							Element:           child.Element,
+							ID:                text,
+							Text:              text,
+							SequentialNumbers: sequentialNumbers,
+						})
+					}
+				}
+			}
 		}
+		return true
+	})
+}
 
-		name := n.Node()
-		for _, e := range s.elements {
-			if e == name {
-				p.Element = name
-				txt := node.ExtractText(n)
-				p.ID = txt
-				p.Text = txt
-
-				s.particles = append(s.particles, p)
-			}
+func walk(n *node.Node, fn func(n *node.Node) bool) {
+	if fn(n) {
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			walk(c, fn)
 		}
 	}
 }

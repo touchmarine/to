@@ -1,9 +1,9 @@
 // package aggregator contains functions and types related to aggregators.
 //
-// Aggregators traverse nodes and aggregate (collect) data we are interested in.
-// For example, we use the sequential number aggregator to generate table of
-// contents by aggregating heading nodes and attaching their sequential numbers
-// to them.
+// Aggregators traverse the node tree and aggregate (collect) data we are
+// interested in. For example, we use the sequential number aggregator to
+// generate table of contents by aggregating heading nodes and attaching their
+// sequential numbers to them.
 //
 // In our context:
 // - aggregate=result
@@ -19,16 +19,16 @@ type AggregatorMap map[string]map[string]Aggregator
 
 // Aggregator is an object that aggregates (collects) nodes.
 type Aggregator interface {
-	Aggregate(nodes []node.Node) Aggregate
+	Aggregate(n *node.Node) Aggregate
 }
 
 // AggregatorFunc is a convenience type that implements the Aggregator interface
 // for the given function.
-type AggregatorFunc func([]node.Node) Aggregate
+type AggregatorFunc func(*node.Node) Aggregate
 
 // Aggregate implements the Aggregator interface.
-func (a AggregatorFunc) Aggregate(nodes []node.Node) Aggregate {
-	return a(nodes)
+func (a AggregatorFunc) Aggregate(n *node.Node) Aggregate {
+	return a(n)
 }
 
 // AggregateMap=map["aggregatorName"]map["aggregateName"]Aggregate
@@ -50,7 +50,7 @@ type Particle interface {
 }
 
 // Apply applies the given aggregators to the given nodes.
-func Apply(nodes []node.Node, aggregatorMap AggregatorMap) AggregateMap {
+func Apply(n *node.Node, aggregatorMap AggregatorMap) AggregateMap {
 	m := AggregateMap{}
 	for namea, ma := range aggregatorMap {
 		if m[namea] == nil {
@@ -58,7 +58,7 @@ func Apply(nodes []node.Node, aggregatorMap AggregatorMap) AggregateMap {
 		}
 
 		for nameb, aggregator := range ma {
-			m[namea][nameb] = aggregator.Aggregate(nodes)
+			m[namea][nameb] = aggregator.Aggregate(n)
 		}
 	}
 	return m

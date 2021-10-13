@@ -4,17 +4,17 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"html/template"
+	"log"
+	"os"
+
 	"github.com/touchmarine/to/aggregator"
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
-	"github.com/touchmarine/to/stringifier"
 	totemplate "github.com/touchmarine/to/template"
 	"github.com/touchmarine/to/transformer"
-	"html/template"
-	"log"
-	"os"
 )
 
 func main() {
@@ -31,11 +31,7 @@ func main() {
 
 	format := os.Args[1]
 
-	var (
-		conf  *config.Config
-		nodes []node.Node
-	)
-
+	var conf *config.Config
 	if *confPath != "" {
 		f, err := os.Open(*confPath)
 		if err != nil {
@@ -49,22 +45,22 @@ func main() {
 		conf = config.Default
 	}
 
-	blocks, errs := parser.Parse(os.Stdin, conf.ParserElements())
-	if errs != nil {
-		log.Fatal(errs)
+	root, err := parser.Parse(os.Stdin, conf.ParserElements())
+	if err != nil {
+		parser.PrintError(os.Stderr, err)
+		os.Exit(2)
 	}
 
-	nodes = node.BlocksToNodes(blocks)
-	nodes = transformer.Apply(nodes, conf.DefaultTransformers())
+	root = transformer.Apply(root, conf.DefaultTransformers())
 
 	if *stringify {
-		stringifier.StringifyTo(os.Stdout, nodes...)
+		node.Fprint(os.Stdout, root)
 	}
 
 	if format == "fmt" {
-		printer.Fprint(os.Stdout, conf.PrinterElements(), nodes)
+		printer.Fprint(os.Stdout, conf.PrinterElements(), root)
 	} else {
-		aggregates := aggregator.Apply(nodes, conf.DefaultAggregators())
+		aggregates := aggregator.Apply(root, conf.DefaultAggregators())
 
 		data := map[string]interface{}{
 			"aggregates": aggregates,
@@ -74,7 +70,7 @@ func main() {
 		tmpl.Funcs(totemplate.Functions)
 		tmpl.Funcs(totemplate.RenderFunctions(tmpl, data))
 		template.Must(conf.ParseTemplates(tmpl, format))
-		if err := tmpl.ExecuteTemplate(os.Stdout, "root", nodes); err != nil {
+		if err := tmpl.ExecuteTemplate(os.Stdout, "root", root); err != nil {
 			panic(err)
 		}
 	}
