@@ -62,11 +62,10 @@ func (s *sequencer) aggregate(n *node.Node) {
 				// walk first level children
 				for _, e := range s.elements {
 					if e == child.Element {
-						text := node.ExtractText(n)
 						s.particles = append(s.particles, Particle{
 							Element:           child.Element,
-							ID:                text,
-							Text:              text,
+							ID:                n.TextContent(),
+							Text:              n.TextContent(),
 							SequentialNumbers: sequentialNumbers,
 						})
 					}

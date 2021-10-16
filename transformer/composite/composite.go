@@ -34,7 +34,7 @@ func (t Transformer) Transform(n *node.Node) *node.Node {
 	for _, target := range targets {
 		composite := &node.Node{
 			Element: target.name,
-			Type:    node.TypeContainer,
+			Type:    node.TypeInlineContainer,
 		}
 
 		target.primary.Parent.InsertBefore(composite, target.primary)

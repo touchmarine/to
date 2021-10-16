@@ -16,27 +16,24 @@ const (
 
 	// blocks
 	TypeContainer
-	TypeLeaf
-	TypeVerbatimLine
 	TypeWalled
 	TypeVerbatimWalled
 	TypeHanging
 	TypeRankedHanging
 	TypeFenced
+	TypeVerbatimLine
+	TypeLeaf
 
 	// inlines
-	TypeText
+	TypeInlineContainer
 	TypeUniform
 	TypeEscaped
 	TypePrefixed
+	TypeText
 )
 
 func (t *Type) UnmarshalText(text []byte) error {
 	switch s := strings.ToLower(string(text)); s {
-	case "leaf":
-		*t = TypeLeaf
-	case "verbatimline":
-		*t = TypeVerbatimLine
 	case "walled":
 		*t = TypeWalled
 	case "verbatimwalled":
@@ -47,14 +44,18 @@ func (t *Type) UnmarshalText(text []byte) error {
 		*t = TypeRankedHanging
 	case "fenced":
 		*t = TypeFenced
-	case "text":
-		*t = TypeText
+	case "verbatimline":
+		*t = TypeVerbatimLine
+	case "leaf":
+		*t = TypeLeaf
 	case "uniform":
 		*t = TypeUniform
 	case "escaped":
 		*t = TypeEscaped
 	case "prefixed":
 		*t = TypePrefixed
+	case "text":
+		*t = TypeText
 	default:
 		return fmt.Errorf("unexpected node.Type value: %q", s)
 	}
@@ -65,7 +66,13 @@ func IsBlock(t Type) bool {
 	if t == TypeError {
 		panic(fmt.Sprintf("node: invalid node (%s)", t))
 	}
-	return t < TypeText
+	return t <= TypeLeaf
+}
+
+func HasDelimiter(t Type) bool {
+	return t == TypeWalled || t == TypeVerbatimWalled || t == TypeHanging ||
+		t == TypeRankedHanging || t == TypeFenced || t == TypeVerbatimLine ||
+		t == TypeUniform || t == TypeEscaped || t == TypePrefixed
 }
 
 type Node struct {
@@ -89,6 +96,21 @@ func (n Node) String() string {
 
 func (n Node) IsBlock() bool {
 	return IsBlock(n.Type)
+}
+
+// IsElementBlock is like IsBlock but also determines if the node is an element
+// not just a container.
+func (n Node) IsElementBlock() bool {
+	return n.IsBlock() && n.Element != ""
+}
+
+// IsElementContainer
+func (n Node) IsElementContainer() bool {
+	return n.Element != "" && (n.Type == TypeContainer || n.Type == TypeInlineContainer)
+}
+
+func (n Node) HasDelimiter() bool {
+	return HasDelimiter(n.Type)
 }
 
 func (n *Node) InsertBefore(newChild, oldChild *Node) {
@@ -154,27 +176,42 @@ func (n *Node) RemoveChild(c *Node) {
 	c.NextSibling = nil
 }
 
-func ExtractText(n *Node) string {
-	return ExtractTextWithReplacements(n, nil)
+// TextContent returns the text content of the node and its descendants.
+func (n *Node) TextContent() string {
+	return n.TextContentWithReplacements(nil)
 }
 
-// ExtractTextWithReplacments is like ExtractText but replaces the node text
-// with the replacement value.
+// TextContentWithReplacements is like TextContent but replaces nodes's text
+// content with their corresponding replacementMap value.
 //
-// replacementMap = map[node.Name]text
-func ExtractTextWithReplacements(n *Node, replacementMap map[string]string) string {
+// TextContentWithReplacements is used to keep nodes's delimiter for nodes that
+// have no content, for example, to keep `.toc`.
+//
+// replacementMap = map[node.Element]replacementText
+func (n *Node) TextContentWithReplacements(replacementMap map[string]string) string {
 	var b strings.Builder
-	extractTextWithReplacements(&b, n, replacementMap)
+	n.textContentWithReplacements(&b, replacementMap)
 	return b.String()
 }
 
-func extractTextWithReplacements(w io.StringWriter, n *Node, replacementMap map[string]string) {
+func (n *Node) textContentWithReplacements(w io.StringWriter, replacementMap map[string]string) {
 	if n.Value != "" && n.FirstChild != nil {
 		panic(fmt.Sprintf("node: node has both data and children (%+v)", n))
 	} else if text, found := replacementMap[n.Element]; found {
 		w.WriteString(text)
 	} else if n.Value != "" {
-		w.WriteString(n.Value)
+		lines := strings.Split(n.Value, "\n")
+		isFilled := false
+		for _, line := range lines {
+			if strings.Trim(line, " \t") != "" {
+				isFilled = true
+				break
+			}
+		}
+
+		if isFilled {
+			w.WriteString(n.Value)
+		}
 	} else if n.FirstChild != nil {
 		i := 0
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -182,7 +219,7 @@ func extractTextWithReplacements(w io.StringWriter, n *Node, replacementMap map[
 				w.WriteString("\n")
 			}
 
-			extractTextWithReplacements(w, c, replacementMap)
+			c.textContentWithReplacements(w, replacementMap)
 			i++
 		}
 	}

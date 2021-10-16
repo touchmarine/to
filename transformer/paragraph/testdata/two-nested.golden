@@ -3,7 +3,7 @@ Container()(
 		Container()(
 			Container(GP)(
 				Leaf(T)(
-					Container()(
+					InlineContainer()(
 						Text(MT)(
 							a
 						)
@@ -12,7 +12,7 @@ Container()(
 			),
 			Container(GP)(
 				Leaf(T)(
-					Container()(
+					InlineContainer()(
 						Text(MT)(
 							b
 						)

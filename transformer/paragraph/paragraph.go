@@ -8,15 +8,11 @@ import (
 
 const trace = false
 
-func NewTransformer(paragraphName string) *transformer {
-	return &transformer{name: paragraphName}
+type Transformer struct {
+	Name string // paragraph name
 }
 
-type transformer struct {
-	name string // paragraph name
-}
-
-func (t transformer) Transform(n *node.Node) *node.Node {
+func (t Transformer) Transform(n *node.Node) *node.Node {
 	var targets []*node.Node
 
 	walk(n, func(n *node.Node) bool {
@@ -33,7 +29,7 @@ func (t transformer) Transform(n *node.Node) *node.Node {
 
 	for _, target := range targets {
 		p := &node.Node{
-			Element: t.name,
+			Element: t.Name,
 			Type:    node.TypeContainer,
 		}
 		target.Parent.InsertBefore(p, target)

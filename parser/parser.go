@@ -281,7 +281,7 @@ func (p *parser) parseVerbatimWalled(name string) *node.Node {
 
 	firstLine := p.consumeLine() // consume here so we can have a nicer loop
 
-	lines := [][]byte{firstLine}
+	lines := []string{string(firstLine)}
 
 	for p.ch > 0 {
 		if p.ch == '\n' {
@@ -294,23 +294,14 @@ func (p *parser) parseVerbatimWalled(name string) *node.Node {
 		}
 
 		line := p.consumeLine()
-		lines = append(lines, line)
+		lines = append(lines, string(line))
 	}
 
 	return &node.Node{
 		Element: name,
 		Type:    node.TypeVerbatimWalled,
-		Value:   strings.Join(btosSlice(lines), "\n"),
+		Value:   strings.Join(lines, "\n"),
 	}
-}
-
-// btosSlice converts [][]byte to []string.
-func btosSlice(p [][]byte) []string {
-	var lines []string
-	for _, line := range p {
-		lines = append(lines, string(line))
-	}
-	return lines
 }
 
 func (p *parser) parseHanging(name, delim string) *node.Node {
@@ -504,9 +495,9 @@ func (p *parser) parseFenced(name string) *node.Node {
 		p.next()
 	}
 
-	openingText := p.consumeLine()
+	openingText := string(p.consumeLine())
 
-	lines := [][]byte{openingText}
+	var lines []string
 	afterNewline := false
 
 	for p.ch > 0 && p.continues(reqdBlocks) {
@@ -532,7 +523,7 @@ func (p *parser) parseFenced(name string) *node.Node {
 			l := p.consumeLine()
 
 			line := string(spacing) + string(l)
-			lines = append(lines, []byte(line))
+			lines = append(lines, line)
 
 			afterNewline = false
 		}
@@ -551,7 +542,8 @@ func (p *parser) parseFenced(name string) *node.Node {
 	return &node.Node{
 		Element: name,
 		Type:    node.TypeFenced,
-		Value:   strings.Join(btosSlice(lines), "\n"),
+		Data:    openingText,
+		Value:   strings.Join(lines, "\n"),
 	}
 }
 
@@ -667,7 +659,7 @@ func (p *parser) parseInlines() (*node.Node, bool) {
 	}
 
 	container := &node.Node{
-		Type: node.TypeContainer,
+		Type: node.TypeInlineContainer,
 	}
 
 	for p.ch > 0 {

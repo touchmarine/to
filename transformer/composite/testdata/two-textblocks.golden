@@ -1,19 +1,19 @@
 Container()(
 	Leaf(T)(
-		Container()(
-			Container(CA)(
+		InlineContainer()(
+			InlineContainer(CA)(
 				Uniform(MA)(
-					Container()()
+					InlineContainer()()
 				),
 				Escaped(MB)()
 			)
 		)
 	),
 	Leaf(T)(
-		Container()(
-			Container(CA)(
+		InlineContainer()(
+			InlineContainer(CA)(
 				Uniform(MA)(
-					Container()()
+					InlineContainer()()
 				),
 				Escaped(MB)()
 			)

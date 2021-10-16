@@ -61,7 +61,7 @@ func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
 	root, err := parser.Parse(strings.NewReader(input), elements)
 	testError(t, testPath, err)
 
-	root = transformer.Apply(root, []transformer.Transformer{paragraph.NewTransformer("GP")})
+	root = transformer.Apply(root, []transformer.Transformer{paragraph.Transformer{"GP"}})
 
 	res, err := node.Stringify(root)
 	if err != nil {

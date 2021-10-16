@@ -3,7 +3,7 @@ Container()(
 		b
 	),
 	Leaf(T)(
-		Container()(
+		InlineContainer()(
 			Text(MT)(
 				a
 			)

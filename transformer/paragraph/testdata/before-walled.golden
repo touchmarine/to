@@ -1,7 +1,7 @@
 Container()(
 	Container(GP)(
 		Leaf(T)(
-			Container()(
+			InlineContainer()(
 				Text(MT)(
 					a
 				)

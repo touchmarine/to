@@ -5,6 +5,8 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"html/template"
+
 	"github.com/touchmarine/to/aggregator"
 	"github.com/touchmarine/to/aggregator/seqnum"
 	"github.com/touchmarine/to/node"
@@ -16,7 +18,6 @@ import (
 	"github.com/touchmarine/to/transformer/paragraph"
 	"github.com/touchmarine/to/transformer/sequence"
 	"github.com/touchmarine/to/transformer/sticky"
-	"html/template"
 )
 
 //go:embed to.json
@@ -226,12 +227,13 @@ func (c *Config) DefaultTransformers() []transformer.Transformer {
 	grouper := group.Transformer{c.TransformerGroups("element")}
 	compositer := composite.Transformer{c.TransformerComposites()}
 	stickier := sticky.Transformer{c.TransformerStickies()}
+	sequencer := sequence.Transformer{}
 
 	transformers = append(transformers, []transformer.Transformer{
 		grouper,
 		compositer,
 		stickier,
-		transformer.Func(sequence.Transform),
+		sequencer,
 	}...)
 	return transformers
 }

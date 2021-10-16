@@ -1,9 +1,9 @@
 Container()(
 	Leaf(T)(
-		Container()(
-			Container(CA)(
+		InlineContainer()(
+			InlineContainer(CA)(
 				Uniform(MA)(
-					Container()(
+					InlineContainer()(
 						Text(MT)(
 							a
 						)

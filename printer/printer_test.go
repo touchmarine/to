@@ -2,15 +2,19 @@ package printer_test
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
+	"strings"
+	"testing"
+
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
 	"github.com/touchmarine/to/transformer"
-	"strings"
-	"testing"
 )
+
+var dumpNode = flag.Bool("dump-node", false, "dump node")
 
 func TestFprint(t *testing.T) {
 	cases := []struct {
@@ -54,8 +58,8 @@ func TestFprint(t *testing.T) {
 		{">\n>^", ""},
 		{">\n>^a", "> ^ a"},
 
-		{"`^", "`^\n`"},
-		{"`^a", "`^a\n`"},
+		{"`^", ""},
+		{"`^a", ""},
 		{"`\n ^", "`\n ^\n`"},
 		{"`\n ^a", "`\n ^a\n`"},
 
@@ -97,15 +101,15 @@ func TestFprint(t *testing.T) {
 
 		// fenced
 		{"`", ""},
-		{"`a", "`a\n`"},
-		{"`a`", "`a`\n`"},
+		{"`a", ""},
+		{"`a`", ""},
 		{"`a\nb", "`a\nb\n`"},
-		{"`a\n ", "`a\n \n`"},
+		{"`a\n ", ""},
 		{"`a\n\nb", "`a\n\nb\n`"},
 		{"`a\n \nb", "`a\n \nb\n`"},
 		{"`a\n\n\nb", "`a\n\n\nb\n`"},
 
-		{"`\\a", "`a\n`"},
+		{"`\\a", ""},
 		{"`\\\n`", "`\\\n`\n\\`"},
 
 		// groups
@@ -551,14 +555,14 @@ func TestDoNotRemove(t *testing.T) {
 		in  string
 		out string
 	}{
-		{".toc", ".toc"},
-		{".toc ", ".toc"},
+		{".a", ".a"},
+		{".a ", ".a"},
 
-		{">.toc ", ">.toc"},
-		{">>.toc ", ">>.toc"},
+		{">.a ", "> .a"},
+		{">>.a ", "> > .a"},
 
-		{".c", ""},
-		{".c.toc ", ".c.toc"},
+		{".b", ""},
+		{".b.a ", ".b .a"},
 
 		{`\`, `\`},
 		{`a\`, `a\`},
@@ -576,18 +580,18 @@ func TestDoNotRemove(t *testing.T) {
 					{
 						Name:        "A",
 						Type:        node.TypeHanging,
-						Delimiter:   ".toc",
+						Delimiter:   ".a",
 						DoNotRemove: true,
 					},
 					{
 						Name:      "B",
-						Type:      node.TypeWalled,
-						Delimiter: ">",
+						Type:      node.TypeHanging,
+						Delimiter: ".b",
 					},
 					{
 						Name:      "C",
-						Type:      node.TypeHanging,
-						Delimiter: ".c",
+						Type:      node.TypeWalled,
+						Delimiter: ">",
 					},
 					{
 						Name:        "MA",
@@ -612,19 +616,25 @@ func test(t *testing.T, conf *config.Config, in []byte, out string) {
 	t.Helper()
 
 	r := bytes.NewReader(in)
-	blocks, errs := parser.Parse(r, conf.ParserElements())
-	if errs != nil {
-		t.Fatal(errs)
+	root, err := parser.Parse(r, conf.ParserElements())
+	if err != nil {
+		t.Fatal(err)
+	}
+	root = transformer.Apply(root, conf.DefaultTransformers())
+
+	if *dumpNode {
+		s, err := node.Dump(root)
+		if err != nil {
+			t.Fatal(err)
+		}
+		fmt.Println(s)
 	}
 
-	nodes := node.BlocksToNodes(blocks)
-	nodes = transformer.Apply(nodes, conf.DefaultTransformers())
-
 	var b strings.Builder
-	printer.Fprint(&b, conf.PrinterElements(), nodes)
-
+	if err := printer.Fprint(&b, conf.PrinterElements(), root); err != nil {
+		t.Fatal(err)
+	}
 	printed := b.String()
-
 	if printed != out {
 		t.Errorf("got %q, want %q", printed, out)
 	}

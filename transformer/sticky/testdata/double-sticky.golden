@@ -11,7 +11,7 @@ Container()(
 					),
 					Container(SB)(
 						Leaf(T)(
-							Container()(
+							InlineContainer()(
 								Text(MT)(
 									b
 								)
