@@ -2,7 +2,7 @@ Container()(
 	Walled(A)(
 		Container()(
 			Leaf(T)(
-				InlineContainer()(
+				Container()(
 					Text(MT)(
 						a
 					)

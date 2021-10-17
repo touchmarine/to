@@ -5,7 +5,7 @@ Container()(
 		),
 		Container(SB)(
 			Leaf(T)(
-				InlineContainer()(
+				Container()(
 					Text(MT)(
 						b
 					)

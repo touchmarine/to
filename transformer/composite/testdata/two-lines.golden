@@ -1,18 +1,18 @@
 Container()(
 	Leaf(T)(
-		InlineContainer()(
-			InlineContainer(CA)(
+		Container()(
+			Container(CA)(
 				Uniform(MA)(
-					InlineContainer()()
+					Container()()
 				),
 				Escaped(MB)()
 			),
 			Text(MT)(
 				 
 			),
-			InlineContainer(CA)(
+			Container(CA)(
 				Uniform(MA)(
-					InlineContainer()()
+					Container()()
 				),
 				Escaped(MB)()
 			)

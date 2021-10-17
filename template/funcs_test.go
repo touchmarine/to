@@ -3,70 +3,11 @@ package template
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/touchmarine/to/aggregator/seqnum"
 	"strings"
 	"testing"
+
+	"github.com/touchmarine/to/aggregator/seqnum"
 )
-
-func TestHead(t *testing.T) {
-	cases := []struct {
-		in  []string
-		out string
-	}{
-		{
-			[]string{},
-			"",
-		},
-		{
-			[]string{"a"},
-			"a",
-		},
-		{
-			[]string{"a", "b"},
-			"a",
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(strings.Join(c.in, " "), func(t *testing.T) {
-			if got := head(c.in); got != c.out {
-				t.Errorf("got %s, want %s", got, c.out)
-			}
-		})
-	}
-}
-
-func TestBody(t *testing.T) {
-	cases := []struct {
-		in  []string
-		out string
-	}{
-		{
-			[]string{},
-			"",
-		},
-		{
-			[]string{"a"},
-			"",
-		},
-		{
-			[]string{"a", "b"},
-			"b",
-		},
-		{
-			[]string{"a", "b", "c"},
-			"b\nc",
-		},
-	}
-
-	for _, c := range cases {
-		t.Run(strings.Join(c.in, " "), func(t *testing.T) {
-			if got := body(c.in); got != c.out {
-				t.Errorf("got %q, want %q", got, c.out)
-			}
-		})
-	}
-}
 
 func TestGroupBySequentialNumber(t *testing.T) {
 	cases := []struct {
@@ -78,16 +19,14 @@ func TestGroupBySequentialNumber(t *testing.T) {
 			"single",
 			seqnum.Aggregate{
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 			},
 		},
@@ -95,26 +34,22 @@ func TestGroupBySequentialNumber(t *testing.T) {
 			"1 depth",
 			seqnum.Aggregate{
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{2},
-					SequentialNumber:  "2",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{2},
-					SequentialNumber:  "2",
 				},
 			},
 		},
@@ -122,27 +57,23 @@ func TestGroupBySequentialNumber(t *testing.T) {
 			"2 depths",
 			seqnum.Aggregate{
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1, 1},
-					SequentialNumber:  "1.1",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "NumberedHeading",
+						Element:           "A",
 						SequentialNumbers: []int{1, 1},
-						SequentialNumber:  "1.1",
 					},
 				},
 			},
@@ -151,38 +82,32 @@ func TestGroupBySequentialNumber(t *testing.T) {
 			"3 depths",
 			seqnum.Aggregate{
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1, 1},
-					SequentialNumber:  "1.1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1, 1, 1},
-					SequentialNumber:  "1.1.1",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "NumberedHeading",
+						Element:           "A",
 						SequentialNumbers: []int{1, 1},
-						SequentialNumber:  "1.1",
 					},
 					sequentialNumberGroup{
 						sequentialNumberParticle{
-							Element:           "NumberedHeading",
+							Element:           "A",
 							SequentialNumbers: []int{1, 1, 1},
-							SequentialNumber:  "1.1.1",
 						},
 					},
 				},
@@ -192,28 +117,24 @@ func TestGroupBySequentialNumber(t *testing.T) {
 			"decrease depth",
 			seqnum.Aggregate{
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1, 1},
-					SequentialNumber:  "1.1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "NumberedHeading",
+						Element:           "A",
 						SequentialNumbers: []int{1, 1},
-						SequentialNumber:  "1.1",
 					},
 				},
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 			},
 		},
@@ -221,38 +142,32 @@ func TestGroupBySequentialNumber(t *testing.T) {
 			"decrease depth 1",
 			seqnum.Aggregate{
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1, 1},
-					SequentialNumber:  "1.1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{2},
-					SequentialNumber:  "2",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "NumberedHeading",
+						Element:           "A",
 						SequentialNumbers: []int{1, 1},
-						SequentialNumber:  "1.1",
 					},
 				},
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{2},
-					SequentialNumber:  "2",
 				},
 			},
 		},
@@ -260,39 +175,33 @@ func TestGroupBySequentialNumber(t *testing.T) {
 			"decrease depth 2",
 			seqnum.Aggregate{
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1, 1},
-					SequentialNumber:  "1.1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{2, 1},
-					SequentialNumber:  "2.1",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "NumberedHeading",
+						Element:           "A",
 						SequentialNumbers: []int{1, 1},
-						SequentialNumber:  "1.1",
 					},
 				},
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "NumberedHeading",
+						Element:           "A",
 						SequentialNumbers: []int{2, 1},
-						SequentialNumber:  "2.1",
 					},
 				},
 			},
@@ -301,38 +210,32 @@ func TestGroupBySequentialNumber(t *testing.T) {
 			"increase depth",
 			seqnum.Aggregate{
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1, 1},
-					SequentialNumber:  "1.1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{2},
-					SequentialNumber:  "2",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "NumberedHeading",
+						Element:           "A",
 						SequentialNumbers: []int{1, 1},
-						SequentialNumber:  "1.1",
 					},
 				},
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{2},
-					SequentialNumber:  "2",
 				},
 			},
 		},
@@ -340,49 +243,41 @@ func TestGroupBySequentialNumber(t *testing.T) {
 			"increase depth",
 			seqnum.Aggregate{
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1, 1},
-					SequentialNumber:  "1.1",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{2},
-					SequentialNumber:  "2",
 				},
 				{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{2, 1},
-					SequentialNumber:  "2.1",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{1},
-					SequentialNumber:  "1",
 				},
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "NumberedHeading",
+						Element:           "A",
 						SequentialNumbers: []int{1, 1},
-						SequentialNumber:  "1.1",
 					},
 				},
 				sequentialNumberParticle{
-					Element:           "NumberedHeading",
+					Element:           "A",
 					SequentialNumbers: []int{2},
-					SequentialNumber:  "2",
 				},
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "NumberedHeading",
+						Element:           "A",
 						SequentialNumbers: []int{2, 1},
-						SequentialNumber:  "2.1",
 					},
 				},
 			},

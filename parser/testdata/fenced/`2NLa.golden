@@ -1,7 +1,6 @@
 Container()(
-	Fenced(A)(
+	Fenced(A)<"">(
 		
-
 a
 	)
 )

@@ -12,10 +12,11 @@ type Type int
 
 // Types of nodes
 const (
+	// special
 	TypeError Type = iota
+	TypeContainer
 
 	// blocks
-	TypeContainer
 	TypeWalled
 	TypeVerbatimWalled
 	TypeHanging
@@ -25,7 +26,6 @@ const (
 	TypeLeaf
 
 	// inlines
-	TypeInlineContainer
 	TypeUniform
 	TypeEscaped
 	TypePrefixed
@@ -63,10 +63,11 @@ func (t *Type) UnmarshalText(text []byte) error {
 }
 
 func IsBlock(t Type) bool {
-	if t == TypeError {
-		panic(fmt.Sprintf("node: invalid node (%s)", t))
-	}
-	return t <= TypeLeaf
+	return t != TypeError && t != TypeContainer && t <= TypeLeaf
+}
+
+func IsInline(t Type) bool {
+	return t != TypeError && t != TypeContainer && t >= TypeUniform
 }
 
 func HasDelimiter(t Type) bool {
@@ -98,20 +99,31 @@ func (n Node) IsBlock() bool {
 	return IsBlock(n.Type)
 }
 
+func (n Node) IsInline() bool {
+	return IsInline(n.Type)
+}
+
 // IsElementBlock is like IsBlock but also determines if the node is an element
-// not just a container.
-func (n Node) IsElementBlock() bool {
-	return n.IsBlock() && n.Element != ""
-}
+// not just a plain container.
+//func (n Node) IsElementBlock() bool {
+//	return n.IsBlock() && n.Element != ""
+//}
 
-// IsElementContainer
-func (n Node) IsElementContainer() bool {
-	return n.Element != "" && (n.Type == TypeContainer || n.Type == TypeInlineContainer)
-}
+// IsPlainContainer reports whether the node is a plain container.
+//
+// A plain container is just a convenient wrapper for multiple nodes and does
+// not represent any element or hold data.
+//func (n Node) IsPlainContainer() bool {
+//	return n.Element == "" && (n.Type == TypeContainer || n.Type == TypeInlineContainer)
+//}
 
-func (n Node) HasDelimiter() bool {
-	return HasDelimiter(n.Type)
-}
+// IsGroupContainer reports whether the node is a group container.
+//
+// A group container is a node wrapper that represents an element and holds
+// data. It
+//func (n Node) IsGroupContainer() bool {
+//	return n.Element != "" && (n.Type == TypeContainer || n.Type == TypeInlineContainer)
+//}
 
 func (n *Node) InsertBefore(newChild, oldChild *Node) {
 	if newChild.Parent != nil || newChild.PrevSibling != nil || newChild.NextSibling != nil {

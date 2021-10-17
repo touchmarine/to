@@ -1,12 +1,12 @@
 Container()(
 	Walled(B)(
 		Container()(
-			RankedHanging(A)(
+			RankedHanging(A)<2>(
 				Container()()
 			)
 		)
 	),
-	RankedHanging(A)(
+	RankedHanging(A)<2>(
 		Container()()
 	)
 )

@@ -34,7 +34,7 @@ func (t Transformer) Transform(n *node.Node) *node.Node {
 	for _, target := range targets {
 		composite := &node.Node{
 			Element: target.name,
-			Type:    node.TypeInlineContainer,
+			Type:    node.TypeContainer,
 		}
 
 		target.primary.Parent.InsertBefore(composite, target.primary)
@@ -62,7 +62,7 @@ func (t Transformer) search(n *node.Node) []target {
 		if trace {
 			log.Printf("s = %+v\n", s)
 		}
-		if !s.IsBlock() && s.NextSibling != nil && !s.NextSibling.IsBlock() {
+		if s.IsInline() && s.NextSibling != nil && s.NextSibling.IsInline() {
 			comp, ok := t.CompositeMap[s.Element]
 			if ok && s.NextSibling.Element == comp.SecondaryElement {
 				if trace {

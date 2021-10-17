@@ -1,5 +1,5 @@
 Container()(
-	RankedHanging(A)(
+	RankedHanging(A)<2>(
 		Container()(
 			Leaf(T)(
 				Container()(
@@ -8,7 +8,7 @@ Container()(
 					)
 				)
 			),
-			RankedHanging(A)(
+			RankedHanging(A)<2>(
 				Container()(
 					Leaf(T)(
 						Container()(

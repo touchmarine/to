@@ -1,9 +1,8 @@
 Container()(
 	Walled(B)(
 		Container()(
-			Fenced(A)(
-				
-       a
+			Fenced(A)<"">(
+				       a
 			)
 		)
 	)

@@ -17,16 +17,15 @@ func _() {
 	_ = x[TypeFenced-6]
 	_ = x[TypeVerbatimLine-7]
 	_ = x[TypeLeaf-8]
-	_ = x[TypeInlineContainer-9]
-	_ = x[TypeUniform-10]
-	_ = x[TypeEscaped-11]
-	_ = x[TypePrefixed-12]
-	_ = x[TypeText-13]
+	_ = x[TypeUniform-9]
+	_ = x[TypeEscaped-10]
+	_ = x[TypePrefixed-11]
+	_ = x[TypeText-12]
 }
 
-const _Type_name = "TypeErrorTypeContainerTypeWalledTypeVerbatimWalledTypeHangingTypeRankedHangingTypeFencedTypeVerbatimLineTypeLeafTypeInlineContainerTypeUniformTypeEscapedTypePrefixedTypeText"
+const _Type_name = "TypeErrorTypeContainerTypeWalledTypeVerbatimWalledTypeHangingTypeRankedHangingTypeFencedTypeVerbatimLineTypeLeafTypeUniformTypeEscapedTypePrefixedTypeText"
 
-var _Type_index = [...]uint8{0, 9, 22, 32, 50, 61, 78, 88, 104, 112, 131, 142, 153, 165, 173}
+var _Type_index = [...]uint8{0, 9, 22, 32, 50, 61, 78, 88, 104, 112, 123, 134, 146, 154}
 
 func (i Type) String() string {
 	if i < 0 || i >= Type(len(_Type_index)-1) {

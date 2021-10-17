@@ -63,8 +63,9 @@ func (p printer) print(w writer, n *node.Node) error {
 		return nil
 	}
 
-	if n.IsElementBlock() && n.PrevSibling != nil && n.PrevSibling.IsElementBlock() {
-		if n.Parent != nil && n.Parent.IsElementContainer() {
+	if (n.IsBlock() || n.Type == node.TypeContainer) && n.PrevSibling != nil &&
+		(n.PrevSibling.IsBlock() || n.PrevSibling.Type == node.TypeContainer) {
+		if n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
 			// in a transformer node like sticky or group
 			p.newline(w)
 		} else {
@@ -74,7 +75,7 @@ func (p printer) print(w writer, n *node.Node) error {
 		}
 	}
 
-	if n.IsBlock() && n.Type != node.TypeContainer {
+	if n.IsBlock() {
 		p.writePrefix(w, withTrailingSpacing)
 	}
 
@@ -203,12 +204,6 @@ func (p printer) print(w writer, n *node.Node) error {
 		if p.needBlockEscape(n) {
 			w.WriteString(`\`)
 		}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if err := p.print(w, c); err != nil {
-				return err
-			}
-		}
-	case node.TypeInlineContainer:
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if err := p.print(w, c); err != nil {
 				return err
@@ -363,7 +358,7 @@ func (p printer) hasBlockDelimiterPrefix(s string) bool {
 
 func (p printer) hasInlineDelimiterPrefix(s string) bool {
 	for _, e := range p.elementMap {
-		if node.HasDelimiter(e.Type) && !node.IsBlock(e.Type) {
+		if node.HasDelimiter(e.Type) && node.IsInline(e.Type) {
 			// same logic as in parser/parser.go
 			delimiter := ""
 			runes := utf8.RuneCountInString(e.Delimiter)
@@ -414,9 +409,6 @@ func (p printer) text(n *node.Node) string {
 			// C: escape backslash so it doesn't escape the
 			// following non-emtpy inline element
 
-			if n.NextSibling.IsBlock() {
-				panic(fmt.Sprintf("next sibling is not inline (%s->%s)", n, n.NextSibling))
-			}
 			b.WriteByte('\\')
 		} else if ch == '\\' && i+1 < len(content) && p.hasInlineDelimiterPrefix(content[i+1:]) {
 			// D: escape backslash so it doesn't escape the
@@ -436,10 +428,6 @@ func (p printer) text(n *node.Node) string {
 			// F: last character and the following non-empty
 			// element's delimiter's first character may form an
 			// inline delimiter
-
-			if n.NextSibling.IsBlock() {
-				panic(fmt.Sprintf("next sibling is not inline (%s->%s)", n, n.NextSibling))
-			}
 
 			if x := searchFirstNonContainer(n.NextSibling); x != nil {
 				e, _ := p.elementMap[x.Element]
@@ -482,7 +470,7 @@ func (p printer) text(n *node.Node) string {
 }
 
 func searchFirstNonContainerParent(n *node.Node) *node.Node {
-	if n.Type != node.TypeContainer && n.Type != node.TypeInlineContainer {
+	if n.Type != node.TypeContainer {
 		return n
 	}
 
@@ -539,7 +527,7 @@ func (p printer) hasEscapeClashingElementAtEnd(n *node.Node) bool {
 }
 
 func searchFirstNonContainer(n *node.Node) *node.Node {
-	if n.Type != node.TypeContainer && n.Type != node.TypeInlineContainer {
+	if n.Type != node.TypeContainer {
 		return n
 	}
 

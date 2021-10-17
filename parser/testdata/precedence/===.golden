@@ -1,5 +1,5 @@
 Container()(
-	RankedHanging(C)(
+	RankedHanging(C)<3>(
 		Container()()
 	)
 )

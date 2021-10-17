@@ -89,7 +89,7 @@ func (p *parser) elements(elementMap ElementMap) {
 			default:
 				p.blockMap[e.Delimiter] = e
 			}
-		} else {
+		} else if node.IsInline(e.Type) {
 			switch e.Type {
 			case node.TypeText:
 				p.text = e.Name
@@ -226,7 +226,7 @@ func (p *parser) matchBlock() (Element, bool) {
 				}
 
 				return e, true
-			} else {
+			} else if node.IsInline(e.Type) {
 				if trace {
 					p.print("return false, inline")
 				}
@@ -659,7 +659,7 @@ func (p *parser) parseInlines() (*node.Node, bool) {
 	}
 
 	container := &node.Node{
-		Type: node.TypeInlineContainer,
+		Type: node.TypeContainer,
 	}
 
 	for p.ch > 0 {
