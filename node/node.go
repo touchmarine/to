@@ -177,28 +177,15 @@ func (n *Node) RemoveChild(c *Node) {
 }
 
 // TextContent returns the text content of the node and its descendants.
-func (n *Node) TextContent() string {
-	return n.TextContentWithReplacements(nil)
-}
-
-// TextContentWithReplacements is like TextContent but replaces nodes's text
-// content with their corresponding replacementMap value.
-//
-// TextContentWithReplacements is used to keep nodes's delimiter for nodes that
-// have no content, for example, to keep `.toc`.
-//
-// replacementMap = map[node.Element]replacementText
-func (n *Node) TextContentWithReplacements(replacementMap map[string]string) string {
+func (n Node) TextContent() string {
 	var b strings.Builder
-	n.textContentWithReplacements(&b, replacementMap)
+	n.textContent(&b)
 	return b.String()
 }
 
-func (n *Node) textContentWithReplacements(w io.StringWriter, replacementMap map[string]string) {
+func (n Node) textContent(w io.StringWriter) {
 	if n.Value != "" && n.FirstChild != nil {
-		panic(fmt.Sprintf("node: node has both data and children (%+v)", n))
-	} else if text, found := replacementMap[n.Element]; found {
-		w.WriteString(text)
+		panic(fmt.Sprintf("node: node has both data and children (%s)", n))
 	} else if n.Value != "" {
 		lines := strings.Split(n.Value, "\n")
 		isFilled := false
@@ -219,7 +206,7 @@ func (n *Node) textContentWithReplacements(w io.StringWriter, replacementMap map
 				w.WriteString("\n")
 			}
 
-			c.textContentWithReplacements(w, replacementMap)
+			c.textContent(w)
 			i++
 		}
 	}

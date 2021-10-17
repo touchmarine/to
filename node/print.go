@@ -1,6 +1,7 @@
 package node
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,19 +11,17 @@ import (
 
 func Stringify(n *Node) (string, error) {
 	var b strings.Builder
-	err := Fprint(&b, n)
-	if err != nil {
+	if err := Fprint(&b, n); err != nil {
 		return "", err
 	}
 	return b.String(), nil
 }
 
-// Dump is like Stringify but includes more information, such as the node's
-// Data.
-func Dump(n *Node) (string, error) {
+// StringifyDetailed is like Stringify but includes more information, such as
+// the node's Data.
+func StringifyDetailed(n *Node) (string, error) {
 	var b strings.Builder
-	err := fprint(&b, true, n)
-	if err != nil {
+	if err := fprint(&b, true, n); err != nil {
 		return "", err
 	}
 	return b.String(), nil
@@ -32,40 +31,49 @@ func Print(n *Node) error {
 	return Fprint(os.Stdout, n)
 }
 
-func Fprint(w io.StringWriter, n *Node) (err error) {
+func Fprint(w io.Writer, n *Node) (err error) {
 	return fprint(w, false, n)
 }
 
-func fprint(w io.StringWriter, detailed bool, n *Node) (err error) {
+type writer interface {
+	io.Writer
+	io.StringWriter
+}
+
+func fprint(w io.Writer, detailed bool, n *Node) error {
+	if x, ok := w.(writer); ok {
+		return fprint0(x, detailed, n)
+	}
+
+	buf := bufio.NewWriter(w)
+	if err := fprint0(buf, detailed, n); err != nil {
+		return err
+	}
+	return buf.Flush()
+}
+
+func fprint0(w writer, detailed bool, n *Node) error {
 	p := printer{
 		w:        w,
 		detailed: detailed,
 	}
-
-	defer func() {
-		if e := recover(); e != nil {
-			err = e.(localError).err // repanic if not localError
-		}
-	}()
-
-	p.print(n)
-	return
+	return p.print(n)
 }
 
 type printer struct {
-	w        io.StringWriter
+	w        writer
 	detailed bool // whether to print more information
 
 	indent       int
 	afterNewline bool
 }
 
-func (p *printer) print(n *Node) {
+func (p *printer) print(n *Node) error {
 	p.writef("%s(%s)", n.Type.String()[len("Type"):], n.Element)
 	if p.detailed && n.Data != nil {
 		b, err := json.Marshal(n.Data)
 		if err != nil {
-			panic(localError{err})
+			panic(err)
 		}
 		if len(b) > 0 {
 			p.writef("<%s>", string(b))
@@ -87,7 +95,7 @@ func (p *printer) print(n *Node) {
 	}()
 
 	if n.Value != "" && n.FirstChild != nil {
-		panic("printer: has data and children")
+		return fmt.Errorf("node has data and children (%s)", n)
 	}
 
 	if n.Value != "" {
@@ -100,10 +108,14 @@ func (p *printer) print(n *Node) {
 				p.newline()
 			}
 
-			p.print(c)
+			if err := p.print(c); err != nil {
+				return err
+			}
 			i++
 		}
 	}
+
+	return nil
 }
 
 func isEmpty(n *Node) bool {
@@ -111,10 +123,7 @@ func isEmpty(n *Node) bool {
 }
 
 func (p *printer) newline() {
-	_, err := p.w.WriteString("\n")
-	if err != nil {
-		panic(localError{err})
-	}
+	p.w.WriteString("\n")
 	p.afterNewline = true
 }
 
@@ -122,22 +131,11 @@ func (p *printer) writef(format string, v ...interface{}) {
 	p.write(fmt.Sprintf(format, v...))
 }
 
-func (p *printer) write(a string) {
+func (p *printer) write(s string) {
 	if p.afterNewline {
-		_, err := p.w.WriteString(strings.Repeat("\t", p.indent) + a)
-		if err != nil {
-			panic(localError{err})
-		}
+		p.w.WriteString(strings.Repeat("\t", p.indent) + s)
 		p.afterNewline = false
 	} else {
-		_, err := p.w.WriteString(a)
-		if err != nil {
-			panic(localError{err})
-		}
+		p.w.WriteString(s)
 	}
-}
-
-// localError wraps local errors so we can distinguish them from genuine panics.
-type localError struct {
-	err error
 }

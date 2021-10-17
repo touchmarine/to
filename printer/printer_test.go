@@ -623,7 +623,7 @@ func test(t *testing.T, conf *config.Config, in []byte, out string) {
 	root = transformer.Apply(root, conf.DefaultTransformers())
 
 	if *dumpNode {
-		s, err := node.Dump(root)
+		s, err := node.StringifyDetailed(root)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -63,7 +63,7 @@ func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
 
 	root = transformer.Apply(root, []transformer.Transformer{sequence.Transformer{}})
 
-	res, err := node.Dump(root)
+	res, err := node.StringifyDetailed(root)
 	if err != nil {
 		t.Fatal(err)
 	}
