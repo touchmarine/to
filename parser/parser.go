@@ -16,6 +16,11 @@ const trace = false
 
 const tabWidth = 8
 
+const (
+	KeyRank        = "rank"
+	KeyOpeningText = "openingText"
+)
+
 var tabSpaces []rune
 
 func init() {
@@ -347,7 +352,9 @@ func (p *parser) parseRankedHanging(name, delim string) *node.Node {
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypeRankedHanging,
-		Data:    rank,
+		Data: node.Data{
+			KeyRank: rank,
+		},
 	}
 	n.AppendChild(children)
 	return n
@@ -542,8 +549,10 @@ func (p *parser) parseFenced(name string) *node.Node {
 	return &node.Node{
 		Element: name,
 		Type:    node.TypeFenced,
-		Data:    openingText,
-		Value:   strings.Join(lines, "\n"),
+		Data: node.Data{
+			KeyOpeningText: openingText,
+		},
+		Value: strings.Join(lines, "\n"),
 	}
 }
 

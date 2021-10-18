@@ -1,14 +1,12 @@
 package config
 
 import (
-	"bytes"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"html/template"
 
 	"github.com/touchmarine/to/aggregator"
-	"github.com/touchmarine/to/aggregator/seqnum"
+	sequentialnumberag "github.com/touchmarine/to/aggregator/sequentialnumber"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
@@ -16,7 +14,7 @@ import (
 	"github.com/touchmarine/to/transformer/composite"
 	"github.com/touchmarine/to/transformer/group"
 	"github.com/touchmarine/to/transformer/paragraph"
-	"github.com/touchmarine/to/transformer/sequence"
+	"github.com/touchmarine/to/transformer/sequentialnumber"
 	"github.com/touchmarine/to/transformer/sticky"
 )
 
@@ -25,26 +23,28 @@ var b []byte
 
 var Default *Config
 
-func init() {
-	r := bytes.NewReader(b)
-	if err := json.NewDecoder(r).Decode(&Default); err != nil {
-		panic(err)
-	}
-}
+//func init() {
+//	r := bytes.NewReader(b)
+//	if err := json.NewDecoder(r).Decode(&Default); err != nil {
+//		panic(err)
+//	}
+//}
 
 type Config struct {
 	Root struct {
 		Templates map[string]string `json:"templates"`
 	} `json:"root"`
-	Elements   []Element   `json:"elements"`
-	Composites []Composite `json:"composites"`
-	Stickies   []Sticky    `json:"stickies"`
-	Groups     []Group     `json:"groups"`
-	Aggregates Aggregates  `json:"aggregates"`
+	Elements   ElementMap           `json:"elements"`
+	Composites map[string]Composite `json:"composites"`
+	Stickies   map[string]Sticky    `json:"stickies"`
+	Groups     map[string]Group     `json:"groups"`
+	Aggregates Aggregates           `json:"aggregates"`
 }
 
+// ElementMap = map["name"]Element
+type ElementMap map[string]Element
+
 type Element struct {
-	Name        string            `json:"name"`
 	Type        node.Type         `json:"type"`
 	Delimiter   string            `json:"delimiter"`
 	Matcher     string            `json:"matcher"`
@@ -57,7 +57,6 @@ type Element struct {
 //
 // The SecondaryElement immediately follows the PrimaryElement.
 type Composite struct {
-	Name             string            `json:"name"`
 	PrimaryElement   string            `json:"primaryElement"`
 	SecondaryElement string            `json:"secondaryElement"`
 	Templates        map[string]string `json:"templates"`
@@ -69,7 +68,6 @@ type Composite struct {
 // The Element sticks to the preceding element if After is true. Otherwise,
 // it sticks to the following element.
 type Sticky struct {
-	Name      string            `json:"name"`
 	Element   string            `json:"element"`
 	After     bool              `json:"after"`
 	Templates map[string]string `json:"templates"`
@@ -77,7 +75,6 @@ type Sticky struct {
 
 // Group is a group of consecutive Elements.
 type Group struct {
-	Name       string            `json:"name"`
 	Recognizer string            `json:"recognizer"`
 	Element    string            `json:"element"`
 	Templates  map[string]string `json:"templates"`
@@ -89,11 +86,11 @@ type Aggregates struct {
 	} `json:"sequentialNumbers"`
 }
 
-func (c *Config) ParserElements() parser.ElementMap {
+func (c Config) ParserElements() parser.ElementMap {
 	m := parser.ElementMap{}
-	for _, e := range c.Elements {
-		m[e.Name] = parser.Element{
-			Name:      e.Name,
+	for name, e := range c.Elements {
+		m[name] = parser.Element{
+			Name:      name,
 			Type:      e.Type,
 			Delimiter: e.Delimiter,
 			Matcher:   e.Matcher,
@@ -102,11 +99,11 @@ func (c *Config) ParserElements() parser.ElementMap {
 	return m
 }
 
-func (c *Config) PrinterElements() printer.ElementMap {
+func (c Config) PrinterElements() printer.ElementMap {
 	m := printer.ElementMap{}
-	for _, e := range c.Elements {
-		m[e.Name] = printer.Element{
-			Name:        e.Name,
+	for name, e := range c.Elements {
+		m[name] = printer.Element{
+			Name:        name,
 			Type:        e.Type,
 			Delimiter:   e.Delimiter,
 			Matcher:     e.Matcher,
@@ -116,11 +113,11 @@ func (c *Config) PrinterElements() printer.ElementMap {
 	return m
 }
 
-func (c *Config) TransformerComposites() composite.Map {
+func (c Config) TransformerComposites() composite.Map {
 	m := composite.Map{}
-	for _, e := range c.Composites {
+	for name, e := range c.Composites {
 		m[e.PrimaryElement] = composite.Composite{
-			Name:             e.Name,
+			Name:             name,
 			PrimaryElement:   e.PrimaryElement,
 			SecondaryElement: e.SecondaryElement,
 		}
@@ -128,22 +125,22 @@ func (c *Config) TransformerComposites() composite.Map {
 	return m
 }
 
-func (c *Config) GroupsByRecognizer(recognizer string) []Group {
-	var groups []Group
-	for _, g := range c.Groups {
+func (c Config) GroupsByRecognizer(recognizer string) map[string]Group {
+	m := map[string]Group{}
+	for name, g := range c.Groups {
 		if g.Recognizer == recognizer {
-			groups = append(groups, g)
+			m[name] = g
 		}
 	}
-	return groups
+	return m
 }
 
-func (c *Config) TransformerGroups(recognizer string) group.Map {
+func (c Config) TransformerGroups(recognizer string) group.Map {
 	m := group.Map{}
-	for _, g := range c.Groups {
+	for name, g := range c.Groups {
 		if g.Recognizer == recognizer {
 			m[g.Element] = group.Group{
-				Name:    g.Name,
+				Name:    name,
 				Element: g.Element,
 			}
 		}
@@ -151,11 +148,11 @@ func (c *Config) TransformerGroups(recognizer string) group.Map {
 	return m
 }
 
-func (c *Config) TransformerStickies() sticky.Map {
+func (c Config) TransformerStickies() sticky.Map {
 	m := sticky.Map{}
-	for _, s := range c.Stickies {
+	for name, s := range c.Stickies {
 		m[s.Element] = sticky.Sticky{
-			Name:    s.Name,
+			Name:    name,
 			Element: s.Element,
 			After:   s.After,
 		}
@@ -163,51 +160,51 @@ func (c *Config) TransformerStickies() sticky.Map {
 	return m
 }
 
-func (c *Config) ParseTemplates(target *template.Template, name string) (*template.Template, error) {
-	rootTmpl, ok := c.Root.Templates[name]
+func (c Config) ParseTemplates(target *template.Template, templateName string) (*template.Template, error) {
+	rootTmpl, ok := c.Root.Templates[templateName]
 	if !ok {
-		return nil, fmt.Errorf("root %s template not found", name)
+		return nil, fmt.Errorf("root %s template not found", templateName)
 	}
 	if _, err := target.New("root").Parse(rootTmpl); err != nil {
 		return nil, err
 	}
 
-	for _, el := range c.Elements {
-		elTmpl, ok := el.Templates[name]
+	for name, element := range c.Elements {
+		tmpl, ok := element.Templates[templateName]
 		if !ok {
-			return nil, fmt.Errorf("element %s %s template not found", el.Name, name)
+			return nil, fmt.Errorf("element template not found (%s %s)", name, templateName)
 		}
-		if _, err := target.New(el.Name).Parse(elTmpl); err != nil {
+		if _, err := target.New(name).Parse(tmpl); err != nil {
 			return nil, err
 		}
 	}
 
-	for _, composite := range c.Composites {
-		cTmpl, ok := composite.Templates[name]
+	for name, composite := range c.Composites {
+		tmpl, ok := composite.Templates[templateName]
 		if !ok {
-			return nil, fmt.Errorf("composite %s %s template not found", composite.Name, name)
+			return nil, fmt.Errorf("composite template not found (%s %s)", name, templateName)
 		}
-		if _, err := target.New(composite.Name).Parse(cTmpl); err != nil {
+		if _, err := target.New(name).Parse(tmpl); err != nil {
 			return nil, err
 		}
 	}
 
-	for _, sticky := range c.Stickies {
-		sTmpl, ok := sticky.Templates[name]
+	for name, sticky := range c.Stickies {
+		tmpl, ok := sticky.Templates[templateName]
 		if !ok {
-			return nil, fmt.Errorf("sticky %s %s template not found", sticky.Name, name)
+			return nil, fmt.Errorf("sticky template not found (%s %s)", name, templateName)
 		}
-		if _, err := target.New(sticky.Name).Parse(sTmpl); err != nil {
+		if _, err := target.New(name).Parse(tmpl); err != nil {
 			return nil, err
 		}
 	}
 
-	for _, group := range c.Groups {
-		gTmpl, ok := group.Templates[name]
+	for name, group := range c.Groups {
+		tmpl, ok := group.Templates[templateName]
 		if !ok {
-			return nil, fmt.Errorf("group %s %s template not found", group.Name, name)
+			return nil, fmt.Errorf("group template not found (%s %s)", name, templateName)
 		}
-		if _, err := target.New(group.Name).Parse(gTmpl); err != nil {
+		if _, err := target.New(name).Parse(tmpl); err != nil {
 			return nil, err
 		}
 	}
@@ -215,37 +212,38 @@ func (c *Config) ParseTemplates(target *template.Template, name string) (*templa
 	return target, nil
 }
 
-func (c *Config) DefaultTransformers() []transformer.Transformer {
+func (c Config) DefaultTransformers() []transformer.Transformer {
 	var transformers []transformer.Transformer
 
 	paragraphGroups := c.GroupsByRecognizer("paragraph")
-	if len(paragraphGroups) > 0 {
-		paragrapher := paragraph.Transformer{paragraphGroups[0].Name}
+	for name, _ := range paragraphGroups {
+		// random if multiple
+		paragrapher := paragraph.Transformer{name}
 		transformers = append(transformers, paragrapher)
+		break
 	}
 
 	grouper := group.Transformer{c.TransformerGroups("element")}
 	compositer := composite.Transformer{c.TransformerComposites()}
 	stickier := sticky.Transformer{c.TransformerStickies()}
-	sequencer := sequence.Transformer{}
 
 	transformers = append(transformers, []transformer.Transformer{
 		grouper,
 		compositer,
 		stickier,
-		sequencer,
+		transformer.Func(sequentialnumber.Transform),
 	}...)
 	return transformers
 }
 
-func (c *Config) DefaultAggregators() map[string]map[string]aggregator.Aggregator {
+func (c Config) DefaultAggregators() map[string]map[string]aggregator.Aggregator {
 	m := map[string]map[string]aggregator.Aggregator{}
 	for n, a := range c.Aggregates.SequentialNumbers {
 		if m["sequentialNumbers"] == nil {
 			m["sequentialNumbers"] = map[string]aggregator.Aggregator{}
 		}
 
-		m["sequentialNumbers"][n] = seqnum.Aggregator{a.Elements}
+		m["sequentialNumbers"][n] = sequentialnumberag.Aggregator{a.Elements}
 	}
 	return m
 }

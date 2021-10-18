@@ -1,0 +1,100 @@
+{
+	"root": {
+		"templates": {
+			"html": '''
+<html>
+<body>
+{{range $c := Children .}}
+	{{Template $c.Element $c}}
+{{end}}
+</body>
+</html>'''
+		}	
+	},
+	"elements": {
+		"TextBlock": {
+			"type": "leaf",
+			"templates": {
+				"html": '''
+{{range $c := Children .}}
+	{{Template $c.Element $c}}
+{{end}}
+'''
+			}
+		},
+		"Text": {
+			"type": "text",
+			"templates": {
+				"html": "{{.Value}}"
+			}
+		},
+
+		"LineBreak": {
+			"type": "prefixed",
+			"delimiter": "\\",
+			"doNotRemove": true,
+			"templates": {
+				"html": "<br>"
+			}
+		},
+		"HTTP": {
+			"type": "prefixed",
+			"delimiter": "http://",
+			"matcher": "url",
+			"templates": {
+				"html": '''<a href="http://{{.Value}}">http://{{.Value}}</a>'''
+			}
+		},
+		"Blockquote": {
+			"type": "walled",
+			"delimiter": ">",
+			"templates": {
+				"html": '''
+<blockquote>
+	{{range $c := Children .}}
+		{{Template $c.Element $c}}
+	{{end}}
+</blockquote>'''
+			}
+		},
+		"Title": {
+			"type": "hanging",
+			"delimiter": "=",
+			"templates": {
+				"html": '''
+<h1>
+	{{range $c := Children .}}
+		{{Template $c.Element $c}}
+	{{end}}
+</h1>'''
+			}
+		},
+		"Heading": {
+			"type": "rankedHanging",
+			"delimiter": "=",
+			"templates": {
+				"html": '''
+<h{{.Data.rank}}>
+	{{range $c := Children .}}
+		{{Template $c.Element $c}}
+	{{end}}
+</h{{.Data.rank}}>'''
+			}
+		}
+
+	},
+	"groups": {
+		"Paragraph": {
+			"recognizer": "paragraph",
+			"templates": {
+				"html": '''
+<p>
+	{{range $c := Children .}}
+		{{Template $c.Element $c}}
+	{{end}}
+</p>
+'''
+			}
+		}
+	}
+}

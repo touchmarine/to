@@ -6,108 +6,108 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/touchmarine/to/aggregator/seqnum"
+	"github.com/touchmarine/to/aggregator/sequentialnumber"
 )
 
 func TestGroupBySequentialNumber(t *testing.T) {
 	cases := []struct {
 		name string
-		in   seqnum.Aggregate
+		in   sequentialnumber.Aggregate
 		out  sequentialNumberGroup
 	}{
 		{
 			"single",
-			seqnum.Aggregate{
+			sequentialnumber.Aggregate{
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 			},
 		},
 		{
 			"1 depth",
-			seqnum.Aggregate{
+			sequentialnumber.Aggregate{
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{2},
+					Element:          "A",
+					SequentialNumber: "2",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{2},
+					Element:          "A",
+					SequentialNumber: "2",
 				},
 			},
 		},
 		{
 			"2 depths",
-			seqnum.Aggregate{
+			sequentialnumber.Aggregate{
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1, 1},
+					Element:          "A",
+					SequentialNumber: "1.1",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "A",
-						SequentialNumbers: []int{1, 1},
+						Element:          "A",
+						SequentialNumber: "1.1",
 					},
 				},
 			},
 		},
 		{
 			"3 depths",
-			seqnum.Aggregate{
+			sequentialnumber.Aggregate{
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1, 1},
+					Element:          "A",
+					SequentialNumber: "1.1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1, 1, 1},
+					Element:          "A",
+					SequentialNumber: "1.1.1",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "A",
-						SequentialNumbers: []int{1, 1},
+						Element:          "A",
+						SequentialNumber: "1.1",
 					},
 					sequentialNumberGroup{
 						sequentialNumberParticle{
-							Element:           "A",
-							SequentialNumbers: []int{1, 1, 1},
+							Element:          "A",
+							SequentialNumber: "1.1.1",
 						},
 					},
 				},
@@ -115,169 +115,169 @@ func TestGroupBySequentialNumber(t *testing.T) {
 		},
 		{
 			"decrease depth",
-			seqnum.Aggregate{
+			sequentialnumber.Aggregate{
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1, 1},
+					Element:          "A",
+					SequentialNumber: "1.1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "A",
-						SequentialNumbers: []int{1, 1},
+						Element:          "A",
+						SequentialNumber: "1.1",
 					},
 				},
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 			},
 		},
 		{
 			"decrease depth 1",
-			seqnum.Aggregate{
+			sequentialnumber.Aggregate{
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1, 1},
+					Element:          "A",
+					SequentialNumber: "1.1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{2},
+					Element:          "A",
+					SequentialNumber: "2",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "A",
-						SequentialNumbers: []int{1, 1},
+						Element:          "A",
+						SequentialNumber: "1.1",
 					},
 				},
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{2},
+					Element:          "A",
+					SequentialNumber: "2",
 				},
 			},
 		},
 		{
 			"decrease depth 2",
-			seqnum.Aggregate{
+			sequentialnumber.Aggregate{
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1, 1},
+					Element:          "A",
+					SequentialNumber: "1.1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{2, 1},
+					Element:          "A",
+					SequentialNumber: "2.1",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "A",
-						SequentialNumbers: []int{1, 1},
+						Element:          "A",
+						SequentialNumber: "1.1",
 					},
 				},
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "A",
-						SequentialNumbers: []int{2, 1},
+						Element:          "A",
+						SequentialNumber: "2.1",
 					},
 				},
 			},
 		},
 		{
 			"increase depth",
-			seqnum.Aggregate{
+			sequentialnumber.Aggregate{
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1, 1},
+					Element:          "A",
+					SequentialNumber: "1.1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{2},
+					Element:          "A",
+					SequentialNumber: "2",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "A",
-						SequentialNumbers: []int{1, 1},
+						Element:          "A",
+						SequentialNumber: "1.1",
 					},
 				},
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{2},
+					Element:          "A",
+					SequentialNumber: "2",
 				},
 			},
 		},
 		{
 			"increase depth",
-			seqnum.Aggregate{
+			sequentialnumber.Aggregate{
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{1, 1},
+					Element:          "A",
+					SequentialNumber: "1.1",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{2},
+					Element:          "A",
+					SequentialNumber: "2",
 				},
 				{
-					Element:           "A",
-					SequentialNumbers: []int{2, 1},
+					Element:          "A",
+					SequentialNumber: "2.1",
 				},
 			},
 			sequentialNumberGroup{
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{1},
+					Element:          "A",
+					SequentialNumber: "1",
 				},
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "A",
-						SequentialNumbers: []int{1, 1},
+						Element:          "A",
+						SequentialNumber: "1.1",
 					},
 				},
 				sequentialNumberParticle{
-					Element:           "A",
-					SequentialNumbers: []int{2},
+					Element:          "A",
+					SequentialNumber: "2",
 				},
 				sequentialNumberGroup{
 					sequentialNumberParticle{
-						Element:           "A",
-						SequentialNumbers: []int{2, 1},
+						Element:          "A",
+						SequentialNumber: "2.1",
 					},
 				},
 			},

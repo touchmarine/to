@@ -1,0 +1,68 @@
+{
+	"root": {
+		"templates": {
+			"html": "<html>\n<body>\n{{range $c := Children .}}\n\t{{Template $c.Element $c}}\n{{end}}\n</body>\n</html>"
+		}	
+	},
+	"elements": {
+		"TextBlock": {
+			"type": "leaf",
+			"templates": {
+				"html": "{{range $c := Children .}}\n\t{{Template $c.Element $c}}\n{{end}}\n"
+			}
+		},
+		"Text": {
+			"type": "text",
+			"templates": {
+				"html": "{{.Value}}"
+			}
+		},
+
+		"LineBreak": {
+			"type": "prefixed",
+			"delimiter": "\\",
+			"doNotRemove": true,
+			"templates": {
+				"html": "<br>"
+			}
+		},
+		"HTTP": {
+			"type": "prefixed",
+			"delimiter": "http://",
+			"matcher": "url",
+			"templates": {
+				"html": "<a href=\"http://{{.Value}}\">http://{{.Value}}</a>"
+			}
+		},
+		"Blockquote": {
+			"type": "walled",
+			"delimiter": ">",
+			"templates": {
+				"html": "<blockquote>\n\t{{range $c := Children .}}\n\t\t{{Template $c.Element $c}}\n\t{{end}}\n</blockquote>"
+			}
+		},
+		"Title": {
+			"type": "hanging",
+			"delimiter": "=",
+			"templates": {
+				"html": "<h1>\n\t{{range $c := Children .}}\n\t\t{{Template $c.Element $c}}\n\t{{end}}\n</h1>"
+			}
+		},
+		"Heading": {
+			"type": "rankedHanging",
+			"delimiter": "=",
+			"templates": {
+				"html": "<h{{.Data.rank}}>\n\t{{range $c := Children .}}\n\t\t{{Template $c.Element $c}}\n\t{{end}}\n</h{{.Data.rank}}>"
+			}
+		}
+
+	},
+	"groups": {
+		"Paragraph": {
+			"recognizer": "paragraph",
+			"templates": {
+				"html": "<p>\n\t{{range $c := Children .}}\n\t\t{{Template $c.Element $c}}\n\t{{end}}\n</p>\n"
+			}
+		}
+	}
+}

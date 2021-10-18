@@ -37,7 +37,9 @@ func (t Transformer) Transform(n *node.Node) *node.Node {
 		sticky := &node.Node{
 			Element: target.name,
 			Type:    node.TypeContainer,
-			Data:    target.position,
+			Data: node.Data{
+				"position": target.position,
+			},
 		}
 
 		target.child1.Parent.InsertBefore(sticky, target.child1)

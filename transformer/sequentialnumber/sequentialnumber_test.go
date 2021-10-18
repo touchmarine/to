@@ -1,4 +1,4 @@
-package sequence_test
+package sequentialnumber_test
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/transformer"
-	"github.com/touchmarine/to/transformer/sequence"
+	"github.com/touchmarine/to/transformer/sequentialnumber"
 )
 
 const testdata = "testdata"
@@ -61,7 +61,7 @@ func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
 		t.Fatal(err)
 	}
 
-	root = transformer.Apply(root, []transformer.Transformer{sequence.Transformer{}})
+	root = transformer.Apply(root, []transformer.Transformer{transformer.Func(sequentialnumber.Transform)})
 
 	res, err := node.StringifyDetailed(root)
 	if err != nil {

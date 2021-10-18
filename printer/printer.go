@@ -9,6 +9,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/touchmarine/to/node"
+	"github.com/touchmarine/to/parser"
 )
 
 const trace = false
@@ -141,11 +142,17 @@ func (p printer) print(w writer, n *node.Node) error {
 		}
 
 	case node.TypeRankedHanging:
-		rank, ok := n.Data.(int)
-		if !ok {
-			return fmt.Errorf("cannot get rank, data is not int (%s)", n)
+		var delimiter string
+		if v, ok := n.Data[parser.KeyRank]; ok {
+			rank, isInt := v.(int)
+			if !isInt {
+				return fmt.Errorf("rank is not int (%T %s)", n.Data[parser.KeyRank], n)
+			}
+
+			delimiter = strings.Repeat(e.Delimiter, rank)
+		} else {
+			delimiter = e.Delimiter
 		}
-		delimiter := strings.Repeat(e.Delimiter, rank)
 
 		prefix := strings.Repeat(" ", len(delimiter))
 		defer p.addPrefix(prefix)()
@@ -172,12 +179,14 @@ func (p printer) print(w writer, n *node.Node) error {
 			w.WriteString(`\`)
 		}
 
-		// opening text on the opening delimiter line
-		openingText, ok := n.Data.(string)
-		if !ok {
-			return fmt.Errorf("cannot get opening text, data is not string (%q %s)", n.Data, n)
+		if v, ok := n.Data[parser.KeyOpeningText]; ok {
+			// opening text on the opening delimiter line
+			openingText, isString := v.(string)
+			if !isString {
+				return fmt.Errorf("openingText is not string (%T %s)", n.Data[parser.KeyOpeningText], n)
+			}
+			w.WriteString(openingText)
 		}
-		w.WriteString(openingText)
 		p.newline(w)
 		p.writePrefix(w, withTrailingSpacing)
 

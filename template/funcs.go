@@ -8,25 +8,23 @@ import (
 	"io"
 	"strings"
 
-	"github.com/touchmarine/to/aggregator/seqnum"
+	"github.com/touchmarine/to/aggregator/sequentialnumber"
 )
 
 const trace = false
 
-var Functions = template.FuncMap{
-	"mapAny":                  mapAny,
-	"map":                     mapString,
-	"get":                     get,
-	"set":                     set,
-	"hasKey":                  hasKey,
-	"head":                    head,
-	"body":                    body,
-	"groupBySequentialNumber": groupBySequentialNumber,
-	"isSequentialNumberGroup": isSequentialNumberGroup,
-	"parseAttrs":              parseAttrs,
-	"htmlAttrs":               htmlAttrs,
-	"trimSpacing":             trimSpacing,
-}
+//var Functions = template.FuncMap{
+//	"mapAny":                  mapAny,
+//	"map":                     mapString,
+//	"get":                     get,
+//	"set":                     set,
+//	"hasKey":                  hasKey,
+//	"groupBySequentialNumber": groupBySequentialNumber,
+//	"isSequentialNumberGroup": isSequentialNumberGroup,
+//	"parseAttrs":              parseAttrs,
+//	"htmlAttrs":               htmlAttrs,
+//	"trimSpacing":             trimSpacing,
+//}
 
 func mapAny(v ...interface{}) (map[string]interface{}, error) {
 	if len(v)%2 > 0 {
@@ -86,20 +84,6 @@ func hasKey(m map[string]string, key string) bool {
 	return ok
 }
 
-func head(lines []string) string {
-	if len(lines) > 0 {
-		return lines[0]
-	}
-	return ""
-}
-
-func body(lines []string) string {
-	if len(lines) > 1 {
-		return strings.Join(lines[1:], "\n")
-	}
-	return ""
-}
-
 type sequentialNumberNode interface {
 	sequentialNumberNode()
 }
@@ -108,7 +92,7 @@ type sequentialNumberGroup []sequentialNumberNode
 
 func (sequentialNumberGroup) sequentialNumberNode() {}
 
-type sequentialNumberParticle seqnum.Particle
+type sequentialNumberParticle sequentialnumber.Particle
 
 func (sequentialNumberParticle) sequentialNumberNode() {}
 
@@ -117,18 +101,18 @@ func isSequentialNumberGroup(v interface{}) bool {
 	return ok
 }
 
-func groupBySequentialNumber(aggregate seqnum.Aggregate) sequentialNumberGroup {
+func groupBySequentialNumber(aggregate sequentialnumber.Aggregate) sequentialNumberGroup {
 	s := sequentialNumberGrouper{}
 	return s.groupBySequentialNumber(aggregate)
 }
 
-// sequentialNumberGrouper groups seqnum.Aggregate by their sequence number.
+// sequentialNumberGrouper groups sequentialnumber.Aggregate by their sequence number.
 type sequentialNumberGrouper struct {
 	lowest int
 	indent int
 }
 
-func (s *sequentialNumberGrouper) groupBySequentialNumber(aggregate seqnum.Aggregate) sequentialNumberGroup {
+func (s *sequentialNumberGrouper) groupBySequentialNumber(aggregate sequentialnumber.Aggregate) sequentialNumberGroup {
 	if trace {
 		defer s.trace("groupBySequentialNumber")()
 	}
@@ -137,7 +121,7 @@ func (s *sequentialNumberGrouper) groupBySequentialNumber(aggregate seqnum.Aggre
 
 	var depth int
 	if len(aggregate) > 0 {
-		depth = len(aggregate[0].SequentialNumbers)
+		depth = getDepth(aggregate[0].SequentialNumber)
 	}
 
 	if trace {
@@ -153,10 +137,10 @@ func (s *sequentialNumberGrouper) groupBySequentialNumber(aggregate seqnum.Aggre
 
 	for i := 0; i < len(aggregate); i++ {
 		particle := aggregate[i]
-		cur := len(particle.SequentialNumbers) // current depth
+		cur := getDepth(particle.SequentialNumber) // current depth
 
 		if trace {
-			s.printf("particle %s", particle.SequentialNumber())
+			s.printf("particle %s", particle.SequentialNumber)
 		}
 
 		if cur > depth {
@@ -188,6 +172,10 @@ func (s *sequentialNumberGrouper) groupBySequentialNumber(aggregate seqnum.Aggre
 	}
 
 	return group
+}
+
+func getDepth(s string) int {
+	return len(strings.Split(s, "."))
 }
 
 func (s *sequentialNumberGrouper) trace(msg string) func() {

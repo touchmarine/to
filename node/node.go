@@ -63,11 +63,11 @@ func (t *Type) UnmarshalText(text []byte) error {
 }
 
 func IsBlock(t Type) bool {
-	return t != TypeError && t != TypeContainer && t <= TypeLeaf
+	return t >= TypeWalled && t <= TypeLeaf
 }
 
 func IsInline(t Type) bool {
-	return t != TypeError && t != TypeContainer && t >= TypeUniform
+	return t >= TypeUniform
 }
 
 func HasDelimiter(t Type) bool {
@@ -79,7 +79,7 @@ func HasDelimiter(t Type) bool {
 type Node struct {
 	Element string // element name
 	Type    Type
-	Data    interface{} // optional data, e.g., rank
+	Data    Data // additional data, like rank
 
 	Value string
 
@@ -89,6 +89,8 @@ type Node struct {
 	PrevSibling *Node
 	NextSibling *Node
 }
+
+type Data map[string]interface{}
 
 // String is used for debugging and can change at any time.
 func (n Node) String() string {

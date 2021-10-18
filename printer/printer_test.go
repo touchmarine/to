@@ -315,58 +315,49 @@ func TestEscape(t *testing.T) {
 		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
 
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
-			conf := &config.Config{
-				Elements: []config.Element{
-					{
-						Name: "T",
+			cfg := &config.Config{
+				Elements: config.ElementMap{
+					"T": {
 						Type: node.TypeLeaf,
 					},
-					{
-						Name:      "A",
+					"A": {
 						Type:      node.TypeHanging,
 						Delimiter: "*",
 					},
-					{
-						Name:      "B",
+					"B": {
 						Type:      node.TypeWalled,
 						Delimiter: ">",
 					},
-					{
-						Name:      "C",
+					"C": {
 						Type:      node.TypeFenced,
 						Delimiter: "`",
 					},
-					{
-						Name:      "MA",
+					"MA": {
 						Type:      node.TypeUniform,
 						Delimiter: "*",
 					},
-					{
-						Name:      "MB",
+					"MB": {
 						Type:      node.TypeEscaped,
 						Delimiter: "`",
 					},
 					// use "{" as it doesn't need escaping
 					// in -run test regex as "(" or "["
-					{
-						Name:      "MC",
+					"MC": {
 						Type:      node.TypeUniform,
 						Delimiter: "{",
 					},
-					{
-						Name:      "MD",
+					"MD": {
 						Type:      node.TypePrefixed,
 						Delimiter: "http://",
 						Matcher:   "url",
 					},
-					{
-						Name: "MT",
+					"MT": {
 						Type: node.TypeText,
 					},
 				},
 			}
 
-			test(t, conf, []byte(c.in), c.out)
+			test(t, cfg, []byte(c.in), c.out)
 		})
 	}
 }
@@ -492,60 +483,51 @@ func TestEscapeWithClash(t *testing.T) {
 		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
 
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
-			conf := &config.Config{
-				Elements: []config.Element{
-					{
-						Name:      "A",
+			cfg := &config.Config{
+				Elements: config.ElementMap{
+					"A": {
 						Type:      node.TypeHanging,
 						Delimiter: "*",
 					},
-					{
-						Name:      "B",
+					"B": {
 						Type:      node.TypeWalled,
 						Delimiter: ">",
 					},
-					{
-						Name:      "C",
+					"C": {
 						Type:      node.TypeFenced,
 						Delimiter: "`",
 					},
-					{
-						Name:      "MA",
+					"MA": {
 						Type:      node.TypeUniform,
 						Delimiter: "*",
 					},
-					{
-						Name:      "MB",
+					"MB": {
 						Type:      node.TypeEscaped,
 						Delimiter: "`",
 					},
-					{
-						Name:        "MC",
+					"MC": {
 						Type:        node.TypePrefixed,
 						Delimiter:   `\`,
 						DoNotRemove: true,
 					},
 					// use "{" as it doesn't need escaping
 					// in -run test regex as "(" or "["
-					{
-						Name:      "MD",
+					"MD": {
 						Type:      node.TypeUniform,
 						Delimiter: "{",
 					},
-					{
-						Name:      "ME",
+					"ME": {
 						Type:      node.TypePrefixed,
 						Delimiter: "http://",
 						Matcher:   "url",
 					},
-					{
-						Name: "MT",
+					"MT": {
 						Type: node.TypeText,
 					},
 				},
 			}
 
-			test(t, conf, []byte(c.in), c.out)
+			test(t, cfg, []byte(c.in), c.out)
 		})
 	}
 }
@@ -575,52 +557,47 @@ func TestDoNotRemove(t *testing.T) {
 		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
 
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
-			conf := &config.Config{
-				Elements: []config.Element{
-					{
-						Name:        "A",
+			cfg := &config.Config{
+				Elements: config.ElementMap{
+					"A": {
 						Type:        node.TypeHanging,
 						Delimiter:   ".a",
 						DoNotRemove: true,
 					},
-					{
-						Name:      "B",
+					"B": {
 						Type:      node.TypeHanging,
 						Delimiter: ".b",
 					},
-					{
-						Name:      "C",
+					"C": {
 						Type:      node.TypeWalled,
 						Delimiter: ">",
 					},
-					{
-						Name:        "MA",
+					"MA": {
 						Type:        node.TypePrefixed,
 						Delimiter:   `\`,
 						DoNotRemove: true,
 					},
-					{
-						Name:      "MB",
+					"MB": {
 						Type:      node.TypeUniform,
 						Delimiter: "*",
 					},
 				},
 			}
 
-			test(t, conf, []byte(c.in), c.out)
+			test(t, cfg, []byte(c.in), c.out)
 		})
 	}
 }
 
-func test(t *testing.T, conf *config.Config, in []byte, out string) {
+func test(t *testing.T, cfg *config.Config, in []byte, out string) {
 	t.Helper()
 
 	r := bytes.NewReader(in)
-	root, err := parser.Parse(r, conf.ParserElements())
+	root, err := parser.Parse(r, cfg.ParserElements())
 	if err != nil {
 		t.Fatal(err)
 	}
-	root = transformer.Apply(root, conf.DefaultTransformers())
+	root = transformer.Apply(root, cfg.DefaultTransformers())
 
 	if *dumpNode {
 		s, err := node.StringifyDetailed(root)
@@ -631,7 +608,7 @@ func test(t *testing.T, conf *config.Config, in []byte, out string) {
 	}
 
 	var b strings.Builder
-	if err := printer.Fprint(&b, conf.PrinterElements(), root); err != nil {
+	if err := printer.Fprint(&b, cfg.PrinterElements(), root); err != nil {
 		t.Fatal(err)
 	}
 	printed := b.String()
