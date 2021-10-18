@@ -1,7 +1,7 @@
 Container()(
 	Walled(B)(
 		Container()(
-			Fenced(A)<"">(
+			Fenced(A)<{"openingText":""}>(
 				 a
 			)
 		)

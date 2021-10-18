@@ -1,3 +1,3 @@
 Container()(
-	Fenced(A)<"a`">()
+	Fenced(A)<{"openingText":"a`"}>()
 )

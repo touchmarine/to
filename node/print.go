@@ -2,6 +2,7 @@ package node
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -71,12 +72,8 @@ type printer struct {
 func (p *printer) print(n *Node) error {
 	p.writef("%s(%s)", n.Type.String()[len("Type"):], n.Element)
 	if p.detailed && n.Data != nil {
-		b, err := json.Marshal(n.Data)
-		if err != nil {
-			panic(err)
-		}
-		if len(b) > 0 {
-			p.writef("<%s>", string(b))
+		if s := p.prettyJSON(n.Data); s != "" {
+			p.writef("<%s>", s)
 		}
 	}
 	p.write("(")
@@ -116,6 +113,20 @@ func (p *printer) print(n *Node) error {
 	}
 
 	return nil
+}
+
+func (p printer) prettyJSON(v interface{}) string {
+	b, err := json.MarshalIndent(v, strings.Repeat("\t", p.indent), "\t")
+	if err != nil {
+		panic(err)
+	}
+	if len(bytes.Split(b, []byte("\n"))) <= 3 {
+		b, err = json.Marshal(v)
+		if err != nil {
+			panic(err)
+		}
+	}
+	return string(b)
 }
 
 func isEmpty(n *Node) bool {

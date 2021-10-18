@@ -7,5 +7,5 @@ Container()(
 			Escaped(MB)()
 		)
 	),
-	Fenced(B)<" `">()
+	Fenced(B)<{"openingText":" `"}>()
 )

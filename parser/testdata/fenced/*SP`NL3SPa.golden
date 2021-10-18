@@ -1,7 +1,7 @@
 Container()(
 	Hanging(C)(
 		Container()(
-			Fenced(A)<"">(
+			Fenced(A)<{"openingText":""}>(
 				 a
 			)
 		)

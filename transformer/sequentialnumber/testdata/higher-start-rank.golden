@@ -1,7 +1,8 @@
 Container()(
-	Container(sequentialNumber)<[0,1]>(
-		RankedHanging(A)<3>(
-			Container()()
-		)
+	RankedHanging(A)<{
+		"rank": 3,
+		"sequentialNumber": "0.1"
+	}>(
+		Container()()
 	)
 )

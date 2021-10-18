@@ -1,5 +1,5 @@
 Container()(
-	RankedHanging(C)<2>(
+	RankedHanging(C)<{"rank":2}>(
 		Container()()
 	)
 )

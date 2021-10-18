@@ -1,9 +1,9 @@
 Container()(
 	Walled(B)(
 		Container()(
-			RankedHanging(A)<2>(
+			RankedHanging(A)<{"rank":2}>(
 				Container()(
-					RankedHanging(A)<2>(
+					RankedHanging(A)<{"rank":2}>(
 						Container()()
 					)
 				)
