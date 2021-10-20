@@ -14,6 +14,9 @@ import (
 	"github.com/touchmarine/to/printer"
 	totemplate "github.com/touchmarine/to/template"
 	"github.com/touchmarine/to/transformer"
+	"github.com/touchmarine/to/transformer/group"
+	"github.com/touchmarine/to/transformer/paragraph"
+	"github.com/touchmarine/to/transformer/sticky"
 )
 
 func main() {
@@ -50,7 +53,45 @@ func main() {
 		os.Exit(2)
 	}
 
-	root = transformer.Apply(root, cfg.DefaultTransformers())
+	//root = transformer.Apply(root, cfg.DefaultTransformers())
+
+	var transformers []transformer.Transformer
+
+	paragraphGroups := cfg.GroupsByType("paragraph")
+	paragraphMap := map[node.Type]string{}
+	for name, g := range paragraphGroups {
+		var t node.Type
+		if err := (&t).UnmarshalText([]byte(g.Option)); err != nil {
+			log.Fatal(err)
+		}
+		paragraphMap[t] = name
+	}
+	transformers = append(transformers, paragraph.Transformer{paragraphMap})
+
+	listGroups := cfg.GroupsByType("list")
+	listMap := group.Map{}
+	for name, g := range listGroups {
+		listMap[g.Element] = group.Group{
+			Name:    name,
+			Element: g.Element,
+		}
+	}
+	transformers = append(transformers, group.Transformer{listMap})
+
+	stickyGroups := cfg.GroupsByType("sticky")
+	//stickyMap = config.ToStickyMap(stickyGroups)
+	stickyMap := sticky.Map{}
+	for name, g := range stickyGroups {
+		stickyMap[g.Element] = sticky.Sticky{
+			Name:    name,
+			Element: g.Element,
+			Target:  g.Target,
+			After:   g.Option == "after",
+		}
+	}
+	transformers = append(transformers, sticky.Transformer{stickyMap})
+
+	transformer.Apply(root, transformers)
 
 	if *stringify {
 		node.Fprint(os.Stdout, root)

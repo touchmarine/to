@@ -4,8 +4,8 @@
 			"html": '''
 <html>
 <body>
-{{range $c := Children .}}
-	{{Template $c.Element $c}}
+{{range $c := elementChildren .}}
+	{{dynamicTemplate $c.Element $c}}
 {{end}}
 </body>
 </html>'''
@@ -16,8 +16,8 @@
 			"type": "leaf",
 			"templates": {
 				"html": '''
-{{range $c := Children .}}
-	{{Template $c.Element $c}}
+{{range $c := elementChildren .}}
+	{{dynamicTemplate $c.Element $c}}
 {{end}}
 '''
 			}
@@ -51,8 +51,8 @@
 			"templates": {
 				"html": '''
 <blockquote>
-	{{range $c := Children .}}
-		{{Template $c.Element $c}}
+	{{range $c := elementChildren .}}
+		{{dynamicTemplate $c.Element $c}}
 	{{end}}
 </blockquote>'''
 			}
@@ -63,8 +63,8 @@
 			"templates": {
 				"html": '''
 <h1>
-	{{range $c := Children .}}
-		{{Template $c.Element $c}}
+	{{range $c := elementChildren .}}
+		{{dynamicTemplate $c.Element $c}}
 	{{end}}
 </h1>'''
 			}
@@ -75,24 +75,157 @@
 			"templates": {
 				"html": '''
 <h{{.Data.rank}}>
-	{{range $c := Children .}}
-		{{Template $c.Element $c}}
+	{{range $c := elementChildren .}}
+		{{dynamicTemplate $c.Element $c}}
 	{{end}}
 </h{{.Data.rank}}>'''
+			}
+		},
+		"Image": {
+			"type": "verbatimLine",
+			"delimiter": ".image",
+			"templates": {
+				"html": '''
+<img src="{{trimSpacing .Value}}" />
+'''
+			}
+		},
+		"Term": {
+			"type": "hanging",
+			"delimiter": "^",
+			"templates": {
+				"html": '''
+{{range $c := elementChildren .}}
+	{{dynamicTemplate $c.Element $c}}
+{{end}}
+'''
+			}
+		},
+		"Strong": {
+			"type": "uniform",
+			"delimiter": "*",
+			"templates": {
+				"html": "<strong>{{range $c := elementChildren .}}{{dynamicTemplate $c.Element $c}}{{end}}</strong>"
+			}
+		},
+		"Attributes": {
+			"type": "verbatimWalled",
+			"delimiter": "!",
+			"templates": {
+				"html": ""
+			}
+		},
+		"Group": {
+			"type": "uniform",
+			"delimiter": "(",
+			"templates": {
+				"html": "{{range $c := elementChildren .}}{{dynamicTemplate $c.Element $c}}{{end}}"
+			}
+		},
+		"Link": {
+			"type": "escaped",
+			"delimiter": "[",
+			"templates": {
+				"html": '''<a href="{{.Value}}">{{.Value}}</a>'''
+			}
+		},
+		"Description": {
+			"type": "hanging",
+			"delimiter": ":",
+			"templates": {
+				"html": '''
+{{range $c := elementChildren .}}
+	{{dynamicTemplate $c.Element $c}}
+{{end}}
+'''
 			}
 		}
 
 	},
 	"groups": {
 		"Paragraph": {
-			"recognizer": "paragraph",
+			"type": "paragraph",
+			"option": "leaf",
 			"templates": {
 				"html": '''
-<p>
-	{{range $c := Children .}}
-		{{Template $c.Element $c}}
+<p {{- with .Data}}{{with .Attributes}} {{attributesToHTML .}}{{end}}{{end}}>
+	{{range $c := elementChildren .}}
+		{{dynamicTemplate $c.Element $c}}
 	{{end}}
 </p>
+'''
+			}
+		},
+		"TermList": {
+			"type": "list",
+			"element": "Term",
+			"templates": {
+				"html": '''
+{{range $c := elementChildren .}}
+	{{dynamicTemplate $c.Element $c}}
+{{end}}
+'''
+			}
+		},
+		"StickyAttributes": {
+			"type": "sticky",
+			"element": "Attributes",
+			"templates": {
+				"html": '''
+{{$attributesNode := .FirstChild}}
+{{$attributes := parseAttributes $attributesNode.Value}}
+{{$target := .LastChild}}
+{{if eq $target.Data.sticky "before"}}
+	{{$_ := nodeSetData $target.FirstChild "Attributes" $attributes}}
+{{else if eq $target.Data.sticky "after"}}
+	{{$_ := nodeSetData $target.LastChild "Attributes" $attributes}}
+{{end}}
+{{dynamicTemplate $target.Element $target}}
+'''
+			}
+		},
+		"NamedLink": {
+			"type": "sticky",
+			"element": "Group",
+			"target": "Link",
+			"templates": {
+				"html": '''
+{{$group := .FirstChild}}
+{{$link := .LastChild}}
+<a href="{{$link.Value}}">
+	{{range $c := elementChildren $group}}{{dynamicTemplate $c.Element $c}}{{end}}
+</a>
+'''
+			}
+		},
+		"DescriptionList": {
+			"type": "list",
+			"element": "Description",
+			"templates": {
+				"html": '''
+{{range $c := elementChildren .}}
+	{{dynamicTemplate $c.Element $c}}
+{{end}}
+'''
+			}
+		},
+		"StickyDescription": {
+			"type": "sticky",
+			"element": "DescriptionList",
+			"option": "after",
+			"templates": {
+				"html": '''
+{{$descriptionList := .LastChild}}
+{{$target := .FirstChild}}
+{{$_ := nodeSetData $target "Attributes" (parseAttributes $descriptionList.Value)}}
+<dl {{- with $descriptionList.Data}}{{with .Attributes}} {{attributesToHTML .}}{{end}}{{end}}>
+	{{range $c := elementChildren $target}}
+		<dt>{{dynamicTemplate $c.Element $c}}</dt>
+	{{end}}
+	{{range $c := elementChildren $descriptionList}}
+		<dd>{{dynamicTemplate $c.Element $c}}</dd>
+	{{end}}
+</dl>
 '''
 			}
 		}

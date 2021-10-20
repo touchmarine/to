@@ -316,7 +316,7 @@ func TestEscape(t *testing.T) {
 
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
 			cfg := &config.Config{
-				Elements: config.ElementMap{
+				Elements: map[string]config.Element{
 					"T": {
 						Type: node.TypeLeaf,
 					},
@@ -484,7 +484,7 @@ func TestEscapeWithClash(t *testing.T) {
 
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
 			cfg := &config.Config{
-				Elements: config.ElementMap{
+				Elements: map[string]config.Element{
 					"A": {
 						Type:      node.TypeHanging,
 						Delimiter: "*",
@@ -558,7 +558,7 @@ func TestDoNotRemove(t *testing.T) {
 
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
 			cfg := &config.Config{
-				Elements: config.ElementMap{
+				Elements: map[string]config.Element{
 					"A": {
 						Type:        node.TypeHanging,
 						Delimiter:   ".a",

@@ -12,7 +12,6 @@ import (
 
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
-	"github.com/touchmarine/to/transformer"
 	"github.com/touchmarine/to/transformer/paragraph"
 )
 
@@ -61,7 +60,9 @@ func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
 	root, err := parser.Parse(strings.NewReader(input), elements)
 	testError(t, testPath, err)
 
-	root = transformer.Apply(root, []transformer.Transformer{paragraph.Transformer{"GP"}})
+	root = paragraph.Transformer{map[node.Type]string{
+		node.TypeLeaf: "GP",
+	}}.Transform(root)
 
 	res, err := node.Stringify(root)
 	if err != nil {

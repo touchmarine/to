@@ -1,12 +1,10 @@
 package sticky
 
 import (
-	"log"
-
 	"github.com/touchmarine/to/node"
 )
 
-const trace = false
+const Key = "sticky"
 
 // Map maps Stickies to Elements.
 type Map map[string]Sticky
@@ -14,6 +12,7 @@ type Map map[string]Sticky
 type Sticky struct {
 	Name    string `json:"name"`
 	Element string `json:"element"`
+	Target  string `json:"target"`
 	After   bool   `json:"after"`
 }
 
@@ -30,26 +29,7 @@ type Transformer struct {
 // after it.
 func (t Transformer) Transform(n *node.Node) *node.Node {
 	targets := t.search(n)
-	if trace {
-		log.Printf("targets = %+v\n", targets)
-	}
-	for _, target := range targets {
-		sticky := &node.Node{
-			Element: target.name,
-			Type:    node.TypeContainer,
-			Data: node.Data{
-				"position": target.position,
-			},
-		}
-
-		target.child1.Parent.InsertBefore(sticky, target.child1)
-
-		target.child1.Parent.RemoveChild(target.child1)
-		sticky.AppendChild(target.child1)
-		target.child2.Parent.RemoveChild(target.child2)
-		sticky.AppendChild(target.child2)
-	}
-
+	t.modify(n, targets)
 	return n
 }
 
@@ -62,32 +42,30 @@ type target struct {
 // search walks breadth-first and searches for a before or after sticky.
 func (t Transformer) search(n *node.Node) []target {
 	var targets []target
-
 	for s := n; s != nil; s = s.NextSibling {
-		if trace {
-			log.Printf("s = %+v\n", s)
-		}
-		if (s.IsBlock() || s.Type == node.TypeContainer) && s.NextSibling != nil {
-			thisSticky, isThisSticky := t.StickyMap[s.Element]
-			nextSticky, isNextSticky := t.StickyMap[s.NextSibling.Element]
-
-			var a target
-			if isThisSticky && !thisSticky.After && !isNextSticky {
-				// sticky before
-				a.name = thisSticky.Name
-				a.position = "before"
-			} else if !isThisSticky && isNextSticky && nextSticky.After {
-				// sticky after
-				a.name = nextSticky.Name
-				a.position = "after"
+		if sticky, ok := t.StickyMap[s.Element]; ok {
+			var x *node.Node
+			if sticky.After {
+				x = s.PreviousSibling
+			} else {
+				x = s.NextSibling
 			}
-
-			if a.name != "" {
-				// found sticky
-				a.child1 = s
-				a.child2 = s.NextSibling
-
-				targets = append(targets, a)
+			if x != nil {
+				if _, ok := t.StickyMap[x.Element]; !ok && (sticky.Target == "" || sticky.Target != "" && sticky.Target == x.Element) {
+					tt := target{
+						name: sticky.Name,
+					}
+					if sticky.After {
+						tt.position = "after"
+						tt.child1 = x
+						tt.child2 = s
+					} else {
+						tt.position = "before"
+						tt.child1 = s
+						tt.child2 = x
+					}
+					targets = append(targets, tt)
+				}
 			}
 		}
 	}
@@ -101,4 +79,23 @@ func (t Transformer) search(n *node.Node) []target {
 	}
 
 	return targets
+}
+
+func (t Transformer) modify(n *node.Node, targets []target) {
+	for _, target := range targets {
+		sticky := &node.Node{
+			Element: target.name,
+			Type:    node.TypeContainer,
+			Data: node.Data{
+				Key: target.position,
+			},
+		}
+
+		target.child1.Parent.InsertBefore(sticky, target.child1)
+
+		target.child1.Parent.RemoveChild(target.child1)
+		sticky.AppendChild(target.child1)
+		target.child2.Parent.RemoveChild(target.child2)
+		sticky.AppendChild(target.child2)
+	}
 }

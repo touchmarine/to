@@ -1,14 +1,14 @@
 {
 	"root": {
 		"templates": {
-			"html": "<html>\n<body>\n{{range $c := Children .}}\n\t{{Template $c.Element $c}}\n{{end}}\n</body>\n</html>"
+			"html": "<html>\n<body>\n{{range $c := elementChildren .}}\n\t{{dynamicTemplate $c.Element $c}}\n{{end}}\n</body>\n</html>"
 		}	
 	},
 	"elements": {
 		"TextBlock": {
 			"type": "leaf",
 			"templates": {
-				"html": "{{range $c := Children .}}\n\t{{Template $c.Element $c}}\n{{end}}\n"
+				"html": "{{range $c := elementChildren .}}\n\t{{dynamicTemplate $c.Element $c}}\n{{end}}\n"
 			}
 		},
 		"Text": {
@@ -38,30 +38,117 @@
 			"type": "walled",
 			"delimiter": ">",
 			"templates": {
-				"html": "<blockquote>\n\t{{range $c := Children .}}\n\t\t{{Template $c.Element $c}}\n\t{{end}}\n</blockquote>"
+				"html": "<blockquote>\n\t{{range $c := elementChildren .}}\n\t\t{{dynamicTemplate $c.Element $c}}\n\t{{end}}\n</blockquote>"
 			}
 		},
 		"Title": {
 			"type": "hanging",
 			"delimiter": "=",
 			"templates": {
-				"html": "<h1>\n\t{{range $c := Children .}}\n\t\t{{Template $c.Element $c}}\n\t{{end}}\n</h1>"
+				"html": "<h1>\n\t{{range $c := elementChildren .}}\n\t\t{{dynamicTemplate $c.Element $c}}\n\t{{end}}\n</h1>"
 			}
 		},
 		"Heading": {
 			"type": "rankedHanging",
 			"delimiter": "=",
 			"templates": {
-				"html": "<h{{.Data.rank}}>\n\t{{range $c := Children .}}\n\t\t{{Template $c.Element $c}}\n\t{{end}}\n</h{{.Data.rank}}>"
+				"html": "<h{{.Data.rank}}>\n\t{{range $c := elementChildren .}}\n\t\t{{dynamicTemplate $c.Element $c}}\n\t{{end}}\n</h{{.Data.rank}}>"
+			}
+		},
+		"Image": {
+			"type": "verbatimLine",
+			"delimiter": ".image",
+			"templates": {
+				"html": "<img src=\"{{trimSpacing .Value}}\" />\n"
+			}
+		},
+		"Term": {
+			"type": "hanging",
+			"delimiter": "^",
+			"templates": {
+				"html": "{{range $c := elementChildren .}}\n\t{{dynamicTemplate $c.Element $c}}\n{{end}}\n"
+			}
+		},
+		"Strong": {
+			"type": "uniform",
+			"delimiter": "*",
+			"templates": {
+				"html": "<strong>{{range $c := elementChildren .}}{{dynamicTemplate $c.Element $c}}{{end}}</strong>"
+			}
+		},
+		"Attributes": {
+			"type": "verbatimWalled",
+			"delimiter": "!",
+			"templates": {
+				"html": ""
+			}
+		},
+		"Group": {
+			"type": "uniform",
+			"delimiter": "(",
+			"templates": {
+				"html": "{{range $c := elementChildren .}}{{dynamicTemplate $c.Element $c}}{{end}}"
+			}
+		},
+		"Link": {
+			"type": "escaped",
+			"delimiter": "[",
+			"templates": {
+				"html": "<a href=\"{{.Value}}\">{{.Value}}</a>"
+			}
+		},
+		"Description": {
+			"type": "hanging",
+			"delimiter": ":",
+			"templates": {
+				"html": "{{range $c := elementChildren .}}\n\t{{dynamicTemplate $c.Element $c}}\n{{end}}\n"
 			}
 		}
 
 	},
 	"groups": {
 		"Paragraph": {
-			"recognizer": "paragraph",
+			"type": "paragraph",
+			"option": "leaf",
 			"templates": {
-				"html": "<p>\n\t{{range $c := Children .}}\n\t\t{{Template $c.Element $c}}\n\t{{end}}\n</p>\n"
+				"html": "<p {{- with .Data}}{{with .Attributes}} {{attributesToHTML .}}{{end}}{{end}}>\n\t{{range $c := elementChildren .}}\n\t\t{{dynamicTemplate $c.Element $c}}\n\t{{end}}\n</p>\n"
+			}
+		},
+		"TermList": {
+			"type": "list",
+			"element": "Term",
+			"templates": {
+				"html": "{{range $c := elementChildren .}}\n\t{{dynamicTemplate $c.Element $c}}\n{{end}}\n"
+			}
+		},
+		"StickyAttributes": {
+			"type": "sticky",
+			"element": "Attributes",
+			"templates": {
+				"html": "{{$attributesNode := .FirstChild}}\n{{$attributes := parseAttributes $attributesNode.Value}}\n{{$target := .LastChild}}\n{{if eq $target.Data.sticky \"before\"}}\n\t{{$_ := nodeSetData $target.FirstChild \"Attributes\" $attributes}}\n{{else if eq $target.Data.sticky \"after\"}}\n\t{{$_ := nodeSetData $target.LastChild \"Attributes\" $attributes}}\n{{end}}\n{{dynamicTemplate $target.Element $target}}\n"
+			}
+		},
+		"NamedLink": {
+			"type": "sticky",
+			"element": "Group",
+			"target": "Link",
+			"templates": {
+				"html": "{{$group := .FirstChild}}\n{{$link := .LastChild}}\n<a href=\"{{$link.Value}}\">\n\t{{range $c := elementChildren $group}}{{dynamicTemplate $c.Element $c}}{{end}}\n</a>\n"
+			}
+		},
+		"DescriptionList": {
+			"type": "list",
+			"element": "Description",
+			"templates": {
+				"html": "{{range $c := elementChildren .}}\n\t{{dynamicTemplate $c.Element $c}}\n{{end}}\n"
+			}
+		},
+		"StickyDescription": {
+			"type": "sticky",
+			"element": "DescriptionList",
+			"option": "after",
+			"templates": {
+				"html": "{{$descriptionList := .LastChild}}\n{{$target := .FirstChild}}\n{{$_ := nodeSetData $target \"Attributes\" (parseAttributes $descriptionList.Value)}}\n<dl {{- with $descriptionList.Data}}{{with .Attributes}} {{attributesToHTML .}}{{end}}{{end}}>\n\t{{range $c := elementChildren $target}}\n\t\t<dt>{{dynamicTemplate $c.Element $c}}</dt>\n\t{{end}}\n\t{{range $c := elementChildren $descriptionList}}\n\t\t<dd>{{dynamicTemplate $c.Element $c}}</dd>\n\t{{end}}\n</dl>\n"
 			}
 		}
 	}

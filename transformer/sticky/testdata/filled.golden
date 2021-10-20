@@ -1,0 +1,18 @@
+Container()(
+	Leaf(T)(
+		Container()(
+			Container(CA)(
+				Uniform(MA)(
+					Container()(
+						Text(MT)(
+							a
+						)
+					)
+				),
+				Escaped(MB)(
+					b
+				)
+			)
+		)
+	)
+)

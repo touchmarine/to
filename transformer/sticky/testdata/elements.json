@@ -23,6 +23,16 @@
 		"name": "T",
 		"type": "leaf"
 	},
+	"MA": {
+		"name": "MA",
+		"type": "uniform",
+		"delimiter": "("
+	},
+	"MB": {
+		"name": "MB",
+		"type": "escaped",
+		"delimiter": "["
+	},
 	"MT": {
 		"name": "MT",
 		"type": "text"

@@ -64,8 +64,8 @@ func (p printer) print(w writer, n *node.Node) error {
 		return nil
 	}
 
-	if (n.IsBlock() || n.Type == node.TypeContainer) && n.PrevSibling != nil &&
-		(n.PrevSibling.IsBlock() || n.PrevSibling.Type == node.TypeContainer) {
+	if (n.IsBlock() || n.Type == node.TypeContainer) && n.PreviousSibling != nil &&
+		(n.PreviousSibling.IsBlock() || n.PreviousSibling.Type == node.TypeContainer) {
 		if n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
 			// in a transformer node like sticky or group
 			p.newline(w)

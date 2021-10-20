@@ -13,7 +13,6 @@ import (
 	"github.com/touchmarine/to/transformer"
 	"github.com/touchmarine/to/transformer/composite"
 	"github.com/touchmarine/to/transformer/group"
-	"github.com/touchmarine/to/transformer/paragraph"
 	"github.com/touchmarine/to/transformer/sequentialnumber"
 	"github.com/touchmarine/to/transformer/sticky"
 )
@@ -34,15 +33,12 @@ type Config struct {
 	Root struct {
 		Templates map[string]string `json:"templates"`
 	} `json:"root"`
-	Elements   ElementMap           `json:"elements"`
+	Elements   map[string]Element   `json:"elements"`
+	Groups     map[string]Group     `json:"groups"`
 	Composites map[string]Composite `json:"composites"`
 	Stickies   map[string]Sticky    `json:"stickies"`
-	Groups     map[string]Group     `json:"groups"`
 	Aggregates Aggregates           `json:"aggregates"`
 }
-
-// ElementMap = map["name"]Element
-type ElementMap map[string]Element
 
 type Element struct {
 	Type        node.Type         `json:"type"`
@@ -74,10 +70,18 @@ type Sticky struct {
 }
 
 // Group is a group of consecutive Elements.
+//type Group struct {
+//	Recognizer string            `json:"recognizer"`
+//	Element    string            `json:"element"`
+//	Templates  map[string]string `json:"templates"`
+//}
+
 type Group struct {
-	Recognizer string            `json:"recognizer"`
-	Element    string            `json:"element"`
-	Templates  map[string]string `json:"templates"`
+	Type      string            `json:"type"`
+	Element   string            `json:"element"`
+	Target    string            `json:"target"`
+	Option    string            `json:"option"`
+	Templates map[string]string `json:"templates"`
 }
 
 type Aggregates struct {
@@ -125,20 +129,20 @@ func (c Config) TransformerComposites() composite.Map {
 	return m
 }
 
-func (c Config) GroupsByRecognizer(recognizer string) map[string]Group {
+func (c Config) GroupsByType(t string) map[string]Group {
 	m := map[string]Group{}
 	for name, g := range c.Groups {
-		if g.Recognizer == recognizer {
+		if g.Type == t {
 			m[name] = g
 		}
 	}
 	return m
 }
 
-func (c Config) TransformerGroups(recognizer string) group.Map {
+func (c Config) TransformerGroups(t string) group.Map {
 	m := group.Map{}
 	for name, g := range c.Groups {
-		if g.Recognizer == recognizer {
+		if g.Type == t {
 			m[g.Element] = group.Group{
 				Name:    name,
 				Element: g.Element,
@@ -215,13 +219,11 @@ func (c Config) ParseTemplates(target *template.Template, templateName string) (
 func (c Config) DefaultTransformers() []transformer.Transformer {
 	var transformers []transformer.Transformer
 
-	paragraphGroups := c.GroupsByRecognizer("paragraph")
-	for name, _ := range paragraphGroups {
-		// random if multiple
-		paragrapher := paragraph.Transformer{name}
-		transformers = append(transformers, paragrapher)
-		break
-	}
+	//paragraphGroups := c.GroupsByType("paragraph")
+	//for name, _ := range paragraphGroups {
+	//	paragrapher := paragraph.Transformer{name}
+	//	transformers = append(transformers, paragrapher)
+	//}
 
 	grouper := group.Transformer{c.TransformerGroups("element")}
 	compositer := composite.Transformer{c.TransformerComposites()}

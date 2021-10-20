@@ -83,11 +83,11 @@ type Node struct {
 
 	Value string
 
-	Parent      *Node
-	FirstChild  *Node
-	LastChild   *Node
-	PrevSibling *Node
-	NextSibling *Node
+	Parent          *Node
+	FirstChild      *Node
+	LastChild       *Node
+	PreviousSibling *Node
+	NextSibling     *Node
 }
 
 type Data map[string]interface{}
@@ -128,12 +128,12 @@ func (n Node) IsInline() bool {
 //}
 
 func (n *Node) InsertBefore(newChild, oldChild *Node) {
-	if newChild.Parent != nil || newChild.PrevSibling != nil || newChild.NextSibling != nil {
+	if newChild.Parent != nil || newChild.PreviousSibling != nil || newChild.NextSibling != nil {
 		panic("node: InsertBefore called for an attached child Node")
 	}
 	var prev, next *Node
 	if oldChild != nil {
-		prev, next = oldChild.PrevSibling, oldChild
+		prev, next = oldChild.PreviousSibling, oldChild
 	} else {
 		prev = n.LastChild
 	}
@@ -143,17 +143,17 @@ func (n *Node) InsertBefore(newChild, oldChild *Node) {
 		n.FirstChild = newChild
 	}
 	if next != nil {
-		next.PrevSibling = newChild
+		next.PreviousSibling = newChild
 	} else {
 		n.LastChild = newChild
 	}
 	newChild.Parent = n
-	newChild.PrevSibling = prev
+	newChild.PreviousSibling = prev
 	newChild.NextSibling = next
 }
 
 func (n *Node) AppendChild(c *Node) {
-	if c.Parent != nil || c.PrevSibling != nil || c.NextSibling != nil {
+	if c.Parent != nil || c.PreviousSibling != nil || c.NextSibling != nil {
 		panic("node: AppendChild called for an attached child Node")
 	}
 
@@ -166,7 +166,7 @@ func (n *Node) AppendChild(c *Node) {
 
 	n.LastChild = c
 	c.Parent = n
-	c.PrevSibling = last
+	c.PreviousSibling = last
 }
 
 func (n *Node) RemoveChild(c *Node) {
@@ -177,16 +177,16 @@ func (n *Node) RemoveChild(c *Node) {
 		n.FirstChild = c.NextSibling
 	}
 	if c.NextSibling != nil {
-		c.NextSibling.PrevSibling = c.PrevSibling
+		c.NextSibling.PreviousSibling = c.PreviousSibling
 	}
 	if n.LastChild == c {
-		n.LastChild = c.PrevSibling
+		n.LastChild = c.PreviousSibling
 	}
-	if c.PrevSibling != nil {
-		c.PrevSibling.NextSibling = c.NextSibling
+	if c.PreviousSibling != nil {
+		c.PreviousSibling.NextSibling = c.NextSibling
 	}
 	c.Parent = nil
-	c.PrevSibling = nil
+	c.PreviousSibling = nil
 	c.NextSibling = nil
 }
 

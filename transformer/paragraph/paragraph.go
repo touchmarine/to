@@ -1,42 +1,34 @@
 package paragraph
 
 import (
-	"log"
-
 	"github.com/touchmarine/to/node"
 )
 
-const trace = false
-
 type Transformer struct {
-	Name string // paragraph name
+	ParagraphMap map[node.Type]string // map[nodeType]groupName
 }
 
 func (t Transformer) Transform(n *node.Node) *node.Node {
-	var targets []*node.Node
-
+	var ops []func()
 	walk(n, func(n *node.Node) bool {
-		if n.Type == node.TypeLeaf && (n.PrevSibling != nil || n.NextSibling != nil) {
-			if trace {
-				log.Printf("add target element %s", n.Element)
-			}
-
-			targets = append(targets, n)
+		if name, ok := t.ParagraphMap[n.Type]; ok && (n.PreviousSibling != nil || n.NextSibling != nil) {
+			ops = append(ops, func() {
+				p := &node.Node{
+					Element: name,
+					Type:    node.TypeContainer,
+				}
+				n.Parent.InsertBefore(p, n)
+				n.Parent.RemoveChild(n)
+				p.AppendChild(n)
+			})
 			return false
 		}
 		return true
 	})
 
-	for _, target := range targets {
-		p := &node.Node{
-			Element: t.Name,
-			Type:    node.TypeContainer,
-		}
-		target.Parent.InsertBefore(p, target)
-		target.Parent.RemoveChild(target)
-		p.AppendChild(target)
+	for _, op := range ops {
+		op()
 	}
-
 	return n
 }
 

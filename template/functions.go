@@ -2,6 +2,7 @@ package template
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"log"
 	"strings"
@@ -11,15 +12,35 @@ import (
 
 func Functions(tmpl *template.Template) template.FuncMap {
 	return template.FuncMap{
-		"Logf":     Logf,
-		"Template": MakeTemplateFunction(tmpl),
-		"Children": Children,
+		"log":              Log,
+		"logf":             Logf,
+		"error":            Error,
+		"errorf":           Errorf,
+		"dynamicTemplate":  MakeTemplateFunction(tmpl),
+		"elementChildren":  ElementChildren,
+		"trimSpacing":      TrimSpacing,
+		"parseAttributes":  ParseAttributes,
+		"nodeSetData":      NodeSetData,
+		"attributesToHTML": AttributesToHTML,
 	}
+}
+
+func Log(v ...interface{}) string {
+	log.Print(v...)
+	return ""
 }
 
 func Logf(format string, v ...interface{}) string {
 	log.Printf(format, v...)
 	return ""
+}
+
+func Error(text string) (string, error) {
+	return "", errors.New(text)
+}
+
+func Errorf(format string, v ...interface{}) (string, error) {
+	return "", fmt.Errorf(format, v...)
 }
 
 func MakeTemplateFunction(tmpl *template.Template) func(name string, v ...interface{}) (template.HTML, error) {
@@ -41,7 +62,7 @@ func MakeTemplateFunction(tmpl *template.Template) func(name string, v ...interf
 	}
 }
 
-func Children(n *node.Node) []*node.Node {
+func ElementChildren(n *node.Node) []*node.Node {
 	var nodes []*node.Node
 	for c := firstElement(n.FirstChild); c != nil; c = firstElement(c.NextSibling) {
 		nodes = append(nodes, c)
@@ -65,4 +86,40 @@ func firstElement(n *node.Node) *node.Node {
 		}
 	}
 	return nil
+}
+
+func TrimSpacing(s string) string {
+	return strings.Trim(s, " \t")
+}
+
+func NodeSetData(n *node.Node, key string, v interface{}) *node.Node {
+	if n != nil {
+		if n.Data == nil {
+			n.Data = node.Data{}
+		}
+		n.Data[key] = v
+	}
+	return n
+}
+
+// AttributesToHTML returns a HTML-formatted string of attributes from the given
+// attributes.
+func AttributesToHTML(attrs map[string]string) template.HTMLAttr {
+	var b strings.Builder
+
+	var i int
+	for name, value := range attrs {
+		if i > 0 {
+			b.WriteString(" ")
+		}
+
+		b.WriteString(name)
+		if value != "" {
+			b.WriteString(`="` + value + `"`)
+		}
+
+		i++
+	}
+
+	return template.HTMLAttr(b.String())
 }

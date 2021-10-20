@@ -71,6 +71,11 @@ func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
 			Element: "B",
 			After:   true,
 		},
+		"MA": {
+			Name:    "CA",
+			Element: "MA",
+			Target:  "MB",
+		},
 	}}})
 
 	res, err := node.Stringify(root)
@@ -94,5 +99,4 @@ func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
 	if res != golden {
 		t.Errorf("\nfrom input:\n%s\ngot:\n%s\nwant:\n%s", input, res, golden)
 	}
-
 }
