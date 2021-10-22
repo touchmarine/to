@@ -32,11 +32,14 @@ type Config struct {
 	Root struct {
 		Templates map[string]string `json:"templates"`
 	} `json:"root"`
-	Elements   map[string]Element `json:"elements"`
-	Groups     map[string]Group   `json:"groups"`
-	Stickies   map[string]Sticky  `json:"stickies"`
-	Aggregates Aggregates         `json:"aggregates"`
+	Elements   Elements          `json:"elements"`
+	Groups     Groups            `json:"groups"`
+	Stickies   map[string]Sticky `json:"stickies"`
+	Aggregates Aggregates        `json:"aggregates"`
 }
+
+// Elements maps Elements by name.
+type Elements map[string]Element
 
 type Element struct {
 	Type        node.Type         `json:"type"`
@@ -57,6 +60,9 @@ type Sticky struct {
 	Templates map[string]string `json:"templates"`
 }
 
+// Groups maps Groups by name.
+type Groups map[string]Group
+
 type Group struct {
 	Type      string            `json:"type"`
 	Element   string            `json:"element"`
@@ -71,9 +77,13 @@ type Aggregates struct {
 	} `json:"sequentialNumbers"`
 }
 
-func (c Config) ParserElements() parser.ElementMap {
-	m := parser.ElementMap{}
-	for name, e := range c.Elements {
+func (c Config) ParserElements() parser.Elements {
+	return ToParserElements(c.Elements)
+}
+
+func ToParserElements(elements Elements) parser.Elements {
+	m := parser.Elements{}
+	for name, e := range elements {
 		m[name] = parser.Element{
 			Name:      name,
 			Type:      e.Type,
@@ -84,9 +94,13 @@ func (c Config) ParserElements() parser.ElementMap {
 	return m
 }
 
-func (c Config) PrinterElements() printer.ElementMap {
-	m := printer.ElementMap{}
-	for name, e := range c.Elements {
+func (c Config) PrinterElements() printer.Elements {
+	return ToPrinterElements(c.Elements)
+}
+
+func ToPrinterElements(elements Elements) printer.Elements {
+	m := printer.Elements{}
+	for name, e := range elements {
 		m[name] = printer.Element{
 			Name:        name,
 			Type:        e.Type,
@@ -98,8 +112,8 @@ func (c Config) PrinterElements() printer.ElementMap {
 	return m
 }
 
-func (c Config) GroupsByType(t string) map[string]Group {
-	m := map[string]Group{}
+func (c Config) GroupsByType(t string) Groups {
+	m := Groups{}
 	for name, g := range c.Groups {
 		if g.Type == t {
 			m[name] = g

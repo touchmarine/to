@@ -14,8 +14,8 @@ import (
 
 const trace = false
 
-// ElementMap maps Elements to Names.
-type ElementMap map[string]Element
+// Elements maps Elements to Names.
+type Elements map[string]Element
 
 type Element struct {
 	Name        string
@@ -31,9 +31,9 @@ type writer interface {
 	io.StringWriter
 }
 
-func Fprint(w io.Writer, elementMap ElementMap, n *node.Node) error {
+func Fprint(w io.Writer, elements Elements, n *node.Node) error {
 	p := printer{
-		elementMap: elementMap,
+		elements: elements,
 	}
 
 	if x, ok := w.(writer); ok {
@@ -48,7 +48,7 @@ func Fprint(w io.Writer, elementMap ElementMap, n *node.Node) error {
 }
 
 type printer struct {
-	elementMap ElementMap
+	elements Elements
 
 	prefixes       []string
 	lastPrefixLine int
@@ -65,7 +65,8 @@ func (p printer) print(w writer, n *node.Node) error {
 	}
 
 	if (n.IsBlock() || n.Type == node.TypeContainer) && n.PreviousSibling != nil &&
-		(n.PreviousSibling.IsBlock() || n.PreviousSibling.Type == node.TypeContainer) {
+		(n.PreviousSibling.IsBlock() || n.PreviousSibling.Type == node.TypeContainer) &&
+		p.hasPrintableContent(n.PreviousSibling) {
 		if n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
 			// in a transformer node like sticky or group
 			p.newline(w)
@@ -80,7 +81,7 @@ func (p printer) print(w writer, n *node.Node) error {
 		p.writePrefix(w, withTrailingSpacing)
 	}
 
-	e, _ := p.elementMap[n.Element]
+	e, _ := p.elements[n.Element]
 	switch n.Type {
 	case node.TypeContainer:
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -114,15 +115,11 @@ func (p printer) print(w writer, n *node.Node) error {
 	case node.TypeVerbatimWalled:
 		defer p.addPrefix(e.Delimiter)()
 		w.WriteString(e.Delimiter)
-		if n.Value != "" {
-			lines := strings.Split(n.Value, "\n")
-			for i, line := range lines {
-				if i > 0 {
-					p.newline(w)
-					p.writePrefix(w, withoutSpacing)
-				}
-				w.WriteString(line)
-			}
+		lines := strings.Split(n.Value, "\n")
+		lines = removeBlankLines(lines)
+		for _, line := range lines {
+			w.WriteString(" ")
+			w.WriteString(line)
 		}
 	case node.TypeHanging:
 		defer p.addPrefix(" ")()
@@ -281,7 +278,7 @@ func (p printer) hasPrintableContent(n *node.Node) bool {
 
 // doNotRemove returns true if n or any of its children has set DoNotRemove.
 func (p printer) doNotRemove(n *node.Node) bool {
-	if e, found := p.elementMap[n.Element]; found && e.DoNotRemove {
+	if e, found := p.elements[n.Element]; found && e.DoNotRemove {
 		return true
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -328,6 +325,16 @@ func (p *printer) writePrefix(w writer, spacing prefixSpacing) {
 	w.WriteString(prefix)
 }
 
+func removeBlankLines(p []string) []string {
+	var n []string
+	for _, s := range p {
+		if strings.Trim(s, " \t") != "" {
+			n = append(n, s)
+		}
+	}
+	return n
+}
+
 func (p printer) needBlockEscape(n *node.Node) bool {
 	if n.Type != node.TypeLeaf {
 		panic(fmt.Sprintf("printer: expected leaf node (%s)", n))
@@ -347,7 +354,7 @@ func (p printer) needBlockEscape(n *node.Node) bool {
 }
 
 func (p printer) hasBlockDelimiterPrefix(s string) bool {
-	for _, e := range p.elementMap {
+	for _, e := range p.elements {
 		if node.HasDelimiter(e.Type) && node.IsBlock(e.Type) {
 			// same logic as in parser/parser.go
 			delimiter := ""
@@ -366,7 +373,7 @@ func (p printer) hasBlockDelimiterPrefix(s string) bool {
 }
 
 func (p printer) hasInlineDelimiterPrefix(s string) bool {
-	for _, e := range p.elementMap {
+	for _, e := range p.elements {
 		if node.HasDelimiter(e.Type) && node.IsInline(e.Type) {
 			// same logic as in parser/parser.go
 			delimiter := ""
@@ -439,7 +446,7 @@ func (p printer) text(n *node.Node) string {
 			// inline delimiter
 
 			if x := searchFirstNonContainer(n.NextSibling); x != nil {
-				e, _ := p.elementMap[x.Element]
+				e, _ := p.elements[x.Element]
 				if e.Delimiter != "" && ch == e.Delimiter[0] {
 					// escape inline delimiter
 					b.WriteByte('\\')
@@ -456,7 +463,7 @@ func (p printer) text(n *node.Node) string {
 		(parent.Type == node.TypeUniform || parent.Type == node.TypeEscaped) {
 		// consider parent closing delimiter
 
-		e, _ := p.elementMap[parent.Element]
+		e, _ := p.elements[parent.Element]
 		counter := counterpartInString(e.Delimiter)
 		closingDelimiter := counter + counter
 		if parent.Type == node.TypeEscaped && strings.Contains(parent.Value, e.Delimiter+e.Delimiter) {
@@ -504,7 +511,7 @@ func (p printer) hasClosingDelimiterPrefix(n *node.Node, s string) bool {
 	var closingDelimiters []string
 	for m := n; m != nil && !m.IsBlock(); m = m.Parent {
 		if m.Type == node.TypeUniform || m.Type == node.TypeEscaped {
-			e, _ := p.elementMap[m.Element]
+			e, _ := p.elements[m.Element]
 			counter := counterpartInString(e.Delimiter)
 			closingDelimiter := counter + counter
 			if m.Type == node.TypeEscaped && strings.Contains(m.Value, e.Delimiter+e.Delimiter) {
@@ -528,7 +535,7 @@ func (p printer) hasClosingDelimiterPrefix(n *node.Node, s string) bool {
 func (p printer) hasEscapeClashingElementAtEnd(n *node.Node) bool {
 	if n.LastChild != nil {
 		if x := searchFirstNonContainer(n.LastChild); x != nil {
-			e, ok := p.elementMap[x.Element]
+			e, ok := p.elements[x.Element]
 			return ok && e.Type == node.TypePrefixed && e.Delimiter == "\\"
 		}
 	}

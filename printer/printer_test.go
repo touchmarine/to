@@ -14,8 +14,9 @@ import (
 	"github.com/touchmarine/to/transformer"
 )
 
-var dumpNode = flag.Bool("dump-node", false, "dump node")
+var stringify = flag.Bool("stringify", false, "dump node")
 
+/*
 func TestFprint(t *testing.T) {
 	cases := []struct {
 		in  string
@@ -195,7 +196,299 @@ func TestFprint(t *testing.T) {
 		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
 
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
-			test(t, config.Default, []byte(c.in), c.out)
+			test(t, cfg, []byte(c.in), c.out)
+		})
+	}
+}
+*/
+
+func TestText(t *testing.T) {
+	cases := []struct {
+		in  string
+		out string
+	}{
+		{"", ""},
+		{"a", "a"},
+		{"a\n ", "a"},
+		{"\na", "a"},
+
+		{"ab", "ab"},
+		{"a\nb", "a b"},
+		{"a\n b", "a b"},
+		{"a\n\n b", "a\n\nb"},
+		{"ab\n c", "ab c"},
+		{"ab\n\n c", "ab\n\nc"},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
+			test(t, nil, nil, []byte(c.in), c.out)
+		})
+	}
+}
+
+func TestVerbatimLine(t *testing.T) {
+	cases := []struct {
+		in  string
+		out string
+	}{
+		{".a", ""},
+		{".A", ".A"},
+		{".aa", ".a a"},
+		{".aa ", ".a a"},
+		// would be nested-but can only contain verbatim
+		{".a>", ".a >"},
+		{".a>b", ".a >b"},
+
+		// nested
+		{">.a", ""},
+		{">.ab", "> .a b"},
+	}
+
+	for _, c := range cases {
+		t.Run(c.in, func(t *testing.T) {
+			elements := config.Elements{
+				"A": {
+					Type:      node.TypeVerbatimLine,
+					Delimiter: ".a",
+				},
+				"B": {
+					Type:      node.TypeWalled,
+					Delimiter: ">",
+				},
+			}
+			test(t, elements, nil, []byte(c.in), c.out)
+		})
+	}
+}
+
+func TestHanging(t *testing.T) {
+	cases := []struct {
+		in  string
+		out string
+	}{
+		{"-", ""},
+		{"-a", "- a"},
+		{"-\n a", "- a"},
+		{"-a\n b", "- a b"},
+		{"-a\n -b", "- a\n\n  - b"},
+		{"-a\n\n -b", "- a\n\n  - b"},
+		{"-a\n \n -b", "- a\n\n  - b"},
+		{"-a\n\n\n -b", "- a\n\n  - b"},
+
+		// nested
+		{"->", ""},
+		{"->a", "- > a"},
+		{"-\n>", ""},
+		{"-\n>a", "> a"},
+		{"-\n >", ""},
+		{"-\n >a", "- > a"},
+		{">-", ""},
+		{">-a", "> - a"},
+		{">\n>-", ""},
+		{">\n>-a", "> - a"},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
+			elements := config.Elements{
+				"A": {
+					Type:      node.TypeHanging,
+					Delimiter: "-",
+				},
+				"B": {
+					Type:      node.TypeWalled,
+					Delimiter: ">",
+				},
+			}
+			test(t, elements, nil, []byte(c.in), c.out)
+		})
+	}
+}
+
+func TestRankedHanging(t *testing.T) {
+	cases := []struct {
+		in  string
+		out string
+	}{
+
+		{"==", ""},
+		{"==a", "== a"},
+		{"==\n  a", "== a"},
+		{"==a\n  b", "== a b"},
+		{"==a", "== a"},
+		{"==a\n  b", "== a b"},
+		{"==a\n\n  b", "== a\n\n   b"},
+		{"==a\n \n  b", "== a\n\n   b"},
+		{"==a\n\n\n  b", "== a\n\n   b"},
+
+		// nested
+		{"==>", ""},
+		{"==>a", "== > a"},
+		{"==\n>", ""},
+		{"==\n>a", "> a"},
+		{"==\n  >", ""},
+		{"==\n  >a", "== > a"},
+		{">==", ""},
+		{">==a", "> == a"},
+		{">\n>==", ""},
+		{">\n>==a", "> == a"},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
+			elements := config.Elements{
+				"A": {
+					Type:      node.TypeRankedHanging,
+					Delimiter: "=",
+				},
+				"B": {
+					Type:      node.TypeWalled,
+					Delimiter: ">",
+				},
+			}
+			test(t, elements, nil, []byte(c.in), c.out)
+		})
+	}
+}
+
+func TestWalled(t *testing.T) {
+	cases := []struct {
+		in  string
+		out string
+	}{
+		{"+", ""},
+		{"+a", "+ a"},
+		{"+\n+a", "+ a"},
+		{"+a\n+b", "+ a b"},
+		{"+a\n++b", "+ a\n+\n+ + b"},
+		{"+a\n+\n++b", "+ a\n+\n+ + b"},
+		{"+a\n++\n++b", "+ a\n+\n+ + b"},
+		{"+a\n+\n+\n++b", "+ a\n+\n+ + b"},
+
+		// nested
+		{"+>", ""},
+		{"+>a", "+ > a"},
+		{"+\n>", ""},
+		{"+\n>a", "> a"},
+		{"+\n+>", ""},
+		{"+\n+>a", "+ > a"},
+		{">+", ""},
+		{">+a", "> + a"},
+		{">\n>+", ""},
+		{">\n>+a", "> + a"},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
+			elements := config.Elements{
+				"A": {
+					Type:      node.TypeWalled,
+					Delimiter: "+",
+				},
+				"B": {
+					Type:      node.TypeWalled,
+					Delimiter: ">",
+				},
+			}
+			test(t, elements, nil, []byte(c.in), c.out)
+		})
+	}
+}
+
+func TestVerbatimWalled(t *testing.T) {
+	cases := []struct {
+		in  string
+		out string
+	}{
+		{"!", ""},
+		{"!a", "! a"},
+		{"!\n!a", "! a"},
+		{"!a\n!b", "! a b"},
+		{"!a\n!\n!b", "! a b"},
+		{"!a\n!\n!\n!b", "! a b"},
+		// would be nested-but can only contain verbatim
+		{"!>", "! >"},
+		{"!>a", "! >a"},
+		{"!\n>", ""},
+		{"!\n>a", "> a"},
+		{"!\n!>", "! >"},
+		{"!\n!>a", "! >a"},
+
+		// nested
+		{">!", ""},
+		{">!a", "> ! a"},
+		{">\n>!", ""},
+		{">\n>!a", "> ! a"},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
+			elements := config.Elements{
+				"A": {
+					Type:      node.TypeVerbatimWalled,
+					Delimiter: "!",
+				},
+				"B": {
+					Type:      node.TypeWalled,
+					Delimiter: ">",
+				},
+			}
+			test(t, elements, nil, []byte(c.in), c.out)
+		})
+	}
+}
+
+func TestFenced(t *testing.T) {
+	cases := []struct {
+		in  string
+		out string
+	}{
+		{"`", ""},
+		{"`a", ""},
+		{"`a`", ""},
+		{"`a\n", ""},
+		{"`a\nb", "`a\nb\n`"},
+		{"`a\n\nb", "`a\n\nb\n`"},
+		{"`a\n \nb", "`a\n \nb\n`"},
+		{"`a\n\n\nb", "`a\n\n\nb\n`"},
+
+		// trailing text
+		{"`a`b", ""},
+		{"`a\nb\n`", "`a\nb\n`"},
+		{"`a\nb\n`c", "`a\nb\n`"},
+		{"`a\nb\n`\nc", "`a\nb\n`\n\nc"},
+
+		// escape delimiter in text
+		{"``", ""},
+		{"``\nb", "``\nb\n`"},
+		{"`a\n`", ""},
+		{"`a\nb`", "`\\a\nb`\n\\`"},
+
+		// unnecessary escape
+		{"`\\a\nb", "`a\nb\n`"},
+		{"`a\nb\n\\`", "`\\a\nb\n\\`\n\\`"},
+
+		// nested
+		{">`", ""},
+		{">`a\n>b", "> `a\n> b\n> `"},
+		{">\n>`", ""},
+		{">\n>`a\n>b", "> `a\n> b\n> `"},
+	}
+
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
+			elements := config.Elements{
+				"A": {
+					Type:      node.TypeFenced,
+					Delimiter: "`",
+				},
+				"B": {
+					Type:      node.TypeWalled,
+					Delimiter: ">",
+				},
+			}
+			test(t, elements, nil, []byte(c.in), c.out)
 		})
 	}
 }
@@ -315,49 +608,47 @@ func TestEscape(t *testing.T) {
 		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
 
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
-			cfg := &config.Config{
-				Elements: map[string]config.Element{
-					"T": {
-						Type: node.TypeLeaf,
-					},
-					"A": {
-						Type:      node.TypeHanging,
-						Delimiter: "*",
-					},
-					"B": {
-						Type:      node.TypeWalled,
-						Delimiter: ">",
-					},
-					"C": {
-						Type:      node.TypeFenced,
-						Delimiter: "`",
-					},
-					"MA": {
-						Type:      node.TypeUniform,
-						Delimiter: "*",
-					},
-					"MB": {
-						Type:      node.TypeEscaped,
-						Delimiter: "`",
-					},
-					// use "{" as it doesn't need escaping
-					// in -run test regex as "(" or "["
-					"MC": {
-						Type:      node.TypeUniform,
-						Delimiter: "{",
-					},
-					"MD": {
-						Type:      node.TypePrefixed,
-						Delimiter: "http://",
-						Matcher:   "url",
-					},
-					"MT": {
-						Type: node.TypeText,
-					},
+			elements := config.Elements{
+				"T": {
+					Type: node.TypeLeaf,
+				},
+				"A": {
+					Type:      node.TypeHanging,
+					Delimiter: "*",
+				},
+				"B": {
+					Type:      node.TypeWalled,
+					Delimiter: ">",
+				},
+				"C": {
+					Type:      node.TypeFenced,
+					Delimiter: "`",
+				},
+				"MA": {
+					Type:      node.TypeUniform,
+					Delimiter: "*",
+				},
+				"MB": {
+					Type:      node.TypeEscaped,
+					Delimiter: "`",
+				},
+				// use "{" as it doesn't need escaping
+				// in -run test regex as "(" or "["
+				"MC": {
+					Type:      node.TypeUniform,
+					Delimiter: "{",
+				},
+				"MD": {
+					Type:      node.TypePrefixed,
+					Delimiter: "http://",
+					Matcher:   "url",
+				},
+				"MT": {
+					Type: node.TypeText,
 				},
 			}
 
-			test(t, cfg, []byte(c.in), c.out)
+			test(t, elements, nil, []byte(c.in), c.out)
 		})
 	}
 }
@@ -483,51 +774,48 @@ func TestEscapeWithClash(t *testing.T) {
 		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
 
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
-			cfg := &config.Config{
-				Elements: map[string]config.Element{
-					"A": {
-						Type:      node.TypeHanging,
-						Delimiter: "*",
-					},
-					"B": {
-						Type:      node.TypeWalled,
-						Delimiter: ">",
-					},
-					"C": {
-						Type:      node.TypeFenced,
-						Delimiter: "`",
-					},
-					"MA": {
-						Type:      node.TypeUniform,
-						Delimiter: "*",
-					},
-					"MB": {
-						Type:      node.TypeEscaped,
-						Delimiter: "`",
-					},
-					"MC": {
-						Type:        node.TypePrefixed,
-						Delimiter:   `\`,
-						DoNotRemove: true,
-					},
-					// use "{" as it doesn't need escaping
-					// in -run test regex as "(" or "["
-					"MD": {
-						Type:      node.TypeUniform,
-						Delimiter: "{",
-					},
-					"ME": {
-						Type:      node.TypePrefixed,
-						Delimiter: "http://",
-						Matcher:   "url",
-					},
-					"MT": {
-						Type: node.TypeText,
-					},
+			elements := config.Elements{
+				"A": {
+					Type:      node.TypeHanging,
+					Delimiter: "*",
+				},
+				"B": {
+					Type:      node.TypeWalled,
+					Delimiter: ">",
+				},
+				"C": {
+					Type:      node.TypeFenced,
+					Delimiter: "`",
+				},
+				"MA": {
+					Type:      node.TypeUniform,
+					Delimiter: "*",
+				},
+				"MB": {
+					Type:      node.TypeEscaped,
+					Delimiter: "`",
+				},
+				"MC": {
+					Type:        node.TypePrefixed,
+					Delimiter:   `\`,
+					DoNotRemove: true,
+				},
+				// use "{" as it doesn't need escaping
+				// in -run test regex as "(" or "["
+				"MD": {
+					Type:      node.TypeUniform,
+					Delimiter: "{",
+				},
+				"ME": {
+					Type:      node.TypePrefixed,
+					Delimiter: "http://",
+					Matcher:   "url",
+				},
+				"MT": {
+					Type: node.TypeText,
 				},
 			}
-
-			test(t, cfg, []byte(c.in), c.out)
+			test(t, elements, nil, []byte(c.in), c.out)
 		})
 	}
 }
@@ -557,49 +845,86 @@ func TestDoNotRemove(t *testing.T) {
 		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
 
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
-			cfg := &config.Config{
-				Elements: map[string]config.Element{
-					"A": {
-						Type:        node.TypeHanging,
-						Delimiter:   ".a",
-						DoNotRemove: true,
-					},
-					"B": {
-						Type:      node.TypeHanging,
-						Delimiter: ".b",
-					},
-					"C": {
-						Type:      node.TypeWalled,
-						Delimiter: ">",
-					},
-					"MA": {
-						Type:        node.TypePrefixed,
-						Delimiter:   `\`,
-						DoNotRemove: true,
-					},
-					"MB": {
-						Type:      node.TypeUniform,
-						Delimiter: "*",
-					},
+			elements := config.Elements{
+				"A": {
+					Type:        node.TypeHanging,
+					Delimiter:   ".a",
+					DoNotRemove: true,
+				},
+				"B": {
+					Type:      node.TypeHanging,
+					Delimiter: ".b",
+				},
+				"C": {
+					Type:      node.TypeWalled,
+					Delimiter: ">",
+				},
+				"MA": {
+					Type:        node.TypePrefixed,
+					Delimiter:   `\`,
+					DoNotRemove: true,
+				},
+				"MB": {
+					Type:      node.TypeUniform,
+					Delimiter: "*",
 				},
 			}
-
-			test(t, cfg, []byte(c.in), c.out)
+			test(t, elements, nil, []byte(c.in), c.out)
 		})
 	}
 }
 
-func test(t *testing.T, cfg *config.Config, in []byte, out string) {
+func test(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in []byte, out string) {
+	t.Helper()
+
+	if elements == nil {
+		elements = config.Elements{}
+	}
+
+	printed := runPrint(t, elements, transformers, in, *stringify)
+	if printed != out {
+		t.Errorf("got %q, want %q", printed, out)
+	}
+
+	hasLeaf, hasText := hasLeafOrText(elements)
+	if !hasLeaf || !hasText {
+		// undefined leaf or text element:
+		// test that result are the same whether the leaf or text
+		// elements are defined or not
+		if !hasLeaf {
+			if _, ok := elements["_T"]; ok {
+				t.Fatal("element _T already exists")
+			}
+			elements["_T"] = config.Element{
+				Type: node.TypeLeaf,
+			}
+		}
+		if !hasText {
+			if _, ok := elements["_MT"]; ok {
+				t.Fatal("element _MT already exists")
+			}
+			elements["_MT"] = config.Element{
+				Type: node.TypeText,
+			}
+		}
+		printedDefined := runPrint(t, elements, transformers, in, false)
+		if printedDefined != printed {
+			t.Errorf("with defined text got %q, with undefined %q", printedDefined, printed)
+		}
+	}
+}
+
+func runPrint(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in []byte, stringify bool) string {
 	t.Helper()
 
 	r := bytes.NewReader(in)
-	root, err := parser.Parse(r, cfg.ParserElements())
+	root, err := parser.Parse(r, config.ToParserElements(elements))
 	if err != nil {
 		t.Fatal(err)
 	}
-	root = transformer.Apply(root, cfg.DefaultTransformers())
+	root = transformer.Apply(root, transformers)
 
-	if *dumpNode {
+	if stringify {
 		s, err := node.StringifyDetailed(root)
 		if err != nil {
 			t.Fatal(err)
@@ -608,11 +933,23 @@ func test(t *testing.T, cfg *config.Config, in []byte, out string) {
 	}
 
 	var b strings.Builder
-	if err := printer.Fprint(&b, cfg.PrinterElements(), root); err != nil {
+	if err := printer.Fprint(&b, config.ToPrinterElements(elements), root); err != nil {
 		t.Fatal(err)
 	}
-	printed := b.String()
-	if printed != out {
-		t.Errorf("got %q, want %q", printed, out)
+	return b.String()
+}
+
+func hasLeafOrText(elements config.Elements) (bool, bool) {
+	var hasLeaf, hasText bool
+	for _, e := range elements {
+		if hasLeaf && hasText {
+			break
+		}
+		if e.Type == node.TypeLeaf {
+			hasLeaf = true
+		} else if e.Type == node.TypeText {
+			hasText = true
+		}
 	}
+	return hasLeaf, hasText
 }

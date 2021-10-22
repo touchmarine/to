@@ -30,7 +30,7 @@ func testDir(t *testing.T, dir string) {
 	}
 	defer ef.Close()
 
-	var elements parser.ElementMap
+	var elements parser.Elements
 	if err := json.NewDecoder(ef).Decode(&elements); err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +49,7 @@ func testDir(t *testing.T, dir string) {
 	}
 }
 
-func runTest(t *testing.T, elements parser.ElementMap, testPath string) {
+func runTest(t *testing.T, elements parser.Elements, testPath string) {
 	bi, err := os.ReadFile(testPath + ".to")
 	if err != nil {
 		t.Fatal(err)

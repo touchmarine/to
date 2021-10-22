@@ -30,7 +30,8 @@ func init() {
 	}
 }
 
-type ElementMap map[string]Element
+// Elements maps Elements by name.
+type Elements map[string]Element
 
 type Element struct {
 	Name      string
@@ -39,10 +40,10 @@ type Element struct {
 	Matcher   string
 }
 
-func Parse(src io.Reader, elementMap ElementMap) (*node.Node, error) {
+func Parse(src io.Reader, elements Elements) (*node.Node, error) {
 	var p parser
 	p.matchers(matcher.Defaults())
-	p.elements(elementMap)
+	p.elements(elements)
 	p.init(src)
 	n := p.parse(nil)
 	p.errors.Sort()
@@ -76,7 +77,7 @@ type parser struct {
 	indent int // trace indentation
 }
 
-func (p *parser) elements(elementMap ElementMap) {
+func (p *parser) elements(elements Elements) {
 	if p.blockMap == nil {
 		p.blockMap = make(map[string]Element)
 	}
@@ -84,7 +85,7 @@ func (p *parser) elements(elementMap ElementMap) {
 		p.inlineMap = make(map[string]Element)
 	}
 
-	for _, e := range elementMap {
+	for _, e := range elements {
 		if node.IsBlock(e.Type) {
 			switch e.Type {
 			case node.TypeLeaf:
