@@ -4,8 +4,11 @@ import (
 	"github.com/touchmarine/to/node"
 )
 
+// Map maps paragraph names by node types.
+type Map map[node.Type]string
+
 type Transformer struct {
-	ParagraphMap map[node.Type]string // map[nodeType]groupName
+	ParagraphMap Map
 }
 
 func (t Transformer) Transform(n *node.Node) *node.Node {

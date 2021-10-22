@@ -10,10 +10,10 @@ const Key = "sticky"
 type Map map[string]Sticky
 
 type Sticky struct {
-	Name    string `json:"name"`
-	Element string `json:"element"`
-	Target  string `json:"target"`
-	After   bool   `json:"after"`
+	Name    string
+	Element string
+	Target  string
+	After   bool
 }
 
 type Transformer struct {
@@ -28,20 +28,15 @@ type Transformer struct {
 // element is grouped. One element can have one sticky element before it and one
 // after it.
 func (t Transformer) Transform(n *node.Node) *node.Node {
-	targets := t.search(n)
-	t.modify(n, targets)
+	ops := t.transform(n)
+	for _, op := range ops {
+		op()
+	}
 	return n
 }
 
-type target struct {
-	name           string // sticky name
-	position       string // "before" | "after"
-	child1, child2 *node.Node
-}
-
-// search walks breadth-first and searches for a before or after sticky.
-func (t Transformer) search(n *node.Node) []target {
-	var targets []target
+func (t Transformer) transform(n *node.Node) []func() {
+	var ops []func()
 	for s := n; s != nil; s = s.NextSibling {
 		if sticky, ok := t.StickyMap[s.Element]; ok {
 			var x *node.Node
@@ -52,19 +47,7 @@ func (t Transformer) search(n *node.Node) []target {
 			}
 			if x != nil {
 				if _, ok := t.StickyMap[x.Element]; !ok && (sticky.Target == "" || sticky.Target != "" && sticky.Target == x.Element) {
-					tt := target{
-						name: sticky.Name,
-					}
-					if sticky.After {
-						tt.position = "after"
-						tt.child1 = x
-						tt.child2 = s
-					} else {
-						tt.position = "before"
-						tt.child1 = s
-						tt.child2 = x
-					}
-					targets = append(targets, tt)
+					ops = append(ops, makeDo(sticky, s, x))
 				}
 			}
 		}
@@ -73,29 +56,38 @@ func (t Transformer) search(n *node.Node) []target {
 	// walk children
 	for s := n; s != nil; s = s.NextSibling {
 		if s.FirstChild != nil {
-			newTargets := t.search(s.FirstChild)
-			targets = append(targets, newTargets...)
+			newOps := t.transform(s.FirstChild)
+			ops = append(ops, newOps...)
 		}
 	}
 
-	return targets
+	return ops
 }
 
-func (t Transformer) modify(n *node.Node, targets []target) {
-	for _, target := range targets {
-		sticky := &node.Node{
-			Element: target.name,
+func makeDo(sticky Sticky, stickynode, targetnode *node.Node) func() {
+	return func() {
+		s := &node.Node{
+			Element: sticky.Name,
 			Type:    node.TypeContainer,
-			Data: node.Data{
-				Key: target.position,
-			},
+			Data:    node.Data{},
 		}
 
-		target.child1.Parent.InsertBefore(sticky, target.child1)
+		var child1, child2 *node.Node
+		if sticky.After {
+			s.Data[Key] = "after"
+			child1 = targetnode
+			child2 = stickynode
+		} else {
+			s.Data[Key] = "before"
+			child1 = stickynode
+			child2 = targetnode
+		}
 
-		target.child1.Parent.RemoveChild(target.child1)
-		sticky.AppendChild(target.child1)
-		target.child2.Parent.RemoveChild(target.child2)
-		sticky.AppendChild(target.child2)
+		child1.Parent.InsertBefore(s, child1)
+
+		child1.Parent.RemoveChild(child1)
+		s.AppendChild(child1)
+		child2.Parent.RemoveChild(child2)
+		s.AppendChild(child2)
 	}
 }

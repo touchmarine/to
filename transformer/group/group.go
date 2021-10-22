@@ -1,12 +1,8 @@
 package group
 
 import (
-	"log"
-
 	"github.com/touchmarine/to/node"
 )
-
-const trace = false
 
 // Map maps Groups by Elements.
 type Map map[string]Group
@@ -20,18 +16,8 @@ type Transformer struct {
 	GroupMap Map
 }
 
-type target struct {
-	name     string // group name
-	children []*node.Node
-}
-
 func (t Transformer) Transform(n *node.Node) *node.Node {
-	var targets []target
-
-	if trace {
-		log.Printf("t.GroupMap = %+v\n", t.GroupMap)
-	}
-
+	var ops []func()
 	walkBreadthFirstStack(n, func(nodes []*node.Node) {
 		name, start, end := "", -1, 0
 
@@ -46,10 +32,7 @@ func (t Transformer) Transform(n *node.Node) *node.Node {
 					continue
 				} else {
 					// group ends
-					targets = append(targets, target{
-						name:     name,
-						children: nodes[start:end],
-					})
+					ops = append(ops, makeAddGroup(name, nodes[start:end]))
 					name, start, end = "", -1, 0
 				}
 			}
@@ -63,37 +46,29 @@ func (t Transformer) Transform(n *node.Node) *node.Node {
 		}
 
 		if name != "" {
-			targets = append(targets, target{
-				name:     name,
-				children: nodes[start:end],
-			})
+			ops = append(ops, makeAddGroup(name, nodes[start:end]))
 		}
 	})
-
-	if trace {
-		log.Printf("targets = %+v\n", targets)
+	for _, op := range ops {
+		op()
 	}
-	for _, target := range targets {
-		group := &node.Node{
-			Element: target.name,
+	return n
+}
+
+func makeAddGroup(name string, children []*node.Node) func() {
+	return func() {
+		g := &node.Node{
+			Element: name,
 			Type:    node.TypeContainer,
 		}
-
-		if len(target.children) > 0 {
-			target.children[0].Parent.InsertBefore(group, target.children[0])
+		if len(children) > 0 {
+			children[0].Parent.InsertBefore(g, children[0])
 		}
-
-		for _, child := range target.children {
-			if trace {
-				log.Printf("child = %+v\n", child)
-			}
-
-			child.Parent.RemoveChild(child)
-			group.AppendChild(child)
+		for _, c := range children {
+			c.Parent.RemoveChild(c)
+			g.AppendChild(c)
 		}
 	}
-
-	return n
 }
 
 func walkBreadthFirstStack(n *node.Node, fn func(nodes []*node.Node)) {

@@ -60,7 +60,7 @@ func main() {
 	var transformers []transformer.Transformer
 
 	paragraphGroups := cfg.GroupsByType("paragraph")
-	paragraphMap := map[node.Type]string{}
+	paragraphMap := paragraph.Map{}
 	for name, g := range paragraphGroups {
 		var t node.Type
 		if err := (&t).UnmarshalText([]byte(g.Option)); err != nil {

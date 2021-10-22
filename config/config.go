@@ -11,7 +11,6 @@ import (
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
 	"github.com/touchmarine/to/transformer"
-	"github.com/touchmarine/to/transformer/composite"
 	"github.com/touchmarine/to/transformer/group"
 	"github.com/touchmarine/to/transformer/sequentialnumber"
 	"github.com/touchmarine/to/transformer/sticky"
@@ -33,11 +32,10 @@ type Config struct {
 	Root struct {
 		Templates map[string]string `json:"templates"`
 	} `json:"root"`
-	Elements   map[string]Element   `json:"elements"`
-	Groups     map[string]Group     `json:"groups"`
-	Composites map[string]Composite `json:"composites"`
-	Stickies   map[string]Sticky    `json:"stickies"`
-	Aggregates Aggregates           `json:"aggregates"`
+	Elements   map[string]Element `json:"elements"`
+	Groups     map[string]Group   `json:"groups"`
+	Stickies   map[string]Sticky  `json:"stickies"`
+	Aggregates Aggregates         `json:"aggregates"`
 }
 
 type Element struct {
@@ -46,16 +44,6 @@ type Element struct {
 	Matcher     string            `json:"matcher"`
 	DoNotRemove bool              `json:"doNotRemove"`
 	Templates   map[string]string `json:"templates"`
-}
-
-// Composite is a group of two inline elements, the PrimaryElement and the
-// SecondaryElement.
-//
-// The SecondaryElement immediately follows the PrimaryElement.
-type Composite struct {
-	PrimaryElement   string            `json:"primaryElement"`
-	SecondaryElement string            `json:"secondaryElement"`
-	Templates        map[string]string `json:"templates"`
 }
 
 // Sticky is a group of two elements, the Element and an element the Element
@@ -68,13 +56,6 @@ type Sticky struct {
 	After     bool              `json:"after"`
 	Templates map[string]string `json:"templates"`
 }
-
-// Group is a group of consecutive Elements.
-//type Group struct {
-//	Recognizer string            `json:"recognizer"`
-//	Element    string            `json:"element"`
-//	Templates  map[string]string `json:"templates"`
-//}
 
 type Group struct {
 	Type      string            `json:"type"`
@@ -112,18 +93,6 @@ func (c Config) PrinterElements() printer.ElementMap {
 			Delimiter:   e.Delimiter,
 			Matcher:     e.Matcher,
 			DoNotRemove: e.DoNotRemove,
-		}
-	}
-	return m
-}
-
-func (c Config) TransformerComposites() composite.Map {
-	m := composite.Map{}
-	for name, e := range c.Composites {
-		m[e.PrimaryElement] = composite.Composite{
-			Name:             name,
-			PrimaryElement:   e.PrimaryElement,
-			SecondaryElement: e.SecondaryElement,
 		}
 	}
 	return m
@@ -183,26 +152,6 @@ func (c Config) ParseTemplates(target *template.Template, templateName string) (
 		}
 	}
 
-	for name, composite := range c.Composites {
-		tmpl, ok := composite.Templates[templateName]
-		if !ok {
-			return nil, fmt.Errorf("composite template not found (%s %s)", name, templateName)
-		}
-		if _, err := target.New(name).Parse(tmpl); err != nil {
-			return nil, err
-		}
-	}
-
-	for name, sticky := range c.Stickies {
-		tmpl, ok := sticky.Templates[templateName]
-		if !ok {
-			return nil, fmt.Errorf("sticky template not found (%s %s)", name, templateName)
-		}
-		if _, err := target.New(name).Parse(tmpl); err != nil {
-			return nil, err
-		}
-	}
-
 	for name, group := range c.Groups {
 		tmpl, ok := group.Templates[templateName]
 		if !ok {
@@ -226,12 +175,10 @@ func (c Config) DefaultTransformers() []transformer.Transformer {
 	//}
 
 	grouper := group.Transformer{c.TransformerGroups("element")}
-	compositer := composite.Transformer{c.TransformerComposites()}
 	stickier := sticky.Transformer{c.TransformerStickies()}
 
 	transformers = append(transformers, []transformer.Transformer{
 		grouper,
-		compositer,
 		stickier,
 		transformer.Func(sequentialnumber.Transform),
 	}...)

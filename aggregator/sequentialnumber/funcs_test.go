@@ -282,7 +282,7 @@ func TestGroup(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			gr := c.in.group()
+			gr := c.in.Group()
 			got := indentedJSON(t, gr)
 			want := indentedJSON(t, c.out)
 			if got != want {

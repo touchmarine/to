@@ -1,20 +1,19 @@
-package sequentialnumber_test
+package sequentialnumber
 
 import (
 	"encoding/json"
 	"testing"
 
-	"github.com/touchmarine/to/aggregator/sequentialnumber"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
-	seqnumtransformer "github.com/touchmarine/to/transformer/sequentialnumber"
+	"github.com/touchmarine/to/transformer/sequentialnumber"
 )
 
 func TestAggregate(t *testing.T) {
 	cases := []struct {
 		name string
 		in   *node.Node
-		out  *sequentialnumber.Aggregate // pointer so we can use nil in first case
+		out  *aggregate // pointer so we can use nil in first case
 	}{
 		{
 			"no sequential number",
@@ -26,10 +25,10 @@ func TestAggregate(t *testing.T) {
 		{
 			"1 sequential number",
 			&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-				parser.KeyRank:        2,
-				seqnumtransformer.Key: "1",
+				parser.KeyRank:       2,
+				sequentialnumber.Key: "1",
 			}},
-			&sequentialnumber.Aggregate{
+			&aggregate{
 				{
 					Element:          "A",
 					SequentialNumber: "1",
@@ -40,8 +39,8 @@ func TestAggregate(t *testing.T) {
 			"1 sequential number with text",
 			appendChildren(
 				&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-					parser.KeyRank:        2,
-					seqnumtransformer.Key: "1",
+					parser.KeyRank:       2,
+					sequentialnumber.Key: "1",
 				}},
 				[]*node.Node{
 					appendChildren(
@@ -52,7 +51,7 @@ func TestAggregate(t *testing.T) {
 					),
 				},
 			),
-			&sequentialnumber.Aggregate{
+			&aggregate{
 				{
 					Element:          "A",
 					ID:               "a",
@@ -65,8 +64,8 @@ func TestAggregate(t *testing.T) {
 			"1 sequential number with multiple inlines",
 			appendChildren(
 				&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-					parser.KeyRank:        2,
-					seqnumtransformer.Key: "1",
+					parser.KeyRank:       2,
+					sequentialnumber.Key: "1",
 				}},
 				[]*node.Node{
 					appendChildren(
@@ -79,7 +78,7 @@ func TestAggregate(t *testing.T) {
 					),
 				},
 			),
-			&sequentialnumber.Aggregate{
+			&aggregate{
 				{
 					Element:          "A",
 					ID:               "a b c",
@@ -92,8 +91,8 @@ func TestAggregate(t *testing.T) {
 			"1 sequential number with multiple blocks",
 			appendChildren(
 				&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-					parser.KeyRank:        2,
-					seqnumtransformer.Key: "1",
+					parser.KeyRank:       2,
+					sequentialnumber.Key: "1",
 				}},
 				[]*node.Node{
 					appendChildren(
@@ -110,7 +109,7 @@ func TestAggregate(t *testing.T) {
 					),
 				},
 			),
-			&sequentialnumber.Aggregate{
+			&aggregate{
 				{
 					Element:          "A",
 					ID:               "a\nb",
@@ -125,16 +124,16 @@ func TestAggregate(t *testing.T) {
 				&node.Node{Type: node.TypeContainer},
 				[]*node.Node{
 					&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-						parser.KeyRank:        2,
-						seqnumtransformer.Key: "1",
+						parser.KeyRank:       2,
+						sequentialnumber.Key: "1",
 					}},
 					&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-						parser.KeyRank:        3,
-						seqnumtransformer.Key: "1.1",
+						parser.KeyRank:       3,
+						sequentialnumber.Key: "1.1",
 					}},
 				},
 			),
-			&sequentialnumber.Aggregate{
+			&aggregate{
 				{
 					Element:          "A",
 					SequentialNumber: "1",
@@ -151,12 +150,12 @@ func TestAggregate(t *testing.T) {
 				&node.Node{Type: node.TypeContainer},
 				[]*node.Node{
 					&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-						parser.KeyRank:        2,
-						seqnumtransformer.Key: "1",
+						parser.KeyRank:       2,
+						sequentialnumber.Key: "1",
 					}},
 				},
 			),
-			&sequentialnumber.Aggregate{
+			&aggregate{
 				{
 					Element:          "A",
 					SequentialNumber: "1",
@@ -167,7 +166,7 @@ func TestAggregate(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			aggregate := sequentialnumber.Aggregator{[]string{"A"}}.Aggregate(c.in)
+			aggregate := Aggregator{[]string{"A"}}.Aggregate(c.in)
 			got := jsonMarshal(t, aggregate)
 			want := jsonMarshal(t, c.out)
 			if got != want {
