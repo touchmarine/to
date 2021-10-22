@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/touchmarine/to/aggregator"
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
@@ -16,6 +17,7 @@ import (
 	"github.com/touchmarine/to/transformer"
 	"github.com/touchmarine/to/transformer/group"
 	"github.com/touchmarine/to/transformer/paragraph"
+	"github.com/touchmarine/to/transformer/sequentialnumber"
 	"github.com/touchmarine/to/transformer/sticky"
 )
 
@@ -91,6 +93,8 @@ func main() {
 	}
 	transformers = append(transformers, sticky.Transformer{stickyMap})
 
+	transformers = append(transformers, transformer.Func(sequentialnumber.Transform))
+
 	transformer.Apply(root, transformers)
 
 	if *stringify {
@@ -100,14 +104,13 @@ func main() {
 	if format == "fmt" {
 		printer.Fprint(os.Stdout, cfg.PrinterElements(), root)
 	} else {
-		//aggregates := aggregator.Apply(root, cfg.DefaultAggregators())
-
-		//data := map[string]interface{}{
-		//	"aggregates": aggregates,
-		//}
+		aggregates := aggregator.Apply(root, cfg.DefaultAggregators())
+		global := map[string]interface{}{
+			"aggregates": aggregates,
+		}
 
 		tmpl := template.New(format)
-		tmpl.Funcs(totemplate.Functions(tmpl))
+		tmpl.Funcs(totemplate.Funcs(tmpl, global))
 		//tmpl.Funcs(totemplate.Functions)
 		//tmpl.Funcs(totemplate.RenderFunctions(tmpl, data))
 		template.Must(cfg.ParseTemplates(tmpl, format))

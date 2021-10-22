@@ -103,6 +103,21 @@
 			"templates": {
 				"html": "{{range $c := elementChildren .}}\n\t{{dynamicTemplate $c.Element $c}}\n{{end}}\n"
 			}
+		},
+		"NumberedHeading": {
+			"type": "rankedHanging",
+			"delimiter": "#",
+			"templates": {
+				"html": "<h{{.Data.rank}} id=\"{{.TextContent}}\">\n\t{{range $c := elementChildren .}}\n\t\t{{dynamicTemplate $c.Element $c}}\n\t{{end}}\n</h{{.Data.rank}}>"
+			}
+		},
+		"TableOfContents": {
+			"type": "hanging",
+			"delimiter": ".toc",
+			"doNotRemove": true,
+			"templates": {
+				"html": "<div {{- with .Data}}{{with .Attributes}} {{attributesToHTML .}}{{end}}{{end}}>\n\t<p>\n\t\t{{range $c := elementChildren .}}\n\t\t\t{{dynamicTemplate $c.Element $c}}\n\t\t{{end}}\n\t</p>\n\n\t{{block \"grouper\" global.aggregates.sequentialNumbers.numberedHeadings.Group}}\n\t\t<ul>\n\t\t\t{{range .}}\n\t\t\t\t{{if eq (printf \"%T\" .) \"sequentialnumber.group\"}}\n\t\t\t\t\t{{template \"grouper\" .}}\n\t\t\t\t{{else}}\n\t\t\t\t\t<li>\n\t\t\t\t\t\t<a href=\"#{{.ID}}\">{{.SequentialNumber}} {{.Text}}</a>\n\t\t\t\t\t</li>\n\t\t\t\t{{end}}\n\t\t\t{{end}}\n\t\t</ul>\n\t{{end}}\n</div>\n"
+			}
 		}
 
 	},
@@ -149,6 +164,13 @@
 			"option": "after",
 			"templates": {
 				"html": "{{$descriptionList := .LastChild}}\n{{$target := .FirstChild}}\n{{$_ := nodeSetData $target \"Attributes\" (parseAttributes $descriptionList.Value)}}\n<dl {{- with $descriptionList.Data}}{{with .Attributes}} {{attributesToHTML .}}{{end}}{{end}}>\n\t{{range $c := elementChildren $target}}\n\t\t<dt>{{dynamicTemplate $c.Element $c}}</dt>\n\t{{end}}\n\t{{range $c := elementChildren $descriptionList}}\n\t\t<dd>{{dynamicTemplate $c.Element $c}}</dd>\n\t{{end}}\n</dl>\n"
+			}
+		}
+	},
+	"aggregates": {
+		"sequentialNumbers": {
+			"numberedHeadings": {
+				"elements": ["NumberedHeading"]
 			}
 		}
 	}

@@ -7,14 +7,14 @@ import (
 	"github.com/touchmarine/to/aggregator/sequentialnumber"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
-	sequentialnumbertr "github.com/touchmarine/to/transformer/sequentialnumber"
+	seqnumtransformer "github.com/touchmarine/to/transformer/sequentialnumber"
 )
 
 func TestAggregate(t *testing.T) {
 	cases := []struct {
 		name string
 		in   *node.Node
-		out  *sequentialnumber.Aggregate
+		out  *sequentialnumber.Aggregate // pointer so we can use nil in first case
 	}{
 		{
 			"no sequential number",
@@ -26,8 +26,8 @@ func TestAggregate(t *testing.T) {
 		{
 			"1 sequential number",
 			&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-				parser.KeyRank:         2,
-				sequentialnumbertr.Key: "1",
+				parser.KeyRank:        2,
+				seqnumtransformer.Key: "1",
 			}},
 			&sequentialnumber.Aggregate{
 				{
@@ -40,8 +40,8 @@ func TestAggregate(t *testing.T) {
 			"1 sequential number with text",
 			appendChildren(
 				&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-					parser.KeyRank:         2,
-					sequentialnumbertr.Key: "1",
+					parser.KeyRank:        2,
+					seqnumtransformer.Key: "1",
 				}},
 				[]*node.Node{
 					appendChildren(
@@ -65,8 +65,8 @@ func TestAggregate(t *testing.T) {
 			"1 sequential number with multiple inlines",
 			appendChildren(
 				&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-					parser.KeyRank:         2,
-					sequentialnumbertr.Key: "1",
+					parser.KeyRank:        2,
+					seqnumtransformer.Key: "1",
 				}},
 				[]*node.Node{
 					appendChildren(
@@ -92,8 +92,8 @@ func TestAggregate(t *testing.T) {
 			"1 sequential number with multiple blocks",
 			appendChildren(
 				&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-					parser.KeyRank:         2,
-					sequentialnumbertr.Key: "1",
+					parser.KeyRank:        2,
+					seqnumtransformer.Key: "1",
 				}},
 				[]*node.Node{
 					appendChildren(
@@ -125,12 +125,12 @@ func TestAggregate(t *testing.T) {
 				&node.Node{Type: node.TypeContainer},
 				[]*node.Node{
 					&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-						parser.KeyRank:         2,
-						sequentialnumbertr.Key: "1",
+						parser.KeyRank:        2,
+						seqnumtransformer.Key: "1",
 					}},
 					&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-						parser.KeyRank:         3,
-						sequentialnumbertr.Key: "1.1",
+						parser.KeyRank:        3,
+						seqnumtransformer.Key: "1.1",
 					}},
 				},
 			),
@@ -151,8 +151,8 @@ func TestAggregate(t *testing.T) {
 				&node.Node{Type: node.TypeContainer},
 				[]*node.Node{
 					&node.Node{Element: "A", Type: node.TypeRankedHanging, Data: node.Data{
-						parser.KeyRank:         2,
-						sequentialnumbertr.Key: "1",
+						parser.KeyRank:        2,
+						seqnumtransformer.Key: "1",
 					}},
 				},
 			),

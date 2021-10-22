@@ -1,62 +1,58 @@
 package sequentialnumber
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/touchmarine/to/aggregator"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/transformer/sequentialnumber"
 )
 
-type Aggregate []Particle
-
-func (a Aggregate) Particles() []aggregator.Particle {
-	return toAggregatorParticles(a)
+type Aggregator struct {
+	Elements []string
 }
 
-func (a Aggregator) Aggregate(n *node.Node) aggregator.Aggregate {
-	s := sequencer{
-		elements: a.Elements,
+func (ar Aggregator) Aggregate(n *node.Node) aggregator.Aggregate {
+	var ae aggregate
+	walk(n, func(n *node.Node) bool {
+		if ar.isTargetElement(n.Element) {
+			if v, ok := n.Data[sequentialnumber.Key]; ok {
+				seqnum := v.(string)
+				ae = append(ae, particle{
+					Element:          n.Element,
+					ID:               n.TextContent(),
+					Text:             n.TextContent(),
+					SequentialNumber: seqnum,
+				})
+			}
+		}
+		return true
+	})
+	return aggregator.Aggregate(ae)
+}
+
+func (a Aggregator) isTargetElement(s string) bool {
+	for _, e := range a.Elements {
+		if e == s {
+			return true
+		}
 	}
-	s.aggregate(n)
-	return aggregator.Aggregate(s.particles)
+	return false
 }
 
-type Particle struct {
+type aggregate []particle
+
+func (aggregate) AnAggregate() {}
+
+type particle struct {
 	Element          string
 	ID               string
 	Text             string
 	SequentialNumber string
 }
 
-func (Particle) Particle() {}
-
-type Aggregator struct {
-	Elements []string
-}
-
-type sequencer struct {
-	elements  []string
-	particles Aggregate
-}
-
-func (s *sequencer) aggregate(n *node.Node) {
-	walk(n, func(n *node.Node) bool {
-		if v, ok := n.Data[sequentialnumber.Key]; ok {
-			seqnum, isString := v.(string)
-			if !isString {
-				panic(fmt.Sprintf("aggregator: sequentialnumber is not a string (%T)", v))
-			}
-
-			s.particles = append(s.particles, Particle{
-				Element:          n.Element,
-				ID:               n.TextContent(),
-				Text:             n.TextContent(),
-				SequentialNumber: seqnum,
-			})
-		}
-		return true
-	})
+func (p particle) depth() int {
+	return len(strings.Split(p.SequentialNumber, "."))
 }
 
 func walk(n *node.Node, fn func(n *node.Node) bool) {
@@ -65,12 +61,4 @@ func walk(n *node.Node, fn func(n *node.Node) bool) {
 			walk(c, fn)
 		}
 	}
-}
-
-func toAggregatorParticles(a []Particle) []aggregator.Particle {
-	b := make([]aggregator.Particle, len(a))
-	for i := range a {
-		b[i] = a[i]
-	}
-	return b
 }

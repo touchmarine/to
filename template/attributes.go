@@ -3,9 +3,32 @@ package template
 import (
 	"bufio"
 	"errors"
+	"html/template"
 	"io"
 	"strings"
 )
+
+// AttributesToHTML returns a HTML-formatted string of attributes from the given
+// attributes.
+func AttributesToHTML(attrs map[string]string) template.HTMLAttr {
+	var b strings.Builder
+
+	var i int
+	for name, value := range attrs {
+		if i > 0 {
+			b.WriteString(" ")
+		}
+
+		b.WriteString(name)
+		if value != "" {
+			b.WriteString(`="` + value + `"`)
+		}
+
+		i++
+	}
+
+	return template.HTMLAttr(b.String())
+}
 
 func ParseAttributes(s string) map[string]string {
 	p := attributeParser{}

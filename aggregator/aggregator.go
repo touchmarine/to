@@ -36,17 +36,12 @@ func (a AggregatorFunc) Aggregate(n *node.Node) Aggregate {
 // For example:
 // 	aggregatorName="sequentialNumbers",
 // 	aggregateName="numberedHeadings" and
-// 	[]Aggregate is the result.
+// 	Aggregate is the result.
 type AggregateMap map[string]map[string]Aggregate
 
-// Aggregate is an aggregate of Particles.
+// Aggregate is an aggregate of data we are interested in.
 type Aggregate interface {
-	Particles() []Particle
-}
-
-// Particle is an element of the aggregate.
-type Particle interface {
-	Particle()
+	AnAggregate() // dummy method to avoid type errors
 }
 
 // Apply applies the given aggregators to the given nodes.
@@ -56,7 +51,6 @@ func Apply(n *node.Node, aggregatorMap AggregatorMap) AggregateMap {
 		if m[namea] == nil {
 			m[namea] = map[string]Aggregate{}
 		}
-
 		for nameb, aggregator := range ma {
 			m[namea][nameb] = aggregator.Aggregate(n)
 		}

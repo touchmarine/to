@@ -139,6 +139,48 @@
 {{end}}
 '''
 			}
+		},
+		"NumberedHeading": {
+			"type": "rankedHanging",
+			"delimiter": "#",
+			"templates": {
+				"html": '''
+<h{{.Data.rank}} id="{{.TextContent}}">
+	{{range $c := elementChildren .}}
+		{{dynamicTemplate $c.Element $c}}
+	{{end}}
+</h{{.Data.rank}}>'''
+			}
+		},
+		"TableOfContents": {
+			"type": "hanging",
+			"delimiter": ".toc",
+			"doNotRemove": true,
+			"templates": {
+				"html": '''
+<div {{- with .Data}}{{with .Attributes}} {{attributesToHTML .}}{{end}}{{end}}>
+	<p>
+		{{range $c := elementChildren .}}
+			{{dynamicTemplate $c.Element $c}}
+		{{end}}
+	</p>
+
+	{{block "grouper" global.aggregates.sequentialNumbers.numberedHeadings.Group}}
+		<ul>
+			{{range .}}
+				{{if eq (printf "%T" .) "sequentialnumber.group"}}
+					{{template "grouper" .}}
+				{{else}}
+					<li>
+						<a href="#{{.ID}}">{{.SequentialNumber}} {{.Text}}</a>
+					</li>
+				{{end}}
+			{{end}}
+		</ul>
+	{{end}}
+</div>
+'''
+			}
 		}
 
 	},
@@ -227,6 +269,13 @@
 	{{end}}
 </dl>
 '''
+			}
+		}
+	},
+	"aggregates": {
+		"sequentialNumbers": {
+			"numberedHeadings": {
+				"elements": ["NumberedHeading"]
 			}
 		}
 	}
