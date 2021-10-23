@@ -62,14 +62,8 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 	}
 
 	root = transformer.Apply(root, []transformer.Transformer{group.Transformer{group.Map{
-		"A": {
-			Name:    "GA",
-			Element: "A",
-		},
-		"D": {
-			Name:    "GB",
-			Element: "D",
-		},
+		"A": "GA",
+		"D": "GB",
 	}}})
 
 	res, err := node.Stringify(root)

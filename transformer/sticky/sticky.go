@@ -10,10 +10,9 @@ const Key = "sticky"
 type Map map[string]Sticky
 
 type Sticky struct {
-	Name    string
-	Element string
-	Target  string
-	After   bool
+	Name   string
+	Target string
+	After  bool
 }
 
 type Transformer struct {

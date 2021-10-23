@@ -55,6 +55,66 @@ type printer struct {
 	line           int
 }
 
+// hasPreviousPrintableSibling reports whether any previous sibling returns
+// p.hasPrintableContent() true.
+func (p printer) hasPreviousPrintableSibling(n *node.Node) bool {
+	for s := n.PreviousSibling; s != nil; s = s.PreviousSibling {
+		if p.hasPrintableContent(s) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p printer) searchFirstPreviousPrintableSibling(n *node.Node) *node.Node {
+	for s := n.PreviousSibling; s != nil; s = s.PreviousSibling {
+		if p.hasPrintableContent(s) {
+			return s
+		}
+	}
+	return nil
+}
+
+// print prints the node in its canonical form.
+//
+// Blocks are separated by single lines, except in groups, such as lists or
+// stickies, where they are placed immediately one after another. Empty blocks
+// are treated as if they were not present. For example, a group interrupted by
+// an empty block is printed as a cohesive group:
+//   	-a
+//   	> 	<- as if it was not here
+//   	-b
+//
+// Table of number of newlines between blocks:
+//
+// previous siblings                                                       | relationship          | newlines
+// ------------------------------------------------------------------------|-----------------------|---------
+// no previous sibling/no printable previous sibling                       | any                   | 0
+// printable immediate previous sibling                                    | in group              | 1
+// printable immediate previous sibling                                    | not in group          | 2
+// non printable immediate previous sibling and printable previous sibling | same previous sibling | 1
+// non printable immediate previous sibling and printable previous sibling | in group              | 1
+// non printable immediate previous sibling and printable previous sibling | not in group          | 2
+//
+// print normally places two lines between blocks. It places only one line:
+//
+//
+// Blocks are separated by two lines, except
+// - in a group like list or sticky
+//   	-a
+//      -b
+// - or in a group interrupted by an empty block:
+//   	-a
+//   	> 	<-- treat it as if it is not here
+//   	-b
+// they are placed on one line.
+//
+//
+// current block relationship                    | newlines
+// ----------------------------------------------|---------
+// non-printable immediate previous sibling and same non-immediate printable previous sibling | 1
+// in group like list or sticky                  | 1
+// not in group                                  | 2
 func (p printer) print(w writer, n *node.Node) error {
 	if n.Type == node.TypeError {
 		return fmt.Errorf("error node (%s)", n)
@@ -64,18 +124,66 @@ func (p printer) print(w writer, n *node.Node) error {
 		return nil
 	}
 
-	if (n.IsBlock() || n.Type == node.TypeContainer) && n.PreviousSibling != nil &&
-		(n.PreviousSibling.IsBlock() || n.PreviousSibling.Type == node.TypeContainer) &&
-		p.hasPrintableContent(n.PreviousSibling) {
-		if n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
-			// in a transformer node like sticky or group
-			p.newline(w)
-		} else {
-			p.newline(w)
-			p.writePrefix(w, withoutTrailingSpacing)
-			p.newline(w)
+	if n.IsBlock() || n.Type == node.TypeContainer {
+		if x := p.searchFirstPreviousPrintableSibling(n); x != nil {
+			// has non-empty previous sibling
+			if x != n.PreviousSibling && x.Type == n.Type && x.Element == n.Element ||
+				n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
+				// has the same non-immediate previous sibling
+				// (e.g., list split by an empty blockquote) or
+				// is in a group like list or sticky
+				p.newline(w)
+			} else {
+				p.newline(w)
+				p.writePrefix(w, withoutTrailingSpacing)
+				p.newline(w)
+			}
 		}
 	}
+
+	//if (n.IsBlock() || n.Type == node.TypeContainer) && p.hasPreviousPrintableSibling(n) {
+	//	if n.Type == node.TypeContainer && n.Element != "" ||
+	//		n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
+	//		// is or is in a transformer node like sticky or group
+	//		p.newline(w)
+	//	} else {
+	//		p.newline(w)
+	//		p.writePrefix(w, withoutTrailingSpacing)
+	//		p.newline(w)
+	//	}
+	//}
+
+	//if n.IsBlock() || n.Type == node.TypeContainer {
+	//	if n.PreviousSibling != nil && p.hasPrintableContent(n.PreviousSibling) {
+	//		// has immediate printable previous sibling
+	//		if n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
+	//			// in a group like list or sticky
+	//			p.newline(w)
+	//		} else {
+	//			p.newline(w)
+	//			p.writePrefix(w, withoutTrailingSpacing)
+	//			p.newline(w)
+	//		}
+	//	} else if x := p.searchFirstPreviousPrintableSibling(n); x != nil {
+	//		// has printable previous sibling but not an immediate
+	//		// printable previous sibling
+	//		//
+	//		// example where "-" = list item and ">" = blockquote:
+	//		// 	-a
+	//		// 	>
+	//		// 	-b	<-- we (n) are here
+	//		if x.Type == n.Type && x.Element == n.Element {
+	//			// same previous sibling, treat it as if
+	//			// immediate previous sibling was not there
+	//			p.newline(w)
+	//		} else {
+	//			// different previous sibling
+	//			p.newline(w)
+	//			p.writePrefix(w, withoutTrailingSpacing)
+	//			p.newline(w)
+	//		}
+	//	}
+	//}
 
 	if n.IsBlock() {
 		p.writePrefix(w, withTrailingSpacing)
@@ -119,7 +227,7 @@ func (p printer) print(w writer, n *node.Node) error {
 		lines = removeBlankLines(lines)
 		for _, line := range lines {
 			w.WriteString(" ")
-			w.WriteString(line)
+			w.WriteString(strings.Trim(line, " \t"))
 		}
 	case node.TypeHanging:
 		defer p.addPrefix(" ")()
@@ -171,7 +279,7 @@ func (p printer) print(w writer, n *node.Node) error {
 	case node.TypeFenced:
 		// opening delimiter
 		w.WriteString(e.Delimiter)
-		needsEscape := strings.Contains(n.Value, e.Delimiter)
+		needsEscape := fencedNeedsEscape(n.Value, e.Delimiter)
 		if needsEscape {
 			w.WriteString(`\`)
 		}
@@ -236,7 +344,7 @@ func (p printer) print(w writer, n *node.Node) error {
 		w.WriteString(counter + counter)
 
 	case node.TypeEscaped:
-		needsEscape := strings.Contains(n.Value, e.Delimiter+e.Delimiter)
+		needsEscape := strings.Contains(n.Value, e.Delimiter)
 
 		w.WriteString(e.Delimiter + e.Delimiter)
 		if needsEscape {
@@ -333,6 +441,17 @@ func removeBlankLines(p []string) []string {
 		}
 	}
 	return n
+}
+
+func fencedNeedsEscape(s, delimiter string) bool {
+	lines := strings.Split(s, "\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, delimiter) {
+			return true
+		}
+	}
+	return false
+
 }
 
 func (p printer) needBlockEscape(n *node.Node) bool {

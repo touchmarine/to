@@ -73,10 +73,7 @@ func main() {
 	listGroups := cfg.GroupsByType("list")
 	listMap := group.Map{}
 	for name, g := range listGroups {
-		listMap[g.Element] = group.Group{
-			Name:    name,
-			Element: g.Element,
-		}
+		listMap[g.Element] = name
 	}
 	transformers = append(transformers, group.Transformer{listMap})
 
@@ -85,10 +82,9 @@ func main() {
 	stickyMap := sticky.Map{}
 	for name, g := range stickyGroups {
 		stickyMap[g.Element] = sticky.Sticky{
-			Name:    name,
-			Element: g.Element,
-			Target:  g.Target,
-			After:   g.Option == "after",
+			Name:   name,
+			Target: g.Target,
+			After:  g.Option == "after",
 		}
 	}
 	transformers = append(transformers, sticky.Transformer{stickyMap})

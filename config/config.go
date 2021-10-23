@@ -126,10 +126,7 @@ func (c Config) TransformerGroups(t string) group.Map {
 	m := group.Map{}
 	for name, g := range c.Groups {
 		if g.Type == t {
-			m[g.Element] = group.Group{
-				Name:    name,
-				Element: g.Element,
-			}
+			m[g.Element] = name
 		}
 	}
 	return m
@@ -139,9 +136,8 @@ func (c Config) TransformerStickies() sticky.Map {
 	m := sticky.Map{}
 	for name, s := range c.Stickies {
 		m[s.Element] = sticky.Sticky{
-			Name:    name,
-			Element: s.Element,
-			After:   s.After,
+			Name:  name,
+			After: s.After,
 		}
 	}
 	return m

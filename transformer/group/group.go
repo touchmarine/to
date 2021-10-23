@@ -4,13 +4,8 @@ import (
 	"github.com/touchmarine/to/node"
 )
 
-// Map maps Groups by Elements.
-type Map map[string]Group
-
-type Group struct {
-	Name    string
-	Element string
-}
+// Map maps group names by element names.
+type Map map[string]string
 
 type Transformer struct {
 	GroupMap Map
@@ -22,11 +17,11 @@ func (t Transformer) Transform(n *node.Node) *node.Node {
 		name, start, end := "", -1, 0
 
 		for i, n := range nodes {
-			group, found := t.GroupMap[n.Element]
+			gname, found := t.GroupMap[n.Element]
 
 			if name != "" {
 				// a group is open
-				if found && group.Name == name {
+				if found && gname == name {
 					// group continues
 					end++
 					continue
@@ -39,7 +34,7 @@ func (t Transformer) Transform(n *node.Node) *node.Node {
 
 			if found {
 				// start of a new group
-				name = group.Name
+				name = gname
 				start = i
 				end = i + 1
 			}
