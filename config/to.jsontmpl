@@ -4,25 +4,257 @@
 			"html": '''
 <html>
 <body>
-{{render .}}
+{{range $c := elementChildren .}}
+	{{dynamicTemplate $c.Element $c}}
+{{end}}
 </body>
-</html>'''
+</html>
+
+{{define "HTMLAttributes"}}{{with .Data}}{{with .Attributes}} {{attributesToHTML .}}{{end}}{{end}}{{end}}
+{{define "children"}}
+	{{- range $c := elementChildren . -}}
+		{{- dynamicTemplate $c.Element $c -}}
+	{{- end -}}
+{{end}}
+'''
 		}	
 	},
-	"elements": [
-		{
-			"name": "TextBlock",
-			"type": "leaf",
+	"elements": {
+		"Title": {
+			"type": "hanging",
+			"delimiter": "=",
 			"templates": {
 				"html": '''
-{{- range .InlineChildren}}
-	{{- render .}}
-{{end -}}
+<h1 {{- template "HTMLAttributes" .}}>
+	{{template "children" .}}
+</h1>
 '''
 			}
 		},
-		{
-			"name": "LineBreak",
+		"Subtitle": {
+			"type": "walled",
+			"delimiter": "_",
+			"templates": {
+				"html": '''{{template "children" .}}'''
+			}
+		},
+		"Heading": {
+			"type": "rankedHanging",
+			"delimiter": "=",
+			"templates": {
+				"html": '''
+{{$_ := setData . "Attributes" (setDefault .Data.Attributes "id" .TextContent)}}
+<h{{.Data.rank}} {{- template "HTMLAttributes" .}}>
+	{{template "children" .}}
+</h{{.Data.rank}}>
+'''
+			}
+		},
+		"NumberedHeading": {
+			"type": "rankedHanging",
+			"delimiter": "#",
+			"templates": {
+				"html": '''
+{{$_ := setData . "Attributes" (setDefault .Data.Attributes "id" .TextContent)}}
+<h{{.Data.rank}} {{- template "HTMLAttributes" .}}>
+	<span style="float:left">{{.Data.sequentialNumber}}&nbsp;</span>
+	{{template "children" .}}
+</h{{.Data.rank}}>
+'''
+			}
+		},
+		"Blockquote": {
+			"type": "walled",
+			"delimiter": ">",
+			"templates": {
+				"html": '''
+<blockquote {{- template "HTMLAttributes" .}}>
+	{{template "children" .}}
+</blockquote>
+'''
+			}
+		},
+		"ListItem": {
+			"type": "hanging",
+			"delimiter": "-",
+			"templates": {
+				"html": '''<li>{{template "children" .}}</li>'''
+			}
+		},
+		"NumberedListItem": {
+			"type": "hanging",
+			"delimiter": "1.",
+			"templates": {
+				"html": '''{{template "ListItem" .}}'''
+			}
+		},
+		"PreformattedBlock": {
+			"type": "fenced",
+			"delimiter": "'",
+			"templates": {
+				"html": '''
+<pre {{- template "HTMLAttributes" .}}>
+	{{- template "children" . -}}
+</pre>
+'''
+			}
+		},
+		"CodeBlock": {
+			"type": "fenced",
+			"delimiter": "`",
+			"templates": {
+				"html": '''
+<pre {{- template "HTMLAttributes" .}}><code {{- with .Data.openingText}} lang="{{.}}"{{end}}>
+	{{- template "children" . -}}
+</code></pre>
+'''
+			}
+		},
+		"Image": {
+			"type": "verbatimLine",
+			"delimiter": ".image",
+			"templates": {
+				"html": '''
+<img src="{{trimSpacing .TextContent}}" {{- template "HTMLAttributes" .}}/>
+'''
+			}
+		},
+		"Note": {
+			"type": "walled",
+			"delimiter": "*",
+			"templates": {
+				"html": '''
+<div style="margin-left: 1em;padding-left:1em;border-left:2px solid blue;" {{- template "HTMLAttributes" .}}>
+	{{template "children" .}}
+</div>'''
+			}
+		},
+		"Term": {
+			"type": "hanging",
+			"delimiter": "?",
+			"templates": {
+				"html": '''{{template "children" .}}'''
+			}
+		},
+		"Description": {
+			"type": "hanging",
+			"delimiter": ":",
+			"templates": {
+				"html": '''{{template "children" .}}'''
+			}
+		},
+		"Caption": {
+			"type": "walled",
+			"delimiter": "+",
+			"templates": {
+				"html": '''{{template "children" .}}'''
+			}
+		},
+		"TableOfContents": {
+			"type": "hanging",
+			"delimiter": ".toc",
+			"doNotRemove": true,
+			"templates": {
+				"html": '''
+<div {{- template "HTMLAttributes" .}}>
+	<p>{{template "children" .}}</p>
+	{{template "grouper" global.aggregates.sequentialNumbers.numberedHeadings.Group}}
+</div>
+
+{{define "grouper"}}
+	<ul>
+		{{range .}}
+			{{if eq (printf "%T" .) "sequentialnumber.group"}}
+				{{template "grouper" .}}
+			{{else}}
+				<li>
+					<a href="#{{.ID}}">{{.SequentialNumber}} {{.Text}}</a>
+				</li>
+			{{end}}
+		{{end}}
+	</ul>
+{{end}}
+'''
+			}
+		},
+		"BlockComment": {
+			"type": "verbatimWalled",
+			"delimiter": "/",
+			"templates": {
+				"html": ""
+			}
+		},
+		"Attributes": {
+			"type": "verbatimWalled",
+			"delimiter": "!",
+			"templates": {
+				"html": ""
+			}
+		},
+		"TextBlock": {
+			"type": "leaf",
+			"templates": {
+				"html": '''
+<span {{- template "HTMLAttributes" .}}>
+	{{template "children" .}}
+</span>
+'''
+			}
+		},
+
+		"Emphasis": {
+			"type": "uniform",
+			"delimiter": "_",
+			"templates": {
+				"html": '''<em>{{template "children" .}}</em>'''
+			}
+		},
+		"Strong": {
+			"type": "uniform",
+			"delimiter": "*",
+			"templates": {
+				"html": '''<strong>{{template "children" .}}</strong>'''
+			}
+		},
+		"Code": {
+			"type": "escaped",
+			"delimiter": "`",
+			"templates": {
+				"html": "<code>{{.TextContent}}</code>"
+			}
+		},
+		"Link": {
+			"type": "escaped",
+			"delimiter": "[",
+			"templates": {
+				"html": '''<a href="{{.TextContent}}">{{.TextContent}}</a>'''
+			}
+		},
+		"HTTP": {
+			"type": "prefixed",
+			"delimiter": "http://",
+			"matcher": "url",
+			"templates": {
+				"html": '''<a href="http://{{.TextContent}}">http://{{.TextContent}}</a>'''
+			}
+		},
+		"HTTPS": {
+			"type": "prefixed",
+			"delimiter": "https://",
+			"matcher": "url",
+			"templates": {
+				"html": '''<a href="https://{{.TextContent}}">https://{{.TextContent}}</a>'''
+			}
+		},
+		"WWW": {
+			"type": "prefixed",
+			"delimiter": "www.",
+			"matcher": "url",
+			"templates": {
+				"html": '''<a href="http://www.{{.TextContent}}">www.{{.TextContent}}</a>'''
+			}
+		},
+		"LineBreak": {
 			"type": "prefixed",
 			"delimiter": "\\",
 			"doNotRemove": true,
@@ -30,449 +262,165 @@
 				"html": "<br>"
 			}
 		},
-		{
-			"name": "HTTP",
-			"type": "prefixed",
-			"delimiter": "http://",
-			"matcher": "url",
-			"templates": {
-				"html": '''<a href="http://{{.Content}}">http://{{.Content}}</a>'''
-			}
-		},
-		{
-			"name": "HTTPS",
-			"type": "prefixed",
-			"delimiter": "https://",
-			"matcher": "url",
-			"templates": {
-				"html": '''<a href="https://{{.Content}}">https://{{.Content}}</a>'''
-			}
-		},
-		{
-			"name": "WWW",
-			"type": "prefixed",
-			"delimiter": "www.",
-			"matcher": "url",
-			"templates": {
-				"html": '''<a href="http://www.{{.Content}}">www.{{.Content}}</a>'''
-			}
-		},
-		{
-			"name": "Blockquote",
-			"type": "walled",
-			"delimiter": ">",
-			"templates": {
-				"html": '''
-<blockquote {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
-	{{- range .BlockChildren}}
-		{{render .}}
-	{{end -}}
-</blockquote>'''
-			}
-		},
-		{
-			"name": "Callout",
-			"type": "walled",
-			"delimiter": "*",
-			"templates": {
-				"html": '''
-<div
-	style="margin-left: 1em;padding-left:1em;border-left:2px solid blue;"
-	{{- with .Attrs}} {{htmlAttrs .}}{{end}}
->
-	{{- range .BlockChildren}}
-		{{render .}}
-	{{end -}}
-</div>'''
-			}
-		},
-		{
-			"name": "Term",
-			"type": "hanging",
-			"delimiter": "^",
-			"templates": {
-				"html": "{{range .BlockChildren}}{{render .}}{{end}}"
-			}
-		},
-		{
-			"name": "Description",
-			"type": "hanging",
-			"delimiter": ":",
-			"templates": {
-				"html": "{{range .BlockChildren}}{{render .}}{{end}}"
-			}
-		},
-		{
-			"name": "CodeBlock",
-			"type": "fenced",
-			"delimiter": "`",
-			"templates": {
-				"html": '''
-<pre {{- with .Attrs}} {{htmlAttrs .}}{{end}}><code {{- with head .Lines}} lang="{{.}}"{{end}}>
-	{{- body .Lines -}}
-</code></pre>'''
-			}
-		},
-		{
-			"name": "PreformattedBlock",
-			"type": "fenced",
-			"delimiter": "'",
-			"templates": {
-				"html": '''
-<pre {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
-	{{- body .Lines -}}
-</pre>'''
-			}
-		},
-		{
-			"name": "Title",
-			"type": "hanging",
-			"delimiter": "=",
-			"templates": {
-				"html": '''
-<h1 {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
-	{{- range .BlockChildren}}
-		{{render .}}
-	{{end -}}
-</h1>'''
-			}
-		},
-		{
-			"name": "Heading",
-			"type": "rankedHanging",
-			"delimiter": "=",
-			"templates": {
-				"html": '''
-<h{{.Rank}} {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
-	{{- range .BlockChildren}}
-		{{render .}}
-	{{end -}}
-</h{{.Rank}}>'''
-			}
-		},
-		{
-			"name": "NumberedHeading",
-			"type": "rankedHanging",
-			"delimiter": "#",
-			"templates": {
-				"html": '''
-<h{{.Rank}} id="{{.TextContent}}" {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
-	<span style="float:left">{{.SequentialNumber}}&nbsp;</span>
-
-	{{- range .BlockChildren}}
-		{{render .}}
-	{{end -}}
-</h{{.Rank}}>'''
-			}
-		},
-		{
-			"name": "Image",
-			"type": "verbatimLine",
-			"delimiter": ".image",
-			"templates": {
-				"html": '''
-<img src="{{trimSpacing .Content}}" {{- with .Attrs}} {{htmlAttrs .}}{{end}} />
-'''
-			}
-		},
-		{
-			"name": "NumberedListItemDot",
-			"type": "hanging",
-			"delimiter": "1.",
-			"templates": {
-				"html": "<li>{{range .BlockChildren}}{{render .}}{{end}}</li>"
-			}
-		},
-		{
-			"name": "NumberedListItemParen",
-			"type": "hanging",
-			"delimiter": "1)",
-			"templates": {
-				"html": "<li>{{range .BlockChildren}}{{render .}}{{end}}</li>"
-			}
-		},
-		{
-			"name": "ListItemDot",
-			"type": "hanging",
-			"delimiter": "-",
-			"templates": {
-				"html": "<li>{{range .BlockChildren}}{{render .}}{{end}}</li>"
-			}
-		},
-		{
-			"name": "TableOfContents",
-			"type": "hanging",
-			"delimiter": ".toc",
-			"doNotRemove": true,
-			"templates": {
-				"html": '''
-<div {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
-	<p>{{range .BlockChildren}}{{render .}}{{end}}</p>
-
-	{{block "grouper" groupBySequentialNumber .aggregates.sequentialNumbers.numberedHeadings}}
-		<ul>
-			{{range .}}
-				{{if isSequentialNumberGroup .}}
-					{{template "grouper" .}}
-				{{else}}
-					<li>
-						<a href="#{{.ID}}">{{.SequentialNumber}} {{.Text}}</a>
-					</li>
-				{{end}}
-			{{end}}
-		</ul>
-	{{end}}
-</div>'''
-			}
-		},
-
-		{
-			"name": "Text",
-			"type": "text",
-			"templates": {
-				"html": "{{.Content}}"
-			}
-		},
-		{
-			"name": "Group",
-			"type": "uniform",
-			"delimiter": "(",
-			"templates": {
-				"html": "{{range .InlineChildren}}{{render .}}{{end}}"
-			}
-		},
-		{
-			"name": "Emphasis",
-			"type": "uniform",
-			"delimiter": "_",
-			"templates": {
-				"html": "<em>{{range .InlineChildren}}{{render .}}{{end}}</em>"
-			}
-		},
-		{
-			"name": "Strong",
-			"type": "uniform",
-			"delimiter": "*",
-			"templates": {
-				"html": "<strong>{{range .InlineChildren}}{{render .}}{{end}}</strong>"
-			}
-		},
-		{
-			"name": "Comment",
+		"Comment": {
 			"type": "escaped",
 			"delimiter": "/",
 			"templates": {
 				"html": ""
 			}
 		},
-		{
-			"name": "Link",
-			"type": "escaped",
-			"delimiter": "[",
+		"Group": {
+			"type": "uniform",
+			"delimiter": "(",
 			"templates": {
-				"html": '''<a href="{{.Content}}">{{.Content}}</a>'''
+				"html": '''{{template "children" .}}'''
 			}
 		},
-		{
-			"name": "Code",
-			"type": "escaped",
-			"delimiter": "`",
+		"Text": {
+			"type": "text",
 			"templates": {
-				"html": "<code>{{.Content}}</code>"
-			}
-		},
-		{
-			"name": "Attributes",
-			"type": "verbatimWalled",
-			"delimiter": "!",
-			"templates": {
-				"html": ""
-			}
-		},
-		{
-			"name": "Caption",
-			"type": "walled",
-			"delimiter": "+",
-			"templates": {
-				"html": '''
-{{- range .BlockChildren}}
-	{{- render .}}
-{{end -}}
-'''
-			}
-		},
-		{
-			"name": "Subtitle",
-			"type": "walled",
-			"delimiter": "_",
-			"templates": {
-				"html": '''
-{{- range .BlockChildren}}
-	{{- render .}}
-{{end -}}
-'''
+				"html": "{{.Value}}"
 			}
 		}
-	],
-	"composites": [
-		{
-			"name": "NamedLink",
-			"primaryElement": "Group",
-			"secondaryElement": "Link",
-			"templates": {
-				"html": '''<a href="{{.SecondaryElement.Content}}">{{range .PrimaryElement.InlineChildren}}{{render .}}{{end}}</a>'''
-			}
-		}
-	],
-	"stickies": [
-		{
-			"name": "StickyAttributes",
-			"element": "Attributes",
+	},
+	"groups": {
+		"Paragraph": {
+			"type": "paragraph",
+			"option": "leaf",
 			"templates": {
 				"html": '''
-{{ $attrs := parseAttrs .StickyElement.Lines }}
-{{renderWithData .TargetElement.Self (mapAny "Attrs" $attrs)}}
+<p {{- template "HTMLAttributes" .}}>
+	{{template "children" .}}
+</p>
 '''
 			}
 		},
-		{
-			"name": "StickyCaption",
+		"List": {
+			"type": "list",
+			"element": "ListItem",
+			"templates": {
+				"html": '''
+<ul {{- template "HTMLAttributes" .}}>
+	{{template "children" .}}
+</ul>
+'''
+			}
+		},
+		"NumberedList": {
+			"type": "list",
+			"element": "NumberedListItem",
+			"templates": {
+				"html": '''
+<ol {{- template "HTMLAttributes" .}}>
+	{{template "children" .}}
+</ol>
+'''
+			}
+		},
+		"TermList": {
+			"type": "list",
+			"element": "Term",
+			"templates": {
+				"html": '''
+<div {{- template "HTMLAttributes" .}}>
+	{{template "children" .}}
+</div>
+'''
+			}
+		},
+		"DescriptionList": {
+			"type": "list",
+			"element": "Description",
+			"templates": {
+				"html": '''
+<div {{- template "HTMLAttributes" .}}>
+	{{template "children" .}}
+</div>
+'''
+			}
+		},
+		"StickySubtitle": {
+			"type": "sticky",
+			"element": "Subtitle",
+			"option": "after",
+			"templates": {
+				"html": '''
+{{$subtitle := .LastChild}}
+{{$target   := .FirstChild}}
+<header {{- template "HTMLAttributes" .}}>
+	{{dynamicTemplate $target.Element $target}}
+	<p>{{dynamicTemplate $subtitle.Element $subtitle}}</p>
+</header>
+'''
+			}
+		},
+		"StickyDescription": {
+			"type": "sticky",
+			"element": "DescriptionList",
+			"option": "after",
+			"templates": {
+				"html": '''
+{{$list   := .LastChild}}
+{{$target := .FirstChild}}
+<dl {{- template "HTMLAttributes" .}}>
+	{{range $c := elementChildren $target}}
+		<dt>{{dynamicTemplate $target.Element $c}}</dt>
+	{{end}}
+	{{range $c := elementChildren $list}}
+		<dd>{{dynamicTemplate $list.Element $c}}</dd>
+	{{end}}
+</dl>
+'''
+			}
+		},
+		"StickyCaption": {
+			"type": "sticky",
 			"element": "Caption",
-			"after": true,
+			"option": "after",
 			"templates": {
 				"html": '''
-<figure>
-	{{render .TargetElement.Self}}
+{{$caption := .LastChild}}
+{{$target  := .FirstChild}}
+<figure {{- template "HTMLAttributes" .}}>
+	{{dynamicTemplate $target.Element $target}}
 	<figcaption>
-		{{- range .StickyElement.BlockChildren}}
-			{{render .}}
-		{{end -}}
+		{{dynamicTemplate $caption.Element $caption}}
 	</figcaption>
 </figure>
 '''
 			}
 		},
-		{
-			"name": "StickySubtitle",
-			"element": "Subtitle",
-			"after": true,
+		"StickyAttributes": {
+			"type": "sticky",
+			"element": "Attributes",
 			"templates": {
 				"html": '''
-<header>
-	{{render .TargetElement.Self}}
-	<p>
-		{{- range .StickyElement.BlockChildren}}
-			{{render .}}
-		{{end -}}
-	</p>
-</header>
-'''
-			}
-		},
-		{
-			"name": "StickyDescription",
-			"element": "DescriptionList",
-			"after": true,
-			"templates": {
-				"html": '''
-{{if eq .TargetElement.Self.Node "StickyAttributes"}}
-	{{- /* has sticky attributes nested so parse attributes from it */ -}}
+{{$attrs  := .FirstChild}}
+{{$target := .LastChild}}
 
-	{{ $attrs := parseAttrs .TargetElement.StickyElement.Lines }}
-	<dl {{- with $attrs}} {{htmlAttrs .}}{{end}}>
-		{{- range .TargetElement.TargetElement.BlockChildren}}
-			<dt>{{render .}}</dt>
-		{{end -}}
-		{{- range .StickyElement.BlockChildren}}
-			<dd>{{render .}}</dd>
-		{{end -}}
-	</dl>
-{{else}}
-	<dl>
-		{{- range .TargetElement.BlockChildren}}
-			<dt>{{render .}}</dt>
-		{{end -}}
-		{{- range .StickyElement.BlockChildren}}
-			<dd>{{render .}}</dd>
-		{{end -}}
-	</dl>
-{{end}}
+{{$attrsMap := parseAttributes $attrs.TextContent}}
+{{$_        := setData $target "Attributes" $attrsMap}}
+
+{{dynamicTemplate $target.Element $target}}
+'''
+			}
+		},
+
+		"NamedLink": {
+			"type": "sticky",
+			"element": "Group",
+			"target": "Link",
+			"templates": {
+				"html": '''
+{{$group := .FirstChild}}
+{{$link  := .LastChild}}
+<a href="{{$link.TextContent}}">
+	{{dynamicTemplate $group.Element $group}}
+</a>
 '''
 			}
 		}
-	],
-	"groups": [
-		{
-			"name": "Paragraph",
-			"recognizer": "paragraph",
-			"templates": {
-				"html": "<p {{- with .Attrs}} {{htmlAttrs .}}{{end}}>{{range .BlockChildren}}{{render .}}{{end}}</p>"
-			}
-		},
-		{
-			"name": "NumberedListDot",
-			"recognizer": "element",
-			"element": "NumberedListItemDot",
-			"templates": {
-				"html": '''
-<ol class="dot" {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
-	{{- range .BlockChildren}}
-		{{render .}}
-	{{- end}}
-</ol>'''
-			}
-		},
-		{
-			"name": "NumberedListParen",
-			"recognizer": "element",
-			"element": "NumberedListItemParen",
-			"templates": {
-				"html": '''
-<ol class="paren" {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
-	{{- range .BlockChildren}}
-		{{render .}}
-	{{- end}}
-</ol>'''
-			}
-		},
-		{
-			"name": "ListDot",
-			"recognizer": "element",
-			"element": "ListItemDot",
-			"templates": {
-				"html": '''
-<ul {{- with .Attrs}} {{htmlAttrs .}}{{end}}>
-	{{- range .BlockChildren}}
-		{{render .}}
-	{{- end}}
-</ul>'''
-			}
-		},
-		{
-			"name": "TermList",
-			"recognizer": "element",
-			"element": "Term",
-			"templates": {
-				"html": '''
-{{- range .BlockChildren}}
-	{{render .}}
-{{- end}}
-'''
-			}
-		},
-		{
-			"name": "DescriptionList",
-			"recognizer": "element",
-			"element": "Description",
-			"templates": {
-				"html": '''
-{{- range .BlockChildren}}
-	{{render .}}
-{{- end}}
-'''
-			}
-		}
-	],
+	},
 	"aggregates": {
 		"sequentialNumbers": {
 			"numberedHeadings": {

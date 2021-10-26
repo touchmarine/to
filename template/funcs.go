@@ -20,10 +20,12 @@ func Funcs(tmpl *template.Template, global map[string]interface{}) template.Func
 		"elementChildren":  ElementChildren,
 		"trimSpacing":      TrimSpacing,
 		"parseAttributes":  ParseAttributes,
-		"nodeSetData":      NodeSetData,
+		"setData":          NodeSetData,
 		"attributesToHTML": AttributesToHTML,
 		"global":           MakeGlobalMapFunction(global),
 		"get":              Dot,
+		"set":              Set,
+		"setDefault":       SetDefault,
 	}
 }
 

@@ -1,7 +1,9 @@
 package config
 
 import (
+	"bytes"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"html/template"
 
@@ -10,10 +12,6 @@ import (
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
-	"github.com/touchmarine/to/transformer"
-	"github.com/touchmarine/to/transformer/group"
-	"github.com/touchmarine/to/transformer/sequentialnumber"
-	"github.com/touchmarine/to/transformer/sticky"
 )
 
 //go:embed to.json
@@ -21,21 +19,20 @@ var b []byte
 
 var Default *Config
 
-//func init() {
-//	r := bytes.NewReader(b)
-//	if err := json.NewDecoder(r).Decode(&Default); err != nil {
-//		panic(err)
-//	}
-//}
+func init() {
+	r := bytes.NewReader(b)
+	if err := json.NewDecoder(r).Decode(&Default); err != nil {
+		panic(err)
+	}
+}
 
 type Config struct {
 	Root struct {
 		Templates map[string]string `json:"templates"`
 	} `json:"root"`
-	Elements   Elements          `json:"elements"`
-	Groups     Groups            `json:"groups"`
-	Stickies   map[string]Sticky `json:"stickies"`
-	Aggregates Aggregates        `json:"aggregates"`
+	Elements   Elements   `json:"elements"`
+	Groups     Groups     `json:"groups"`
+	Aggregates Aggregates `json:"aggregates"`
 }
 
 // Elements maps Elements by name.
@@ -47,17 +44,6 @@ type Element struct {
 	Matcher     string            `json:"matcher"`
 	DoNotRemove bool              `json:"doNotRemove"`
 	Templates   map[string]string `json:"templates"`
-}
-
-// Sticky is a group of two elements, the Element and an element the Element
-// sticks to.
-//
-// The Element sticks to the preceding element if After is true. Otherwise,
-// it sticks to the following element.
-type Sticky struct {
-	Element   string            `json:"element"`
-	After     bool              `json:"after"`
-	Templates map[string]string `json:"templates"`
 }
 
 // Groups maps Groups by name.
@@ -81,35 +67,8 @@ func (c Config) ParserElements() parser.Elements {
 	return ToParserElements(c.Elements)
 }
 
-func ToParserElements(elements Elements) parser.Elements {
-	m := parser.Elements{}
-	for name, e := range elements {
-		m[name] = parser.Element{
-			Name:      name,
-			Type:      e.Type,
-			Delimiter: e.Delimiter,
-			Matcher:   e.Matcher,
-		}
-	}
-	return m
-}
-
 func (c Config) PrinterElements() printer.Elements {
 	return ToPrinterElements(c.Elements)
-}
-
-func ToPrinterElements(elements Elements) printer.Elements {
-	m := printer.Elements{}
-	for name, e := range elements {
-		m[name] = printer.Element{
-			Name:        name,
-			Type:        e.Type,
-			Delimiter:   e.Delimiter,
-			Matcher:     e.Matcher,
-			DoNotRemove: e.DoNotRemove,
-		}
-	}
-	return m
 }
 
 func (c Config) GroupsByType(t string) Groups {
@@ -117,27 +76,6 @@ func (c Config) GroupsByType(t string) Groups {
 	for name, g := range c.Groups {
 		if g.Type == t {
 			m[name] = g
-		}
-	}
-	return m
-}
-
-func (c Config) TransformerGroups(t string) group.Map {
-	m := group.Map{}
-	for name, g := range c.Groups {
-		if g.Type == t {
-			m[g.Element] = name
-		}
-	}
-	return m
-}
-
-func (c Config) TransformerStickies() sticky.Map {
-	m := sticky.Map{}
-	for name, s := range c.Stickies {
-		m[s.Element] = sticky.Sticky{
-			Name:  name,
-			After: s.After,
 		}
 	}
 	return m
@@ -175,26 +113,6 @@ func (c Config) ParseTemplates(target *template.Template, templateName string) (
 	return target, nil
 }
 
-func (c Config) DefaultTransformers() []transformer.Transformer {
-	var transformers []transformer.Transformer
-
-	//paragraphGroups := c.GroupsByType("paragraph")
-	//for name, _ := range paragraphGroups {
-	//	paragrapher := paragraph.Transformer{name}
-	//	transformers = append(transformers, paragrapher)
-	//}
-
-	grouper := group.Transformer{c.TransformerGroups("element")}
-	stickier := sticky.Transformer{c.TransformerStickies()}
-
-	transformers = append(transformers, []transformer.Transformer{
-		grouper,
-		stickier,
-		transformer.Func(sequentialnumber.Transform),
-	}...)
-	return transformers
-}
-
 func (c Config) DefaultAggregators() map[string]map[string]aggregator.Aggregator {
 	m := map[string]map[string]aggregator.Aggregator{}
 	for n, a := range c.Aggregates.SequentialNumbers {
@@ -203,6 +121,33 @@ func (c Config) DefaultAggregators() map[string]map[string]aggregator.Aggregator
 		}
 
 		m["sequentialNumbers"][n] = sequentialnumberag.Aggregator{a.Elements}
+	}
+	return m
+}
+
+func ToParserElements(elements Elements) parser.Elements {
+	m := parser.Elements{}
+	for name, e := range elements {
+		m[name] = parser.Element{
+			Name:      name,
+			Type:      e.Type,
+			Delimiter: e.Delimiter,
+			Matcher:   e.Matcher,
+		}
+	}
+	return m
+}
+
+func ToPrinterElements(elements Elements) printer.Elements {
+	m := printer.Elements{}
+	for name, e := range elements {
+		m[name] = printer.Element{
+			Name:        name,
+			Type:        e.Type,
+			Delimiter:   e.Delimiter,
+			Matcher:     e.Matcher,
+			DoNotRemove: e.DoNotRemove,
+		}
 	}
 	return m
 }

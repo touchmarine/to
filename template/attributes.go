@@ -3,6 +3,7 @@ package template
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"strings"
@@ -10,27 +11,31 @@ import (
 
 // AttributesToHTML returns a HTML-formatted string of attributes from the given
 // attributes.
-func AttributesToHTML(attrs map[string]string) template.HTMLAttr {
+func AttributesToHTML(attrs map[string]interface{}) template.HTMLAttr {
 	var b strings.Builder
-
 	var i int
-	for name, value := range attrs {
+	for k, v := range attrs {
 		if i > 0 {
 			b.WriteString(" ")
 		}
+		b.WriteString(k)
 
-		b.WriteString(name)
-		if value != "" {
-			b.WriteString(`="` + value + `"`)
+		var s string
+		if vs, ok := v.(string); ok {
+			s = vs
+		} else {
+			s = fmt.Sprint(v)
+		}
+		if s != "" {
+			b.WriteString(`="` + s + `"`)
 		}
 
 		i++
 	}
-
 	return template.HTMLAttr(b.String())
 }
 
-func ParseAttributes(s string) map[string]string {
+func ParseAttributes(s string) map[string]interface{} {
 	p := attributeParser{}
 	reader := strings.NewReader(s)
 	p.init(reader)
@@ -60,12 +65,12 @@ type attributeParser struct {
 	reader *bufio.Reader
 
 	ch    byte
-	attrs map[string]string
+	attrs map[string]interface{}
 }
 
 func (p *attributeParser) init(r io.Reader) {
 	p.reader = bufio.NewReader(r)
-	p.attrs = map[string]string{}
+	p.attrs = map[string]interface{}{}
 }
 
 func (p *attributeParser) next() bool {

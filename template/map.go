@@ -29,3 +29,21 @@ func Get(m map[string]interface{}, key string) interface{} {
 	}
 	return ""
 }
+
+func Set(m map[string]interface{}, key string, v interface{}) map[string]interface{} {
+	if m == nil {
+		m = map[string]interface{}{}
+	}
+	m[key] = v
+	return m
+}
+
+func SetDefault(m map[string]interface{}, key string, v interface{}) map[string]interface{} {
+	if m != nil {
+		if _, ok := m[key]; ok {
+			// an entry already exists
+			return m
+		}
+	}
+	return Set(m, key, v)
+}

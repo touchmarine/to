@@ -55,8 +55,6 @@ func main() {
 		os.Exit(2)
 	}
 
-	//root = transformer.Apply(root, cfg.DefaultTransformers())
-
 	var transformers []transformer.Transformer
 
 	paragraphGroups := cfg.GroupsByType("paragraph")
@@ -78,7 +76,6 @@ func main() {
 	transformers = append(transformers, group.Transformer{listMap})
 
 	stickyGroups := cfg.GroupsByType("sticky")
-	//stickyMap = config.ToStickyMap(stickyGroups)
 	stickyMap := sticky.Map{}
 	for name, g := range stickyGroups {
 		stickyMap[g.Element] = sticky.Sticky{
@@ -107,8 +104,6 @@ func main() {
 
 		tmpl := template.New(format)
 		tmpl.Funcs(totemplate.Funcs(tmpl, global))
-		//tmpl.Funcs(totemplate.Functions)
-		//tmpl.Funcs(totemplate.RenderFunctions(tmpl, data))
 		template.Must(cfg.ParseTemplates(tmpl, format))
 		if err := tmpl.ExecuteTemplate(os.Stdout, "root", root); err != nil {
 			panic(err)
