@@ -10,7 +10,9 @@ Container()(
 					)
 				),
 				Escaped(MB)(
-					b
+					Text(MT)(
+						b
+					)
 				)
 			)
 		)

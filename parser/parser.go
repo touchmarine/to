@@ -58,7 +58,7 @@ type parser struct {
 	blockKeys      []string           // length-sorted (longest first) blockMap keys
 	leaf           string             // leaf element name
 	inlineMap      map[string]Element // registered inline elements by delimiter
-	text           string             // text element name
+	textElement    string             // text element name
 	specialEscapes []string           // delimiters that do not start with a punctuation
 	matcherMap     matcher.Map        // registered matchers by name
 
@@ -98,7 +98,7 @@ func (p *parser) elements(elements Elements) {
 		} else if node.IsInline(e.Type) {
 			switch e.Type {
 			case node.TypeText:
-				p.text = e.Name
+				p.textElement = e.Name
 			default:
 				r, _ := utf8.DecodeRuneInString(e.Delimiter)
 				if !isPunct(r) {
@@ -303,11 +303,14 @@ func (p *parser) parseVerbatimWalled(name string) *node.Node {
 		lines = append(lines, string(line))
 	}
 
-	return &node.Node{
+	n := &node.Node{
 		Element: name,
 		Type:    node.TypeVerbatimWalled,
-		Value:   strings.Join(lines, "\n"),
 	}
+	if s := strings.Join(lines, "\n"); s != "" {
+		p.setTextContent(n, s)
+	}
+	return n
 }
 
 func (p *parser) parseHanging(name, delim string) *node.Node {
@@ -547,14 +550,17 @@ func (p *parser) parseFenced(name string) *node.Node {
 		p.parseSpacing()
 	}
 
-	return &node.Node{
+	n := &node.Node{
 		Element: name,
 		Type:    node.TypeFenced,
 		Data: node.Data{
 			KeyOpeningText: openingText,
 		},
-		Value: strings.Join(lines, "\n"),
 	}
+	if text := strings.Join(lines, "\n"); text != "" {
+		p.setTextContent(n, text)
+	}
+	return n
 }
 
 func (p *parser) consumeLine() []byte {
@@ -642,11 +648,14 @@ func (p *parser) parseVerbatimLine(name, delim string) *node.Node {
 	p.parseLead()
 	p.parseSpacing()
 
-	return &node.Node{
+	n := &node.Node{
 		Element: name,
 		Type:    node.TypeVerbatimLine,
-		Value:   string(content),
 	}
+	if len(content) > 0 {
+		p.setTextContent(n, string(content))
+	}
+	return n
 }
 
 func (p *parser) parseLeaf(name string) *node.Node {
@@ -711,7 +720,7 @@ func (p *parser) parseInline() (*node.Node, bool) {
 		}
 	}
 
-	return p.parseText(p.text)
+	return p.parseText(p.textElement)
 }
 
 func (p *parser) isEscape() bool {
@@ -872,11 +881,14 @@ func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 		defer p.printf("return %q", txt)
 	}
 
-	return &node.Node{
+	n := &node.Node{
 		Element: name,
 		Type:    node.TypeEscaped,
-		Value:   string(txt),
-	}, cont
+	}
+	if len(txt) > 0 {
+		p.setTextContent(n, string(txt))
+	}
+	return n, cont
 }
 
 // cmpRunes determines whether a and b have the same values.
@@ -945,11 +957,22 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (*node.Node,
 		p.next()
 	}
 
-	return &node.Node{
+	n := &node.Node{
 		Element: name,
 		Type:    node.TypePrefixed,
-		Value:   string(b.Bytes()),
-	}, true
+	}
+	if text := string(b.Bytes()); text != "" {
+		p.setTextContent(n, text)
+	}
+	return n, true
+}
+
+func (p parser) setTextContent(n *node.Node, text string) {
+	n.AppendChild(&node.Node{
+		Element: p.textElement,
+		Type:    node.TypeText,
+		Value:   text,
+	})
 }
 
 func (p *parser) parseText(name string) (*node.Node, bool) {

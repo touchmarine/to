@@ -2,8 +2,10 @@ Container()(
 	Walled(B)(
 		Container()(
 			VerbatimWalled(A)(
-				a
+				Text(MT)(
+					a
 b
+				)
 			)
 		)
 	)

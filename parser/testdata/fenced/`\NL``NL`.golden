@@ -1,6 +1,8 @@
 Container()(
 	Fenced(A)<{"openingText":""}>(
-		``
+		Text(MT)(
+			``
 `
+		)
 	)
 )

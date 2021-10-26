@@ -1,7 +1,9 @@
 Container()(
 	Container(SA)(
 		VerbatimWalled(A)(
-			a
+			Text(MT)(
+				a
+			)
 		),
 		Container(SB)(
 			Leaf(T)(
@@ -12,7 +14,9 @@ Container()(
 				)
 			),
 			VerbatimWalled(B)(
-				c
+				Text(MT)(
+					c
+				)
 			)
 		)
 	)

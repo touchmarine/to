@@ -176,8 +176,10 @@ func (n Node) TextContent() string {
 
 func (n Node) textContent(w io.StringWriter) {
 	if n.Value != "" && n.FirstChild != nil {
-		panic(fmt.Sprintf("node: node has both data and children (%s)", n))
-	} else if n.Value != "" {
+		panic(fmt.Sprintf("node: node has both value and children (%s)", n))
+	}
+
+	if n.Value != "" {
 		lines := strings.Split(n.Value, "\n")
 		isFilled := false
 		for _, line := range lines {

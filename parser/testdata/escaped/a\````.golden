@@ -5,7 +5,9 @@ Container()(
 				a`
 			),
 			Escaped(MA)(
-				`
+				Text(MT)(
+					`
+				)
 			)
 		)
 	)

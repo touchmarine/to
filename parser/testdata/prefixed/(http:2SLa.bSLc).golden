@@ -5,7 +5,9 @@ Container()(
 				(
 			),
 			Prefixed(MB)(
-				a.b/c
+				Text(MT)(
+					a.b/c
+				)
 			),
 			Text(MT)(
 				)

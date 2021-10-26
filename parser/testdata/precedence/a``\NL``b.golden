@@ -5,7 +5,9 @@ Container()(
 				a
 			),
 			Escaped(MB)(
-				 ``b
+				Text(MT)(
+					 ``b
+				)
 			)
 		)
 	)

@@ -5,7 +5,9 @@ Container()(
 				a
 			),
 			Escaped(MB)(
-				[
+				Text(MT)(
+					[
+				)
 			)
 		)
 	)

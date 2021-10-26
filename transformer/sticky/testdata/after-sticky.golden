@@ -1,8 +1,12 @@
 Container()(
 	VerbatimWalled(B)(
-		a
+		Text(MT)(
+			a
+		)
 	),
 	VerbatimWalled(B)(
-		b
+		Text(MT)(
+			b
+		)
 	)
 )

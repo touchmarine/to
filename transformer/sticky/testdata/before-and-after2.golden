@@ -1,10 +1,14 @@
 Container()(
 	VerbatimWalled(A)(
-		a
+		Text(MT)(
+			a
+		)
 	),
 	Container(SA)(
 		VerbatimWalled(A)(
-			b
+			Text(MT)(
+				b
+			)
 		),
 		Container(SB)(
 			Leaf(T)(
@@ -15,11 +19,15 @@ Container()(
 				)
 			),
 			VerbatimWalled(B)(
-				d
+				Text(MT)(
+					d
+				)
 			)
 		)
 	),
 	VerbatimWalled(B)(
-		e
+		Text(MT)(
+			e
+		)
 	)
 )

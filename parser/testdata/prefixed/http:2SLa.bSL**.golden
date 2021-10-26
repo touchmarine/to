@@ -2,7 +2,9 @@ Container()(
 	Leaf(T)(
 		Container()(
 			Prefixed(MB)(
-				a.b/
+				Text(MT)(
+					a.b/
+				)
 			),
 			Uniform(MC)(
 				Container()()

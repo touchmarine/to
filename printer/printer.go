@@ -12,8 +12,6 @@ import (
 	"github.com/touchmarine/to/parser"
 )
 
-const trace = false
-
 // Elements maps Elements to Names.
 type Elements map[string]Element
 
@@ -84,37 +82,6 @@ func (p printer) searchFirstPreviousPrintableSibling(n *node.Node) *node.Node {
 //   	-a
 //   	> 	<- as if it was not here
 //   	-b
-//
-// Table of number of newlines between blocks:
-//
-// previous siblings                                                       | relationship          | newlines
-// ------------------------------------------------------------------------|-----------------------|---------
-// no previous sibling/no printable previous sibling                       | any                   | 0
-// printable immediate previous sibling                                    | in group              | 1
-// printable immediate previous sibling                                    | not in group          | 2
-// non printable immediate previous sibling and printable previous sibling | same previous sibling | 1
-// non printable immediate previous sibling and printable previous sibling | in group              | 1
-// non printable immediate previous sibling and printable previous sibling | not in group          | 2
-//
-// print normally places two lines between blocks. It places only one line:
-//
-//
-// Blocks are separated by two lines, except
-// - in a group like list or sticky
-//   	-a
-//      -b
-// - or in a group interrupted by an empty block:
-//   	-a
-//   	> 	<-- treat it as if it is not here
-//   	-b
-// they are placed on one line.
-//
-//
-// current block relationship                    | newlines
-// ----------------------------------------------|---------
-// non-printable immediate previous sibling and same non-immediate printable previous sibling | 1
-// in group like list or sticky                  | 1
-// not in group                                  | 2
 func (p printer) print(w writer, n *node.Node) error {
 	if n.Type == node.TypeError {
 		return fmt.Errorf("error node (%s)", n)
@@ -141,50 +108,6 @@ func (p printer) print(w writer, n *node.Node) error {
 		}
 	}
 
-	//if (n.IsBlock() || n.Type == node.TypeContainer) && p.hasPreviousPrintableSibling(n) {
-	//	if n.Type == node.TypeContainer && n.Element != "" ||
-	//		n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
-	//		// is or is in a transformer node like sticky or group
-	//		p.newline(w)
-	//	} else {
-	//		p.newline(w)
-	//		p.writePrefix(w, withoutTrailingSpacing)
-	//		p.newline(w)
-	//	}
-	//}
-
-	//if n.IsBlock() || n.Type == node.TypeContainer {
-	//	if n.PreviousSibling != nil && p.hasPrintableContent(n.PreviousSibling) {
-	//		// has immediate printable previous sibling
-	//		if n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
-	//			// in a group like list or sticky
-	//			p.newline(w)
-	//		} else {
-	//			p.newline(w)
-	//			p.writePrefix(w, withoutTrailingSpacing)
-	//			p.newline(w)
-	//		}
-	//	} else if x := p.searchFirstPreviousPrintableSibling(n); x != nil {
-	//		// has printable previous sibling but not an immediate
-	//		// printable previous sibling
-	//		//
-	//		// example where "-" = list item and ">" = blockquote:
-	//		// 	-a
-	//		// 	>
-	//		// 	-b	<-- we (n) are here
-	//		if x.Type == n.Type && x.Element == n.Element {
-	//			// same previous sibling, treat it as if
-	//			// immediate previous sibling was not there
-	//			p.newline(w)
-	//		} else {
-	//			// different previous sibling
-	//			p.newline(w)
-	//			p.writePrefix(w, withoutTrailingSpacing)
-	//			p.newline(w)
-	//		}
-	//	}
-	//}
-
 	if n.IsBlock() {
 		p.writePrefix(w, withTrailingSpacing)
 	}
@@ -199,9 +122,9 @@ func (p printer) print(w writer, n *node.Node) error {
 		}
 	case node.TypeVerbatimLine:
 		w.WriteString(e.Delimiter)
-		if n.Value != "" {
+		if text := n.TextContent(); text != "" {
 			w.WriteString(" ")
-			w.WriteString(strings.Trim(n.Value, " \t"))
+			w.WriteString(strings.Trim(text, " \t"))
 		}
 	case node.TypeWalled:
 		defer p.addPrefix(e.Delimiter)()
@@ -223,7 +146,7 @@ func (p printer) print(w writer, n *node.Node) error {
 	case node.TypeVerbatimWalled:
 		defer p.addPrefix(e.Delimiter)()
 		w.WriteString(e.Delimiter)
-		lines := strings.Split(n.Value, "\n")
+		lines := strings.Split(n.TextContent(), "\n")
 		lines = removeBlankLines(lines)
 		for _, line := range lines {
 			w.WriteString(" ")
@@ -279,7 +202,8 @@ func (p printer) print(w writer, n *node.Node) error {
 	case node.TypeFenced:
 		// opening delimiter
 		w.WriteString(e.Delimiter)
-		needsEscape := fencedNeedsEscape(n.Value, e.Delimiter)
+		text := n.TextContent()
+		needsEscape := fencedNeedsEscape(text, e.Delimiter)
 		if needsEscape {
 			w.WriteString(`\`)
 		}
@@ -295,8 +219,8 @@ func (p printer) print(w writer, n *node.Node) error {
 		p.newline(w)
 		p.writePrefix(w, withTrailingSpacing)
 
-		if n.Value != "" {
-			lines := strings.Split(n.Value, "\n")
+		if text != "" {
+			lines := strings.Split(text, "\n")
 			for i, line := range lines {
 				if i > 0 {
 					p.newline(w)
@@ -344,14 +268,15 @@ func (p printer) print(w writer, n *node.Node) error {
 		w.WriteString(counter + counter)
 
 	case node.TypeEscaped:
-		needsEscape := strings.Contains(n.Value, e.Delimiter)
+		text := n.TextContent()
+		needsEscape := strings.Contains(text, e.Delimiter)
 
 		w.WriteString(e.Delimiter + e.Delimiter)
 		if needsEscape {
 			w.WriteString(`\`)
 		}
 
-		w.WriteString(n.Value)
+		w.WriteString(text)
 
 		// closing delimiter
 		if p.hasEscapeClashingElementAtEnd(n) {
@@ -369,7 +294,7 @@ func (p printer) print(w writer, n *node.Node) error {
 
 	case node.TypePrefixed:
 		w.WriteString(e.Delimiter)
-		w.WriteString(n.Value)
+		w.WriteString(n.TextContent())
 	case node.TypeText:
 		w.WriteString(p.text(n))
 

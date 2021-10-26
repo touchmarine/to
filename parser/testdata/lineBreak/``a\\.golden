@@ -2,7 +2,9 @@ Container()(
 	Leaf(T)(
 		Container()(
 			Escaped(MC)(
-				a\\
+				Text(MT)(
+					a\\
+				)
 			)
 		)
 	)

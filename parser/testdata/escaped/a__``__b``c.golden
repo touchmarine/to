@@ -7,7 +7,9 @@ Container()(
 			Uniform(MC)(
 				Container()(
 					Escaped(MA)(
-						__b
+						Text(MT)(
+							__b
+						)
 					),
 					Text(MT)(
 						c

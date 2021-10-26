@@ -12,7 +12,9 @@ Container()(
 					Container()()
 				),
 				Escaped(MB)(
-					}}
+					Text(MT)(
+						}}
+					)
 				)
 			)
 		)
