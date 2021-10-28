@@ -1,4 +1,4 @@
-// package aggregator contains functions and types related to aggregators.
+// package aggregator contains functions and types related to aggregates.
 //
 // Aggregators traverse the node tree and aggregate (collect) data we are
 // interested in. For example, we use the sequential number aggregator to
@@ -14,8 +14,8 @@ import (
 	"github.com/touchmarine/to/node"
 )
 
-// AggregatorMap=map["aggregatorName"]["aggregateName"]Aggregator
-type AggregatorMap map[string]map[string]Aggregator
+// Aggregators maps Aggregators by name.
+type Aggregators map[string]Aggregator
 
 // Aggregator is an object that aggregates (collects) nodes.
 type Aggregator interface {
@@ -31,29 +31,19 @@ func (a AggregatorFunc) Aggregate(n *node.Node) Aggregate {
 	return a(n)
 }
 
-// AggregateMap=map["aggregatorName"]map["aggregateName"]Aggregate
-//
-// For example:
-// 	aggregatorName="sequentialNumbers",
-// 	aggregateName="numberedHeadings" and
-// 	Aggregate is the result.
-type AggregateMap map[string]map[string]Aggregate
+// Aggregates maps Aggregates by name.
+type Aggregates map[string]Aggregate
 
 // Aggregate is an aggregate of data we are interested in.
 type Aggregate interface {
 	AnAggregate() // dummy method to avoid type errors
 }
 
-// Apply applies the given aggregators to the given nodes.
-func Apply(n *node.Node, aggregatorMap AggregatorMap) AggregateMap {
-	m := AggregateMap{}
-	for namea, ma := range aggregatorMap {
-		if m[namea] == nil {
-			m[namea] = map[string]Aggregate{}
-		}
-		for nameb, aggregator := range ma {
-			m[namea][nameb] = aggregator.Aggregate(n)
-		}
+// Apply applies the given aggregators and returns the resulting aggregates.
+func Apply(n *node.Node, aggregators Aggregators) Aggregates {
+	m := Aggregates{}
+	for name, a := range aggregators {
+		m[name] = a.Aggregate(n)
 	}
 	return m
 }

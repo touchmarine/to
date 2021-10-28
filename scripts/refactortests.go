@@ -73,9 +73,9 @@ func main() {
 	}
 }
 
-// clashMap is used to check for duplicates.
+// clashes is used to check for duplicates.
 // map["testName"]map["filename"]whateverBool
-var clashMap = map[string]map[string]bool{}
+var clashes = map[string]map[string]bool{}
 
 // addTest writes a test case as an input file.
 func addTest(name, testcase string) {
@@ -91,12 +91,12 @@ func addTest(name, testcase string) {
 	}
 
 	filename := filepath.Join(dir, normalize(testcase)+".input")
-	if _, ok := clashMap[name][filename]; ok {
+	if _, ok := clashes[name][filename]; ok {
 		log.Fatalf("found duplicate; testname=%s case=%s filename=%s", name, testcase, filename)
 	}
 
-	clashMap[name] = map[string]bool{}
-	clashMap[name][filename] = true
+	clashes[name] = map[string]bool{}
+	clashes[name][filename] = true
 
 	if trace {
 		log.Printf("write %s", filename)

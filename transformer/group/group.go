@@ -8,7 +8,7 @@ import (
 type Map map[string]string
 
 type Transformer struct {
-	GroupMap Map
+	Groups Map
 }
 
 func (t Transformer) Transform(n *node.Node) *node.Node {
@@ -17,7 +17,7 @@ func (t Transformer) Transform(n *node.Node) *node.Node {
 		name, start, end := "", -1, 0
 
 		for i, n := range nodes {
-			gname, found := t.GroupMap[n.Element]
+			gname, found := t.Groups[n.Element]
 
 			if name != "" {
 				// a group is open

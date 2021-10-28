@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"html/template"
 
-	"github.com/touchmarine/to/aggregator"
-	sequentialnumberag "github.com/touchmarine/to/aggregator/sequentialnumber"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
@@ -27,12 +25,41 @@ func init() {
 }
 
 type Config struct {
-	Root struct {
-		Templates map[string]string `json:"templates"`
-	} `json:"root"`
+	Root       Root       `json:"root"`
 	Elements   Elements   `json:"elements"`
 	Groups     Groups     `json:"groups"`
 	Aggregates Aggregates `json:"aggregates"`
+}
+
+// ParseTemplates parses root, element, and group templates as template bodies
+// for t. It parses templates that match the given name.
+func (c Config) ParseTemplates(t *template.Template, name string) (*template.Template, error) {
+	if _, err := c.Root.parseTemplates(t, name); err != nil {
+		return nil, err
+	}
+	if _, err := c.Elements.parseTemplates(t, name); err != nil {
+		return nil, err
+	}
+	if _, err := c.Groups.parseTemplates(t, name); err != nil {
+		return nil, err
+	}
+	return t, nil
+}
+
+// Root holds data related to the root node.
+type Root struct {
+	Templates map[string]string `json:"templates"`
+}
+
+func (r Root) parseTemplates(t *template.Template, name string) (*template.Template, error) {
+	s, ok := r.Templates[name]
+	if !ok {
+		return nil, fmt.Errorf("root template not found (%s)", name)
+	}
+	if _, err := t.New("root").Parse(s); err != nil {
+		return nil, err
+	}
+	return t, nil
 }
 
 // Elements maps Elements by name.
@@ -46,6 +73,48 @@ type Element struct {
 	Templates   map[string]string `json:"templates"`
 }
 
+// ParserElemetns returns the elements converted to parser.Elements.
+func (es Elements) ParserElements() parser.Elements {
+	m := parser.Elements{}
+	for name, e := range es {
+		m[name] = parser.Element{
+			Name:      name,
+			Type:      e.Type,
+			Delimiter: e.Delimiter,
+			Matcher:   e.Matcher,
+		}
+	}
+	return m
+}
+
+// PrinterElements returns the elements converted to printer.Elements.
+func (es Elements) PrinterElements() printer.Elements {
+	m := printer.Elements{}
+	for name, e := range es {
+		m[name] = printer.Element{
+			Name:        name,
+			Type:        e.Type,
+			Delimiter:   e.Delimiter,
+			Matcher:     e.Matcher,
+			DoNotRemove: e.DoNotRemove,
+		}
+	}
+	return m
+}
+
+func (es Elements) parseTemplates(t *template.Template, name string) (*template.Template, error) {
+	for n, e := range es {
+		s, ok := e.Templates[name]
+		if !ok {
+			return nil, fmt.Errorf("element template not found (%s.%s)", n, name)
+		}
+		if _, err := t.New(n).Parse(s); err != nil {
+			return nil, err
+		}
+	}
+	return t, nil
+}
+
 // Groups maps Groups by name.
 type Groups map[string]Group
 
@@ -57,97 +126,23 @@ type Group struct {
 	Templates map[string]string `json:"templates"`
 }
 
-type Aggregates struct {
-	SequentialNumbers map[string]struct {
-		Elements []string `json:"elements"`
-	} `json:"sequentialNumbers"`
-}
-
-func (c Config) ParserElements() parser.Elements {
-	return ToParserElements(c.Elements)
-}
-
-func (c Config) PrinterElements() printer.Elements {
-	return ToPrinterElements(c.Elements)
-}
-
-func (c Config) GroupsByType(t string) Groups {
-	m := Groups{}
-	for name, g := range c.Groups {
-		if g.Type == t {
-			m[name] = g
-		}
-	}
-	return m
-}
-
-func (c Config) ParseTemplates(target *template.Template, templateName string) (*template.Template, error) {
-	rootTmpl, ok := c.Root.Templates[templateName]
-	if !ok {
-		return nil, fmt.Errorf("root %s template not found", templateName)
-	}
-	if _, err := target.New("root").Parse(rootTmpl); err != nil {
-		return nil, err
-	}
-
-	for name, element := range c.Elements {
-		tmpl, ok := element.Templates[templateName]
+func (gs Groups) parseTemplates(t *template.Template, name string) (*template.Template, error) {
+	for n, g := range gs {
+		s, ok := g.Templates[name]
 		if !ok {
-			return nil, fmt.Errorf("element template not found (%s %s)", name, templateName)
+			return nil, fmt.Errorf("group template not found (%s.%s)", n, name)
 		}
-		if _, err := target.New(name).Parse(tmpl); err != nil {
+		if _, err := t.New(n).Parse(s); err != nil {
 			return nil, err
 		}
 	}
-
-	for name, group := range c.Groups {
-		tmpl, ok := group.Templates[templateName]
-		if !ok {
-			return nil, fmt.Errorf("group template not found (%s %s)", name, templateName)
-		}
-		if _, err := target.New(name).Parse(tmpl); err != nil {
-			return nil, err
-		}
-	}
-
-	return target, nil
+	return t, nil
 }
 
-func (c Config) DefaultAggregators() map[string]map[string]aggregator.Aggregator {
-	m := map[string]map[string]aggregator.Aggregator{}
-	for n, a := range c.Aggregates.SequentialNumbers {
-		if m["sequentialNumbers"] == nil {
-			m["sequentialNumbers"] = map[string]aggregator.Aggregator{}
-		}
+// Aggregates maps Aggregates by name.
+type Aggregates map[string]Aggregate
 
-		m["sequentialNumbers"][n] = sequentialnumberag.Aggregator{a.Elements}
-	}
-	return m
-}
-
-func ToParserElements(elements Elements) parser.Elements {
-	m := parser.Elements{}
-	for name, e := range elements {
-		m[name] = parser.Element{
-			Name:      name,
-			Type:      e.Type,
-			Delimiter: e.Delimiter,
-			Matcher:   e.Matcher,
-		}
-	}
-	return m
-}
-
-func ToPrinterElements(elements Elements) printer.Elements {
-	m := printer.Elements{}
-	for name, e := range elements {
-		m[name] = printer.Element{
-			Name:        name,
-			Type:        e.Type,
-			Delimiter:   e.Delimiter,
-			Matcher:     e.Matcher,
-			DoNotRemove: e.DoNotRemove,
-		}
-	}
-	return m
+type Aggregate struct {
+	Type     string   `json:"type"`
+	Elements []string `json:"elements"`
 }

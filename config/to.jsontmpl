@@ -158,7 +158,7 @@
 				"html": '''
 <div {{- template "HTMLAttributes" .}}>
 	<p>{{template "children" .}}</p>
-	{{template "grouper" global.aggregates.sequentialNumbers.numberedHeadings.Group}}
+	{{template "grouper" global.aggregates.numberedHeadings.Group}}
 </div>
 
 {{define "grouper"}}
@@ -422,10 +422,9 @@
 		}
 	},
 	"aggregates": {
-		"sequentialNumbers": {
-			"numberedHeadings": {
-				"elements": ["NumberedHeading"]
-			}
+		"numberedHeadings": {
+			"type": "sequentialNumber",
+			"elements": ["NumberedHeading"]
 		}
 	}
 }

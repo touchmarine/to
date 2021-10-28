@@ -108,7 +108,7 @@
 			"delimiter": ".toc",
 			"doNotRemove": true,
 			"templates": {
-				"html": "<div {{- template \"HTMLAttributes\" .}}>\n\t<p>{{template \"children\" .}}</p>\n\t{{template \"grouper\" global.aggregates.sequentialNumbers.numberedHeadings.Group}}\n</div>\n\n{{define \"grouper\"}}\n\t<ul>\n\t\t{{range .}}\n\t\t\t{{if eq (printf \"%T\" .) \"sequentialnumber.group\"}}\n\t\t\t\t{{template \"grouper\" .}}\n\t\t\t{{else}}\n\t\t\t\t<li>\n\t\t\t\t\t<a href=\"#{{.ID}}\">{{.SequentialNumber}} {{.Text}}</a>\n\t\t\t\t</li>\n\t\t\t{{end}}\n\t\t{{end}}\n\t</ul>\n{{end}}\n"
+				"html": "<div {{- template \"HTMLAttributes\" .}}>\n\t<p>{{template \"children\" .}}</p>\n\t{{template \"grouper\" global.aggregates.numberedHeadings.Group}}\n</div>\n\n{{define \"grouper\"}}\n\t<ul>\n\t\t{{range .}}\n\t\t\t{{if eq (printf \"%T\" .) \"sequentialnumber.group\"}}\n\t\t\t\t{{template \"grouper\" .}}\n\t\t\t{{else}}\n\t\t\t\t<li>\n\t\t\t\t\t<a href=\"#{{.ID}}\">{{.SequentialNumber}} {{.Text}}</a>\n\t\t\t\t</li>\n\t\t\t{{end}}\n\t\t{{end}}\n\t</ul>\n{{end}}\n"
 			}
 		},
 		"BlockComment": {
@@ -291,10 +291,9 @@
 		}
 	},
 	"aggregates": {
-		"sequentialNumbers": {
-			"numberedHeadings": {
-				"elements": ["NumberedHeading"]
-			}
+		"numberedHeadings": {
+			"type": "sequentialNumber",
+			"elements": ["NumberedHeading"]
 		}
 	}
 }

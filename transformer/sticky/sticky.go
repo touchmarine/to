@@ -16,7 +16,7 @@ type Sticky struct {
 }
 
 type Transformer struct {
-	StickyMap Map
+	Stickies Map
 }
 
 // Transform recognizes sticky patterns and creates Sticky nodes. Note that
@@ -37,7 +37,7 @@ func (t Transformer) Transform(n *node.Node) *node.Node {
 func (t Transformer) transform(n *node.Node) []func() {
 	var ops []func()
 	for s := n; s != nil; s = s.NextSibling {
-		if sticky, ok := t.StickyMap[s.Element]; ok {
+		if sticky, ok := t.Stickies[s.Element]; ok {
 			var x *node.Node
 			if sticky.After {
 				x = s.PreviousSibling
@@ -45,7 +45,7 @@ func (t Transformer) transform(n *node.Node) []func() {
 				x = s.NextSibling
 			}
 			if x != nil {
-				if _, ok := t.StickyMap[x.Element]; !ok && (sticky.Target == "" || sticky.Target != "" && sticky.Target == x.Element) {
+				if _, ok := t.Stickies[x.Element]; !ok && (sticky.Target == "" || sticky.Target != "" && sticky.Target == x.Element) {
 					ops = append(ops, makeDo(sticky, s, x))
 				}
 			}

@@ -1127,7 +1127,7 @@ func runPrint(t *testing.T, elements config.Elements, transformers []transformer
 	t.Helper()
 
 	r := strings.NewReader(in)
-	root, err := parser.Parse(r, config.ToParserElements(elements))
+	root, err := parser.Parse(r, elements.ParserElements())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1142,7 +1142,7 @@ func runPrint(t *testing.T, elements config.Elements, transformers []transformer
 	}
 
 	var b strings.Builder
-	if err := printer.Fprint(&b, config.ToPrinterElements(elements), root); err != nil {
+	if err := printer.Fprint(&b, elements.PrinterElements(), root); err != nil {
 		t.Fatal(err)
 	}
 	return b.String()

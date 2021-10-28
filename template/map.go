@@ -4,13 +4,13 @@ import (
 	"strings"
 )
 
-func MakeGlobalMapFunction(global map[string]interface{}) func() map[string]interface{} {
-	globalMap := map[string]interface{}{}
-	if global != nil {
-		globalMap = global
+func MakeGlobalMapFunction(base map[string]interface{}) func() map[string]interface{} {
+	m := base
+	if m == nil {
+		m = map[string]interface{}{}
 	}
 	return func() map[string]interface{} {
-		return globalMap
+		return m
 	}
 }
 

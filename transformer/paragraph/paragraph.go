@@ -8,13 +8,13 @@ import (
 type Map map[node.Type]string
 
 type Transformer struct {
-	ParagraphMap Map
+	Paragraphs Map
 }
 
 func (t Transformer) Transform(n *node.Node) *node.Node {
 	var ops []func()
 	walk(n, func(n *node.Node) bool {
-		if name, ok := t.ParagraphMap[n.Type]; ok && (n.PreviousSibling != nil || n.NextSibling != nil) {
+		if name, ok := t.Paragraphs[n.Type]; ok && (n.PreviousSibling != nil || n.NextSibling != nil) {
 			ops = append(ops, func() {
 				p := &node.Node{
 					Element: name,
