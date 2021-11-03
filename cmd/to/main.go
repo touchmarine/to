@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-	"log"
 	"os"
 
 	"github.com/touchmarine/to/aggregator"
@@ -22,63 +21,121 @@ import (
 	"github.com/touchmarine/to/transformer/sticky"
 )
 
-func main() {
-	fmtCmd := flag.NewFlagSet("format", flag.ExitOnError)
-	configPath := fmtCmd.String("config", "", "custom config")
-	stringify := fmtCmd.Bool("stringify", false, "stringify")
+const version = "1.0.0-beta"
 
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "no format")
-		os.Exit(1)
+func usage() {
+	fmt.Fprintln(os.Stderr, "usage: to [options] format")
+	fmt.Fprintln(os.Stderr, "Run 'to -help' for details.")
+	os.Exit(2)
+}
+
+func main() {
+	var (
+		conf        = flag.String("config", "", "base configuration file")
+		stringify   = flag.Bool("stringify", false, "print nodes to stdout (debugging)")
+		showHelp    = flag.Bool("help", false, "print help")
+		showVersion = flag.Bool("version", false, "print version")
+	)
+	var overrides []string
+	flag.Func("config-override", "configuration files that override the base file", func(s string) error {
+		overrides = append(overrides, s)
+		return nil
+	})
+	flag.Usage = usage
+	flag.Parse()
+
+	if *showHelp {
+		fmt.Fprint(os.Stdout, `usage: to [options] format
+
+Touch converts Touch formatted text to the given format. It reads the
+text from standard input and writes the converted text to standard
+output.
+
+Options:
+	-config          base configuration file
+	-config-override configuration files that override the base file
+	-stringify       print nodes to stdout (debugging)
+	-help            print help
+	-version         print version
+`)
+		return
+	}
+	if *showVersion {
+		fmt.Fprintf(os.Stdout, "to %s\n", version)
+		return
 	}
 
-	fmtCmd.Parse(os.Args[2:])
-
-	format := os.Args[1]
+	args := flag.Args()
+	if len(args) < 1 {
+		usage()
+		return
+	}
 
 	var cfg *config.Config
-	if *configPath != "" {
-		f, err := os.Open(*configPath)
+	if *conf != "" {
+		f, err := os.Open(*conf)
 		if err != nil {
-			log.Fatal(err)
+			fmt.Fprintf(os.Stderr, "cannot open config file (%s): %v\n", *conf, err)
+			os.Exit(2)
 		}
-
 		if err := json.NewDecoder(f).Decode(&cfg); err != nil {
-			log.Fatal(err)
+			fmt.Fprintf(os.Stderr, "cannot decode json from config file (%s): %v\n", *conf, err)
+			os.Exit(2)
 		}
 	} else {
 		cfg = config.Default
 	}
 
+	for _, p := range overrides {
+		var o *config.Config
+		f, err := os.Open(p)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "cannot open config file (%s): %v\n", *conf, err)
+			os.Exit(2)
+		}
+		if err := json.NewDecoder(f).Decode(&o); err != nil {
+			fmt.Fprintf(os.Stderr, "cannot decode json from config file (%s): %v\n", *conf, err)
+			os.Exit(2)
+		}
+		config.ShallowMerge(cfg, o)
+	}
+
 	root, err := parser.Parse(os.Stdin, cfg.Elements.ParserElements())
 	if err != nil {
 		parser.PrintError(os.Stderr, err)
-		os.Exit(2)
+		os.Exit(1)
 	}
 
 	var transformers []transformer.Transformer
 	paragraphs := paragraph.Map{}
 	lists := group.Map{}
 	stickies := sticky.Map{}
-	for n, g := range cfg.Groups {
-		switch g.Type {
+	for n, e := range cfg.Elements {
+		var x node.Type
+		if err := (&x).UnmarshalText([]byte(e.Type)); err == nil {
+			// is a node element (can't be a group)
+			continue
+		}
+
+		switch e.Type {
 		case "paragraph":
 			var t node.Type
-			if err := (&t).UnmarshalText([]byte(g.Option)); err != nil {
-				log.Fatal(err)
+			if err := (&t).UnmarshalText([]byte(e.Option)); err != nil {
+				fmt.Fprintf(os.Stderr, "invalid paragraph option (%s)\n", e.Option)
+				os.Exit(2)
 			}
 			paragraphs[t] = n
 		case "list":
-			lists[g.Element] = n
+			lists[e.Element] = n
 		case "sticky":
-			stickies[g.Element] = sticky.Sticky{
+			stickies[e.Element] = sticky.Sticky{
 				Name:   n,
-				Target: g.Target,
-				After:  g.Option == "after",
+				Target: e.Target,
+				After:  e.Option == "after",
 			}
 		default:
-			fmt.Fprintf(os.Stderr, "unexpected group type %s\n", g.Type)
-			os.Exit(1)
+			fmt.Fprintf(os.Stderr, "unsupported group type (%s)\n", e.Type)
+			os.Exit(2)
 		}
 	}
 	transformers = append(transformers, paragraph.Transformer{paragraphs})
@@ -91,7 +148,7 @@ func main() {
 		node.Fprint(os.Stdout, root)
 	}
 
-	if format == "fmt" {
+	if format := args[0]; format == "fmt" {
 		printer.Fprint(os.Stdout, cfg.Elements.PrinterElements(), root)
 	} else {
 		aggregators := aggregator.Aggregators{}
@@ -100,8 +157,8 @@ func main() {
 			case "sequentialNumber":
 				aggregators[n] = seqnumaggregator.Aggregator{a.Elements}
 			default:
-				fmt.Fprintf(os.Stderr, "unexpected aggregate type %s\n", a.Type)
-				os.Exit(1)
+				fmt.Fprintf(os.Stderr, "unsupported aggregate type (%s)\n", a.Type)
+				os.Exit(2)
 			}
 		}
 		aggregates := aggregator.Apply(root, aggregators)
@@ -113,7 +170,8 @@ func main() {
 		tmpl.Funcs(totemplate.Funcs(tmpl, global))
 		template.Must(cfg.ParseTemplates(tmpl, format))
 		if err := tmpl.ExecuteTemplate(os.Stdout, "root", root); err != nil {
-			panic(err)
+			fmt.Fprintf(os.Stderr, "execute template failed ('root'): %v\n", err)
+			os.Exit(1)
 		}
 	}
 }

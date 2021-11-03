@@ -1,24 +1,20 @@
 {
-	"root": {
-		"templates": {
-			"html": '''
+	"templates": {
+		"html": '''
 <html>
 <body>
-{{range $c := elementChildren .}}
-	{{dynamicTemplate $c.Element $c}}
-{{end}}
+{{template "children" .}}
 </body>
 </html>
 
 {{define "HTMLAttributes"}}{{with .Data}}{{with .Attributes}} {{attributesToHTML .}}{{end}}{{end}}{{end}}
 {{define "children"}}
-	{{- range $c := elementChildren . -}}
-		{{- dynamicTemplate $c.Element $c -}}
-	{{- end -}}
+{{- range $c := elementChildren . -}}
+	{{- dynamicTemplate $c.Element $c -}}
+{{- end -}}
 {{end}}
 '''
-		}	
-	},
+	},	
 	"elements": {
 		"Title": {
 			"type": "hanging",
@@ -281,9 +277,8 @@
 			"templates": {
 				"html": "{{.Value}}"
 			}
-		}
-	},
-	"groups": {
+		},
+
 		"Paragraph": {
 			"type": "paragraph",
 			"option": "leaf",
@@ -413,11 +408,10 @@
 			"templates": {
 				"html": '''
 {{$group := .FirstChild}}
-{{$link  := .LastChild}}
+{{$link  := .LastChild -}}
 <a href="{{$link.TextContent}}">
-	{{dynamicTemplate $group.Element $group}}
-</a>
-'''
+	{{- dynamicTemplate $group.Element $group -}}
+</a>'''
 			}
 		}
 	},

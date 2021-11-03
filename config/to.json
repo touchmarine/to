@@ -1,9 +1,7 @@
 {
-	"root": {
-		"templates": {
-			"html": "<html>\n<body>\n{{range $c := elementChildren .}}\n\t{{dynamicTemplate $c.Element $c}}\n{{end}}\n</body>\n</html>\n\n{{define \"HTMLAttributes\"}}{{with .Data}}{{with .Attributes}} {{attributesToHTML .}}{{end}}{{end}}{{end}}\n{{define \"children\"}}\n\t{{- range $c := elementChildren . -}}\n\t\t{{- dynamicTemplate $c.Element $c -}}\n\t{{- end -}}\n{{end}}\n"
-		}	
-	},
+	"templates": {
+		"html": "<html>\n<body>\n{{template \"children\" .}}\n</body>\n</html>\n\n{{define \"HTMLAttributes\"}}{{with .Data}}{{with .Attributes}} {{attributesToHTML .}}{{end}}{{end}}{{end}}\n{{define \"children\"}}\n{{- range $c := elementChildren . -}}\n\t{{- dynamicTemplate $c.Element $c -}}\n{{- end -}}\n{{end}}\n"
+	},	
 	"elements": {
 		"Title": {
 			"type": "hanging",
@@ -211,9 +209,8 @@
 			"templates": {
 				"html": "{{.Value}}"
 			}
-		}
-	},
-	"groups": {
+		},
+
 		"Paragraph": {
 			"type": "paragraph",
 			"option": "leaf",
@@ -286,7 +283,7 @@
 			"element": "Group",
 			"target": "Link",
 			"templates": {
-				"html": "{{$group := .FirstChild}}\n{{$link  := .LastChild}}\n<a href=\"{{$link.TextContent}}\">\n\t{{dynamicTemplate $group.Element $group}}\n</a>\n"
+				"html": "{{$group := .FirstChild}}\n{{$link  := .LastChild -}}\n<a href=\"{{$link.TextContent}}\">\n\t{{- dynamicTemplate $group.Element $group -}}\n</a>"
 			}
 		}
 	},

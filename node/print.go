@@ -70,7 +70,7 @@ type printer struct {
 }
 
 func (p *printer) print(n *Node) error {
-	p.writef("%s(%s)", n.Type.String()[len("Type"):], n.Element)
+	p.writef("%s(%s)", n.Type.String(), n.Element)
 	if p.detailed && n.Data != nil {
 		if s := p.prettyJSON(n.Data); s != "" {
 			p.writef("<%s>", s)

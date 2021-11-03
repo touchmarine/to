@@ -6,75 +6,6 @@ import (
 	"strings"
 )
 
-//go:generate stringer -type=Type
-type Type int
-
-// Types of nodes
-const (
-	// special
-	TypeError Type = iota
-	TypeContainer
-
-	// blocks
-	TypeWalled
-	TypeVerbatimWalled
-	TypeHanging
-	TypeRankedHanging
-	TypeFenced
-	TypeVerbatimLine
-	TypeLeaf
-
-	// inlines
-	TypeUniform
-	TypeEscaped
-	TypePrefixed
-	TypeText
-)
-
-func (t *Type) UnmarshalText(text []byte) error {
-	switch s := strings.ToLower(string(text)); s {
-	case "walled":
-		*t = TypeWalled
-	case "verbatimwalled":
-		*t = TypeVerbatimWalled
-	case "hanging":
-		*t = TypeHanging
-	case "rankedhanging":
-		*t = TypeRankedHanging
-	case "fenced":
-		*t = TypeFenced
-	case "verbatimline":
-		*t = TypeVerbatimLine
-	case "leaf":
-		*t = TypeLeaf
-	case "uniform":
-		*t = TypeUniform
-	case "escaped":
-		*t = TypeEscaped
-	case "prefixed":
-		*t = TypePrefixed
-	case "text":
-		*t = TypeText
-	default:
-		return fmt.Errorf("unexpected node.Type value: %q", s)
-	}
-	return nil
-}
-
-func IsBlock(t Type) bool {
-	return t >= TypeWalled && t <= TypeLeaf
-}
-
-func IsInline(t Type) bool {
-	return t >= TypeUniform
-}
-
-func HasDelimiter(t Type) bool {
-	return t == TypeWalled || t == TypeVerbatimWalled || t == TypeHanging ||
-		t == TypeRankedHanging || t == TypeFenced || t == TypeVerbatimLine ||
-		t == TypeUniform || t == TypeEscaped || t == TypePrefixed
-}
-
 type Node struct {
 	Element string // element name
 	Type    Type
@@ -93,7 +24,7 @@ type Data map[string]interface{}
 
 // String is used for debugging and can change at any time.
 func (n Node) String() string {
-	return fmt.Sprintf("%s(%s)", n.Type.String()[len("Type"):], n.Element)
+	return fmt.Sprintf("%s(%s)", n.Type.String(), n.Element)
 }
 
 func (n Node) IsBlock() bool {

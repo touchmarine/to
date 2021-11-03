@@ -45,11 +45,11 @@ func TestText(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 			elements := config.Elements{
 				"A": {
-					Type:      node.TypeWalled,
+					Type:      node.TypeWalled.String(),
 					Delimiter: ">",
 				},
 				"B": {
-					Type:      node.TypeWalled,
+					Type:      node.TypeWalled.String(),
 					Delimiter: "*",
 				},
 			}
@@ -80,11 +80,11 @@ func TestVerbatimLine(t *testing.T) {
 		t.Run(c.in, func(t *testing.T) {
 			elements := config.Elements{
 				"A": {
-					Type:      node.TypeVerbatimLine,
+					Type:      node.TypeVerbatimLine.String(),
 					Delimiter: ".a",
 				},
 				"B": {
-					Type:      node.TypeWalled,
+					Type:      node.TypeWalled.String(),
 					Delimiter: ">",
 				},
 			}
@@ -124,11 +124,11 @@ func TestHanging(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 			elements := config.Elements{
 				"A": {
-					Type:      node.TypeHanging,
+					Type:      node.TypeHanging.String(),
 					Delimiter: "-",
 				},
 				"B": {
-					Type:      node.TypeWalled,
+					Type:      node.TypeWalled.String(),
 					Delimiter: ">",
 				},
 			}
@@ -170,11 +170,11 @@ func TestRankedHanging(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 			elements := config.Elements{
 				"A": {
-					Type:      node.TypeRankedHanging,
+					Type:      node.TypeRankedHanging.String(),
 					Delimiter: "=",
 				},
 				"B": {
-					Type:      node.TypeWalled,
+					Type:      node.TypeWalled.String(),
 					Delimiter: ">",
 				},
 			}
@@ -214,11 +214,11 @@ func TestWalled(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 			elements := config.Elements{
 				"A": {
-					Type:      node.TypeWalled,
+					Type:      node.TypeWalled.String(),
 					Delimiter: "+",
 				},
 				"B": {
-					Type:      node.TypeWalled,
+					Type:      node.TypeWalled.String(),
 					Delimiter: ">",
 				},
 			}
@@ -257,11 +257,11 @@ func TestVerbatimWalled(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 			elements := config.Elements{
 				"A": {
-					Type:      node.TypeVerbatimWalled,
+					Type:      node.TypeVerbatimWalled.String(),
 					Delimiter: "!",
 				},
 				"B": {
-					Type:      node.TypeWalled,
+					Type:      node.TypeWalled.String(),
 					Delimiter: ">",
 				},
 			}
@@ -313,11 +313,11 @@ func TestFenced(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 			elements := config.Elements{
 				"A": {
-					Type:      node.TypeFenced,
+					Type:      node.TypeFenced.String(),
 					Delimiter: "`",
 				},
 				"B": {
-					Type:      node.TypeWalled,
+					Type:      node.TypeWalled.String(),
 					Delimiter: ">",
 				},
 			}
@@ -345,11 +345,11 @@ func TestGroup(t *testing.T) {
 			t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 				elements := config.Elements{
 					"A": {
-						Type:      node.TypeWalled,
+						Type:      node.TypeWalled.String(),
 						Delimiter: ">",
 					},
 					"B": {
-						Type:      node.TypeWalled,
+						Type:      node.TypeWalled.String(),
 						Delimiter: "*",
 					},
 				}
@@ -390,15 +390,15 @@ func TestGroup(t *testing.T) {
 			t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 				elements := config.Elements{
 					"A": {
-						Type:      node.TypeHanging,
+						Type:      node.TypeHanging.String(),
 						Delimiter: "-",
 					},
 					"B": {
-						Type:      node.TypeWalled,
+						Type:      node.TypeWalled.String(),
 						Delimiter: ">",
 					},
 					"C": {
-						Type:      node.TypeWalled,
+						Type:      node.TypeWalled.String(),
 						Delimiter: "*",
 					},
 				}
@@ -445,15 +445,15 @@ func TestGroup(t *testing.T) {
 			t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 				elements := config.Elements{
 					"A": {
-						Type:      node.TypeVerbatimWalled,
+						Type:      node.TypeVerbatimWalled.String(),
 						Delimiter: "!",
 					},
 					"B": {
-						Type:      node.TypeWalled,
+						Type:      node.TypeWalled.String(),
 						Delimiter: "+",
 					},
 					"C": {
-						Type:      node.TypeWalled,
+						Type:      node.TypeWalled.String(),
 						Delimiter: ">",
 					},
 				}
@@ -493,11 +493,11 @@ func TestGroup(t *testing.T) {
 			t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 				elements := config.Elements{
 					"A": {
-						Type:      node.TypeUniform,
+						Type:      node.TypeUniform.String(),
 						Delimiter: "(",
 					},
 					"B": {
-						Type:      node.TypeUniform,
+						Type:      node.TypeUniform.String(),
 						Delimiter: "*",
 					},
 				}
@@ -549,15 +549,15 @@ func TestUniform(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 			elements := config.Elements{
 				"MA": {
-					Type:      node.TypeUniform,
+					Type:      node.TypeUniform.String(),
 					Delimiter: "*",
 				},
 				"MB": {
-					Type:      node.TypeUniform,
+					Type:      node.TypeUniform.String(),
 					Delimiter: "_",
 				},
 				"MC": {
-					Type:      node.TypeUniform,
+					Type:      node.TypeUniform.String(),
 					Delimiter: "(",
 				},
 			}
@@ -608,15 +608,15 @@ func TestEscaped(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 			elements := config.Elements{
 				"MA": {
-					Type:      node.TypeEscaped,
+					Type:      node.TypeEscaped.String(),
 					Delimiter: "`",
 				},
 				"MB": {
-					Type:      node.TypeUniform,
+					Type:      node.TypeUniform.String(),
 					Delimiter: "_",
 				},
 				"MC": {
-					Type:      node.TypeEscaped,
+					Type:      node.TypeEscaped.String(),
 					Delimiter: "[",
 				},
 			}
@@ -639,7 +639,7 @@ func TestPrefixed(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 			elements := config.Elements{
 				"MA": {
-					Type:      node.TypePrefixed,
+					Type:      node.TypePrefixed.String(),
 					Delimiter: `\`,
 				},
 			}
@@ -661,7 +661,7 @@ func TestPrefixed(t *testing.T) {
 			t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 				elements := config.Elements{
 					"MA": {
-						Type:        node.TypePrefixed,
+						Type:        node.TypePrefixed.String(),
 						Delimiter:   `\`,
 						DoNotRemove: true,
 					},
@@ -685,7 +685,7 @@ func TestPrefixed(t *testing.T) {
 			t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
 				elements := config.Elements{
 					"MA": {
-						Type:      node.TypePrefixed,
+						Type:      node.TypePrefixed.String(),
 						Delimiter: "a:",
 						Matcher:   "url",
 					},
@@ -812,33 +812,33 @@ func TestEscape(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
 			elements := config.Elements{
 				"A": {
-					Type:      node.TypeHanging,
+					Type:      node.TypeHanging.String(),
 					Delimiter: "*",
 				},
 				"B": {
-					Type:      node.TypeWalled,
+					Type:      node.TypeWalled.String(),
 					Delimiter: ">",
 				},
 				"C": {
-					Type:      node.TypeFenced,
+					Type:      node.TypeFenced.String(),
 					Delimiter: "`",
 				},
 				"MA": {
-					Type:      node.TypeUniform,
+					Type:      node.TypeUniform.String(),
 					Delimiter: "*",
 				},
 				"MB": {
-					Type:      node.TypeEscaped,
+					Type:      node.TypeEscaped.String(),
 					Delimiter: "`",
 				},
 				// use "{" as it doesn't need escaping
 				// in -run test regex as "(" or "["
 				"MC": {
-					Type:      node.TypeUniform,
+					Type:      node.TypeUniform.String(),
 					Delimiter: "{",
 				},
 				"MD": {
-					Type:      node.TypePrefixed,
+					Type:      node.TypePrefixed.String(),
 					Delimiter: "http://",
 					Matcher:   "url",
 				},
@@ -971,38 +971,38 @@ func TestEscapeWithClash(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
 			elements := config.Elements{
 				"A": {
-					Type:      node.TypeHanging,
+					Type:      node.TypeHanging.String(),
 					Delimiter: "*",
 				},
 				"B": {
-					Type:      node.TypeWalled,
+					Type:      node.TypeWalled.String(),
 					Delimiter: ">",
 				},
 				"C": {
-					Type:      node.TypeFenced,
+					Type:      node.TypeFenced.String(),
 					Delimiter: "`",
 				},
 				"MA": {
-					Type:      node.TypeUniform,
+					Type:      node.TypeUniform.String(),
 					Delimiter: "*",
 				},
 				"MB": {
-					Type:      node.TypeEscaped,
+					Type:      node.TypeEscaped.String(),
 					Delimiter: "`",
 				},
 				"MC": {
-					Type:        node.TypePrefixed,
+					Type:        node.TypePrefixed.String(),
 					Delimiter:   `\`,
 					DoNotRemove: true,
 				},
 				// use "{" as it doesn't need escaping
 				// in -run test regex as "(" or "["
 				"MD": {
-					Type:      node.TypeUniform,
+					Type:      node.TypeUniform.String(),
 					Delimiter: "{",
 				},
 				"ME": {
-					Type:      node.TypePrefixed,
+					Type:      node.TypePrefixed.String(),
 					Delimiter: "http://",
 					Matcher:   "url",
 				},
@@ -1038,25 +1038,25 @@ func TestDoNotRemove(t *testing.T) {
 		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
 			elements := config.Elements{
 				"A": {
-					Type:        node.TypeHanging,
+					Type:        node.TypeHanging.String(),
 					Delimiter:   ".a",
 					DoNotRemove: true,
 				},
 				"B": {
-					Type:      node.TypeHanging,
+					Type:      node.TypeHanging.String(),
 					Delimiter: ".b",
 				},
 				"C": {
-					Type:      node.TypeWalled,
+					Type:      node.TypeWalled.String(),
 					Delimiter: ">",
 				},
 				"MA": {
-					Type:        node.TypePrefixed,
+					Type:        node.TypePrefixed.String(),
 					Delimiter:   `\`,
 					DoNotRemove: true,
 				},
 				"MB": {
-					Type:      node.TypeUniform,
+					Type:      node.TypeUniform.String(),
 					Delimiter: "*",
 				},
 			}
@@ -1105,7 +1105,7 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 				t.Fatal("element _T already exists")
 			}
 			elements["_T"] = config.Element{
-				Type: node.TypeLeaf,
+				Type: node.TypeLeaf.String(),
 			}
 		}
 		if !hasText {
@@ -1113,7 +1113,7 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 				t.Fatal("element _MT already exists")
 			}
 			elements["_MT"] = config.Element{
-				Type: node.TypeText,
+				Type: node.TypeText.String(),
 			}
 		}
 		printedDefined := runPrint(t, elements, transformers, in, false)
@@ -1154,9 +1154,9 @@ func hasLeafOrText(elements config.Elements) (bool, bool) {
 		if hasLeaf && hasText {
 			break
 		}
-		if e.Type == node.TypeLeaf {
+		if e.Type == node.TypeLeaf.String() {
 			hasLeaf = true
-		} else if e.Type == node.TypeText {
+		} else if e.Type == node.TypeText.String() {
 			hasText = true
 		}
 	}
