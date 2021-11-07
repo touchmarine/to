@@ -18,9 +18,42 @@ type Node struct {
 	LastChild       *Node
 	PreviousSibling *Node
 	NextSibling     *Node
+
+	Location Location
 }
 
 type Data map[string]interface{}
+
+// Location represents a location inside a resource, such as a line inside a
+// text file.
+type Location struct {
+	URI   DocumentURI
+	Range Range
+}
+
+//   foo://example.com:8042/over/there?name=ferret#nose
+//   \_/   \______________/\_________/ \_________/ \__/
+//    |           |            |            |        |
+// scheme     authority       path        query   fragment
+//    |   _____________________|__
+//   / \ /                        \
+//   urn:example:animal:ferret:nose
+//
+// https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#uri
+// https://datatracker.ietf.org/doc/html/rfc3986
+type DocumentURI string
+
+// Range is like a selection in an editor (zero-based).
+type Range struct {
+	Start, End Position
+}
+
+// Position is like an 'insert' cursor in an editor (zero-based).
+type Position struct {
+	Offset int // zero-based
+	Line   int // zero-based
+	Column int // zero-based, byte-count
+}
 
 // String is used for debugging and can change at any time.
 func (n Node) String() string {

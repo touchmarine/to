@@ -63,9 +63,11 @@ type parser struct {
 	matcherMap     matcher.Map        // registered matchers by name
 
 	// parsing
-	ch       rune // current character
-	offset   int  // character offset
-	rdOffset int  // position after current character
+	ch         rune // current character
+	offset     int  // character offset
+	rdOffset   int  // position after current character
+	line       int  // current line
+	lineOffset int  // current line offset
 
 	blocks []rune // open blocks
 	lead   []rune // blocks on current line
@@ -155,18 +157,28 @@ func (p *parser) parse(reqdBlocks []rune) *node.Node {
 		defer p.trace("parse")()
 	}
 
+	start := p.pos()
 	container := &node.Node{
 		Type: node.TypeContainer,
 	}
 
+	end := p.pos()
 	for p.ch > 0 {
 		if isSpacing(p.ch) {
 			p.parseSpacing()
+			if t, a := p.continuesAmbiguous(reqdBlocks); t && !a {
+				// continues non ambiguously
+				end = p.pos()
+			}
 		} else if !p.continues(reqdBlocks) {
 			break
 		} else if p.ch == '\n' {
 			p.next()
 			p.parseLead()
+			if t, a := p.continuesAmbiguous(reqdBlocks); t && !a {
+				// continues non ambiguously
+				end = p.pos()
+			}
 		} else {
 			b := p.parseBlock()
 			if b == nil {
@@ -174,9 +186,16 @@ func (p *parser) parse(reqdBlocks []rune) *node.Node {
 			}
 
 			container.AppendChild(b)
+			end = p.pos()
 		}
 	}
 
+	container.Location = node.Location{
+		Range: node.Range{
+			Start: start,
+			End:   end,
+		},
+	}
 	return container
 }
 
@@ -259,6 +278,7 @@ func (p *parser) parseWalled(name string) *node.Node {
 		defer p.tracef("parseWalled (%s)", name)()
 	}
 
+	start := p.pos()
 	p.addLead(p.ch)
 	defer p.open(p.ch)()
 
@@ -266,13 +286,27 @@ func (p *parser) parseWalled(name string) *node.Node {
 
 	reqdBlocks := p.blocks
 	children := p.parse(reqdBlocks)
+	end := children.Location.Range.End
 
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypeWalled,
+		Location: node.Location{
+			Range: node.Range{
+				Start: start,
+				End:   end,
+			},
+		},
 	}
 	n.AppendChild(children)
 	return n
+}
+
+func (p *parser) lastChildPosition(n *node.Node) node.Position {
+	if n.LastChild != nil {
+		return n.LastChild.Location.Range.End
+	}
+	return p.pos()
 }
 
 func (p *parser) parseVerbatimWalled(name string) *node.Node {
@@ -280,15 +314,18 @@ func (p *parser) parseVerbatimWalled(name string) *node.Node {
 		defer p.tracef("parseVerbatimWalled (%s)", name)()
 	}
 
+	start := p.pos()
 	p.addLead(p.ch)
 	defer p.open(p.ch)()
 
 	p.next() // consume delimiter
 
+	contentStart := p.pos()
 	firstLine := p.consumeLine() // consume here so we can have a nicer loop
 
 	lines := []string{string(firstLine)}
 
+	end := p.pos()
 	for p.ch > 0 {
 		if p.ch == '\n' {
 			p.next()
@@ -301,14 +338,21 @@ func (p *parser) parseVerbatimWalled(name string) *node.Node {
 
 		line := p.consumeLine()
 		lines = append(lines, string(line))
+		end = p.pos()
 	}
 
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypeVerbatimWalled,
+		Location: node.Location{
+			Range: node.Range{
+				Start: start,
+				End:   end,
+			},
+		},
 	}
 	if s := strings.Join(lines, "\n"); s != "" {
-		p.setTextContent(n, s)
+		p.setTextContent(n, s, contentStart, end)
 	}
 	return n
 }
@@ -318,18 +362,26 @@ func (p *parser) parseHanging(name, delim string) *node.Node {
 		defer p.tracef("parseHanging (%s, delim=%q)", name, delim)()
 	}
 
+	start := p.pos()
 	c := utf8.RuneCountInString(delim)
 	p.addLead([]rune(strings.Repeat(" ", c))...)
 
-	// consume delimiter
 	for i := 0; i < c; i++ {
+		// consume delimiter
 		p.next()
 	}
 
 	children := p.parseHanging0()
+	end := children.Location.Range.End
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypeHanging,
+		Location: node.Location{
+			Range: node.Range{
+				Start: start,
+				End:   end,
+			},
+		},
 	}
 	n.AppendChild(children)
 	return n
@@ -340,24 +392,29 @@ func (p *parser) parseRankedHanging(name, delim string) *node.Node {
 		defer p.tracef("parseRankedHanging (%s, delim=%q)", name, delim)()
 	}
 
+	start := p.pos()
 	var rank int
-
-	// consume delimiter, count rank
 	d := p.ch
 	for p.ch == d {
+		// count rank and consume delimiter
 		rank++
-
 		p.next()
 	}
-
 	p.addLead([]rune(strings.Repeat(" ", rank))...)
 
 	children := p.parseHanging0()
+	end := children.Location.Range.End
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypeRankedHanging,
 		Data: node.Data{
 			KeyRank: rank,
+		},
+		Location: node.Location{
+			Range: node.Range{
+				Start: start,
+				End:   end,
+			},
 		},
 	}
 	n.AppendChild(children)
@@ -382,6 +439,11 @@ func (p *parser) parseHanging0() *node.Node {
 }
 
 func (p *parser) continues(blocks []rune) bool {
+	t, _ := p.continuesAmbiguous(blocks)
+	return t
+}
+
+func (p *parser) continuesAmbiguous(blocks []rune) (bool, bool) {
 	if trace {
 		defer p.trace("continues")()
 		p.printDelims("reqd", blocks)
@@ -390,9 +452,9 @@ func (p *parser) continues(blocks []rune) bool {
 
 	if p.blank && onlySpacing(blocks) {
 		if trace {
-			p.print("return true (blank)")
+			p.print("return true (blank, ambiguous)")
 		}
-		return true
+		return true, true
 	}
 
 	var i, j int
@@ -401,22 +463,22 @@ func (p *parser) continues(blocks []rune) bool {
 			if trace {
 				p.print("return true")
 			}
-			return true
+			return true, false
 		}
 
 		if j > len(p.lead)-1 {
 			if onlySpacing(blocks[i:]) && len(p.lead) > 0 &&
 				(p.ch == 0 || p.ch == '\n' || p.ch == ' ' || p.ch == '\t') {
 				if trace {
-					p.print("return true")
+					p.print("return true (ambiguous)")
 				}
-				return true
+				return true, true
 			}
 
 			if trace {
 				p.print("return false (not enough blocks)")
 			}
-			return false
+			return false, false
 		}
 
 		if blocks[i] == ' ' || blocks[i] == '\t' || p.lead[j] == ' ' || p.lead[j] == '\t' {
@@ -444,7 +506,7 @@ func (p *parser) continues(blocks []rune) bool {
 				if trace {
 					p.print("return false (lesser ident)")
 				}
-				return false
+				return false, false
 			}
 
 			continue
@@ -454,7 +516,7 @@ func (p *parser) continues(blocks []rune) bool {
 			if trace {
 				p.printf("return false (%q != %q, i=%d, j=%d)", blocks[i], p.lead[j], i, j)
 			}
-			return false
+			return false, false
 		}
 
 		i++
@@ -491,13 +553,12 @@ func (p *parser) parseFenced(name string) *node.Node {
 		defer p.tracef("parseFenced (%s)", name)()
 	}
 
+	start := p.pos()
 	reqdBlocks := p.blocks
-
 	openSpacing := diffSpacing(lastSpacingSeq(p.blocks), lastSpacingSeq(p.lead))
 	defer p.open(openSpacing...)()
 
 	delim := p.ch
-
 	// consume delimiter
 	p.next()
 
@@ -507,11 +568,19 @@ func (p *parser) parseFenced(name string) *node.Node {
 	}
 
 	openingText := string(p.consumeLine())
+	p.next()
+	p.parseLead()
 
 	var lines []string
-	afterNewline := false
+	afterNewline := true
+	textStart := p.pos()
+	end := p.pos()
+	textEnd := p.pos()
+	for p.ch > 0 {
+		if !p.continues(reqdBlocks) {
+			break
+		}
 
-	for p.ch > 0 && p.continues(reqdBlocks) {
 		if !escaped && p.ch == delim || escaped && p.ch == '\\' && p.peek() == delim {
 			// closing delimiter
 
@@ -519,7 +588,14 @@ func (p *parser) parseFenced(name string) *node.Node {
 				p.next()
 			}
 			p.next()
+			end = p.pos()
 
+			if p.continues(reqdBlocks) {
+				p.consumeLine()
+				p.next()
+				p.parseLead()
+				p.parseSpacing()
+			}
 			break
 		}
 
@@ -537,17 +613,9 @@ func (p *parser) parseFenced(name string) *node.Node {
 			lines = append(lines, line)
 
 			afterNewline = false
+			textEnd = p.pos()
 		}
-	}
-
-	if p.continues(reqdBlocks) {
-		// closed by delimiter, not continues
-
-		p.consumeLine()
-
-		p.next()
-		p.parseLead()
-		p.parseSpacing()
+		end = p.pos()
 	}
 
 	n := &node.Node{
@@ -556,9 +624,15 @@ func (p *parser) parseFenced(name string) *node.Node {
 		Data: node.Data{
 			KeyOpeningText: openingText,
 		},
+		Location: node.Location{
+			Range: node.Range{
+				Start: start,
+				End:   end,
+			},
+		},
 	}
 	if text := strings.Join(lines, "\n"); text != "" {
-		p.setTextContent(n, text)
+		p.setTextContent(n, text, textStart, textEnd)
 	}
 	return n
 }
@@ -637,13 +711,16 @@ func (p *parser) parseVerbatimLine(name, delim string) *node.Node {
 		defer p.tracef("parseVerbatimLine (%s, delim=%q)", name, delim)()
 	}
 
+	start := p.pos()
 	for i := 0; i < utf8.RuneCountInString(delim); i++ {
+		// consume delimiter
 		p.next()
-
 	}
-
+	contentStart := p.pos()
 	content := p.consumeLine()
+	end := p.pos()
 
+	// prepare next line
 	p.next()
 	p.parseLead()
 	p.parseSpacing()
@@ -651,11 +728,25 @@ func (p *parser) parseVerbatimLine(name, delim string) *node.Node {
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypeVerbatimLine,
+		Location: node.Location{
+			Range: node.Range{
+				Start: start,
+				End:   end,
+			},
+		},
 	}
 	if len(content) > 0 {
-		p.setTextContent(n, string(content))
+		p.setTextContent(n, string(content), contentStart, end)
 	}
 	return n
+}
+
+func (p *parser) pos() node.Position {
+	return node.Position{
+		Offset: p.offset,
+		Line:   p.line,
+		Column: p.offset - p.lineOffset,
+	}
 }
 
 func (p *parser) parseLeaf(name string) *node.Node {
@@ -663,10 +754,18 @@ func (p *parser) parseLeaf(name string) *node.Node {
 		defer p.tracef("parseLeaf %s", name)()
 	}
 
+	start := p.pos()
 	children, _ := p.parseInlines()
+	end := p.pos()
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypeLeaf,
+		Location: node.Location{
+			Range: node.Range{
+				Start: start,
+				End:   end,
+			},
+		},
 	}
 	n.AppendChild(children)
 	return n
@@ -677,26 +776,36 @@ func (p *parser) parseInlines() (*node.Node, bool) {
 		defer p.trace("parseInlines")()
 	}
 
+	start := p.pos()
 	container := &node.Node{
 		Type: node.TypeContainer,
 	}
 
+	cont := true
 	for p.ch > 0 {
 		if p.closingDelimiter() > 0 {
 			break
 		}
 
-		inline, cont := p.parseInline()
+		var inline *node.Node
+		inline, cont = p.parseInline()
 		if inline != nil {
 			container.AppendChild(inline)
 		}
 
 		if !cont {
-			return container, false
+			break
 		}
 	}
 
-	return container, true
+	end := p.pos()
+	container.Location = node.Location{
+		Range: node.Range{
+			Start: start,
+			End:   end,
+		},
+	}
+	return container, cont
 }
 
 func (p *parser) parseInline() (*node.Node, bool) {
@@ -769,8 +878,8 @@ func (p *parser) parseUniform(name string) (*node.Node, bool) {
 		p.printDelims("inlines", p.inlines)
 	}
 
+	start := p.pos()
 	delim := p.ch
-
 	// consume delimiter
 	p.next()
 	p.next()
@@ -785,9 +894,16 @@ func (p *parser) parseUniform(name string) (*node.Node, bool) {
 		p.next()
 	}
 
+	end := p.pos()
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypeUniform,
+		Location: node.Location{
+			Range: node.Range{
+				Start: start,
+				End:   end,
+			},
+		},
 	}
 	n.AppendChild(children)
 	return n, cont
@@ -886,7 +1002,7 @@ func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 		Type:    node.TypeEscaped,
 	}
 	if len(txt) > 0 {
-		p.setTextContent(n, string(txt))
+		p.setTextContent(n, string(txt), node.Position{}, node.Position{})
 	}
 	return n, cont
 }
@@ -962,16 +1078,22 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (*node.Node,
 		Type:    node.TypePrefixed,
 	}
 	if text := string(b.Bytes()); text != "" {
-		p.setTextContent(n, text)
+		p.setTextContent(n, text, node.Position{}, node.Position{})
 	}
 	return n, true
 }
 
-func (p parser) setTextContent(n *node.Node, text string) {
+func (p parser) setTextContent(n *node.Node, text string, start, end node.Position) {
 	n.AppendChild(&node.Node{
 		Element: p.textElement,
 		Type:    node.TypeText,
 		Value:   text,
+		Location: node.Location{
+			Range: node.Range{
+				Start: start,
+				End:   end,
+			},
+		},
 	})
 }
 
@@ -980,10 +1102,12 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 		defer p.tracef("parseText (%s)", name)()
 	}
 
+	start := p.pos()
 	cont := true
 	afterNewline := false
 
 	var b bytes.Buffer
+	end := p.pos()
 	for p.ch > 0 {
 		if p.ch == '\n' {
 			line := b.Bytes()
@@ -1023,10 +1147,12 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 				p.next()
 			} else {
 				if p.closingDelimiter() > 0 {
+					end = p.pos()
 					break
 				}
 
 				if _, ok := p.matchInline(); ok {
+					end = p.pos()
 					break
 				}
 			}
@@ -1034,6 +1160,7 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 			b.WriteRune(p.ch)
 
 			p.next()
+			end = p.pos() // here because of loop condition
 		}
 	}
 
@@ -1055,6 +1182,12 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 		Element: name,
 		Type:    node.TypeText,
 		Value:   string(txt),
+		Location: node.Location{
+			Range: node.Range{
+				Start: start,
+				End:   end,
+			},
+		},
 	}, cont
 }
 
@@ -1227,6 +1360,10 @@ func (p *parser) next() {
 
 	if p.rdOffset < len(p.src) {
 		p.offset = p.rdOffset
+		if p.ch == '\n' {
+			p.line++
+			p.lineOffset = p.offset
+		}
 
 		r, w := utf8.DecodeRune(p.src[p.rdOffset:])
 
@@ -1259,6 +1396,10 @@ func (p *parser) next() {
 	} else {
 		p.ch = 0
 		p.offset = len(p.src)
+		if p.ch == '\n' {
+			p.line++
+			p.lineOffset = p.offset
+		}
 	}
 
 	if trace {

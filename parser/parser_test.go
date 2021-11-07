@@ -16,7 +16,7 @@ import (
 
 const testdata = "testdata"
 
-// use go test -update to create/update the golden files
+// use go test ./parser -update to create/update the golden files
 var update = flag.Bool("update", false, "update golden files")
 
 func TestGolden(t *testing.T) {
@@ -69,15 +69,55 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	input := string(bi)
+	// \n is always added, don't know by what, but it isn't nice for testing
+	// positions
+	input := strings.TrimSuffix(string(bi), "\n")
 
-	nodes, err := parser.Parse(strings.NewReader(input), elements)
+	fs := flag.NewFlagSet("", flag.ContinueOnError)
+	var printModes []string
+	fs.Func("print-mode", "enable print tree mode (options: PrintAll, PrintData, PrintLocation)", func(s string) error {
+		printModes = append(printModes, s)
+		return nil
+	})
+
+	var src string
+	const prefix = "//to:"
+	if strings.HasPrefix(input, prefix) {
+		var end int
+		if i := strings.Index(input, "\n"); i > 0 {
+			end = i
+		} else {
+			end = len(input)
+		}
+		if err := fs.Parse(strings.Split(input[len(prefix):end], " ")); err != nil {
+			t.Fatal(err)
+		}
+		src = input[end+1:]
+	} else {
+		src = input
+	}
+
+	nodes, err := parser.Parse(strings.NewReader(src), elements)
 	testError(t, testPath, err)
 
-	res, err := node.StringifyDetailed(nodes)
-	if err != nil {
+	var m node.PrinterMode
+	for _, s := range printModes {
+		var mm node.PrinterMode
+		if err := (&mm).UnmarshalText([]byte(s)); err != nil {
+			t.Fatal(err)
+		}
+		m = m | mm // set flag
+	}
+	if len(printModes) == 0 && m&node.PrintData == 0 {
+		// set as default because before print modes were added,
+		// Data was always printed
+		m = m | node.PrintData
+	}
+	var b strings.Builder
+	if err := (node.Printer{m}).Fprint(&b, nodes); err != nil {
 		t.Fatal(err)
 	}
+	res := b.String()
 
 	goldenPath := testPath + ".golden"
 	if *update {
@@ -93,7 +133,7 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 	golden := string(bg)
 
 	if res != golden {
-		t.Errorf("\nfrom input:\n%s\ngot:\n%s\nwant:\n%s", input, res, golden)
+		t.Errorf("\nfrom input:\n%s\ngot:\n%s\nwant:\n%s", src, res, golden)
 	}
 
 }

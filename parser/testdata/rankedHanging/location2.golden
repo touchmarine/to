@@ -1,0 +1,13 @@
+0:0#0-0:4#4: Container()(
+	0:0#0-0:4#4: RankedHanging(A)(
+		0:2#2-0:4#4: Container()(
+			0:3#3-0:4#4: Leaf(T)(
+				0:3#3-0:4#4: Container()(
+					0:3#3-0:4#4: Text(MT)(
+						a
+					)
+				)
+			)
+		)
+	)
+)

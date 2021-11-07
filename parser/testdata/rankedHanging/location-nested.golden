@@ -1,0 +1,9 @@
+0:0#0-2:1#8: Container()(
+	0:0#0-2:1#8: Walled(B)(
+		0:1#1-2:1#8: Container()(
+			1:2#4-1:4#6: RankedHanging(A)(
+				1:4#6-1:4#6: Container()()
+			)
+		)
+	)
+)
