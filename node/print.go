@@ -10,30 +10,41 @@ import (
 	"strings"
 )
 
-func Stringify(n *Node) (string, error) {
-	var b strings.Builder
-	if err := Fprint(&b, n); err != nil {
-		return "", err
+//go:generate stringer -type=PrinterMode
+type PrinterMode int
+
+const (
+	PrintAll  PrinterMode = PrintData | PrintLocation
+	PrintData PrinterMode = 1 << iota
+	PrintLocation
+)
+
+func (m *PrinterMode) UnmarshalText(text []byte) error {
+	s := strings.ToLower(string(text))
+	if mm, ok := validModes[s]; ok {
+		*m = mm
+	} else {
+		return fmt.Errorf("unexpected PrinterMode value: %q", text)
 	}
-	return b.String(), nil
+	return nil
 }
 
-// StringifyDetailed is like Stringify but includes more information, such as
-// the node's Data.
-func StringifyDetailed(n *Node) (string, error) {
-	var b strings.Builder
-	if err := fprint(&b, true, n); err != nil {
-		return "", err
-	}
-	return b.String(), nil
+var validModes = map[string]PrinterMode{
+	strings.ToLower(PrintAll.String()):      PrintAll,
+	strings.ToLower(PrintData.String()):     PrintData,
+	strings.ToLower(PrintLocation.String()): PrintLocation,
 }
 
 func Print(n *Node) error {
 	return Fprint(os.Stdout, n)
 }
 
-func Fprint(w io.Writer, n *Node) (err error) {
-	return fprint(w, false, n)
+func Fprint(w io.Writer, n *Node) error {
+	return Printer{}.Fprint(w, n)
+}
+
+type Printer struct {
+	Mode PrinterMode
 }
 
 type writer interface {
@@ -41,37 +52,42 @@ type writer interface {
 	io.StringWriter
 }
 
-func fprint(w io.Writer, detailed bool, n *Node) error {
+func (p Printer) Fprint(w io.Writer, n *Node) error {
 	if x, ok := w.(writer); ok {
-		return fprint0(x, detailed, n)
+		return p.fprint(x, n)
 	}
 
 	buf := bufio.NewWriter(w)
-	if err := fprint0(buf, detailed, n); err != nil {
+	if err := p.fprint(buf, n); err != nil {
 		return err
 	}
 	return buf.Flush()
 }
 
-func fprint0(w writer, detailed bool, n *Node) error {
-	p := printer{
-		w:        w,
-		detailed: detailed,
+func (p Printer) fprint(w writer, n *Node) error {
+	pp := printer{
+		w:    w,
+		mode: p.Mode,
 	}
-	return p.print(n)
+	return pp.print(n)
 }
 
 type printer struct {
-	w        writer
-	detailed bool // whether to print more information
+	w    writer
+	mode PrinterMode
 
 	indent       int
 	afterNewline bool
 }
 
 func (p *printer) print(n *Node) error {
+	if p.mode&PrintLocation != 0 {
+		s := n.Location.Range.Start
+		e := n.Location.Range.End
+		p.writef("%d:%d#%d-%d:%d#%d: ", s.Line, s.Column, s.Offset, e.Line, e.Column, e.Offset)
+	}
 	p.writef("%s(%s)", n.Type.String(), n.Element)
-	if p.detailed && n.Data != nil {
+	if p.mode&PrintData != 0 && n.Data != nil {
 		if s := p.prettyJSON(n.Data); s != "" {
 			p.writef("<%s>", s)
 		}

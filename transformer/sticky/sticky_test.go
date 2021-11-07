@@ -75,10 +75,11 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 		},
 	}}})
 
-	res, err := node.Stringify(root)
-	if err != nil {
+	var b strings.Builder
+	if err := node.Fprint(&b, root); err != nil {
 		t.Fatal(err)
 	}
+	res := b.String()
 
 	goldenPath := testPath + ".golden"
 	if *update {

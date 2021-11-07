@@ -32,13 +32,18 @@ func usage() {
 func main() {
 	var (
 		conf        = flag.String("config", "", "base configuration file")
-		stringify   = flag.Bool("stringify", false, "print nodes to stdout (debugging)")
+		printTree   = flag.Bool("print-tree", false, "print node tree to stdout (debugging)")
 		showHelp    = flag.Bool("help", false, "print help")
 		showVersion = flag.Bool("version", false, "print version")
 	)
 	var overrides []string
 	flag.Func("config-override", "configuration files that override the base file", func(s string) error {
 		overrides = append(overrides, s)
+		return nil
+	})
+	var printTreeModes []string
+	flag.Func("print-tree-mode", "enable print tree mode (options: PrintAll, PrintData, PrintLocation)", func(s string) error {
+		printTreeModes = append(printTreeModes, s)
 		return nil
 	})
 	flag.Usage = usage
@@ -54,7 +59,8 @@ output.
 Options:
 	-config          base configuration file
 	-config-override configuration files that override the base file
-	-stringify       print nodes to stdout (debugging)
+	-print-tree      print node tree to stdout (debugging)
+	-print-tree-mode enable print tree mode (options: PrintAll, PrintData, PrintLocation)
 	-help            print help
 	-version         print version
 `)
@@ -79,7 +85,7 @@ Options:
 			os.Exit(2)
 		}
 		if err := json.NewDecoder(f).Decode(&cfg); err != nil {
-			fmt.Fprintf(os.Stderr, "cannot decode json from config file (%s): %v\n", *conf, err)
+			fmt.Fprintf(os.Stderr, "cannot decode JSON from config file (%s): %v\n", *conf, err)
 			os.Exit(2)
 		}
 	} else {
@@ -94,7 +100,7 @@ Options:
 			os.Exit(2)
 		}
 		if err := json.NewDecoder(f).Decode(&o); err != nil {
-			fmt.Fprintf(os.Stderr, "cannot decode json from config file (%s): %v\n", *conf, err)
+			fmt.Fprintf(os.Stderr, "cannot decode JSON from config file (%s): %v\n", *conf, err)
 			os.Exit(2)
 		}
 		config.ShallowMerge(cfg, o)
@@ -121,7 +127,7 @@ Options:
 		case "paragraph":
 			var t node.Type
 			if err := (&t).UnmarshalText([]byte(e.Option)); err != nil {
-				fmt.Fprintf(os.Stderr, "invalid paragraph option (%s)\n", e.Option)
+				fmt.Fprintf(os.Stderr, "invalid paragraph option (%q)\n", e.Option)
 				os.Exit(2)
 			}
 			paragraphs[t] = n
@@ -134,7 +140,7 @@ Options:
 				After:  e.Option == "after",
 			}
 		default:
-			fmt.Fprintf(os.Stderr, "unsupported group type (%s)\n", e.Type)
+			fmt.Fprintf(os.Stderr, "unsupported group type (%q)\n", e.Type)
 			os.Exit(2)
 		}
 	}
@@ -144,12 +150,28 @@ Options:
 	transformers = append(transformers, transformer.Func(sequentialnumber.Transform))
 	transformer.Apply(root, transformers)
 
-	if *stringify {
-		node.Fprint(os.Stdout, root)
+	if *printTree {
+		var m node.PrinterMode
+		for _, s := range printTreeModes {
+			var mm node.PrinterMode
+			if err := (&mm).UnmarshalText([]byte(s)); err != nil {
+				fmt.Fprintf(os.Stderr, "invalid print tree mode %q (options: PrintAll, PrintData, PrintLocation)\n", s)
+				os.Exit(2)
+			}
+			m = m | mm // set flag
+		}
+		if err := (node.Printer{m}).Fprint(os.Stdout, root); err != nil {
+			fmt.Fprintf(os.Stderr, "print tree failed: %v\n", err)
+			os.Exit(1)
+		}
+		return
 	}
 
 	if format := args[0]; format == "fmt" {
-		printer.Fprint(os.Stdout, cfg.Elements.PrinterElements(), root)
+		if err := printer.Fprint(os.Stdout, cfg.Elements.PrinterElements(), root); err != nil {
+			fmt.Fprintf(os.Stderr, "format failed: %v\n", err)
+			os.Exit(1)
+		}
 	} else {
 		aggregators := aggregator.Aggregators{}
 		for n, a := range cfg.Aggregates {
@@ -157,7 +179,7 @@ Options:
 			case "sequentialNumber":
 				aggregators[n] = seqnumaggregator.Aggregator{a.Elements}
 			default:
-				fmt.Fprintf(os.Stderr, "unsupported aggregate type (%s)\n", a.Type)
+				fmt.Fprintf(os.Stderr, "unsupported aggregate type (%q)\n", a.Type)
 				os.Exit(2)
 			}
 		}

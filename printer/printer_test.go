@@ -16,7 +16,7 @@ import (
 	"github.com/touchmarine/to/transformer/sticky"
 )
 
-var stringify = flag.Bool("stringify", false, "dump node")
+var printTree = flag.Bool("print-tree", false, "print node tree")
 
 func TestText(t *testing.T) {
 	cases := []struct {
@@ -1072,7 +1072,7 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 		elements = config.Elements{}
 	}
 
-	printed := runPrint(t, elements, transformers, in, *stringify)
+	printed := runPrint(t, elements, transformers, in, *printTree)
 	if printed != out {
 		t.Errorf("got %q, want %q", printed, out)
 	}
@@ -1084,7 +1084,7 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 			break
 		}
 
-		reprinted := runPrint(t, elements, transformers, previousPrint, *stringify)
+		reprinted := runPrint(t, elements, transformers, previousPrint, *printTree)
 		if reprinted == previousPrint {
 			break
 		}
@@ -1123,7 +1123,7 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 	}
 }
 
-func runPrint(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in string, stringify bool) string {
+func runPrint(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in string, printTree bool) string {
 	t.Helper()
 
 	r := strings.NewReader(in)
@@ -1133,12 +1133,12 @@ func runPrint(t *testing.T, elements config.Elements, transformers []transformer
 	}
 	root = transformer.Apply(root, transformers)
 
-	if stringify {
-		s, err := node.StringifyDetailed(root)
-		if err != nil {
+	if printTree {
+		var b strings.Builder
+		if err := (node.Printer{node.PrintData}).Fprint(&b, root); err != nil {
 			t.Fatal(err)
 		}
-		fmt.Println(s)
+		fmt.Println(b.String())
 	}
 
 	var b strings.Builder

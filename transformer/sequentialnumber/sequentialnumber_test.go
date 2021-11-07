@@ -63,10 +63,11 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 
 	root = transformer.Apply(root, []transformer.Transformer{transformer.Func(sequentialnumber.Transform)})
 
-	res, err := node.StringifyDetailed(root)
-	if err != nil {
+	var b strings.Builder
+	if err := (node.Printer{node.PrintData}).Fprint(&b, root); err != nil {
 		t.Fatal(err)
 	}
+	res := b.String()
 
 	goldenPath := testPath + ".golden"
 	if *update {

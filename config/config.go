@@ -25,9 +25,9 @@ func init() {
 }
 
 type Config struct {
-	Templates  Templates  `json:"templates"`
-	Elements   Elements   `json:"elements"`
-	Aggregates Aggregates `json:"aggregates"`
+	Templates  Templates
+	Elements   Elements
+	Aggregates Aggregates
 }
 
 type Templates map[string]string
@@ -59,14 +59,14 @@ func (c Config) ParseTemplates(t *template.Template, format string) (*template.T
 type Elements map[string]Element
 
 type Element struct {
-	Type        string    `json:"type"`
-	Delimiter   string    `json:"delimiter"`
-	Matcher     string    `json:"matcher"`
-	DoNotRemove bool      `json:"doNotRemove"`
-	Element     string    `json:"element"`
-	Target      string    `json:"target"`
-	Option      string    `json:"option"`
-	Templates   Templates `json:"templates"`
+	Type        string
+	Delimiter   string
+	Matcher     string
+	DoNotRemove bool
+	Element     string
+	Target      string
+	Option      string
+	Templates   Templates
 }
 
 // ParserElements returns the elements converted to parser.Elements.
@@ -121,6 +121,6 @@ func (es Elements) parseTemplates(t *template.Template, format string) (*templat
 type Aggregates map[string]Aggregate
 
 type Aggregate struct {
-	Type     string   `json:"type"`
-	Elements []string `json:"elements"`
+	Type     string
+	Elements []string
 }

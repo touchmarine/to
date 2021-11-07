@@ -1,5 +1,5 @@
 {
-	"templates": {
+	"Templates": {
 		"html": '''
 <html>
 <body>
@@ -15,11 +15,11 @@
 {{end}}
 '''
 	},	
-	"elements": {
+	"Elements": {
 		"Title": {
-			"type": "hanging",
-			"delimiter": "=",
-			"templates": {
+			"Type": "hanging",
+			"Delimiter": "=",
+			"Templates": {
 				"html": '''
 <h1 {{- template "HTMLAttributes" .}}>
 	{{template "children" .}}
@@ -28,16 +28,16 @@
 			}
 		},
 		"Subtitle": {
-			"type": "walled",
-			"delimiter": "_",
-			"templates": {
+			"Type": "walled",
+			"Delimiter": "_",
+			"Templates": {
 				"html": '''{{template "children" .}}'''
 			}
 		},
 		"Heading": {
-			"type": "rankedHanging",
-			"delimiter": "=",
-			"templates": {
+			"Type": "rankedHanging",
+			"Delimiter": "=",
+			"Templates": {
 				"html": '''
 {{$_ := setData . "Attributes" (setDefault .Data.Attributes "id" .TextContent)}}
 <h{{.Data.rank}} {{- template "HTMLAttributes" .}}>
@@ -47,9 +47,9 @@
 			}
 		},
 		"NumberedHeading": {
-			"type": "rankedHanging",
-			"delimiter": "#",
-			"templates": {
+			"Type": "rankedHanging",
+			"Delimiter": "#",
+			"Templates": {
 				"html": '''
 {{$_ := setData . "Attributes" (setDefault .Data.Attributes "id" .TextContent)}}
 <h{{.Data.rank}} {{- template "HTMLAttributes" .}}>
@@ -60,9 +60,9 @@
 			}
 		},
 		"Blockquote": {
-			"type": "walled",
-			"delimiter": ">",
-			"templates": {
+			"Type": "walled",
+			"Delimiter": ">",
+			"Templates": {
 				"html": '''
 <blockquote {{- template "HTMLAttributes" .}}>
 	{{template "children" .}}
@@ -71,23 +71,23 @@
 			}
 		},
 		"ListItem": {
-			"type": "hanging",
-			"delimiter": "-",
-			"templates": {
+			"Type": "hanging",
+			"Delimiter": "-",
+			"Templates": {
 				"html": '''<li>{{template "children" .}}</li>'''
 			}
 		},
 		"NumberedListItem": {
-			"type": "hanging",
-			"delimiter": "1.",
-			"templates": {
+			"Type": "hanging",
+			"Delimiter": "1.",
+			"Templates": {
 				"html": '''{{template "ListItem" .}}'''
 			}
 		},
 		"PreformattedBlock": {
-			"type": "fenced",
-			"delimiter": "'",
-			"templates": {
+			"Type": "fenced",
+			"Delimiter": "'",
+			"Templates": {
 				"html": '''
 <pre {{- template "HTMLAttributes" .}}>
 	{{- template "children" . -}}
@@ -96,9 +96,9 @@
 			}
 		},
 		"CodeBlock": {
-			"type": "fenced",
-			"delimiter": "`",
-			"templates": {
+			"Type": "fenced",
+			"Delimiter": "`",
+			"Templates": {
 				"html": '''
 <pre {{- template "HTMLAttributes" .}}><code {{- with .Data.openingText}} lang="{{.}}"{{end}}>
 	{{- template "children" . -}}
@@ -107,18 +107,18 @@
 			}
 		},
 		"Image": {
-			"type": "verbatimLine",
-			"delimiter": ".image",
-			"templates": {
+			"Type": "verbatimLine",
+			"Delimiter": ".image",
+			"Templates": {
 				"html": '''
 <img src="{{trimSpacing .TextContent}}" {{- template "HTMLAttributes" .}}/>
 '''
 			}
 		},
 		"Note": {
-			"type": "walled",
-			"delimiter": "*",
-			"templates": {
+			"Type": "walled",
+			"Delimiter": "*",
+			"Templates": {
 				"html": '''
 <div style="margin-left: 1em;padding-left:1em;border-left:2px solid blue;" {{- template "HTMLAttributes" .}}>
 	{{template "children" .}}
@@ -126,70 +126,43 @@
 			}
 		},
 		"Term": {
-			"type": "hanging",
-			"delimiter": "?",
-			"templates": {
+			"Type": "hanging",
+			"Delimiter": "?",
+			"Templates": {
 				"html": '''{{template "children" .}}'''
 			}
 		},
 		"Description": {
-			"type": "hanging",
-			"delimiter": ":",
-			"templates": {
+			"Type": "hanging",
+			"Delimiter": ":",
+			"Templates": {
 				"html": '''{{template "children" .}}'''
 			}
 		},
 		"Caption": {
-			"type": "walled",
-			"delimiter": "+",
-			"templates": {
+			"Type": "walled",
+			"Delimiter": "+",
+			"Templates": {
 				"html": '''{{template "children" .}}'''
 			}
 		},
-		"TableOfContents": {
-			"type": "hanging",
-			"delimiter": ".toc",
-			"doNotRemove": true,
-			"templates": {
-				"html": '''
-<div {{- template "HTMLAttributes" .}}>
-	<p>{{template "children" .}}</p>
-	{{template "grouper" global.aggregates.numberedHeadings.Group}}
-</div>
-
-{{define "grouper"}}
-	<ul>
-		{{range .}}
-			{{if eq (printf "%T" .) "sequentialnumber.group"}}
-				{{template "grouper" .}}
-			{{else}}
-				<li>
-					<a href="#{{.ID}}">{{.SequentialNumber}} {{.Text}}</a>
-				</li>
-			{{end}}
-		{{end}}
-	</ul>
-{{end}}
-'''
-			}
-		},
 		"BlockComment": {
-			"type": "verbatimWalled",
-			"delimiter": "/",
-			"templates": {
+			"Type": "verbatimWalled",
+			"Delimiter": "/",
+			"Templates": {
 				"html": ""
 			}
 		},
 		"Attributes": {
-			"type": "verbatimWalled",
-			"delimiter": "!",
-			"templates": {
+			"Type": "verbatimWalled",
+			"Delimiter": "!",
+			"Templates": {
 				"html": ""
 			}
 		},
 		"TextBlock": {
-			"type": "leaf",
-			"templates": {
+			"Type": "leaf",
+			"Templates": {
 				"html": '''
 <span {{- template "HTMLAttributes" .}}>
 	{{template "children" .}}
@@ -199,90 +172,90 @@
 		},
 
 		"Emphasis": {
-			"type": "uniform",
-			"delimiter": "_",
-			"templates": {
+			"Type": "uniform",
+			"Delimiter": "_",
+			"Templates": {
 				"html": '''<em>{{template "children" .}}</em>'''
 			}
 		},
 		"Strong": {
-			"type": "uniform",
-			"delimiter": "*",
-			"templates": {
+			"Type": "uniform",
+			"Delimiter": "*",
+			"Templates": {
 				"html": '''<strong>{{template "children" .}}</strong>'''
 			}
 		},
 		"Code": {
-			"type": "escaped",
-			"delimiter": "`",
-			"templates": {
+			"Type": "escaped",
+			"Delimiter": "`",
+			"Templates": {
 				"html": "<code>{{.TextContent}}</code>"
 			}
 		},
 		"Link": {
-			"type": "escaped",
-			"delimiter": "[",
-			"templates": {
+			"Type": "escaped",
+			"Delimiter": "(",
+			"Templates": {
 				"html": '''<a href="{{.TextContent}}">{{.TextContent}}</a>'''
 			}
 		},
 		"HTTP": {
-			"type": "prefixed",
-			"delimiter": "http://",
-			"matcher": "url",
-			"templates": {
+			"Type": "prefixed",
+			"Delimiter": "http://",
+			"Matcher": "url",
+			"Templates": {
 				"html": '''<a href="http://{{.TextContent}}">http://{{.TextContent}}</a>'''
 			}
 		},
 		"HTTPS": {
-			"type": "prefixed",
-			"delimiter": "https://",
-			"matcher": "url",
-			"templates": {
+			"Type": "prefixed",
+			"Delimiter": "https://",
+			"Matcher": "url",
+			"Templates": {
 				"html": '''<a href="https://{{.TextContent}}">https://{{.TextContent}}</a>'''
 			}
 		},
 		"WWW": {
-			"type": "prefixed",
-			"delimiter": "www.",
-			"matcher": "url",
-			"templates": {
+			"Type": "prefixed",
+			"Delimiter": "www.",
+			"Matcher": "url",
+			"Templates": {
 				"html": '''<a href="http://www.{{.TextContent}}">www.{{.TextContent}}</a>'''
 			}
 		},
 		"LineBreak": {
-			"type": "prefixed",
-			"delimiter": "\\",
-			"doNotRemove": true,
-			"templates": {
+			"Type": "prefixed",
+			"Delimiter": "\\",
+			"DoNotRemove": true,
+			"Templates": {
 				"html": "<br>"
 			}
 		},
 		"Comment": {
-			"type": "escaped",
-			"delimiter": "/",
-			"templates": {
+			"Type": "escaped",
+			"Delimiter": "/",
+			"Templates": {
 				"html": ""
 			}
 		},
 		"Group": {
-			"type": "uniform",
-			"delimiter": "(",
-			"templates": {
+			"Type": "uniform",
+			"Delimiter": "[",
+			"Templates": {
 				"html": '''{{template "children" .}}'''
 			}
 		},
 		"Text": {
-			"type": "text",
-			"templates": {
+			"Type": "text",
+			"Templates": {
 				"html": "{{.Value}}"
 			}
 		},
 
 		"Paragraph": {
-			"type": "paragraph",
-			"option": "leaf",
-			"templates": {
+			"Type": "paragraph",
+			"Option": "leaf",
+			"Templates": {
 				"html": '''
 <p {{- template "HTMLAttributes" .}}>
 	{{template "children" .}}
@@ -291,9 +264,9 @@
 			}
 		},
 		"List": {
-			"type": "list",
-			"element": "ListItem",
-			"templates": {
+			"Type": "list",
+			"Element": "ListItem",
+			"Templates": {
 				"html": '''
 <ul {{- template "HTMLAttributes" .}}>
 	{{template "children" .}}
@@ -302,9 +275,9 @@
 			}
 		},
 		"NumberedList": {
-			"type": "list",
-			"element": "NumberedListItem",
-			"templates": {
+			"Type": "list",
+			"Element": "NumberedListItem",
+			"Templates": {
 				"html": '''
 <ol {{- template "HTMLAttributes" .}}>
 	{{template "children" .}}
@@ -313,9 +286,9 @@
 			}
 		},
 		"TermList": {
-			"type": "list",
-			"element": "Term",
-			"templates": {
+			"Type": "list",
+			"Element": "Term",
+			"Templates": {
 				"html": '''
 <div {{- template "HTMLAttributes" .}}>
 	{{template "children" .}}
@@ -324,9 +297,9 @@
 			}
 		},
 		"DescriptionList": {
-			"type": "list",
-			"element": "Description",
-			"templates": {
+			"Type": "list",
+			"Element": "Description",
+			"Templates": {
 				"html": '''
 <div {{- template "HTMLAttributes" .}}>
 	{{template "children" .}}
@@ -335,10 +308,10 @@
 			}
 		},
 		"StickySubtitle": {
-			"type": "sticky",
-			"element": "Subtitle",
-			"option": "after",
-			"templates": {
+			"Type": "sticky",
+			"Element": "Subtitle",
+			"Option": "after",
+			"Templates": {
 				"html": '''
 {{$subtitle := .LastChild}}
 {{$target   := .FirstChild}}
@@ -350,10 +323,10 @@
 			}
 		},
 		"StickyDescription": {
-			"type": "sticky",
-			"element": "DescriptionList",
-			"option": "after",
-			"templates": {
+			"Type": "sticky",
+			"Element": "DescriptionList",
+			"Option": "after",
+			"Templates": {
 				"html": '''
 {{$list   := .LastChild}}
 {{$target := .FirstChild}}
@@ -369,10 +342,10 @@
 			}
 		},
 		"StickyCaption": {
-			"type": "sticky",
-			"element": "Caption",
-			"option": "after",
-			"templates": {
+			"Type": "sticky",
+			"Element": "Caption",
+			"Option": "after",
+			"Templates": {
 				"html": '''
 {{$caption := .LastChild}}
 {{$target  := .FirstChild}}
@@ -386,9 +359,9 @@
 			}
 		},
 		"StickyAttributes": {
-			"type": "sticky",
-			"element": "Attributes",
-			"templates": {
+			"Type": "sticky",
+			"Element": "Attributes",
+			"Templates": {
 				"html": '''
 {{$attrs  := .FirstChild}}
 {{$target := .LastChild}}
@@ -402,10 +375,10 @@
 		},
 
 		"NamedLink": {
-			"type": "sticky",
-			"element": "Group",
-			"target": "Link",
-			"templates": {
+			"Type": "sticky",
+			"Element": "Group",
+			"Target": "Link",
+			"Templates": {
 				"html": '''
 {{$group := .FirstChild}}
 {{$link  := .LastChild -}}
@@ -413,12 +386,6 @@
 	{{- dynamicTemplate $group.Element $group -}}
 </a>'''
 			}
-		}
-	},
-	"aggregates": {
-		"numberedHeadings": {
-			"type": "sequentialNumber",
-			"elements": ["NumberedHeading"]
 		}
 	}
 }
