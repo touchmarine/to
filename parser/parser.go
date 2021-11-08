@@ -302,13 +302,6 @@ func (p *parser) parseWalled(name string) *node.Node {
 	return n
 }
 
-func (p *parser) lastChildPosition(n *node.Node) node.Position {
-	if n.LastChild != nil {
-		return n.LastChild.Location.Range.End
-	}
-	return p.pos()
-}
-
 func (p *parser) parseVerbatimWalled(name string) *node.Node {
 	if trace {
 		defer p.tracef("parseVerbatimWalled (%s)", name)()
@@ -756,7 +749,7 @@ func (p *parser) parseLeaf(name string) *node.Node {
 
 	start := p.pos()
 	children, _ := p.parseInlines()
-	end := p.pos()
+	end := children.Location.Range.End
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypeLeaf,
@@ -782,6 +775,7 @@ func (p *parser) parseInlines() (*node.Node, bool) {
 	}
 
 	cont := true
+	end := p.pos()
 	for p.ch > 0 {
 		if p.closingDelimiter() > 0 {
 			break
@@ -798,7 +792,9 @@ func (p *parser) parseInlines() (*node.Node, bool) {
 		}
 	}
 
-	end := p.pos()
+	if container.LastChild != nil {
+		end = container.LastChild.Location.Range.End
+	}
 	container.Location = node.Location{
 		Range: node.Range{
 			Start: start,
@@ -914,6 +910,7 @@ func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 		defer p.tracef("parseEscaped (%s)", name)()
 	}
 
+	start := p.pos()
 	delim := p.ch
 	c := counterpart(delim)
 	closing := []rune{c, c}
@@ -932,6 +929,9 @@ func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 	afterNewline := false
 
 	var b bytes.Buffer
+	end := p.pos()
+	textStart := p.pos()
+	textEnd := p.pos()
 	for p.ch > 0 {
 		if p.ch == '\n' {
 			line := b.Bytes()
@@ -972,10 +972,12 @@ func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 		if cmpRunes(a, closing) {
 			// closing delimiter
 
+			textEnd = p.pos()
 			for i := 0; i < len(closing); i++ {
 				p.next()
 
 			}
+			end = p.pos()
 
 			break
 		}
@@ -989,6 +991,8 @@ func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 		b.WriteRune(p.ch)
 
 		p.next()
+		end = p.pos()
+		textEnd = p.pos()
 	}
 
 	txt := b.Bytes()
@@ -1000,9 +1004,15 @@ func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypeEscaped,
+		Location: node.Location{
+			Range: node.Range{
+				Start: start,
+				End:   end,
+			},
+		},
 	}
 	if len(txt) > 0 {
-		p.setTextContent(n, string(txt), node.Position{}, node.Position{})
+		p.setTextContent(n, string(txt), textStart, textEnd)
 	}
 	return n, cont
 }
@@ -1046,15 +1056,24 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (*node.Node,
 		defer p.tracef("parsePrefixed (%s, prefix=%q, matcher=%q)", name, prefix, matcher)()
 	}
 
+	start := p.pos()
 	// consume prefix
 	for i := 0; i < len(prefix); i++ {
 		p.next()
 	}
+	textStart := p.pos()
 
 	if matcher == "" {
+		end := p.pos()
 		return &node.Node{
 			Element: name,
 			Type:    node.TypePrefixed,
+			Location: node.Location{
+				Range: node.Range{
+					Start: start,
+					End:   end,
+				},
+			},
 		}, true
 	}
 
@@ -1064,21 +1083,28 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (*node.Node,
 	}
 
 	w := m.Match(p.src[p.offset:])
-	end := p.offset + w
+	offsetEnd := p.offset + w
 
 	// consume match
 	var b bytes.Buffer
-	for p.offset < end {
+	for p.offset < offsetEnd {
 		b.WriteRune(p.ch)
 		p.next()
 	}
 
+	end := p.pos()
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypePrefixed,
+		Location: node.Location{
+			Range: node.Range{
+				Start: start,
+				End:   end,
+			},
+		},
 	}
 	if text := string(b.Bytes()); text != "" {
-		p.setTextContent(n, text, node.Position{}, node.Position{})
+		p.setTextContent(n, text, textStart, end)
 	}
 	return n, true
 }
