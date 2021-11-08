@@ -1,7 +1,11 @@
 Container()(
 	Leaf(T)(
 		Container()(
-			Text(MT)(
+			Text(MT)<{
+				"newlines": [
+					1
+				]
+			}>(
 				\ \
 			)
 		)

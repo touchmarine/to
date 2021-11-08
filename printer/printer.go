@@ -12,6 +12,13 @@ import (
 	"github.com/touchmarine/to/parser"
 )
 
+//go:generate stringer -type=Mode
+type Mode int
+
+const (
+	KeepNewlines Mode = 1 << iota
+)
+
 // Elements maps Elements to Names.
 type Elements map[string]Element
 
@@ -29,17 +36,22 @@ type writer interface {
 	io.StringWriter
 }
 
-func Fprint(w io.Writer, elements Elements, n *node.Node) error {
-	p := printer{
-		elements: elements,
-	}
+type Printer struct {
+	Elements Elements
+	Mode     Mode
+}
 
+func (p Printer) Fprint(w io.Writer, n *node.Node) error {
+	pp := printer{
+		elements: p.Elements,
+		mode:     p.Mode,
+	}
 	if x, ok := w.(writer); ok {
-		return p.print(x, n)
+		return pp.print(x, n)
 	}
 
 	buf := bufio.NewWriter(w)
-	if err := p.print(buf, n); err != nil {
+	if err := pp.print(buf, n); err != nil {
 		return err
 	}
 	return buf.Flush()
@@ -47,6 +59,7 @@ func Fprint(w io.Writer, elements Elements, n *node.Node) error {
 
 type printer struct {
 	elements Elements
+	mode     Mode
 
 	prefixes       []string
 	lastPrefixLine int
@@ -296,7 +309,7 @@ func (p printer) print(w writer, n *node.Node) error {
 		w.WriteString(e.Delimiter)
 		w.WriteString(n.TextContent())
 	case node.TypeText:
-		w.WriteString(p.text(n))
+		w.WriteString(p.text(w, n))
 
 	default:
 		return fmt.Errorf("unexpected node type %v (%s)", n.Type, n)
@@ -388,13 +401,17 @@ func (p printer) needBlockEscape(n *node.Node) bool {
 			// we only need to check a text node, any other node
 			// will have it's own non-block delimiter
 			if content := x.Value; content != "" {
-				return p.hasBlockDelimiterPrefix(content) &&
-					!p.hasInlineDelimiterPrefix(content)
+				return p.needsBlockEscape(content)
 
 			}
 		}
 	}
 	return false
+}
+
+func (p printer) needsBlockEscape(s string) bool {
+	return p.hasBlockDelimiterPrefix(s) &&
+		!p.hasInlineDelimiterPrefix(s)
 }
 
 func (p printer) hasBlockDelimiterPrefix(s string) bool {
@@ -441,7 +458,7 @@ func (p printer) hasInlineDelimiterPrefix(s string) bool {
 	return false
 }
 
-func (p printer) text(n *node.Node) string {
+func (p printer) text(w writer, n *node.Node) string {
 	if n.Type != node.TypeText {
 		panic(fmt.Sprintf("printer: expected text node (%s)", n))
 	}
@@ -450,6 +467,28 @@ func (p printer) text(n *node.Node) string {
 	if content == "" {
 		return ""
 	}
+
+	//if n.Data != nil {
+	//	if v, ok := n.Data[parser.KeyNewlines]; ok {
+	//		if newlines, ok := v.([]int); ok {
+	//			c := []byte(content)
+	//			for _, pos := range newlines {
+	//				c[pos] = '\n' // replace space
+	//				// pos+1 must exist (so no need to bound
+	//				// check)
+	//				o := pos + 1
+	//				if p.needsBlockEscape(string(c[o:])) {
+	//					c = append(c[:o], append([]byte{'\\'}, c[o:]...)...)
+	//				}
+	//				if len(p.prefixes) > 0 {
+	//					prefix := strings.Join(p.prefixes, " ") + " "
+	//					c = append(c[:o], append([]byte(prefix), c[o:]...)...)
+	//				}
+	//			}
+	//			content = string(c)
+	//		}
+	//	}
+	//}
 
 	var b strings.Builder
 	for i := 0; i < len(content); i++ {
@@ -499,6 +538,24 @@ func (p printer) text(n *node.Node) string {
 
 		}
 
+		if ch == ' ' && p.mode&KeepNewlines != 0 && n.Data != nil {
+			if v, ok := n.Data[parser.KeyNewlines]; ok {
+				if newlines, ok := v.([]int); ok && containsInt(newlines, i) {
+					b.WriteByte('\n')
+					// i+1 must exist (so no need to bound
+					// check)
+					if p.needsBlockEscape(string(content[i+1:])) {
+						b.WriteByte('\\')
+					}
+					if len(p.prefixes) > 0 {
+						prefix := strings.Join(p.prefixes, " ") + " "
+						b.WriteString(prefix)
+					}
+					continue
+				}
+			}
+		}
+
 		b.WriteByte(ch)
 	}
 
@@ -527,6 +584,15 @@ func (p printer) text(n *node.Node) string {
 	}
 
 	return text
+}
+
+func containsInt(ii []int, x int) bool {
+	for _, i := range ii {
+		if x == i {
+			return true
+		}
+	}
+	return false
 }
 
 func searchFirstNonContainerParent(n *node.Node) *node.Node {

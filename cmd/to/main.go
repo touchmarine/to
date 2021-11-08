@@ -168,7 +168,7 @@ Options:
 	}
 
 	if format := args[0]; format == "fmt" {
-		if err := printer.Fprint(os.Stdout, cfg.Elements.PrinterElements(), root); err != nil {
+		if err := (printer.Printer{Elements: cfg.Elements.PrinterElements()}).Fprint(os.Stdout, root); err != nil {
 			fmt.Fprintf(os.Stderr, "format failed: %v\n", err)
 			os.Exit(1)
 		}

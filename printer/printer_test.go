@@ -1,3 +1,8 @@
+// package printer_test contines tests the printer package.
+//
+// out cases containing "$$" denote the wanted output for the printer mode
+// printer.KeepNewlines; the output is placed after the "$$". If there is no
+// "$$" section, the wanted output is assumed to be the regular out string.
 package printer_test
 
 import (
@@ -29,10 +34,10 @@ func TestText(t *testing.T) {
 		{"\na", "a"},
 
 		{"ab", "ab"},
-		{"a\nb", "a b"},
-		{"a\n b", "a b"},
+		{"a\nb", "a b$$a\nb"},
+		{"a\n b", "a b$$a\nb"},
 		{"a\n\n b", "a\n\nb"},
-		{"ab\n c", "ab c"},
+		{"ab\n c", "ab c$$ab\nc"},
 		{"ab\n\n c", "ab\n\nc"},
 
 		// interrupted by empty blocks
@@ -41,19 +46,23 @@ func TestText(t *testing.T) {
 		{"a\n>\n*b\nc", "a\n\n* b\n\nc"},
 	}
 
+	elements := config.Elements{
+		"A": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: ">",
+		},
+		"B": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: "*",
+		},
+	}
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-			elements := config.Elements{
-				"A": {
-					Type:      node.TypeWalled.String(),
-					Delimiter: ">",
-				},
-				"B": {
-					Type:      node.TypeWalled.String(),
-					Delimiter: "*",
-				},
-			}
-			test(t, elements, nil, c.in, c.out)
+		name := fmt.Sprintf("%q", c.in)
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 }
@@ -76,19 +85,23 @@ func TestVerbatimLine(t *testing.T) {
 		{">.ab", "> .a b"},
 	}
 
+	elements := config.Elements{
+		"A": {
+			Type:      node.TypeVerbatimLine.String(),
+			Delimiter: ".a",
+		},
+		"B": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: ">",
+		},
+	}
 	for _, c := range cases {
-		t.Run(c.in, func(t *testing.T) {
-			elements := config.Elements{
-				"A": {
-					Type:      node.TypeVerbatimLine.String(),
-					Delimiter: ".a",
-				},
-				"B": {
-					Type:      node.TypeWalled.String(),
-					Delimiter: ">",
-				},
-			}
-			test(t, elements, nil, c.in, c.out)
+		name := c.in
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 }
@@ -101,7 +114,7 @@ func TestHanging(t *testing.T) {
 		{"-", ""},
 		{"-a", "- a"},
 		{"-\n a", "- a"},
-		{"-a\n b", "- a b"},
+		{"-a\n b", "- a b$$- a\n  b"},
 		{"-a\n -b", "- a\n\n  - b"},
 		{"-a\n\n -b", "- a\n\n  - b"},
 		{"-a\n \n -b", "- a\n\n  - b"},
@@ -120,19 +133,23 @@ func TestHanging(t *testing.T) {
 		{">\n>-a", "> - a"},
 	}
 
+	elements := config.Elements{
+		"A": {
+			Type:      node.TypeHanging.String(),
+			Delimiter: "-",
+		},
+		"B": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: ">",
+		},
+	}
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-			elements := config.Elements{
-				"A": {
-					Type:      node.TypeHanging.String(),
-					Delimiter: "-",
-				},
-				"B": {
-					Type:      node.TypeWalled.String(),
-					Delimiter: ">",
-				},
-			}
-			test(t, elements, nil, c.in, c.out)
+		name := fmt.Sprintf("%q", c.in)
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 }
@@ -146,9 +163,9 @@ func TestRankedHanging(t *testing.T) {
 		{"==", ""},
 		{"==a", "== a"},
 		{"==\n  a", "== a"},
-		{"==a\n  b", "== a b"},
+		{"==a\n  b", "== a b$$== a\n   b"},
 		{"==a", "== a"},
-		{"==a\n  b", "== a b"},
+		{"==a\n  b", "== a b$$== a\n   b"},
 		{"==a\n\n  b", "== a\n\n   b"},
 		{"==a\n \n  b", "== a\n\n   b"},
 		{"==a\n\n\n  b", "== a\n\n   b"},
@@ -166,19 +183,23 @@ func TestRankedHanging(t *testing.T) {
 		{">\n>==a", "> == a"},
 	}
 
+	elements := config.Elements{
+		"A": {
+			Type:      node.TypeRankedHanging.String(),
+			Delimiter: "=",
+		},
+		"B": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: ">",
+		},
+	}
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-			elements := config.Elements{
-				"A": {
-					Type:      node.TypeRankedHanging.String(),
-					Delimiter: "=",
-				},
-				"B": {
-					Type:      node.TypeWalled.String(),
-					Delimiter: ">",
-				},
-			}
-			test(t, elements, nil, c.in, c.out)
+		name := fmt.Sprintf("%q", c.in)
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 }
@@ -191,7 +212,7 @@ func TestWalled(t *testing.T) {
 		{"+", ""},
 		{"+a", "+ a"},
 		{"+\n+a", "+ a"},
-		{"+a\n+b", "+ a b"},
+		{"+a\n+b", "+ a b$$+ a\n+ b"},
 		{"+a\n++b", "+ a\n+\n+ + b"},
 		{"+a\n+\n++b", "+ a\n+\n+ + b"},
 		{"+a\n++\n++b", "+ a\n+\n+ + b"},
@@ -210,19 +231,23 @@ func TestWalled(t *testing.T) {
 		{">\n>+a", "> + a"},
 	}
 
+	elements := config.Elements{
+		"A": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: "+",
+		},
+		"B": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: ">",
+		},
+	}
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-			elements := config.Elements{
-				"A": {
-					Type:      node.TypeWalled.String(),
-					Delimiter: "+",
-				},
-				"B": {
-					Type:      node.TypeWalled.String(),
-					Delimiter: ">",
-				},
-			}
-			test(t, elements, nil, c.in, c.out)
+		name := fmt.Sprintf("%q", c.in)
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 }
@@ -253,19 +278,23 @@ func TestVerbatimWalled(t *testing.T) {
 		{">\n>!a", "> ! a"},
 	}
 
+	elements := config.Elements{
+		"A": {
+			Type:      node.TypeVerbatimWalled.String(),
+			Delimiter: "!",
+		},
+		"B": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: ">",
+		},
+	}
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-			elements := config.Elements{
-				"A": {
-					Type:      node.TypeVerbatimWalled.String(),
-					Delimiter: "!",
-				},
-				"B": {
-					Type:      node.TypeWalled.String(),
-					Delimiter: ">",
-				},
-			}
-			test(t, elements, nil, c.in, c.out)
+		name := fmt.Sprintf("%q", c.in)
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 }
@@ -309,19 +338,23 @@ func TestFenced(t *testing.T) {
 		{">\n>`a\n>b", "> `a\n> b\n> `"},
 	}
 
+	elements := config.Elements{
+		"A": {
+			Type:      node.TypeFenced.String(),
+			Delimiter: "`",
+		},
+		"B": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: ">",
+		},
+	}
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-			elements := config.Elements{
-				"A": {
-					Type:      node.TypeFenced.String(),
-					Delimiter: "`",
-				},
-				"B": {
-					Type:      node.TypeWalled.String(),
-					Delimiter: ">",
-				},
-			}
-			test(t, elements, nil, c.in, c.out)
+		name := fmt.Sprintf("%q", c.in)
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 }
@@ -341,24 +374,28 @@ func TestGroup(t *testing.T) {
 			{"a\n>\n*b\nc", "a\n\n* b\n\nc"},
 		}
 
+		elements := config.Elements{
+			"A": {
+				Type:      node.TypeWalled.String(),
+				Delimiter: ">",
+			},
+			"B": {
+				Type:      node.TypeWalled.String(),
+				Delimiter: "*",
+			},
+		}
+		transformers := []transformer.Transformer{
+			paragraph.Transformer{paragraph.Map{
+				node.TypeLeaf: "PA",
+			}},
+		}
 		for _, c := range cases {
-			t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-				elements := config.Elements{
-					"A": {
-						Type:      node.TypeWalled.String(),
-						Delimiter: ">",
-					},
-					"B": {
-						Type:      node.TypeWalled.String(),
-						Delimiter: "*",
-					},
-				}
-				transformers := []transformer.Transformer{
-					paragraph.Transformer{paragraph.Map{
-						node.TypeLeaf: "PA",
-					}},
-				}
-				test(t, elements, transformers, c.in, c.out)
+			name := fmt.Sprintf("%q", c.in)
+			t.Run(name, func(t *testing.T) {
+				test(t, elements, transformers, c.in, c.out, 0)
+			})
+			t.Run("eepNewlines-"+name, func(t *testing.T) {
+				test(t, elements, transformers, c.in, c.out, printer.KeepNewlines)
 			})
 		}
 	})
@@ -386,28 +423,32 @@ func TestGroup(t *testing.T) {
 			{"-a\n>\n*b\n-c", "- a\n\n* b\n\n- c"},
 		}
 
+		elements := config.Elements{
+			"A": {
+				Type:      node.TypeHanging.String(),
+				Delimiter: "-",
+			},
+			"B": {
+				Type:      node.TypeWalled.String(),
+				Delimiter: ">",
+			},
+			"C": {
+				Type:      node.TypeWalled.String(),
+				Delimiter: "*",
+			},
+		}
+		transformers := []transformer.Transformer{
+			group.Transformer{group.Map{
+				"A": "LA",
+			}},
+		}
 		for _, c := range cases {
-			t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-				elements := config.Elements{
-					"A": {
-						Type:      node.TypeHanging.String(),
-						Delimiter: "-",
-					},
-					"B": {
-						Type:      node.TypeWalled.String(),
-						Delimiter: ">",
-					},
-					"C": {
-						Type:      node.TypeWalled.String(),
-						Delimiter: "*",
-					},
-				}
-				transformers := []transformer.Transformer{
-					group.Transformer{group.Map{
-						"A": "LA",
-					}},
-				}
-				test(t, elements, transformers, c.in, c.out)
+			name := fmt.Sprintf("%q", c.in)
+			t.Run(name, func(t *testing.T) {
+				test(t, elements, transformers, c.in, c.out, 0)
+			})
+			t.Run("KeepNewlines-"+name, func(t *testing.T) {
+				test(t, elements, transformers, c.in, c.out, printer.KeepNewlines)
 			})
 		}
 	})
@@ -441,34 +482,38 @@ func TestGroup(t *testing.T) {
 			//{"!a\n>\nb", "! a\nb"},
 		}
 
+		elements := config.Elements{
+			"A": {
+				Type:      node.TypeVerbatimWalled.String(),
+				Delimiter: "!",
+			},
+			"B": {
+				Type:      node.TypeWalled.String(),
+				Delimiter: "+",
+			},
+			"C": {
+				Type:      node.TypeWalled.String(),
+				Delimiter: ">",
+			},
+		}
+		transformers := []transformer.Transformer{
+			sticky.Transformer{sticky.Map{
+				"A": sticky.Sticky{
+					Name: "SA",
+				},
+				"B": sticky.Sticky{
+					Name:  "SB",
+					After: true,
+				},
+			}},
+		}
 		for _, c := range cases {
-			t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-				elements := config.Elements{
-					"A": {
-						Type:      node.TypeVerbatimWalled.String(),
-						Delimiter: "!",
-					},
-					"B": {
-						Type:      node.TypeWalled.String(),
-						Delimiter: "+",
-					},
-					"C": {
-						Type:      node.TypeWalled.String(),
-						Delimiter: ">",
-					},
-				}
-				transformers := []transformer.Transformer{
-					sticky.Transformer{sticky.Map{
-						"A": sticky.Sticky{
-							Name: "SA",
-						},
-						"B": sticky.Sticky{
-							Name:  "SB",
-							After: true,
-						},
-					}},
-				}
-				test(t, elements, transformers, c.in, c.out)
+			name := fmt.Sprintf("%q", c.in)
+			t.Run(name, func(t *testing.T) {
+				test(t, elements, transformers, c.in, c.out, 0)
+			})
+			t.Run("KeepNewlines-"+name, func(t *testing.T) {
+				test(t, elements, transformers, c.in, c.out, printer.KeepNewlines)
 			})
 		}
 	})
@@ -489,27 +534,33 @@ func TestGroup(t *testing.T) {
 			{"((a))\n**b**", "((a))**b**"},
 		}
 
+		elements := config.Elements{
+			"A": {
+				Type:      node.TypeUniform.String(),
+				Delimiter: "(",
+			},
+			"B": {
+				Type:      node.TypeUniform.String(),
+				Delimiter: "*",
+			},
+		}
+		transformers := []transformer.Transformer{
+			sticky.Transformer{sticky.Map{
+				"A": sticky.Sticky{
+					Name:   "SA",
+					Target: "B",
+				},
+			}},
+		}
 		for _, c := range cases {
-			t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-				elements := config.Elements{
-					"A": {
-						Type:      node.TypeUniform.String(),
-						Delimiter: "(",
-					},
-					"B": {
-						Type:      node.TypeUniform.String(),
-						Delimiter: "*",
-					},
-				}
-				transformers := []transformer.Transformer{
-					sticky.Transformer{sticky.Map{
-						"A": sticky.Sticky{
-							Name:   "SA",
-							Target: "B",
-						},
-					}},
-				}
-				test(t, elements, transformers, c.in, c.out)
+			name := fmt.Sprintf("%q", c.in)
+			t.Run(name, func(t *testing.T) {
+				test(t, elements, transformers, c.in, c.out, 0)
+			})
+			t.Run("KeepNewlines", func(t *testing.T) {
+				t.Run(name, func(t *testing.T) {
+					test(t, elements, transformers, c.in, c.out, printer.KeepNewlines)
+				})
 			})
 		}
 	})
@@ -526,9 +577,9 @@ func TestUniform(t *testing.T) {
 		{"**a**b", "**a**b"},
 		{"**\n", ""},
 		{"**\n ", ""},
-		{"**\na", "** a**"},
-		{"**\na**", "** a**"},
-		{"**\na**b", "** a**b"},
+		{"**\na", "** a**$$**\na**"},
+		{"**\na**", "** a**$$**\na**"},
+		{"**\na**b", "** a**b$$**\na**b"},
 		{"**\n**", ""},
 
 		{"a**", "a"},
@@ -545,23 +596,27 @@ func TestUniform(t *testing.T) {
 		{"((a", "((a))"},
 	}
 
+	elements := config.Elements{
+		"MA": {
+			Type:      node.TypeUniform.String(),
+			Delimiter: "*",
+		},
+		"MB": {
+			Type:      node.TypeUniform.String(),
+			Delimiter: "_",
+		},
+		"MC": {
+			Type:      node.TypeUniform.String(),
+			Delimiter: "(",
+		},
+	}
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-			elements := config.Elements{
-				"MA": {
-					Type:      node.TypeUniform.String(),
-					Delimiter: "*",
-				},
-				"MB": {
-					Type:      node.TypeUniform.String(),
-					Delimiter: "_",
-				},
-				"MC": {
-					Type:      node.TypeUniform.String(),
-					Delimiter: "(",
-				},
-			}
-			test(t, elements, nil, c.in, c.out)
+		name := fmt.Sprintf("%q", c.in)
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 }
@@ -604,23 +659,27 @@ func TestEscaped(t *testing.T) {
 		{"[[a", "[[a]]"},
 	}
 
+	elements := config.Elements{
+		"MA": {
+			Type:      node.TypeEscaped.String(),
+			Delimiter: "`",
+		},
+		"MB": {
+			Type:      node.TypeUniform.String(),
+			Delimiter: "_",
+		},
+		"MC": {
+			Type:      node.TypeEscaped.String(),
+			Delimiter: "[",
+		},
+	}
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-			elements := config.Elements{
-				"MA": {
-					Type:      node.TypeEscaped.String(),
-					Delimiter: "`",
-				},
-				"MB": {
-					Type:      node.TypeUniform.String(),
-					Delimiter: "_",
-				},
-				"MC": {
-					Type:      node.TypeEscaped.String(),
-					Delimiter: "[",
-				},
-			}
-			test(t, elements, nil, c.in, c.out)
+		name := fmt.Sprintf("%q", c.in)
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 }
@@ -635,15 +694,19 @@ func TestPrefixed(t *testing.T) {
 		{`a\`, "a"},
 	}
 
+	elements := config.Elements{
+		"MA": {
+			Type:      node.TypePrefixed.String(),
+			Delimiter: `\`,
+		},
+	}
 	for _, c := range cases {
-		t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-			elements := config.Elements{
-				"MA": {
-					Type:      node.TypePrefixed.String(),
-					Delimiter: `\`,
-				},
-			}
-			test(t, elements, nil, c.in, c.out)
+		name := fmt.Sprintf("%q", c.in)
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 
@@ -657,16 +720,20 @@ func TestPrefixed(t *testing.T) {
 			{`a\`, `a\`},
 		}
 
+		elements := config.Elements{
+			"MA": {
+				Type:        node.TypePrefixed.String(),
+				Delimiter:   `\`,
+				DoNotRemove: true,
+			},
+		}
 		for _, c := range cases {
-			t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-				elements := config.Elements{
-					"MA": {
-						Type:        node.TypePrefixed.String(),
-						Delimiter:   `\`,
-						DoNotRemove: true,
-					},
-				}
-				test(t, elements, nil, c.in, c.out)
+			name := fmt.Sprintf("%q", c.in)
+			t.Run(name, func(t *testing.T) {
+				test(t, elements, nil, c.in, c.out, 0)
+			})
+			t.Run("KeepNewlines-"+name, func(t *testing.T) {
+				test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 			})
 		}
 	})
@@ -681,16 +748,20 @@ func TestPrefixed(t *testing.T) {
 			{"ba:", "b"},
 		}
 
+		elements := config.Elements{
+			"MA": {
+				Type:      node.TypePrefixed.String(),
+				Delimiter: "a:",
+				Matcher:   "url",
+			},
+		}
 		for _, c := range cases {
-			t.Run(fmt.Sprintf("%q", c.in), func(t *testing.T) {
-				elements := config.Elements{
-					"MA": {
-						Type:      node.TypePrefixed.String(),
-						Delimiter: "a:",
-						Matcher:   "url",
-					},
-				}
-				test(t, elements, nil, c.in, c.out)
+			name := fmt.Sprintf("%q", c.in)
+			t.Run(name, func(t *testing.T) {
+				test(t, elements, nil, c.in, c.out, 0)
+			})
+			t.Run("KeepNewlines-"+name, func(t *testing.T) {
+				test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 			})
 		}
 	})
@@ -731,7 +802,7 @@ func TestEscape(t *testing.T) {
 		{`\\\\*`, `\\\\*`}, // \\*
 
 		// text block
-		{"\\*\n\\*", `\* *`}, // * *
+		{"\\*\n\\*", "\\* *$$\\*\n\\*"}, // * *
 
 		{"**a", "**a**"},         // I(a)
 		{`\**`, `\**`},           // **
@@ -807,44 +878,46 @@ func TestEscape(t *testing.T) {
 		{"``a\\\\", "``a\\\\``"},  // I(a\\)
 	}
 
+	elements := config.Elements{
+		"A": {
+			Type:      node.TypeHanging.String(),
+			Delimiter: "*",
+		},
+		"B": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: ">",
+		},
+		"C": {
+			Type:      node.TypeFenced.String(),
+			Delimiter: "`",
+		},
+		"MA": {
+			Type:      node.TypeUniform.String(),
+			Delimiter: "*",
+		},
+		"MB": {
+			Type:      node.TypeEscaped.String(),
+			Delimiter: "`",
+		},
+		// use "{" as it doesn't need escaping
+		// in -run test regex as "(" or "["
+		"MC": {
+			Type:      node.TypeUniform.String(),
+			Delimiter: "{",
+		},
+		"MD": {
+			Type:      node.TypePrefixed.String(),
+			Delimiter: "http://",
+			Matcher:   "url",
+		},
+	}
 	for _, c := range cases {
-		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
-		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
-			elements := config.Elements{
-				"A": {
-					Type:      node.TypeHanging.String(),
-					Delimiter: "*",
-				},
-				"B": {
-					Type:      node.TypeWalled.String(),
-					Delimiter: ">",
-				},
-				"C": {
-					Type:      node.TypeFenced.String(),
-					Delimiter: "`",
-				},
-				"MA": {
-					Type:      node.TypeUniform.String(),
-					Delimiter: "*",
-				},
-				"MB": {
-					Type:      node.TypeEscaped.String(),
-					Delimiter: "`",
-				},
-				// use "{" as it doesn't need escaping
-				// in -run test regex as "(" or "["
-				"MC": {
-					Type:      node.TypeUniform.String(),
-					Delimiter: "{",
-				},
-				"MD": {
-					Type:      node.TypePrefixed.String(),
-					Delimiter: "http://",
-					Matcher:   "url",
-				},
-			}
-
-			test(t, elements, nil, c.in, c.out)
+		name := fmt.Sprintf("%q", strings.ReplaceAll(c.in, "/", "2F")) // %2F is URL-escaped slash
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 }
@@ -889,7 +962,7 @@ func TestEscapeWithClash(t *testing.T) {
 		{`\\\\*`, `\\\\*`}, // \\*
 
 		// text block
-		{"\\*\n\\*", `\* *`}, // * *
+		{"\\*\n\\*", "\\* *$$\\*\n\\*"}, // * *
 
 		{"**a", "**a**"},         // I(a)
 		{`\**`, `\**`},           // **
@@ -966,48 +1039,51 @@ func TestEscapeWithClash(t *testing.T) {
 		{"``a\\\\", "``a\\\\``"},  // I(a\\)
 	}
 
+	elements := config.Elements{
+		"A": {
+			Type:      node.TypeHanging.String(),
+			Delimiter: "*",
+		},
+		"B": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: ">",
+		},
+		"C": {
+			Type:      node.TypeFenced.String(),
+			Delimiter: "`",
+		},
+		"MA": {
+			Type:      node.TypeUniform.String(),
+			Delimiter: "*",
+		},
+		"MB": {
+			Type:      node.TypeEscaped.String(),
+			Delimiter: "`",
+		},
+		"MC": {
+			Type:        node.TypePrefixed.String(),
+			Delimiter:   `\`,
+			DoNotRemove: true,
+		},
+		// use "{" as it doesn't need escaping
+		// in -run test regex as "(" or "["
+		"MD": {
+			Type:      node.TypeUniform.String(),
+			Delimiter: "{",
+		},
+		"ME": {
+			Type:      node.TypePrefixed.String(),
+			Delimiter: "http://",
+			Matcher:   "url",
+		},
+	}
 	for _, c := range cases {
-		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
-		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
-			elements := config.Elements{
-				"A": {
-					Type:      node.TypeHanging.String(),
-					Delimiter: "*",
-				},
-				"B": {
-					Type:      node.TypeWalled.String(),
-					Delimiter: ">",
-				},
-				"C": {
-					Type:      node.TypeFenced.String(),
-					Delimiter: "`",
-				},
-				"MA": {
-					Type:      node.TypeUniform.String(),
-					Delimiter: "*",
-				},
-				"MB": {
-					Type:      node.TypeEscaped.String(),
-					Delimiter: "`",
-				},
-				"MC": {
-					Type:        node.TypePrefixed.String(),
-					Delimiter:   `\`,
-					DoNotRemove: true,
-				},
-				// use "{" as it doesn't need escaping
-				// in -run test regex as "(" or "["
-				"MD": {
-					Type:      node.TypeUniform.String(),
-					Delimiter: "{",
-				},
-				"ME": {
-					Type:      node.TypePrefixed.String(),
-					Delimiter: "http://",
-					Matcher:   "url",
-				},
-			}
-			test(t, elements, nil, c.in, c.out)
+		name := fmt.Sprintf("%q", strings.ReplaceAll(c.in, "/", "2F")) // %2F is URL-escaped slash
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 }
@@ -1033,48 +1109,62 @@ func TestDoNotRemove(t *testing.T) {
 		{`**\`, "**\\\n**"},
 	}
 
+	elements := config.Elements{
+		"A": {
+			Type:        node.TypeHanging.String(),
+			Delimiter:   ".a",
+			DoNotRemove: true,
+		},
+		"B": {
+			Type:      node.TypeHanging.String(),
+			Delimiter: ".b",
+		},
+		"C": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: ">",
+		},
+		"MA": {
+			Type:        node.TypePrefixed.String(),
+			Delimiter:   `\`,
+			DoNotRemove: true,
+		},
+		"MB": {
+			Type:      node.TypeUniform.String(),
+			Delimiter: "*",
+		},
+	}
 	for _, c := range cases {
-		name := strings.ReplaceAll(c.in, "/", "2F") // %2F is URL-escaped slash
-		t.Run(fmt.Sprintf("%q", name), func(t *testing.T) {
-			elements := config.Elements{
-				"A": {
-					Type:        node.TypeHanging.String(),
-					Delimiter:   ".a",
-					DoNotRemove: true,
-				},
-				"B": {
-					Type:      node.TypeHanging.String(),
-					Delimiter: ".b",
-				},
-				"C": {
-					Type:      node.TypeWalled.String(),
-					Delimiter: ">",
-				},
-				"MA": {
-					Type:        node.TypePrefixed.String(),
-					Delimiter:   `\`,
-					DoNotRemove: true,
-				},
-				"MB": {
-					Type:      node.TypeUniform.String(),
-					Delimiter: "*",
-				},
-			}
-			test(t, elements, nil, c.in, c.out)
+		name := fmt.Sprintf("%q", strings.ReplaceAll(c.in, "/", "2F")) // %2F is URL-escaped slash
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 0)
+		})
+		t.Run("KeepNewlines-"+name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
 		})
 	}
 }
 
-func test(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in string, out string) {
+func test(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in, out string, mode printer.Mode) {
 	t.Helper()
 
 	if elements == nil {
 		elements = config.Elements{}
 	}
 
-	printed := runPrint(t, elements, transformers, in, *printTree)
-	if printed != out {
-		t.Errorf("got %q, want %q", printed, out)
+	var want string
+	if i := strings.Index(out, "$$"); i > -1 {
+		if mode&printer.KeepNewlines != 0 {
+			want = out[i+2:]
+		} else {
+			want = out[:i]
+		}
+	} else {
+		want = out
+	}
+
+	printed := runPrint(t, elements, transformers, in, mode, *printTree)
+	if printed != want {
+		t.Errorf("got %q, want %q", printed, want)
 	}
 
 	previousPrint := printed
@@ -1084,7 +1174,7 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 			break
 		}
 
-		reprinted := runPrint(t, elements, transformers, previousPrint, *printTree)
+		reprinted := runPrint(t, elements, transformers, previousPrint, mode, *printTree)
 		if reprinted == previousPrint {
 			break
 		}
@@ -1116,14 +1206,14 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 				Type: node.TypeText.String(),
 			}
 		}
-		printedDefined := runPrint(t, elements, transformers, in, false)
+		printedDefined := runPrint(t, elements, transformers, in, mode, false)
 		if printedDefined != printed {
 			t.Errorf("with defined text got %q, with undefined %q", printedDefined, printed)
 		}
 	}
 }
 
-func runPrint(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in string, printTree bool) string {
+func runPrint(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in string, mode printer.Mode, printTree bool) string {
 	t.Helper()
 
 	r := strings.NewReader(in)
@@ -1142,7 +1232,7 @@ func runPrint(t *testing.T, elements config.Elements, transformers []transformer
 	}
 
 	var b strings.Builder
-	if err := printer.Fprint(&b, elements.PrinterElements(), root); err != nil {
+	if err := (printer.Printer{Elements: elements.PrinterElements(), Mode: mode}).Fprint(&b, root); err != nil {
 		t.Fatal(err)
 	}
 	return b.String()

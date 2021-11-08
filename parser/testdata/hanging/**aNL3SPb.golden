@@ -5,7 +5,11 @@ Container()(
 				Container()(
 					Leaf(T)(
 						Container()(
-							Text(MT)(
+							Text(MT)<{
+								"newlines": [
+									1
+								]
+							}>(
 								a b
 							)
 						)

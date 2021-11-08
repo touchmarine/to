@@ -8,7 +8,11 @@ Container()(
 				Container()(
 					Uniform(MC)(
 						Container()(
-							Text(MT)(
+							Text(MT)<{
+								"newlines": [
+									0
+								]
+							}>(
 								 b
 							)
 						)

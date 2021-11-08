@@ -19,6 +19,7 @@ const tabWidth = 8
 const (
 	KeyRank        = "rank"
 	KeyOpeningText = "openingText"
+	KeyNewlines    = "newlines"
 )
 
 var tabSpaces []rune
@@ -1134,6 +1135,7 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 
 	var b bytes.Buffer
 	end := p.pos()
+	var newlines []int
 	for p.ch > 0 {
 		if p.ch == '\n' {
 			line := b.Bytes()
@@ -1163,7 +1165,9 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 				}
 			}
 		} else {
+			newlinePos := -1
 			if afterNewline {
+				newlinePos = b.Len()
 				b.WriteByte(' ') // newline separator
 
 				afterNewline = false
@@ -1187,6 +1191,9 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 
 			p.next()
 			end = p.pos() // here because of loop condition
+			if newlinePos > -1 {
+				newlines = append(newlines, newlinePos)
+			}
 		}
 	}
 
@@ -1204,7 +1211,7 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 		defer p.printf("return %q", txt)
 	}
 
-	return &node.Node{
+	n := &node.Node{
 		Element: name,
 		Type:    node.TypeText,
 		Value:   string(txt),
@@ -1214,7 +1221,13 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 				End:   end,
 			},
 		},
-	}, cont
+	}
+	if len(newlines) > 0 {
+		n.Data = node.Data{
+			KeyNewlines: newlines,
+		}
+	}
+	return n, cont
 }
 
 func (p *parser) matchInline() (Element, bool) {
