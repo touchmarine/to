@@ -104,7 +104,7 @@ func (p printer) print(w writer, n *node.Node) error {
 		return nil
 	}
 
-	if n.IsBlock() || n.Type == node.TypeContainer {
+	if n.IsBlock() || (n.Type == node.TypeContainer && !isInlineContainer(n)) {
 		if x := p.searchFirstPreviousPrintableSibling(n); x != nil {
 			// has non-empty previous sibling
 			if x != n.PreviousSibling && x.Type == n.Type && x.Element == n.Element ||
@@ -161,7 +161,11 @@ func (p printer) print(w writer, n *node.Node) error {
 		w.WriteString(e.Delimiter)
 		lines := strings.Split(n.TextContent(), "\n")
 		lines = removeBlankLines(lines)
-		for _, line := range lines {
+		for i, line := range lines {
+			if p.mode&KeepNewlines != 0 && i > 0 {
+				p.newline(w)
+				p.writePrefix(w, withoutTrailingSpacing)
+			}
 			w.WriteString(" ")
 			w.WriteString(strings.Trim(line, " \t"))
 		}
@@ -322,6 +326,24 @@ func (p printer) hasPrintableContent(n *node.Node) bool {
 	return p.doNotRemove(n) || n.TextContent() != ""
 }
 
+// isInlineContainer reports whether a container is inline based on its
+// children.
+func isInlineContainer(n *node.Node) bool {
+	if n == nil {
+		panic("n is nil")
+	}
+	if n.Type != node.TypeContainer {
+		panic("n is not type container")
+	}
+	if n.IsInline() {
+		return true
+	}
+	if n.FirstChild != nil && n.FirstChild.IsInline() {
+		return true
+	}
+	return false
+}
+
 // doNotRemove returns true if n or any of its children has set DoNotRemove.
 func (p printer) doNotRemove(n *node.Node) bool {
 	if e, found := p.elements[n.Element]; found && e.DoNotRemove {
@@ -468,28 +490,6 @@ func (p printer) text(w writer, n *node.Node) string {
 		return ""
 	}
 
-	//if n.Data != nil {
-	//	if v, ok := n.Data[parser.KeyNewlines]; ok {
-	//		if newlines, ok := v.([]int); ok {
-	//			c := []byte(content)
-	//			for _, pos := range newlines {
-	//				c[pos] = '\n' // replace space
-	//				// pos+1 must exist (so no need to bound
-	//				// check)
-	//				o := pos + 1
-	//				if p.needsBlockEscape(string(c[o:])) {
-	//					c = append(c[:o], append([]byte{'\\'}, c[o:]...)...)
-	//				}
-	//				if len(p.prefixes) > 0 {
-	//					prefix := strings.Join(p.prefixes, " ") + " "
-	//					c = append(c[:o], append([]byte(prefix), c[o:]...)...)
-	//				}
-	//			}
-	//			content = string(c)
-	//		}
-	//	}
-	//}
-
 	var b strings.Builder
 	for i := 0; i < len(content); i++ {
 		ch := content[i]
@@ -541,6 +541,8 @@ func (p printer) text(w writer, n *node.Node) string {
 		if ch == ' ' && p.mode&KeepNewlines != 0 && n.Data != nil {
 			if v, ok := n.Data[parser.KeyNewlines]; ok {
 				if newlines, ok := v.([]int); ok && containsInt(newlines, i) {
+					// insert newline at same place as in
+					// source (instead of a space)
 					b.WriteByte('\n')
 					// i+1 must exist (so no need to bound
 					// check)

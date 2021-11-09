@@ -21,7 +21,10 @@ import (
 	"github.com/touchmarine/to/transformer/sticky"
 )
 
-var printTree = flag.Bool("print-tree", false, "print node tree")
+var (
+	printTree = flag.Bool("print-tree", false, "print node tree")
+	noReprint = flag.Bool("no-reprint", false, "don't run reprint tests")
+)
 
 func TestText(t *testing.T) {
 	cases := []struct {
@@ -260,9 +263,9 @@ func TestVerbatimWalled(t *testing.T) {
 		{"!", ""},
 		{"!a", "! a"},
 		{"!\n!a", "! a"},
-		{"!a\n!b", "! a b"},
-		{"!a\n!\n!b", "! a b"},
-		{"!a\n!\n!\n!b", "! a b"},
+		{"!a\n!b", "! a b$$! a\n! b"},
+		{"!a\n!\n!b", "! a b$$! a\n! b"},
+		{"!a\n!\n!\n!b", "! a b$$! a\n! b"},
 		// would be nested-but can only contain verbatim
 		{"!>", "! >"},
 		{"!>a", "! >a"},
@@ -532,6 +535,9 @@ func TestGroup(t *testing.T) {
 			{"((a)) **b**", "((a))**b**"},
 			{"((a))b**c**", "((a))b**c**"},
 			{"((a))\n**b**", "((a))**b**"},
+
+			{"a\n((b))**c**", "a ((b))**c**$$a\n((b))**c**"},
+			{"((a))**b**((c))**d**", "((a))**b**((c))**d**"},
 		}
 
 		elements := config.Elements{
@@ -657,6 +663,8 @@ func TestEscaped(t *testing.T) {
 
 		// left-right delimiter
 		{"[[a", "[[a]]"},
+
+		{"a\n``b``", "a ``b``$$a\n``b``"},
 	}
 
 	elements := config.Elements{
@@ -1167,48 +1175,50 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 		t.Errorf("got %q, want %q", printed, want)
 	}
 
-	previousPrint := printed
-	for i := 0; ; i++ {
-		if i > 2 {
-			t.Errorf("too many reprints, skipping")
-			break
+	if !*noReprint {
+		previousPrint := printed
+		for i := 0; ; i++ {
+			if i > 2 {
+				t.Errorf("too many reprints, skipping")
+				break
+			}
+
+			reprinted := runPrint(t, elements, transformers, previousPrint, mode, *printTree)
+			if reprinted == previousPrint {
+				break
+			}
+
+			// test that printing the output returns the same output, if it
+			// doesn't it is not canonical
+			t.Errorf("reprint %d got %q, want %q", i+1, reprinted, previousPrint)
+			previousPrint = reprinted
 		}
 
-		reprinted := runPrint(t, elements, transformers, previousPrint, mode, *printTree)
-		if reprinted == previousPrint {
-			break
-		}
-
-		// test that printing the output returns the same output, if it
-		// doesn't it is not canonical
-		t.Errorf("reprint %d got %q, want %q", i+1, reprinted, previousPrint)
-		previousPrint = reprinted
-	}
-
-	hasLeaf, hasText := hasLeafOrText(elements)
-	if !hasLeaf || !hasText {
-		// undefined leaf or text element:
-		// test that result are the same whether the leaf or text
-		// elements are defined or not
-		if !hasLeaf {
-			if _, ok := elements["_T"]; ok {
-				t.Fatal("element _T already exists")
+		hasLeaf, hasText := hasLeafOrText(elements)
+		if !hasLeaf || !hasText {
+			// undefined leaf or text element:
+			// test that result are the same whether the leaf or text
+			// elements are defined or not
+			if !hasLeaf {
+				if _, ok := elements["_T"]; ok {
+					t.Fatal("element _T already exists")
+				}
+				elements["_T"] = config.Element{
+					Type: node.TypeLeaf.String(),
+				}
 			}
-			elements["_T"] = config.Element{
-				Type: node.TypeLeaf.String(),
+			if !hasText {
+				if _, ok := elements["_MT"]; ok {
+					t.Fatal("element _MT already exists")
+				}
+				elements["_MT"] = config.Element{
+					Type: node.TypeText.String(),
+				}
 			}
-		}
-		if !hasText {
-			if _, ok := elements["_MT"]; ok {
-				t.Fatal("element _MT already exists")
+			printedDefined := runPrint(t, elements, transformers, in, mode, false)
+			if printedDefined != printed {
+				t.Errorf("with defined text got %q, with undefined %q", printedDefined, printed)
 			}
-			elements["_MT"] = config.Element{
-				Type: node.TypeText.String(),
-			}
-		}
-		printedDefined := runPrint(t, elements, transformers, in, mode, false)
-		if printedDefined != printed {
-			t.Errorf("with defined text got %q, with undefined %q", printedDefined, printed)
 		}
 	}
 }

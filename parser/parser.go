@@ -1165,11 +1165,9 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 				}
 			}
 		} else {
-			newlinePos := -1
 			if afterNewline {
-				newlinePos = b.Len()
+				newlines = append(newlines, b.Len())
 				b.WriteByte(' ') // newline separator
-
 				afterNewline = false
 			}
 
@@ -1191,9 +1189,6 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 
 			p.next()
 			end = p.pos() // here because of loop condition
-			if newlinePos > -1 {
-				newlines = append(newlines, newlinePos)
-			}
 		}
 	}
 

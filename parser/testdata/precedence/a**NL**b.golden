@@ -6,7 +6,11 @@ Container()(
 			),
 			Uniform(MA)(
 				Container()(
-					Text(MT)(
+					Text(MT)<{
+						"newlines": [
+							0
+						]
+					}>(
 						 
 					)
 				)
