@@ -164,7 +164,7 @@ func (p *parser) parse(reqdBlocks []rune) *node.Node {
 	}
 
 	end := p.pos()
-	for p.ch > 0 {
+	for p.ch >= 0 {
 		if isSpacing(p.ch) {
 			p.parseSpacing()
 			if t, a := p.continuesAmbiguous(reqdBlocks); t && !a {
@@ -320,7 +320,7 @@ func (p *parser) parseVerbatimWalled(name string) *node.Node {
 	lines := []string{string(firstLine)}
 
 	end := p.pos()
-	for p.ch > 0 {
+	for p.ch >= 0 {
 		if p.ch == '\n' {
 			p.next()
 			p.parseLead()
@@ -462,7 +462,7 @@ func (p *parser) continuesAmbiguous(blocks []rune) (bool, bool) {
 
 		if j > len(p.lead)-1 {
 			if onlySpacing(blocks[i:]) && len(p.lead) > 0 &&
-				(p.ch == 0 || p.ch == '\n' || p.ch == ' ' || p.ch == '\t') {
+				(p.ch < 0 || p.ch == '\n' || p.ch == ' ' || p.ch == '\t') {
 				if trace {
 					p.print("return true (ambiguous)")
 				}
@@ -570,7 +570,7 @@ func (p *parser) parseFenced(name string) *node.Node {
 	textStart := p.pos()
 	end := p.pos()
 	textEnd := p.pos()
-	for p.ch > 0 {
+	for p.ch >= 0 {
 		if !p.continues(reqdBlocks) {
 			break
 		}
@@ -638,7 +638,7 @@ func (p *parser) consumeLine() []byte {
 
 	var b bytes.Buffer
 
-	for p.ch > 0 && p.ch != '\n' {
+	for p.ch >= 0 && p.ch != '\n' {
 		b.WriteRune(p.ch)
 
 		p.next()
@@ -777,8 +777,8 @@ func (p *parser) parseInlines() (*node.Node, bool) {
 
 	cont := true
 	end := p.pos()
-	for p.ch > 0 {
-		if p.closingDelimiter() > 0 {
+	for p.ch >= 0 {
+		if p.closingDelimiter() >= 0 {
 			break
 		}
 
@@ -933,7 +933,7 @@ func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 	end := p.pos()
 	textStart := p.pos()
 	textEnd := p.pos()
-	for p.ch > 0 {
+	for p.ch >= 0 {
 		if p.ch == '\n' {
 			line := b.Bytes()
 			trailingSpacing := len(line) - len(bytes.TrimRight(line, " \t"))
@@ -1136,7 +1136,7 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 	var b bytes.Buffer
 	end := p.pos()
 	var newlines []int
-	for p.ch > 0 {
+	for p.ch >= 0 {
 		if p.ch == '\n' {
 			line := b.Bytes()
 			trailingSpacing := len(line) - len(bytes.TrimRight(line, " \t"))
@@ -1174,7 +1174,7 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 			if p.isEscape() {
 				p.next()
 			} else {
-				if p.closingDelimiter() > 0 {
+				if p.closingDelimiter() >= 0 {
 					end = p.pos()
 					break
 				}
@@ -1267,10 +1267,10 @@ func (p *parser) closingDelimiter() rune {
 	}
 
 	if trace {
-		p.print("return 0 (not closing delim)")
+		p.print("return -1 (not closing delim)")
 	}
 
-	return 0
+	return -1
 }
 
 func (p *parser) init(src io.Reader) {
@@ -1282,7 +1282,7 @@ func (p *parser) init(src io.Reader) {
 	p.src = b
 
 	p.next()
-	if p.ch == '\uFEFF' {
+	if p.ch == bom {
 		// skip BOM at file beginning
 		p.next()
 	}
@@ -1305,7 +1305,7 @@ func (p *parser) parseLead() {
 	var lead []rune
 	var i int
 
-	for p.ch > 0 && p.ch != '\n' && i < len(a) {
+	for p.ch >= 0 && p.ch != '\n' && i < len(a) {
 		if !isSpacing(p.ch) {
 			p.blank = false
 		}
@@ -1386,7 +1386,13 @@ var (
 	ErrIllegalBOM          = &Error{"illegal byte order mark"}
 )
 
+const (
+	bom = 0xFEFF // byte order mark (permitted as first character)
+	eof = -1     // end of file
+)
+
 // next reads the next character.
+// https://cs.opensource.google/go/go/+/refs/tags/go1.17.3:src/go/scanner/scanner.go;l=61
 func (p *parser) next() {
 	if trace {
 		defer p.trace("next")()
@@ -1399,41 +1405,29 @@ func (p *parser) next() {
 			p.lineOffset = p.offset
 		}
 
-		r, w := utf8.DecodeRune(p.src[p.rdOffset:])
-
-		switch r {
-		case utf8.RuneError: // encoding error
-			if w == 0 {
-				panic("parser: cannot decode empty slice")
-			} else if w == 1 {
-				p.error(ErrInvalidUTF8Encoding)
-				p.ch = utf8.RuneError
-			} else {
-				p.ch = r
-			}
-		case '\u0000': // NULL
+		r, w := rune(p.src[p.rdOffset]), 1
+		switch {
+		case r == 0:
 			p.error(ErrIllegalNULL)
-			p.ch = utf8.RuneError
-		case '\uFEFF': // BOM
-			if p.offset == 0 {
-				// skip in p.init
-				p.ch = r
-			} else {
+		case r >= utf8.RuneSelf:
+			// not ASCII
+			r, w = utf8.DecodeRune(p.src[p.rdOffset:])
+			if r == utf8.RuneError && w == 1 {
+				p.error(ErrInvalidUTF8Encoding)
+			} else if r == bom && p.offset > 0 {
+				// BOM at offset 0 is skipped at init
 				p.error(ErrIllegalBOM)
-				p.ch = utf8.RuneError
 			}
-		default:
-			p.ch = r
 		}
-
 		p.rdOffset += w
+		p.ch = r
 	} else {
-		p.ch = 0
 		p.offset = len(p.src)
 		if p.ch == '\n' {
 			p.line++
 			p.lineOffset = p.offset
 		}
+		p.ch = eof
 	}
 
 	if trace {
@@ -1443,35 +1437,33 @@ func (p *parser) next() {
 
 func (p *parser) peek() rune {
 	if p.rdOffset < len(p.src) {
-		return validRune(utf8.DecodeRune(p.src[p.rdOffset:]))
+		r := rune(p.src[p.rdOffset])
+		if r >= utf8.RuneSelf {
+			// not ASCII
+			r, _ = utf8.DecodeRune(p.src[p.rdOffset:])
+		}
+		return r
 	}
-	return 0
+	return eof
 }
 
 func (p *parser) peek2() rune {
-	if p.peek() > 0 {
-		l := utf8.RuneLen(p.peek())
-
-		if p.rdOffset+l < len(p.src) {
-			return validRune(utf8.DecodeRune(p.src[p.rdOffset+l:]))
+	if p.rdOffset < len(p.src) {
+		r, w := rune(p.src[p.rdOffset]), 1
+		if r >= utf8.RuneSelf {
+			// not ASCII
+			r, w = utf8.DecodeRune(p.src[p.rdOffset:])
+		}
+		if o := p.rdOffset + w; o < len(p.src) {
+			rr, _ := rune(p.src[o]), 1
+			if rr >= utf8.RuneSelf {
+				// not ASCII
+				rr, _ = utf8.DecodeRune(p.src[o:])
+			}
+			return rr
 		}
 	}
-
-	return 0
-}
-
-func validRune(r rune, w int) rune {
-	switch r {
-	case utf8.RuneError:
-		if w == 0 {
-			panic("parser: cannot decode empty slice")
-		} else {
-			return utf8.RuneError
-		}
-	case '\u0000', '\uFEFF': // NULL, or BOM
-		return utf8.RuneError
-	}
-	return r
+	return eof
 }
 
 func (p *parser) open(blocks ...rune) func() {
