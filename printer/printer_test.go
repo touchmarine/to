@@ -1,8 +1,4 @@
 // package printer_test contines tests the printer package.
-//
-// out cases containing "$$" denote the wanted output for the printer mode
-// printer.KeepNewlines; the output is placed after the "$$". If there is no
-// "$$" section, the wanted output is assumed to be the regular out string.
 package printer_test
 
 import (
@@ -37,10 +33,10 @@ func TestText(t *testing.T) {
 		{"\na", "a"},
 
 		{"ab", "ab"},
-		{"a\nb", "a\nb$$a\nb"},
-		{"a\n b", "a\nb$$a\nb"},
+		{"a\nb", "a\nb"},
+		{"a\n b", "a\nb"},
 		{"a\n\n b", "a\n\nb"},
-		{"ab\n c", "ab\nc$$ab\nc"},
+		{"ab\n c", "ab\nc"},
 		{"ab\n\n c", "ab\n\nc"},
 
 		// interrupted by empty blocks
@@ -62,10 +58,7 @@ func TestText(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 }
@@ -101,10 +94,7 @@ func TestVerbatimLine(t *testing.T) {
 	for _, c := range cases {
 		name := c.in
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 }
@@ -117,7 +107,7 @@ func TestHanging(t *testing.T) {
 		{"-", ""},
 		{"-a", "- a"},
 		{"-\n a", "- a"},
-		{"-a\n b", "- a\n  b$$- a\n  b"},
+		{"-a\n b", "- a\n  b"},
 		{"-a\n -b", "- a\n\n  - b"},
 		{"-a\n\n -b", "- a\n\n  - b"},
 		{"-a\n \n -b", "- a\n\n  - b"},
@@ -149,10 +139,7 @@ func TestHanging(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 }
@@ -166,9 +153,9 @@ func TestRankedHanging(t *testing.T) {
 		{"==", ""},
 		{"==a", "== a"},
 		{"==\n  a", "== a"},
-		{"==a\n  b", "== a\n   b$$== a\n   b"},
+		{"==a\n  b", "== a\n   b"},
 		{"==a", "== a"},
-		{"==a\n  b", "== a\n   b$$== a\n   b"},
+		{"==a\n  b", "== a\n   b"},
 		{"==a\n\n  b", "== a\n\n   b"},
 		{"==a\n \n  b", "== a\n\n   b"},
 		{"==a\n\n\n  b", "== a\n\n   b"},
@@ -199,10 +186,7 @@ func TestRankedHanging(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 }
@@ -215,7 +199,7 @@ func TestWalled(t *testing.T) {
 		{"+", ""},
 		{"+a", "+ a"},
 		{"+\n+a", "+ a"},
-		{"+a\n+b", "+ a\n+ b$$+ a\n+ b"},
+		{"+a\n+b", "+ a\n+ b"},
 		{"+a\n++b", "+ a\n+\n+ + b"},
 		{"+a\n+\n++b", "+ a\n+\n+ + b"},
 		{"+a\n++\n++b", "+ a\n+\n+ + b"},
@@ -247,10 +231,7 @@ func TestWalled(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 }
@@ -263,9 +244,9 @@ func TestVerbatimWalled(t *testing.T) {
 		{"!", ""},
 		{"!a", "! a"},
 		{"!\n!a", "! a"},
-		{"!a\n!b", "! a b$$! a\n! b"},
-		{"!a\n!\n!b", "! a b$$! a\n! b"},
-		{"!a\n!\n!\n!b", "! a b$$! a\n! b"},
+		{"!a\n!b", "! a\n! b"},
+		{"!a\n!\n!b", "! a\n! b"},
+		{"!a\n!\n!\n!b", "! a\n! b"},
 		// would be nested-but can only contain verbatim
 		{"!>", "! >"},
 		{"!>a", "! >a"},
@@ -294,10 +275,7 @@ func TestVerbatimWalled(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 }
@@ -354,10 +332,7 @@ func TestFenced(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 }
@@ -395,10 +370,7 @@ func TestGroup(t *testing.T) {
 		for _, c := range cases {
 			name := fmt.Sprintf("%q", c.in)
 			t.Run(name, func(t *testing.T) {
-				test(t, elements, transformers, c.in, c.out, 0)
-			})
-			t.Run("eepNewlines-"+name, func(t *testing.T) {
-				test(t, elements, transformers, c.in, c.out, printer.KeepNewlines)
+				test(t, elements, transformers, c.in, c.out)
 			})
 		}
 	})
@@ -448,10 +420,7 @@ func TestGroup(t *testing.T) {
 		for _, c := range cases {
 			name := fmt.Sprintf("%q", c.in)
 			t.Run(name, func(t *testing.T) {
-				test(t, elements, transformers, c.in, c.out, 0)
-			})
-			t.Run("KeepNewlines-"+name, func(t *testing.T) {
-				test(t, elements, transformers, c.in, c.out, printer.KeepNewlines)
+				test(t, elements, transformers, c.in, c.out)
 			})
 		}
 	})
@@ -513,10 +482,7 @@ func TestGroup(t *testing.T) {
 		for _, c := range cases {
 			name := fmt.Sprintf("%q", c.in)
 			t.Run(name, func(t *testing.T) {
-				test(t, elements, transformers, c.in, c.out, 0)
-			})
-			t.Run("KeepNewlines-"+name, func(t *testing.T) {
-				test(t, elements, transformers, c.in, c.out, printer.KeepNewlines)
+				test(t, elements, transformers, c.in, c.out)
 			})
 		}
 	})
@@ -536,7 +502,7 @@ func TestGroup(t *testing.T) {
 			{"((a))b**c**", "((a))b**c**"},
 			{"((a))\n**b**", "((a))**b**"},
 
-			{"a\n((b))**c**", "a\n((b))**c**$$a\n((b))**c**"},
+			{"a\n((b))**c**", "a\n((b))**c**"},
 			{"((a))**b**((c))**d**", "((a))**b**((c))**d**"},
 		}
 
@@ -561,12 +527,7 @@ func TestGroup(t *testing.T) {
 		for _, c := range cases {
 			name := fmt.Sprintf("%q", c.in)
 			t.Run(name, func(t *testing.T) {
-				test(t, elements, transformers, c.in, c.out, 0)
-			})
-			t.Run("KeepNewlines", func(t *testing.T) {
-				t.Run(name, func(t *testing.T) {
-					test(t, elements, transformers, c.in, c.out, printer.KeepNewlines)
-				})
+				test(t, elements, transformers, c.in, c.out)
 			})
 		}
 	})
@@ -583,9 +544,9 @@ func TestUniform(t *testing.T) {
 		{"**a**b", "**a**b"},
 		{"**\n", ""},
 		{"**\n ", ""},
-		{"**\na", "**\na**$$**\na**"},
-		{"**\na**", "**\na**$$**\na**"},
-		{"**\na**b", "**\na**b$$**\na**b"},
+		{"**\na", "**\na**"},
+		{"**\na**", "**\na**"},
+		{"**\na**b", "**\na**b"},
 		{"**\n**", ""},
 
 		{"a**", "a"},
@@ -619,10 +580,7 @@ func TestUniform(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 }
@@ -664,7 +622,7 @@ func TestEscaped(t *testing.T) {
 		// left-right delimiter
 		{"[[a", "[[a]]"},
 
-		{"a\n``b``", "a\n``b``$$a\n``b``"},
+		{"a\n``b``", "a\n``b``"},
 	}
 
 	elements := config.Elements{
@@ -684,10 +642,7 @@ func TestEscaped(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 }
@@ -711,10 +666,7 @@ func TestPrefixed(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 
@@ -738,10 +690,7 @@ func TestPrefixed(t *testing.T) {
 		for _, c := range cases {
 			name := fmt.Sprintf("%q", c.in)
 			t.Run(name, func(t *testing.T) {
-				test(t, elements, nil, c.in, c.out, 0)
-			})
-			t.Run("KeepNewlines-"+name, func(t *testing.T) {
-				test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+				test(t, elements, nil, c.in, c.out)
 			})
 		}
 	})
@@ -766,10 +715,7 @@ func TestPrefixed(t *testing.T) {
 		for _, c := range cases {
 			name := fmt.Sprintf("%q", c.in)
 			t.Run(name, func(t *testing.T) {
-				test(t, elements, nil, c.in, c.out, 0)
-			})
-			t.Run("KeepNewlines-"+name, func(t *testing.T) {
-				test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+				test(t, elements, nil, c.in, c.out)
 			})
 		}
 	})
@@ -810,7 +756,7 @@ func TestEscape(t *testing.T) {
 		{`\\\\*`, `\\\\*`}, // \\*
 
 		// text block
-		{"\\*\n\\*", "\\*\n\\*$$\\*\n\\*"}, // * *
+		{"\\*\n\\*", "\\*\n\\*"}, // * *
 
 		{"**a", "**a**"},         // I(a)
 		{`\**`, `\**`},           // **
@@ -922,10 +868,7 @@ func TestEscape(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", strings.ReplaceAll(c.in, "/", "2F")) // %2F is URL-escaped slash
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 }
@@ -970,7 +913,7 @@ func TestEscapeWithClash(t *testing.T) {
 		{`\\\\*`, `\\\\*`}, // \\*
 
 		// text block
-		{"\\*\n\\*", "\\*\n\\*$$\\*\n\\*"}, // * *
+		{"\\*\n\\*", "\\*\n\\*"}, // * *
 
 		{"**a", "**a**"},         // I(a)
 		{`\**`, `\**`},           // **
@@ -1088,10 +1031,7 @@ func TestEscapeWithClash(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", strings.ReplaceAll(c.in, "/", "2F")) // %2F is URL-escaped slash
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 }
@@ -1144,35 +1084,21 @@ func TestDoNotRemove(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", strings.ReplaceAll(c.in, "/", "2F")) // %2F is URL-escaped slash
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 0)
-		})
-		t.Run("KeepNewlines-"+name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, printer.KeepNewlines)
+			test(t, elements, nil, c.in, c.out)
 		})
 	}
 }
 
-func test(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in, out string, mode printer.Mode) {
+func test(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in, out string) {
 	t.Helper()
 
 	if elements == nil {
 		elements = config.Elements{}
 	}
 
-	var want string
-	if i := strings.Index(out, "$$"); i > -1 {
-		if mode&printer.KeepNewlines != 0 {
-			want = out[i+2:]
-		} else {
-			want = out[:i]
-		}
-	} else {
-		want = out
-	}
-
-	printed := runPrint(t, elements, transformers, in, mode, *printTree)
-	if printed != want {
-		t.Errorf("got %q, want %q", printed, want)
+	printed := runPrint(t, elements, transformers, in, *printTree)
+	if printed != out {
+		t.Errorf("got %q, want %q", printed, out)
 	}
 
 	if !*noReprint {
@@ -1183,7 +1109,7 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 				break
 			}
 
-			reprinted := runPrint(t, elements, transformers, previousPrint, mode, *printTree)
+			reprinted := runPrint(t, elements, transformers, previousPrint, *printTree)
 			if reprinted == previousPrint {
 				break
 			}
@@ -1215,7 +1141,7 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 					Type: node.TypeText.String(),
 				}
 			}
-			printedDefined := runPrint(t, elements, transformers, in, mode, false)
+			printedDefined := runPrint(t, elements, transformers, in, false)
 			if printedDefined != printed {
 				t.Errorf("with defined text got %q, with undefined %q", printedDefined, printed)
 			}
@@ -1223,7 +1149,7 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 	}
 }
 
-func runPrint(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in string, mode printer.Mode, printTree bool) string {
+func runPrint(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in string, printTree bool) string {
 	t.Helper()
 
 	r := strings.NewReader(in)
@@ -1242,7 +1168,7 @@ func runPrint(t *testing.T, elements config.Elements, transformers []transformer
 	}
 
 	var b strings.Builder
-	if err := (printer.Printer{Elements: elements.PrinterElements(), Mode: mode}).Fprint(&b, root); err != nil {
+	if err := (printer.Printer{Elements: elements.PrinterElements()}).Fprint(&b, root); err != nil {
 		t.Fatal(err)
 	}
 	return b.String()

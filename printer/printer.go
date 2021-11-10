@@ -12,13 +12,6 @@ import (
 	"github.com/touchmarine/to/parser"
 )
 
-//go:generate stringer -type=Mode
-type Mode int
-
-const (
-	KeepNewlines Mode = 1 << iota
-)
-
 // Elements maps Elements to Names.
 type Elements map[string]Element
 
@@ -38,13 +31,11 @@ type writer interface {
 
 type Printer struct {
 	Elements Elements
-	Mode     Mode
 }
 
 func (p Printer) Fprint(w io.Writer, n *node.Node) error {
 	pp := printer{
 		elements: p.Elements,
-		mode:     p.Mode,
 	}
 	if x, ok := w.(writer); ok {
 		return pp.print(x, n)
@@ -59,7 +50,6 @@ func (p Printer) Fprint(w io.Writer, n *node.Node) error {
 
 type printer struct {
 	elements Elements
-	mode     Mode
 
 	prefixes       []string
 	lastPrefixLine int
@@ -162,7 +152,7 @@ func (p printer) print(w writer, n *node.Node) error {
 		lines := strings.Split(n.TextContent(), "\n")
 		lines = removeBlankLines(lines)
 		for i, line := range lines {
-			if p.mode&KeepNewlines != 0 && i > 0 {
+			if i > 0 {
 				p.newline(w)
 				p.writePrefix(w, withoutTrailingSpacing)
 			}
