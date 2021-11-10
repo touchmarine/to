@@ -538,25 +538,25 @@ func (p printer) text(w writer, n *node.Node) string {
 
 		}
 
-		if ch == ' ' && p.mode&KeepNewlines != 0 && n.Data != nil {
-			if v, ok := n.Data[parser.KeyNewlines]; ok {
-				if newlines, ok := v.([]int); ok && containsInt(newlines, i) {
-					// insert newline at same place as in
-					// source (instead of a space)
-					b.WriteByte('\n')
-					// i+1 must exist (so no need to bound
-					// check)
-					if p.needsBlockEscape(string(content[i+1:])) {
-						b.WriteByte('\\')
-					}
-					if len(p.prefixes) > 0 {
-						prefix := strings.Join(p.prefixes, " ") + " "
-						b.WriteString(prefix)
-					}
-					continue
-				}
-			}
-		}
+		//if ch == ' ' && p.mode&KeepNewlines != 0 && n.Data != nil {
+		//	if v, ok := n.Data[parser.KeyNewlines]; ok {
+		//		if newlines, ok := v.([]int); ok && containsInt(newlines, i) {
+		//			// insert newline at same place as in
+		//			// source (instead of a space)
+		//			b.WriteByte('\n')
+		//			// i+1 must exist (so no need to bound
+		//			// check)
+		//			if p.needsBlockEscape(string(content[i+1:])) {
+		//				b.WriteByte('\\')
+		//			}
+		//			if len(p.prefixes) > 0 {
+		//				prefix := strings.Join(p.prefixes, " ") + " "
+		//				b.WriteString(prefix)
+		//			}
+		//			continue
+		//		}
+		//	}
+		//}
 
 		b.WriteByte(ch)
 	}

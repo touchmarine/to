@@ -6,7 +6,8 @@ Container()(
 			),
 			Escaped(MA)(
 				Text(MT)(
-					 b
+					
+b
 				)
 			)
 		)

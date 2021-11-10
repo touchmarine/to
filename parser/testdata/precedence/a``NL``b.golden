@@ -4,7 +4,12 @@ Container()(
 			Text(MT)(
 				a
 			),
-			Escaped(MB)(),
+			Escaped(MB)(
+				Text(MT)(
+					
+
+				)
+			),
 			Text(MT)(
 				b
 			)

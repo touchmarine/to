@@ -2,7 +2,7 @@ Container()(
 	Leaf(T)(
 		Container()(
 			Text(MT)(
-				ï¿½a
+				€a
 			)
 		)
 	)

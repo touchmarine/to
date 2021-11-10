@@ -54,7 +54,9 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	input := string(bi)
+	// \n is always added, don't know by what, but it isn't nice for testing
+	// positions
+	input := strings.TrimSuffix(string(bi), "\n")
 
 	root, err := parser.Parse(strings.NewReader(input), elements)
 	if err != nil {

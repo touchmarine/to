@@ -3,12 +3,9 @@ Container()(
 		Container()(
 			Leaf(T)(
 				Container()(
-					Text(MT)<{
-						"newlines": [
-							1
-						]
-					}>(
-						a b
+					Text(MT)(
+						a
+b
 					)
 				)
 			)

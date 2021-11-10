@@ -1,12 +1,9 @@
 Container()(
 	Leaf(T)(
 		Container()(
-			Text(MT)<{
-				"newlines": [
-					1
-				]
-			}>(
-				a \
+			Text(MT)(
+				a
+\
 			),
 			Uniform(MA)(
 				Container()()

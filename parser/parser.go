@@ -19,7 +19,6 @@ const tabWidth = 8
 const (
 	KeyRank        = "rank"
 	KeyOpeningText = "openingText"
-	KeyNewlines    = "newlines"
 )
 
 var tabSpaces []rune
@@ -315,24 +314,19 @@ func (p *parser) parseVerbatimWalled(name string) *node.Node {
 	p.next() // consume delimiter
 
 	contentStart := p.pos()
-	firstLine := p.consumeLine() // consume here so we can have a nicer loop
-
-	lines := []string{string(firstLine)}
-
 	end := p.pos()
-	for p.ch >= 0 {
+	var lines [][]byte
+	for p.ch >= 0 && p.continues(p.blocks) {
+		offs := p.offset
+		for p.ch >= 0 && p.ch != '\n' {
+			p.next()
+		}
+		lines = append(lines, p.src[offs:p.offset])
+		end = p.pos()
 		if p.ch == '\n' {
 			p.next()
 			p.parseLead()
 		}
-
-		if !p.continues(p.blocks) {
-			break
-		}
-
-		line := p.consumeLine()
-		lines = append(lines, string(line))
-		end = p.pos()
 	}
 
 	n := &node.Node{
@@ -345,8 +339,8 @@ func (p *parser) parseVerbatimWalled(name string) *node.Node {
 			},
 		},
 	}
-	if s := strings.Join(lines, "\n"); s != "" {
-		p.setTextContent(n, s, contentStart, end)
+	if content := bytes.Join(lines, []byte("\n")); len(content) > 0 {
+		p.setTextContent(n, string(content), contentStart, end)
 	}
 	return n
 }
@@ -561,23 +555,22 @@ func (p *parser) parseFenced(name string) *node.Node {
 		p.next()
 	}
 
-	openingText := string(p.consumeLine())
+	oOffs := p.offset
+	for p.ch >= 0 && p.ch != '\n' {
+		p.next()
+	}
+	openingText := string(p.src[oOffs:p.offset])
 	p.next()
 	p.parseLead()
 
-	var lines []string
+	var lines [][]byte
 	afterNewline := true
 	textStart := p.pos()
-	end := p.pos()
 	textEnd := p.pos()
-	for p.ch >= 0 {
-		if !p.continues(reqdBlocks) {
-			break
-		}
-
+	end := p.pos()
+	for p.ch >= 0 && p.continues(reqdBlocks) {
 		if !escaped && p.ch == delim || escaped && p.ch == '\\' && p.peek() == delim {
 			// closing delimiter
-
 			if escaped {
 				p.next()
 			}
@@ -585,7 +578,10 @@ func (p *parser) parseFenced(name string) *node.Node {
 			end = p.pos()
 
 			if p.continues(reqdBlocks) {
-				p.consumeLine()
+				for p.ch >= 0 && p.ch != '\n' {
+					// consume closing line
+					p.next()
+				}
 				p.next()
 				p.parseLead()
 				p.parseSpacing()
@@ -596,16 +592,18 @@ func (p *parser) parseFenced(name string) *node.Node {
 		if p.ch == '\n' && !afterNewline {
 			p.next()
 			p.parseLead()
-
 			afterNewline = true
 		} else {
 			// leading spacing that is part of the element
 			spacing := diffSpacing(lastSpacingSeq(p.blocks), lastSpacingSeq(p.lead))
-			l := p.consumeLine()
+			o := p.offset
+			for p.ch >= 0 && p.ch != '\n' {
+				p.next()
+			}
+			l := p.src[o:p.offset]
 
-			line := string(spacing) + string(l)
+			line := append([]byte(string(spacing)), l...)
 			lines = append(lines, line)
-
 			afterNewline = false
 			textEnd = p.pos()
 		}
@@ -625,8 +623,8 @@ func (p *parser) parseFenced(name string) *node.Node {
 			},
 		},
 	}
-	if text := strings.Join(lines, "\n"); text != "" {
-		p.setTextContent(n, text, textStart, textEnd)
+	if text := bytes.Join(lines, []byte("\n")); len(text) > 0 {
+		p.setTextContent(n, string(text), textStart, textEnd)
 	}
 	return n
 }
@@ -711,7 +709,11 @@ func (p *parser) parseVerbatimLine(name, delim string) *node.Node {
 		p.next()
 	}
 	contentStart := p.pos()
-	content := p.consumeLine()
+	offs := p.offset
+	for p.ch >= 0 && p.ch != '\n' {
+		p.next()
+	}
+	content := p.src[offs:p.offset]
 	end := p.pos()
 
 	// prepare next line
@@ -913,93 +915,58 @@ func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 
 	start := p.pos()
 	delim := p.ch
-	c := counterpart(delim)
-	closing := []rune{c, c}
+	c := string(counterpart(delim))
+	closing := c + c
 
 	// consume delimiter
 	p.next()
 	p.next()
 
-	escaped := p.ch == '\\'
-	if escaped {
-		closing = append([]rune{'\\'}, closing...)
+	isEscaped := p.ch == '\\'
+	if isEscaped {
+		closing = `\` + closing
 		p.next()
 	}
 
 	cont := true
-	afterNewline := false
-
-	var b bytes.Buffer
 	end := p.pos()
 	textStart := p.pos()
 	textEnd := p.pos()
-	for p.ch >= 0 {
-		if p.ch == '\n' {
-			line := b.Bytes()
-			trailingSpacing := len(line) - len(bytes.TrimRight(line, " \t"))
+	var lines [][]byte
+	offs := p.offset
+	for {
+		if p.ch < 0 || p.ch == '\n' || p.isEscapedClosingDelimiter(closing, isEscaped) {
+			line := p.src[offs:p.offset]
+			lines = append(lines, line)
 
-			if trailingSpacing > 0 {
-				// remove trailing spacing
-				b.Truncate(len(line) - trailingSpacing)
-			}
-
-			if afterNewline {
-				cont = false
+			if p.ch < 0 {
 				break
-			}
-
-			p.next()
-			p.parseLead()
-			p.parseSpacing()
-
-			afterNewline = true
-
-			_, matchesBlock := p.matchBlock()
-			if matchesBlock || !p.continues(p.blocks) {
-				cont = false
-				break
-			}
-
-			continue
-		}
-
-		var a []rune
-		if escaped {
-			a = append([]rune{p.ch}, []rune{p.peek(), p.peek2()}...)
-		} else {
-			a = []rune{p.ch, p.peek()}
-		}
-
-		if cmpRunes(a, closing) {
-			// closing delimiter
-
-			textEnd = p.pos()
-			for i := 0; i < len(closing); i++ {
+			} else if p.ch == '\n' {
 				p.next()
+				p.parseLead()
+				p.parseSpacing()
 
+				if _, matchesBlock := p.matchBlock(); p.ch == '\n' || matchesBlock || !p.continues(p.blocks) {
+					cont = false
+					break
+				}
+
+				offs = p.offset
+			} else if p.isEscapedClosingDelimiter(closing, isEscaped) {
+				textEnd = p.pos()
+				for i := 0; i < len(closing); i++ {
+					p.next()
+				}
+				end = p.pos()
+				break
+			} else {
+				panic("unexpected case")
 			}
+		} else {
+			p.next()
 			end = p.pos()
-
-			break
+			textEnd = p.pos()
 		}
-
-		if afterNewline {
-			b.WriteByte(' ') // newline separator
-
-			afterNewline = false
-		}
-
-		b.WriteRune(p.ch)
-
-		p.next()
-		end = p.pos()
-		textEnd = p.pos()
-	}
-
-	txt := b.Bytes()
-
-	if trace {
-		defer p.printf("return %q", txt)
 	}
 
 	n := &node.Node{
@@ -1012,10 +979,24 @@ func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 			},
 		},
 	}
+	txt := bytes.Join(lines, []byte("\n"))
+	if trace {
+		defer p.printf("return %q", txt)
+	}
 	if len(txt) > 0 {
 		p.setTextContent(n, string(txt), textStart, textEnd)
 	}
 	return n, cont
+}
+
+func (p *parser) isEscapedClosingDelimiter(closing string, escaped bool) bool {
+	var x []rune
+	if escaped {
+		x = append([]rune{p.ch}, []rune{p.peek(), p.peek2()}...)
+	} else {
+		x = []rune{p.ch, p.peek()}
+	}
+	return cmpRunes(x, []rune(closing))
 }
 
 // cmpRunes determines whether a and b have the same values.
@@ -1084,14 +1065,13 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (*node.Node,
 	}
 
 	w := m.Match(p.src[p.offset:])
+	offs := p.offset
 	offsetEnd := p.offset + w
-
-	// consume match
-	var b bytes.Buffer
 	for p.offset < offsetEnd {
-		b.WriteRune(p.ch)
+		// consume match
 		p.next()
 	}
+	content := p.src[offs:offsetEnd]
 
 	end := p.pos()
 	n := &node.Node{
@@ -1104,8 +1084,8 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (*node.Node,
 			},
 		},
 	}
-	if text := string(b.Bytes()); text != "" {
-		p.setTextContent(n, text, textStart, end)
+	if len(content) > 0 {
+		p.setTextContent(n, string(content), textStart, end)
 	}
 	return n, true
 }
@@ -1131,77 +1111,59 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 
 	start := p.pos()
 	cont := true
-	afterNewline := false
-
-	var b bytes.Buffer
 	end := p.pos()
-	var newlines []int
-	for p.ch >= 0 {
-		if p.ch == '\n' {
-			line := b.Bytes()
-			trailingSpacing := len(line) - len(bytes.TrimRight(line, " \t"))
-
-			if trailingSpacing > 0 {
-				// remove trailing spacing
-				b.Truncate(len(line) - trailingSpacing)
+	var lines [][]byte
+	var escapes []int
+	offs := p.offset
+	for {
+		isEscape := p.isEscape()
+		_, matchesInline := p.matchInline()
+		if p.ch < 0 || p.ch == '\n' || !isEscape && (p.closingDelimiter() >= 0 || matchesInline) {
+			line := p.src[offs:p.offset]
+			for i := len(escapes) - 1; i >= 0; i-- { // reverse so we don't have to account for removed chars
+				x := escapes[i] - offs                 // escape char position in slice
+				line = append(line[:x], line[x+1:]...) // remove escape char
 			}
+			escapes = nil
+			line = bytes.TrimRight(line, " \t")
+			lines = append(lines, line)
 
-			if afterNewline {
-				cont = false
+			if p.ch < 0 {
 				break
-			}
+			} else if p.ch == '\n' {
+				p.next()
+				p.parseLead()
+				p.parseSpacing()
 
-			p.next()
-			p.parseLead()
-			p.parseSpacing()
-
-			afterNewline = true
-
-			if !p.isEscape() {
-				_, matchesBlock := p.matchBlock()
-				if matchesBlock || !p.continues(p.blocks) {
+				if _, matchesBlock := p.matchBlock(); p.ch < 0 || p.ch == '\n' || matchesBlock || !p.continues(p.blocks) {
 					cont = false
 					break
 				}
+
+				offs = p.offset
+			} else if p.closingDelimiter() >= 0 || matchesInline {
+				end = p.pos()
+				break
+			} else {
+				panic("unexpected case")
 			}
 		} else {
-			if afterNewline {
-				newlines = append(newlines, b.Len())
-				b.WriteByte(' ') // newline separator
-				afterNewline = false
-			}
-
-			if p.isEscape() {
+			if isEscape {
+				escapes = append(escapes, p.offset)
 				p.next()
-			} else {
-				if p.closingDelimiter() >= 0 {
-					end = p.pos()
-					break
-				}
-
-				if _, ok := p.matchInline(); ok {
-					end = p.pos()
-					break
-				}
 			}
-
-			b.WriteRune(p.ch)
-
 			p.next()
-			end = p.pos() // here because of loop condition
+			end = p.pos()
 		}
 	}
 
-	if b.Len() == 0 {
+	txt := bytes.Join(lines, []byte("\n"))
+	if len(txt) == 0 {
 		if trace {
 			p.print("return nil")
 		}
-
 		return nil, cont
 	}
-
-	txt := b.Bytes()
-
 	if trace {
 		defer p.printf("return %q", txt)
 	}
@@ -1216,11 +1178,6 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 				End:   end,
 			},
 		},
-	}
-	if len(newlines) > 0 {
-		n.Data = node.Data{
-			KeyNewlines: newlines,
-		}
 	}
 	return n, cont
 }

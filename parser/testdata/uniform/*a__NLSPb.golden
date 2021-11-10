@@ -8,12 +8,9 @@ Container()(
 					),
 					Uniform(MA)(
 						Container()(
-							Text(MT)<{
-								"newlines": [
-									0
-								]
-							}>(
-								 b
+							Text(MT)(
+								
+b
 							)
 						)
 					)

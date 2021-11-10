@@ -2,12 +2,9 @@ Container()(
 	Leaf(T)(
 		Container()(
 			Prefixed(MA)(),
-			Text(MT)<{
-				"newlines": [
-					0
-				]
-			}>(
-				 
+			Text(MT)(
+				
+
 			),
 			Prefixed(MA)()
 		)
