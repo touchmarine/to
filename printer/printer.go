@@ -494,6 +494,19 @@ func (p printer) text(w writer, n *node.Node) string {
 	for i := 0; i < len(content); i++ {
 		ch := content[i]
 
+		if ch == '\n' {
+			p.newline(&b)
+			// i+1 must exist (so no need to bound check)
+			//
+			// must exist because parser doesn't leave newlines at
+			// the end of text
+			if p.needsBlockEscape(string(content[i+1:])) {
+				b.WriteByte('\\')
+			}
+			p.writePrefix(&b, withTrailingSpacing)
+			continue
+		}
+
 		// backslash escape checks
 		if ch == '\\' && i+1 < len(content) && content[i+1] == '\\' {
 			// A: consecutive backslashes
@@ -537,26 +550,6 @@ func (p printer) text(w writer, n *node.Node) string {
 			}
 
 		}
-
-		//if ch == ' ' && p.mode&KeepNewlines != 0 && n.Data != nil {
-		//	if v, ok := n.Data[parser.KeyNewlines]; ok {
-		//		if newlines, ok := v.([]int); ok && containsInt(newlines, i) {
-		//			// insert newline at same place as in
-		//			// source (instead of a space)
-		//			b.WriteByte('\n')
-		//			// i+1 must exist (so no need to bound
-		//			// check)
-		//			if p.needsBlockEscape(string(content[i+1:])) {
-		//				b.WriteByte('\\')
-		//			}
-		//			if len(p.prefixes) > 0 {
-		//				prefix := strings.Join(p.prefixes, " ") + " "
-		//				b.WriteString(prefix)
-		//			}
-		//			continue
-		//		}
-		//	}
-		//}
 
 		b.WriteByte(ch)
 	}

@@ -37,10 +37,10 @@ func TestText(t *testing.T) {
 		{"\na", "a"},
 
 		{"ab", "ab"},
-		{"a\nb", "a b$$a\nb"},
-		{"a\n b", "a b$$a\nb"},
+		{"a\nb", "a\nb$$a\nb"},
+		{"a\n b", "a\nb$$a\nb"},
 		{"a\n\n b", "a\n\nb"},
-		{"ab\n c", "ab c$$ab\nc"},
+		{"ab\n c", "ab\nc$$ab\nc"},
 		{"ab\n\n c", "ab\n\nc"},
 
 		// interrupted by empty blocks
@@ -117,7 +117,7 @@ func TestHanging(t *testing.T) {
 		{"-", ""},
 		{"-a", "- a"},
 		{"-\n a", "- a"},
-		{"-a\n b", "- a b$$- a\n  b"},
+		{"-a\n b", "- a\n  b$$- a\n  b"},
 		{"-a\n -b", "- a\n\n  - b"},
 		{"-a\n\n -b", "- a\n\n  - b"},
 		{"-a\n \n -b", "- a\n\n  - b"},
@@ -166,9 +166,9 @@ func TestRankedHanging(t *testing.T) {
 		{"==", ""},
 		{"==a", "== a"},
 		{"==\n  a", "== a"},
-		{"==a\n  b", "== a b$$== a\n   b"},
+		{"==a\n  b", "== a\n   b$$== a\n   b"},
 		{"==a", "== a"},
-		{"==a\n  b", "== a b$$== a\n   b"},
+		{"==a\n  b", "== a\n   b$$== a\n   b"},
 		{"==a\n\n  b", "== a\n\n   b"},
 		{"==a\n \n  b", "== a\n\n   b"},
 		{"==a\n\n\n  b", "== a\n\n   b"},
@@ -215,7 +215,7 @@ func TestWalled(t *testing.T) {
 		{"+", ""},
 		{"+a", "+ a"},
 		{"+\n+a", "+ a"},
-		{"+a\n+b", "+ a b$$+ a\n+ b"},
+		{"+a\n+b", "+ a\n+ b$$+ a\n+ b"},
 		{"+a\n++b", "+ a\n+\n+ + b"},
 		{"+a\n+\n++b", "+ a\n+\n+ + b"},
 		{"+a\n++\n++b", "+ a\n+\n+ + b"},
@@ -536,7 +536,7 @@ func TestGroup(t *testing.T) {
 			{"((a))b**c**", "((a))b**c**"},
 			{"((a))\n**b**", "((a))**b**"},
 
-			{"a\n((b))**c**", "a ((b))**c**$$a\n((b))**c**"},
+			{"a\n((b))**c**", "a\n((b))**c**$$a\n((b))**c**"},
 			{"((a))**b**((c))**d**", "((a))**b**((c))**d**"},
 		}
 
@@ -583,9 +583,9 @@ func TestUniform(t *testing.T) {
 		{"**a**b", "**a**b"},
 		{"**\n", ""},
 		{"**\n ", ""},
-		{"**\na", "** a**$$**\na**"},
-		{"**\na**", "** a**$$**\na**"},
-		{"**\na**b", "** a**b$$**\na**b"},
+		{"**\na", "**\na**$$**\na**"},
+		{"**\na**", "**\na**$$**\na**"},
+		{"**\na**b", "**\na**b$$**\na**b"},
 		{"**\n**", ""},
 
 		{"a**", "a"},
@@ -664,7 +664,7 @@ func TestEscaped(t *testing.T) {
 		// left-right delimiter
 		{"[[a", "[[a]]"},
 
-		{"a\n``b``", "a ``b``$$a\n``b``"},
+		{"a\n``b``", "a\n``b``$$a\n``b``"},
 	}
 
 	elements := config.Elements{
@@ -810,7 +810,7 @@ func TestEscape(t *testing.T) {
 		{`\\\\*`, `\\\\*`}, // \\*
 
 		// text block
-		{"\\*\n\\*", "\\* *$$\\*\n\\*"}, // * *
+		{"\\*\n\\*", "\\*\n\\*$$\\*\n\\*"}, // * *
 
 		{"**a", "**a**"},         // I(a)
 		{`\**`, `\**`},           // **
@@ -970,7 +970,7 @@ func TestEscapeWithClash(t *testing.T) {
 		{`\\\\*`, `\\\\*`}, // \\*
 
 		// text block
-		{"\\*\n\\*", "\\* *$$\\*\n\\*"}, // * *
+		{"\\*\n\\*", "\\*\n\\*$$\\*\n\\*"}, // * *
 
 		{"**a", "**a**"},         // I(a)
 		{`\**`, `\**`},           // **
