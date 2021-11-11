@@ -40,9 +40,9 @@ func TestText(t *testing.T) {
 		{"ab\n\n c", "ab\n\nc"},
 
 		// interrupted by empty blocks
-		{"a\n>\n*\nb", "a\nb"},
-		{"a\n>b\n*\nc", "a\n\n> b\n\nc"},
-		{"a\n>\n*b\nc", "a\n\n* b\n\nc"},
+		{"a\n>\n*\nb", "a\n\n>\n\n*\n\nb"},
+		{"a\n>b\n*\nc", "a\n\n> b\n\n*\n\nc"},
+		{"a\n>\n*b\nc", "a\n\n>\n\n* b\n\nc"},
 	}
 
 	elements := config.Elements{
@@ -68,7 +68,7 @@ func TestVerbatimLine(t *testing.T) {
 		in  string
 		out string
 	}{
-		{".a", ""},
+		{".a", ".a"},
 		{".A", ".A"},
 		{".aa", ".a a"},
 		{".aa ", ".a a"},
@@ -77,7 +77,7 @@ func TestVerbatimLine(t *testing.T) {
 		{".a>b", ".a >b"},
 
 		// nested
-		{">.a", ""},
+		{">.a", "> .a"},
 		{">.ab", "> .a b"},
 	}
 
@@ -104,7 +104,7 @@ func TestHanging(t *testing.T) {
 		in  string
 		out string
 	}{
-		{"-", ""},
+		{"-", "-"},
 		{"-a", "- a"},
 		{"-\n a", "- a"},
 		{"-a\n b", "- a\n  b"},
@@ -114,15 +114,15 @@ func TestHanging(t *testing.T) {
 		{"-a\n\n\n -b", "- a\n\n  - b"},
 
 		// nested
-		{"->", ""},
+		{"->", "- >"},
 		{"->a", "- > a"},
-		{"-\n>", ""},
-		{"-\n>a", "> a"},
-		{"-\n >", ""},
+		{"-\n>", "-\n\n>"},
+		{"-\n>a", "-\n\n> a"},
+		{"-\n >", "- >"},
 		{"-\n >a", "- > a"},
-		{">-", ""},
+		{">-", "> -"},
 		{">-a", "> - a"},
-		{">\n>-", ""},
+		{">\n>-", "> -"},
 		{">\n>-a", "> - a"},
 	}
 
@@ -150,7 +150,7 @@ func TestRankedHanging(t *testing.T) {
 		out string
 	}{
 
-		{"==", ""},
+		{"==", "=="},
 		{"==a", "== a"},
 		{"==\n  a", "== a"},
 		{"==a\n  b", "== a\n   b"},
@@ -161,15 +161,15 @@ func TestRankedHanging(t *testing.T) {
 		{"==a\n\n\n  b", "== a\n\n   b"},
 
 		// nested
-		{"==>", ""},
+		{"==>", "== >"},
 		{"==>a", "== > a"},
-		{"==\n>", ""},
-		{"==\n>a", "> a"},
-		{"==\n  >", ""},
+		{"==\n>", "==\n\n>"},
+		{"==\n>a", "==\n\n> a"},
+		{"==\n  >", "== >"},
 		{"==\n  >a", "== > a"},
-		{">==", ""},
+		{">==", "> =="},
 		{">==a", "> == a"},
-		{">\n>==", ""},
+		{">\n>==", "> =="},
 		{">\n>==a", "> == a"},
 	}
 
@@ -196,7 +196,7 @@ func TestWalled(t *testing.T) {
 		in  string
 		out string
 	}{
-		{"+", ""},
+		{"+", "+"},
 		{"+a", "+ a"},
 		{"+\n+a", "+ a"},
 		{"+a\n+b", "+ a\n+ b"},
@@ -206,15 +206,15 @@ func TestWalled(t *testing.T) {
 		{"+a\n+\n+\n++b", "+ a\n+\n+ + b"},
 
 		// nested
-		{"+>", ""},
+		{"+>", "+ >"},
 		{"+>a", "+ > a"},
-		{"+\n>", ""},
-		{"+\n>a", "> a"},
-		{"+\n+>", ""},
+		{"+\n>", "+\n\n>"},
+		{"+\n>a", "+\n\n> a"},
+		{"+\n+>", "+ >"},
 		{"+\n+>a", "+ > a"},
-		{">+", ""},
+		{">+", "> +"},
 		{">+a", "> + a"},
-		{">\n>+", ""},
+		{">\n>+", "> +"},
 		{">\n>+a", "> + a"},
 	}
 
@@ -241,7 +241,7 @@ func TestVerbatimWalled(t *testing.T) {
 		in  string
 		out string
 	}{
-		{"!", ""},
+		{"!", "!"},
 		{"!a", "! a"},
 		{"!\n!a", "! a"},
 		{"!a\n!b", "! a\n! b"},
@@ -250,15 +250,15 @@ func TestVerbatimWalled(t *testing.T) {
 		// would be nested-but can only contain verbatim
 		{"!>", "! >"},
 		{"!>a", "! >a"},
-		{"!\n>", ""},
-		{"!\n>a", "> a"},
+		{"!\n>", "!\n\n>"},
+		{"!\n>a", "!\n\n> a"},
 		{"!\n!>", "! >"},
 		{"!\n!>a", "! >a"},
 
 		// nested
-		{">!", ""},
+		{">!", "> !"},
 		{">!a", "> ! a"},
-		{">\n>!", ""},
+		{">\n>!", "> !"},
 		{">\n>!a", "> ! a"},
 	}
 
@@ -285,25 +285,25 @@ func TestFenced(t *testing.T) {
 		in  string
 		out string
 	}{
-		{"`", ""},
-		{"`a", ""},
-		{"`a`", ""},
-		{"`a\n", ""},
+		{"`", "`\n`"},
+		{"`a", "`a\n`"},
+		{"`a`", "`a`\n`"},
+		{"`a\n", "`a\n`"},
 		{"`a\nb", "`a\nb\n`"},
 		{"`a\n\nb", "`a\n\nb\n`"},
 		{"`a\n \nb", "`a\n \nb\n`"},
 		{"`a\n\n\nb", "`a\n\n\nb\n`"},
 
 		// trailing text
-		{"`a`b", ""},
+		{"`a`b", "`a`b\n`"},
 		{"`a\nb\n`", "`a\nb\n`"},
 		{"`a\nb\n`c", "`a\nb\n`"},
 		{"`a\nb\n`\nc", "`a\nb\n`\n\nc"},
 
 		// escape
-		{"``", ""},
+		{"``", "``\n`"},
 		{"``\nb", "``\nb\n`"},
-		{"`a\n`", ""},
+		{"`a\n`", "`a\n`"},
 		{"`a\nb`", "`a\nb`\n`"},
 
 		// unnecessary escape
@@ -311,8 +311,8 @@ func TestFenced(t *testing.T) {
 		{"`a\nb\n\\`", "`a\nb\n\\`\n`"},
 
 		// nested
-		{">`", ""},
-		{">\n>`", ""},
+		{">`", "> `\n> `"},
+		{">\n>`", "> `\n> `"},
 		{">`a\n>b", "> `a\n> b\n> `"},
 		{">`a\n>b`", "> `a\n> b`\n> `"},
 		{">`a\n>b\n>`", "> `a\n> b\n> `"},
@@ -347,9 +347,9 @@ func TestGroup(t *testing.T) {
 			{">a\n>\n>b", "> a\n>\n> b"},
 
 			// interrupted by empty blocks
-			{"a\n>\n*\nb", "a\nb"},
-			{"a\n>b\n*\nc", "a\n\n> b\n\nc"},
-			{"a\n>\n*b\nc", "a\n\n* b\n\nc"},
+			{"a\n>\n*\nb", "a\n\n>\n\n*\n\nb"},
+			{"a\n>b\n*\nc", "a\n\n> b\n\n*\n\nc"},
+			{"a\n>\n*b\nc", "a\n\n>\n\n* b\n\nc"},
 		}
 
 		elements := config.Elements{
@@ -380,22 +380,22 @@ func TestGroup(t *testing.T) {
 			in  string
 			out string
 		}{
-			{"-a\n-", "- a"},
+			{"-a\n-", "- a\n-"},
 			{"-a\n-b", "- a\n- b"},
 			{"-a\n\n-b", "- a\n- b"},
 
 			// nested
-			{"-a\n-", "- a"},
+			{"-a\n-", "- a\n-"},
 			{"-a\n-b", "- a\n- b"},
 
 			// interrupted by empty blocks
-			{"-a\n>\n-b", "- a\n- b"},
-			{"-a\n>\n\n>\n-b", "- a\n- b"},
-			{"-a\n>b\n\n>\n-c", "- a\n\n> b\n\n- c"},
-			{"-a\n>\n\n>b\n-c", "- a\n\n> b\n\n- c"},
-			{"-a\n>\n*\n-b", "- a\n- b"},
-			{"-a\n>b\n*\n-c", "- a\n\n> b\n\n- c"},
-			{"-a\n>\n*b\n-c", "- a\n\n* b\n\n- c"},
+			{"-a\n>\n-b", "- a\n\n>\n\n- b"},
+			{"-a\n>\n\n>\n-b", "- a\n\n>\n\n>\n\n- b"},
+			{"-a\n>b\n\n>\n-c", "- a\n\n> b\n\n>\n\n- c"},
+			{"-a\n>\n\n>b\n-c", "- a\n\n>\n\n> b\n\n- c"},
+			{"-a\n>\n*\n-b", "- a\n\n>\n\n*\n\n- b"},
+			{"-a\n>b\n*\n-c", "- a\n\n> b\n\n*\n\n- c"},
+			{"-a\n>\n*b\n-c", "- a\n\n>\n\n* b\n\n- c"},
 		}
 
 		elements := config.Elements{
@@ -431,27 +431,22 @@ func TestGroup(t *testing.T) {
 			out string
 		}{
 			// sticky before
-			{"!\na", "a"},
+			{"!\na", "!\na"},
 			{"!a\nb", "! a\nb"},
 			{"!a\n\nb", "! a\nb"},
-			{"a\n!", "a"},
+			{"a\n!", "a\n\n!"},
 			{"a\n!b", "a\n\n! b"},
 			{"a\n\n!b", "a\n\n! b"},
 
 			// sticky after
-			{"a\n+", "a"},
+			{"a\n+", "a\n+"},
 			{"a\n+b", "a\n+ b"},
 			{"a\n\n+b", "a\n+ b"},
-			{"+\na", "a"},
+			{"+\na", "+\n\na"},
 			{"+a\nb", "+ a\n\nb"},
 			{"+a\n\nb", "+ a\n\nb"},
 
-			// interrupted by empty blocks
-			// note: semantics change-a side effect of consistently
-			// removing empty blocks
-			{"!a\n>\nb", "! a\n\nb"},
-			//{"!a\n>\nb", "! a\n>\n\nb"},
-			//{"!a\n>\nb", "! a\nb"},
+			{"!a\n>\nb", "! a\n>\n\nb"},
 		}
 
 		elements := config.Elements{
@@ -494,13 +489,13 @@ func TestGroup(t *testing.T) {
 			in  string
 			out string
 		}{
-			{"(())****", ""},
-			{"((a))****", "((a))"},
-			{"(())**a**", "**a**"},
+			{"(())****", "(())****"},
+			{"((a))****", "((a))****"},
+			{"(())**a**", "(())**a**"},
 			{"((a))**b**", "((a))**b**"},
 			{"((a)) **b**", "((a))**b**"},
 			{"((a))b**c**", "((a))b**c**"},
-			{"((a))\n**b**", "((a))**b**"},
+			{"((a))\n**b**", "((a))\n**b**"},
 
 			{"a\n((b))**c**", "a\n((b))**c**"},
 			{"((a))**b**((c))**d**", "((a))**b**((c))**d**"},
@@ -538,25 +533,25 @@ func TestUniform(t *testing.T) {
 		in  string
 		out string
 	}{
-		{"**", ""},
-		{"** ", ""},
+		{"**", "****"},
+		{"** ", "****"},
 		{"**a", "**a**"},
 		{"**a**b", "**a**b"},
-		{"**\n", ""},
-		{"**\n ", ""},
+		{"**\n", "****"},
+		{"**\n ", "****"},
 		{"**\na", "**\na**"},
 		{"**\na**", "**\na**"},
 		{"**\na**b", "**\na**b"},
-		{"**\n**", ""},
+		{"**\n**", "**\n**"},
 
-		{"a**", "a"},
+		{"a**", "a****"},
 
 		// nested
-		{"**__", ""},
+		{"**__", "**____**"},
 		{"**a__b", "**a__b__**"},
 		{"**a__b__", "**a__b__**"},
 		{"**a__b**", "**a__b__**"},
-		{"**a__b**__", "**a__b__**"},
+		{"**a__b**__", "**a__b__**____"},
 		{"**a__b__**", "**a__b__**"},
 
 		// left-right delimiter
@@ -590,26 +585,26 @@ func TestEscaped(t *testing.T) {
 		in  string
 		out string
 	}{
-		{"``", ""},
-		{"`` ", ""},
+		{"``", "````"},
+		{"`` ", "````"},
 		{"``a", "``a``"},
 		{"``a``b", "``a``b"},
-		{"``\n", ""},
-		{"``\n ", ""},
+		{"``\n", "````"},
+		{"``\n ", "````"},
 		{"``\na", "``\na``"},
 		{"``\na``", "``\na``"},
 		{"``\na``b", "``\na``b"},
-		{"``\n``", ""},
-		{"`````", "`"},
+		{"``\n``", "````"},
+		{"`````", "`````"},
 
-		{"a``", "a"},
+		{"a``", "a````"},
 
 		// would be nested
 		{"``__", "``__``"},
 		{"``a__b", "``a__b``"},
 		{"``a__b__", "``a__b__``"},
 		{"``a__b``", "``a__b``"},
-		{"``a__b``__", "``a__b``"},
+		{"``a__b``__", "``a__b``____"},
 		{"``a__b__``", "``a__b__``"},
 
 		// escape
@@ -652,9 +647,9 @@ func TestPrefixed(t *testing.T) {
 		in  string
 		out string
 	}{
-		{`\`, ""},
-		{`\a`, "a"},
-		{`a\`, "a"},
+		{`\`, `\`},
+		{`\a`, `\a`},
+		{`a\`, `a\`},
 	}
 
 	elements := config.Elements{
@@ -700,9 +695,9 @@ func TestPrefixed(t *testing.T) {
 			in  string
 			out string
 		}{
-			{"a:", ""},
+			{"a:", "a:"},
 			{"a:b", "a:b"},
-			{"ba:", "b"},
+			{"ba:", "ba:"},
 		}
 
 		elements := config.Elements{
@@ -760,18 +755,18 @@ func TestEscape(t *testing.T) {
 
 		{"**a", "**a**"},         // I(a)
 		{`\**`, `\**`},           // **
-		{`\\**`, `\`},            // \
+		{`\\**`, `\\****`},       // \
 		{`\\**a`, `\\**a**`},     // \I(a)
 		{`\\\**`, `\\\**`},       // \**
 		{`\\\**a`, `\\\**a`},     // \**a
 		{`\\\\**a`, `\\\\**a**`}, // \\I(A)
 
-		{`a\**`, `a\**`},     // a**
-		{`a\\**`, `a\`},      // a\
-		{`a\\\**`, `a\\\**`}, // a\**
-		{`a\\\\**`, `a\\\`},  // a\\
+		{`a\**`, `a\**`},         // a**
+		{`a\\**`, `a\\****`},     // a\
+		{`a\\\**`, `a\\\**`},     // a\**
+		{`a\\\\**`, `a\\\\****`}, // a\\
 
-		{`a\***`, `a*`},           // a*
+		{`a\***`, `a\*****`},      // a*
 		{`a\***b`, `a\***b**`},    // a*I(b)
 		{`a\*\**`, `a\*\**`},      // a***
 		{`a\*\*\*`, `a\*\**`},     // a***
@@ -781,16 +776,16 @@ func TestEscape(t *testing.T) {
 		// prefixed, non-punctuation delimiter
 		{"http://a", "http://a"},         // I(a)
 		{`\http://`, `\http://`},         // http://
-		{`\\http://`, `\`},               // \
+		{`\\http://`, `\\http://`},       // \
 		{`\\http://a`, `\\http://a`},     // \I(a)
 		{`\\\http://`, `\\\http://`},     // \http://
 		{`\\\http://a`, `\\\http://a`},   // \http://a
 		{`\\\\http://a`, `\\\\http://a`}, // \\I(A)
 
-		{`a\http://`, `a\http://`},     // ahttp://
-		{`a\\http://`, `a\`},           // a\
-		{`a\\\http://`, `a\\\http://`}, // a\http://
-		{`a\\\\http://`, `a\\\`},       // a\\
+		{`a\http://`, `a\http://`},       // ahttp://
+		{`a\\http://`, `a\\http://`},     // a\
+		{`a\\\http://`, `a\\\http://`},   // a\http://
+		{`a\\\\http://`, `a\\\\http://`}, // a\\
 
 		// closing delimiter
 		{`**\`, `**\\**`},             // I(\)
@@ -825,7 +820,8 @@ func TestEscape(t *testing.T) {
 		{`>\\\\*`, `> \\\\*`}, // B(\\*)
 
 		// nested closing delimiter
-		{`>**\`, `> **\\**`}, // B(I(\))
+		{`>**\`, `> **\\**`},       // B(I(\))
+		{`>{{**\`, `> {{**\\**}}`}, // B(I1(I2(BR)))
 
 		// in verbatim
 		{"`\n\\\\", "`\n\\\\\n`"}, // B(\n\\)
@@ -917,18 +913,18 @@ func TestEscapeWithClash(t *testing.T) {
 
 		{"**a", "**a**"},         // I(a)
 		{`\**`, `\**`},           // **
-		{`\\**`, `\\`},           // \
+		{`\\**`, `\\****`},       // \
 		{`\\**a`, `\\**a**`},     // \I(a)
 		{`\\\**`, `\\\**`},       // \**
 		{`\\\**a`, `\\\**a`},     // \**a
 		{`\\\\**a`, `\\\\**a**`}, // \\I(A)
 
-		{`a\**`, `a\**`},     // a**
-		{`a\\**`, `a\\`},     // a\
-		{`a\\\**`, `a\\\**`}, // a\**
-		{`a\\\\**`, `a\\\\`}, // a\\
+		{`a\**`, `a\**`},         // a**
+		{`a\\**`, `a\\****`},     // a\
+		{`a\\\**`, `a\\\**`},     // a\**
+		{`a\\\\**`, `a\\\\****`}, // a\\
 
-		{`a\***`, `a*`},           // a*
+		{`a\***`, `a\*****`},      // a*
 		{`a\***b`, `a\***b**`},    // a*I(b)
 		{`a\*\**`, `a\*\**`},      // a***
 		{`a\*\*\*`, `a\*\**`},     // a***
@@ -938,19 +934,19 @@ func TestEscapeWithClash(t *testing.T) {
 		// prefixed, non-punctuation delimiter
 		{"http://a", "http://a"},         // I(a)
 		{`\http://`, `\http://`},         // http://
-		{`\\http://`, `\\`},              // \
+		{`\\http://`, `\\http://`},       // \
 		{`\\http://a`, `\\http://a`},     // \I(a)
 		{`\\\http://`, `\\\http://`},     // \http://
 		{`\\\http://a`, `\\\http://a`},   // \http://a
 		{`\\\\http://a`, `\\\\http://a`}, // \\I(A)
 
-		{`a\http://`, `a\http://`},     // ahttp://
-		{`a\\http://`, `a\\`},          // a\
-		{`a\\\http://`, `a\\\http://`}, // a\http://
-		{`a\\\\http://`, `a\\\\`},      // a\\
+		{`a\http://`, `a\http://`},       // ahttp://
+		{`a\\http://`, `a\\http://`},     // a\
+		{`a\\\http://`, `a\\\http://`},   // a\http://
+		{`a\\\\http://`, `a\\\\http://`}, // a\\
 
 		// closing delimiter
-		{`**\`, "**\\\n**"},           // I(BR)
+		{`**\`, `**\ **`},             // I(BR)
 		{`**\*`, `**\***`},            // I(*)
 		{`**\**`, `**\*\***`},         // I(**)
 		{`**\*\**`, `**\*\*\***`},     // I(***)
@@ -960,13 +956,13 @@ func TestEscapeWithClash(t *testing.T) {
 		{`***\*a`, `**\**a**`}, // I(**a)
 
 		// left/right closing delimiter
-		{`{{\`, "{{\\\n}}"},           // I(BR)
+		{`{{\`, `{{\ }}`},             // I(BR)
 		{`{{\}`, `{{\}}}`},            // I(})
 		{`{{\}}`, `{{\}\}}}`},         // I(}})
 		{`{{\}\}}`, `{{\}\}\}}}`},     // I(}}})
 		{`{{\}\}\}}`, `{{\}\}\}\}}}`}, // I(}}}})
 
-		{`{{**\`, "{{**\\\n**}}"},          // I1(I2(BR))
+		{`{{**\`, `{{**\ **}}`},            // I1(I2(BR))
 		{`{{**\}`, `{{**}**}}`},            // I1(I2(}))
 		{`{{**\}}`, `{{**\}}**}}`},         // I1(I2(}}))
 		{`{{**\}\}}`, `{{**\}\}}**}}`},     // I1(I2(}}}))
@@ -982,8 +978,8 @@ func TestEscapeWithClash(t *testing.T) {
 		{`>\\\\*`, `> \\\\*`}, // B(\\*)
 
 		// nested closing delimiter
-		{`>{{\`, "> {{\\\n> }}"},       // B(I(BR))
-		{`>{{**\`, "> {{**\\\n> **}}"}, // B(I1(I2(BR)))
+		{`>{{\`, `> {{\ }}`},       // B(I(BR))
+		{`>{{**\`, `> {{**\ **}}`}, // B(I1(I2(BR)))
 
 		// in verbatim
 		{"`\n\\\\", "`\n\\\\\n`"}, // B(\n\\)
@@ -1047,14 +1043,14 @@ func TestDoNotRemove(t *testing.T) {
 		{">.a ", "> .a"},
 		{">>.a ", "> > .a"},
 
-		{".b", ""},
+		{".b", ".b"},
 		{".b.a ", ".b .a"},
 
 		{`\`, `\`},
 		{`a\`, `a\`},
 
-		{"**", ""},
-		{`**\`, "**\\\n**"},
+		{"**", "****"},
+		{`**\`, `**\ **`},
 	}
 
 	elements := config.Elements{

@@ -555,20 +555,20 @@ func (p *parser) parseFenced(name string) *node.Node {
 		p.next()
 	}
 
-	oOffs := p.offset
+	// parse text on opening line
+	o := p.offset
 	for p.ch >= 0 && p.ch != '\n' {
 		p.next()
 	}
-	openingText := string(p.src[oOffs:p.offset])
+	openingText := string(p.src[o:p.offset])
 	p.next()
 	p.parseLead()
 
 	var lines [][]byte
-	afterNewline := true
 	textStart := p.pos()
 	textEnd := p.pos()
 	end := p.pos()
-	for p.ch >= 0 && p.continues(reqdBlocks) {
+	for p.continues(reqdBlocks) {
 		if !escaped && p.ch == delim || escaped && p.ch == '\\' && p.peek() == delim {
 			// closing delimiter
 			if escaped {
@@ -589,25 +589,28 @@ func (p *parser) parseFenced(name string) *node.Node {
 			break
 		}
 
-		if p.ch == '\n' && !afterNewline {
+		offs := p.offset
+		for p.ch >= 0 && p.ch != '\n' {
 			p.next()
-			p.parseLead()
-			afterNewline = true
-		} else {
+		}
+		textEnd = p.pos()
+		end = p.pos()
+
+		if p.ch < 0 || p.ch == '\n' {
 			// leading spacing that is part of the element
 			spacing := diffSpacing(lastSpacingSeq(p.blocks), lastSpacingSeq(p.lead))
-			o := p.offset
-			for p.ch >= 0 && p.ch != '\n' {
-				p.next()
-			}
-			l := p.src[o:p.offset]
-
+			l := p.src[offs:p.offset]
 			line := append([]byte(string(spacing)), l...)
 			lines = append(lines, line)
-			afterNewline = false
-			textEnd = p.pos()
+			end = p.pos()
+			if p.ch < 0 {
+				break
+			}
+			// p.ch='\n'
+			p.next()
+			p.parseLead()
 		}
-		end = p.pos()
+
 	}
 
 	n := &node.Node{

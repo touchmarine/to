@@ -56,26 +56,6 @@ type printer struct {
 	line           int
 }
 
-// hasPreviousPrintableSibling reports whether any previous sibling returns
-// p.hasPrintableContent() true.
-func (p printer) hasPreviousPrintableSibling(n *node.Node) bool {
-	for s := n.PreviousSibling; s != nil; s = s.PreviousSibling {
-		if p.hasPrintableContent(s) {
-			return true
-		}
-	}
-	return false
-}
-
-func (p printer) searchFirstPreviousPrintableSibling(n *node.Node) *node.Node {
-	for s := n.PreviousSibling; s != nil; s = s.PreviousSibling {
-		if p.hasPrintableContent(s) {
-			return s
-		}
-	}
-	return nil
-}
-
 // print prints the node in its canonical form.
 //
 // Blocks are separated by single lines, except in groups, such as lists or
@@ -90,17 +70,9 @@ func (p printer) print(w writer, n *node.Node) error {
 		return fmt.Errorf("error node (%s)", n)
 	}
 
-	if !p.hasPrintableContent(n) {
-		return nil
-	}
-
 	if n.IsBlock() || (n.Type == node.TypeContainer && !isInlineContainer(n)) {
-		if x := p.searchFirstPreviousPrintableSibling(n); x != nil {
-			// has non-empty previous sibling
-			if x != n.PreviousSibling && x.Type == n.Type && x.Element == n.Element ||
-				n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
-				// has the same non-immediate previous sibling
-				// (e.g., list split by an empty blockquote) or
+		if n.PreviousSibling != nil {
+			if n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
 				// is in a group like list or sticky
 				p.newline(w)
 			} else {
@@ -228,18 +200,14 @@ func (p printer) print(w writer, n *node.Node) error {
 
 		if text != "" {
 			lines := strings.Split(text, "\n")
-			for i, line := range lines {
-				if i > 0 {
-					p.newline(w)
-					p.writePrefix(w, withTrailingSpacing)
-				}
+			for _, line := range lines {
 				w.WriteString(line)
+				p.newline(w)
+				p.writePrefix(w, withTrailingSpacing)
 			}
 		}
 
 		// closing delimiter
-		p.newline(w)
-		p.writePrefix(w, withTrailingSpacing)
 		if needsEscape {
 			w.WriteString(`\`)
 		}
@@ -263,21 +231,16 @@ func (p printer) print(w writer, n *node.Node) error {
 			}
 		}
 
-		// closing delimiter
 		if p.hasEscapeClashingElementAtEnd(n) {
 			// otherwise `**\` would return `**\**`
-
-			p.newline(w)
-			p.writePrefix(w, withTrailingSpacing)
+			w.WriteByte(' ')
 		}
-
 		counter := counterpartInString(e.Delimiter)
 		w.WriteString(counter + counter)
 
 	case node.TypeEscaped:
 		text := n.TextContent()
 		needsEscape := strings.Contains(text, e.Delimiter)
-
 		w.WriteString(e.Delimiter + e.Delimiter)
 		if needsEscape {
 			w.WriteString(`\`)
@@ -285,14 +248,10 @@ func (p printer) print(w writer, n *node.Node) error {
 
 		w.WriteString(text)
 
-		// closing delimiter
 		if p.hasEscapeClashingElementAtEnd(n) {
 			// otherwise `**\` would return `**\**`
-
-			p.newline(w)
-			p.writePrefix(w, withTrailingSpacing)
+			w.WriteByte(' ')
 		}
-
 		if needsEscape {
 			w.WriteString(`\`)
 		}
@@ -310,10 +269,6 @@ func (p printer) print(w writer, n *node.Node) error {
 	}
 
 	return nil
-}
-
-func (p printer) hasPrintableContent(n *node.Node) bool {
-	return p.doNotRemove(n) || n.TextContent() != ""
 }
 
 // isInlineContainer reports whether a container is inline based on its
@@ -507,7 +462,7 @@ func (p printer) text(w writer, n *node.Node) string {
 			// following punctuation
 
 			b.WriteByte('\\')
-		} else if ch == '\\' && i == len(content)-1 && n.NextSibling != nil && p.hasPrintableContent(n.NextSibling) {
+		} else if ch == '\\' && i == len(content)-1 && n.NextSibling != nil {
 			// C: escape backslash so it doesn't escape the
 			// following non-emtpy inline element
 
@@ -526,7 +481,7 @@ func (p printer) text(w writer, n *node.Node) string {
 			// E: escape inline delimiter
 
 			b.WriteByte('\\')
-		} else if i == len(content)-1 && n.NextSibling != nil && p.hasPrintableContent(n.NextSibling) {
+		} else if i == len(content)-1 && n.NextSibling != nil {
 			// F: last character and the following non-empty
 			// element's delimiter's first character may form an
 			// inline delimiter
