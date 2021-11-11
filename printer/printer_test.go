@@ -70,15 +70,16 @@ func TestVerbatimLine(t *testing.T) {
 	}{
 		{".a", ".a"},
 		{".A", ".A"},
-		{".aa", ".a a"},
-		{".aa ", ".a a"},
+		{".aa", ".aa"},
+		{".aa ", ".aa"},
+		{".a a", ".a a"},
 		// would be nested-but can only contain verbatim
-		{".a>", ".a >"},
-		{".a>b", ".a >b"},
+		{".a>", ".a>"},
+		{".a>b", ".a>b"},
 
 		// nested
 		{">.a", "> .a"},
-		{">.ab", "> .a b"},
+		{">.ab", "> .ab"},
 	}
 
 	elements := config.Elements{
@@ -242,24 +243,26 @@ func TestVerbatimWalled(t *testing.T) {
 		out string
 	}{
 		{"!", "!"},
-		{"!a", "! a"},
-		{"!\n!a", "! a"},
-		{"!a\n!b", "! a\n! b"},
-		{"!a\n!\n!b", "! a\n! b"},
-		{"!a\n!\n!\n!b", "! a\n! b"},
+		{"!a", "!a"},
+		{"!a ", "!a"},
+		{"! a ", "! a"},
+		{"!\n!a", "!\n!a"},
+		{"!a\n!b", "!a\n!b"},
+		{"!a\n!\n!b", "!a\n!\n!b"},
+		{"!a\n!\n!\n!b", "!a\n!\n!\n!b"},
 		// would be nested-but can only contain verbatim
-		{"!>", "! >"},
-		{"!>a", "! >a"},
+		{"!>", "!>"},
+		{"!>a", "!>a"},
 		{"!\n>", "!\n\n>"},
 		{"!\n>a", "!\n\n> a"},
-		{"!\n!>", "! >"},
-		{"!\n!>a", "! >a"},
+		{"!\n!>", "!\n!>"},
+		{"!\n!>a", "!\n!>a"},
 
 		// nested
 		{">!", "> !"},
-		{">!a", "> ! a"},
+		{">!a", "> !a"},
 		{">\n>!", "> !"},
-		{">\n>!a", "> ! a"},
+		{">\n>!a", "> !a"},
 	}
 
 	elements := config.Elements{
@@ -432,11 +435,11 @@ func TestGroup(t *testing.T) {
 		}{
 			// sticky before
 			{"!\na", "!\na"},
-			{"!a\nb", "! a\nb"},
-			{"!a\n\nb", "! a\nb"},
+			{"!a\nb", "!a\nb"},
+			{"!a\n\nb", "!a\nb"},
 			{"a\n!", "a\n\n!"},
-			{"a\n!b", "a\n\n! b"},
-			{"a\n\n!b", "a\n\n! b"},
+			{"a\n!b", "a\n\n!b"},
+			{"a\n\n!b", "a\n\n!b"},
 
 			// sticky after
 			{"a\n+", "a\n+"},
@@ -446,7 +449,7 @@ func TestGroup(t *testing.T) {
 			{"+a\nb", "+ a\n\nb"},
 			{"+a\n\nb", "+ a\n\nb"},
 
-			{"!a\n>\nb", "! a\n>\n\nb"},
+			{"!a\n>\nb", "!a\n>\n\nb"},
 		}
 
 		elements := config.Elements{

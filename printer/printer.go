@@ -96,9 +96,8 @@ func (p printer) print(w writer, n *node.Node) error {
 		}
 	case node.TypeVerbatimLine:
 		w.WriteString(e.Delimiter)
-		if text := n.TextContent(); text != "" {
-			w.WriteString(" ")
-			w.WriteString(strings.Trim(text, " \t"))
+		if t := n.TextContent(); t != "" {
+			w.WriteString(strings.TrimRight(t, " \t"))
 		}
 	case node.TypeWalled:
 		defer p.addPrefix(e.Delimiter)()
@@ -121,14 +120,12 @@ func (p printer) print(w writer, n *node.Node) error {
 		defer p.addPrefix(e.Delimiter)()
 		w.WriteString(e.Delimiter)
 		lines := strings.Split(n.TextContent(), "\n")
-		lines = removeBlankLines(lines)
 		for i, line := range lines {
 			if i > 0 {
 				p.newline(w)
 				p.writePrefix(w, withoutTrailingSpacing)
 			}
-			w.WriteString(" ")
-			w.WriteString(strings.Trim(line, " \t"))
+			w.WriteString(strings.TrimRight(line, " \t"))
 		}
 	case node.TypeHanging:
 		defer p.addPrefix(" ")()
@@ -324,16 +321,6 @@ func (p *printer) writePrefix(w writer, spacing prefixSpacing) {
 	w.WriteString(prefix)
 }
 
-func removeBlankLines(p []string) []string {
-	var n []string
-	for _, s := range p {
-		if strings.Trim(s, " \t") != "" {
-			n = append(n, s)
-		}
-	}
-	return n
-}
-
 func fencedNeedsEscape(s, delimiter string) bool {
 	lines := strings.Split(s, "\n")
 	for _, line := range lines {
@@ -510,15 +497,6 @@ func (p printer) text(w writer, n *node.Node) string {
 	}
 
 	return text
-}
-
-func containsInt(ii []int, x int) bool {
-	for _, i := range ii {
-		if x == i {
-			return true
-		}
-	}
-	return false
 }
 
 func searchFirstNonContainerParent(n *node.Node) *node.Node {
