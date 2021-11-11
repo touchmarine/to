@@ -59,14 +59,13 @@ func (c Config) ParseTemplates(t *template.Template, format string) (*template.T
 type Elements map[string]Element
 
 type Element struct {
-	Type        string
-	Delimiter   string
-	Matcher     string
-	DoNotRemove bool
-	Element     string
-	Target      string
-	Option      string
-	Templates   Templates
+	Type      string
+	Delimiter string
+	Matcher   string
+	Element   string
+	Target    string
+	Option    string
+	Templates Templates
 }
 
 // ParserElements returns the elements converted to parser.Elements.
@@ -98,11 +97,10 @@ func (es Elements) PrinterElements() printer.Elements {
 			continue
 		}
 		m[n] = printer.Element{
-			Name:        n,
-			Type:        t,
-			Delimiter:   e.Delimiter,
-			Matcher:     e.Matcher,
-			DoNotRemove: e.DoNotRemove,
+			Name:      n,
+			Type:      t,
+			Delimiter: e.Delimiter,
+			Matcher:   e.Matcher,
 		}
 	}
 	return m

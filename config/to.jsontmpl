@@ -226,7 +226,6 @@
 		"LineBreak": {
 			"Type": "prefixed",
 			"Delimiter": "\\",
-			"DoNotRemove": true,
 			"Templates": {
 				"html": "<br>"
 			}

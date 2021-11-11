@@ -677,9 +677,8 @@ func TestPrefixed(t *testing.T) {
 
 		elements := config.Elements{
 			"MA": {
-				Type:        node.TypePrefixed.String(),
-				Delimiter:   `\`,
-				DoNotRemove: true,
+				Type:      node.TypePrefixed.String(),
+				Delimiter: `\`,
 			},
 		}
 		for _, c := range cases {
@@ -1008,9 +1007,8 @@ func TestEscapeWithClash(t *testing.T) {
 			Delimiter: "`",
 		},
 		"MC": {
-			Type:        node.TypePrefixed.String(),
-			Delimiter:   `\`,
-			DoNotRemove: true,
+			Type:      node.TypePrefixed.String(),
+			Delimiter: `\`,
 		},
 		// use "{" as it doesn't need escaping
 		// in -run test regex as "(" or "["
@@ -1022,59 +1020,6 @@ func TestEscapeWithClash(t *testing.T) {
 			Type:      node.TypePrefixed.String(),
 			Delimiter: "http://",
 			Matcher:   "url",
-		},
-	}
-	for _, c := range cases {
-		name := fmt.Sprintf("%q", strings.ReplaceAll(c.in, "/", "2F")) // %2F is URL-escaped slash
-		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
-		})
-	}
-}
-
-func TestDoNotRemove(t *testing.T) {
-	cases := []struct {
-		in  string
-		out string
-	}{
-		{".a", ".a"},
-		{".a ", ".a"},
-
-		{">.a ", "> .a"},
-		{">>.a ", "> > .a"},
-
-		{".b", ".b"},
-		{".b.a ", ".b .a"},
-
-		{`\`, `\`},
-		{`a\`, `a\`},
-
-		{"**", "****"},
-		{`**\`, `**\ **`},
-	}
-
-	elements := config.Elements{
-		"A": {
-			Type:        node.TypeHanging.String(),
-			Delimiter:   ".a",
-			DoNotRemove: true,
-		},
-		"B": {
-			Type:      node.TypeHanging.String(),
-			Delimiter: ".b",
-		},
-		"C": {
-			Type:      node.TypeWalled.String(),
-			Delimiter: ">",
-		},
-		"MA": {
-			Type:        node.TypePrefixed.String(),
-			Delimiter:   `\`,
-			DoNotRemove: true,
-		},
-		"MB": {
-			Type:      node.TypeUniform.String(),
-			Delimiter: "*",
 		},
 	}
 	for _, c := range cases {

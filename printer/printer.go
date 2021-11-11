@@ -16,11 +16,10 @@ import (
 type Elements map[string]Element
 
 type Element struct {
-	Name        string
-	Type        node.Type
-	Delimiter   string
-	Matcher     string
-	DoNotRemove bool
+	Name      string
+	Type      node.Type
+	Delimiter string
+	Matcher   string
 }
 
 type writer interface {
@@ -285,19 +284,6 @@ func isInlineContainer(n *node.Node) bool {
 	}
 	if n.FirstChild != nil && n.FirstChild.IsInline() {
 		return true
-	}
-	return false
-}
-
-// doNotRemove returns true if n or any of its children has set DoNotRemove.
-func (p printer) doNotRemove(n *node.Node) bool {
-	if e, found := p.elements[n.Element]; found && e.DoNotRemove {
-		return true
-	}
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		if p.doNotRemove(c) {
-			return true
-		}
 	}
 	return false
 }
