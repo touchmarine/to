@@ -2,7 +2,6 @@ package printer
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"strings"
@@ -11,6 +10,8 @@ import (
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 )
+
+const tabWidth = 8
 
 // Elements maps Elements to Names.
 type Elements map[string]Element
@@ -29,42 +30,45 @@ type writer interface {
 }
 
 type Printer struct {
-	Elements Elements
+	Elements   Elements
+	LineLength int // line length to wrap text at
 }
 
 func (p Printer) Fprint(w io.Writer, n *node.Node) error {
 	pp := printer{
-		elements: p.Elements,
+		elements:   p.Elements,
+		lineLength: p.LineLength,
 	}
 	if x, ok := w.(writer); ok {
-		return pp.print(x, n)
+		pp.w = x
+		return pp.print(n)
 	}
 
 	buf := bufio.NewWriter(w)
-	if err := pp.print(buf, n); err != nil {
+	pp.w = buf
+	if err := pp.print(n); err != nil {
 		return err
 	}
 	return buf.Flush()
 }
 
 type printer struct {
-	elements Elements
+	w          writer
+	elements   Elements
+	lineLength int
 
-	prefixes       []string
-	lastPrefixLine int
-	line           int
+	prefixes       []string // opened block prefixes
+	lastPrefixLine int      // last line on which a prefix was written
+	line           int      // current line
+	textColumn     int      // byte number (zero-based)
+	screenColumn   int      // utf8 number (zero-based, tab=tabWidth)
 }
 
 // print prints the node in its canonical form.
 //
 // Blocks are separated by single lines, except in groups, such as lists or
-// stickies, where they are placed immediately one after another. Empty blocks
-// are treated as if they were not present. For example, a group interrupted by
-// an empty block is printed as a cohesive group:
-//   	-a
-//   	> 	<- as if it was not here
-//   	-b
-func (p printer) print(w writer, n *node.Node) error {
+// stickies, where they are placed immediately one after another.
+func (p printer) print(n *node.Node) error {
 	if n.Type == node.TypeError {
 		return fmt.Errorf("error node (%s)", n)
 	}
@@ -73,77 +77,67 @@ func (p printer) print(w writer, n *node.Node) error {
 		if n.PreviousSibling != nil {
 			if n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
 				// is in a group like list or sticky
-				p.newline(w)
+				p.newline()
 			} else {
-				p.newline(w)
-				p.writePrefix(w, withoutTrailingSpacing)
-				p.newline(w)
+				p.newline()
+				p.writePrefix(withoutTrailingSpacing)
+				p.newline()
 			}
 		}
 	}
 
 	if n.IsBlock() {
-		p.writePrefix(w, withTrailingSpacing)
+		p.writePrefix(withTrailingSpacing)
 	}
 
 	e, _ := p.elements[n.Element]
 	switch n.Type {
 	case node.TypeContainer:
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if err := p.print(w, c); err != nil {
+			if err := p.print(c); err != nil {
 				return err
 			}
 		}
 	case node.TypeVerbatimLine:
-		w.WriteString(e.Delimiter)
+		p.writeString(e.Delimiter)
 		if t := n.TextContent(); t != "" {
-			w.WriteString(strings.TrimRight(t, " \t"))
+			p.writeString(strings.TrimRight(t, " \t"))
 		}
 	case node.TypeWalled:
 		defer p.addPrefix(e.Delimiter)()
-		w.WriteString(e.Delimiter)
+		p.writeString(e.Delimiter)
 
-		buf := &bytes.Buffer{}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if err := p.print(buf, c); err != nil {
-				return err
+		if x := searchFirstNonContainer(n.FirstChild); x != nil {
+			p.writeByte(' ')
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				if err := p.print(c); err != nil {
+					return err
+				}
 			}
 		}
-		if buf.Len() > 0 {
-			w.WriteString(" ")
-			if _, err := buf.WriteTo(w); err != nil {
-				return err
-			}
-		}
-
 	case node.TypeVerbatimWalled:
 		defer p.addPrefix(e.Delimiter)()
-		w.WriteString(e.Delimiter)
+		p.writeString(e.Delimiter)
 		lines := strings.Split(n.TextContent(), "\n")
 		for i, line := range lines {
 			if i > 0 {
-				p.newline(w)
-				p.writePrefix(w, withoutTrailingSpacing)
+				p.newline()
+				p.writePrefix(withoutTrailingSpacing)
 			}
-			w.WriteString(strings.TrimRight(line, " \t"))
+			p.writeString(strings.TrimRight(line, " \t"))
 		}
 	case node.TypeHanging:
 		defer p.addPrefix(" ")()
-		w.WriteString(e.Delimiter)
+		p.writeString(e.Delimiter)
 
-		buf := &bytes.Buffer{}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if err := p.print(buf, c); err != nil {
-				return err
+		if x := searchFirstNonContainer(n.FirstChild); x != nil {
+			p.writeByte(' ')
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				if err := p.print(c); err != nil {
+					return err
+				}
 			}
 		}
-		if buf.Len() > 0 {
-			w.WriteString(" ")
-			if _, err := buf.WriteTo(w); err != nil {
-				return err
-			}
-		}
-
 	case node.TypeRankedHanging:
 		var delimiter string
 		if v, ok := n.Data[parser.KeyRank]; ok {
@@ -160,27 +154,23 @@ func (p printer) print(w writer, n *node.Node) error {
 		prefix := strings.Repeat(" ", len(delimiter))
 		defer p.addPrefix(prefix)()
 
-		w.WriteString(delimiter)
+		p.writeString(delimiter)
 
-		buf := &bytes.Buffer{}
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if err := p.print(buf, c); err != nil {
-				return err
-			}
-		}
-		if buf.Len() > 0 {
-			w.WriteString(" ")
-			if _, err := buf.WriteTo(w); err != nil {
-				return err
+		if x := searchFirstNonContainer(n.FirstChild); x != nil {
+			p.writeByte(' ')
+			for c := n.FirstChild; c != nil; c = c.NextSibling {
+				if err := p.print(c); err != nil {
+					return err
+				}
 			}
 		}
 	case node.TypeFenced:
 		// opening delimiter
-		w.WriteString(e.Delimiter)
+		p.writeString(e.Delimiter)
 		text := n.TextContent()
 		needsEscape := fencedNeedsEscape(text, e.Delimiter)
 		if needsEscape {
-			w.WriteString(`\`)
+			p.writeByte('\\')
 		}
 
 		if v, ok := n.Data[parser.KeyOpeningText]; ok {
@@ -189,76 +179,76 @@ func (p printer) print(w writer, n *node.Node) error {
 			if !isString {
 				return fmt.Errorf("openingText is not string (%T %s)", n.Data[parser.KeyOpeningText], n)
 			}
-			w.WriteString(openingText)
+			p.writeString(openingText)
 		}
-		p.newline(w)
-		p.writePrefix(w, withTrailingSpacing)
+		p.newline()
+		p.writePrefix(withTrailingSpacing)
 
 		if text != "" {
 			lines := strings.Split(text, "\n")
 			for _, line := range lines {
-				w.WriteString(line)
-				p.newline(w)
-				p.writePrefix(w, withTrailingSpacing)
+				p.writeString(line)
+				p.newline()
+				p.writePrefix(withTrailingSpacing)
 			}
 		}
 
 		// closing delimiter
 		if needsEscape {
-			w.WriteString(`\`)
+			p.writeByte('\\')
 		}
-		w.WriteString(e.Delimiter)
+		p.writeString(e.Delimiter)
 
 	case node.TypeLeaf:
 		if p.needBlockEscape(n) {
-			w.WriteString(`\`)
+			p.writeByte('\\')
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if err := p.print(w, c); err != nil {
+			if err := p.print(c); err != nil {
 				return err
 			}
 		}
 	case node.TypeUniform:
-		w.WriteString(e.Delimiter + e.Delimiter)
+		p.writeString(e.Delimiter + e.Delimiter)
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			if err := p.print(w, c); err != nil {
+			if err := p.print(c); err != nil {
 				return err
 			}
 		}
 
 		if p.hasEscapeClashingElementAtEnd(n) {
 			// otherwise `**\` would return `**\**`
-			w.WriteByte(' ')
+			p.writeByte(' ')
 		}
 		counter := counterpartInString(e.Delimiter)
-		w.WriteString(counter + counter)
+		p.writeString(counter + counter)
 
 	case node.TypeEscaped:
 		text := n.TextContent()
 		needsEscape := strings.Contains(text, e.Delimiter)
-		w.WriteString(e.Delimiter + e.Delimiter)
+		p.writeString(e.Delimiter + e.Delimiter)
 		if needsEscape {
-			w.WriteString(`\`)
+			p.writeByte('\\')
 		}
 
-		w.WriteString(text)
+		p.writeString(text)
 
 		if p.hasEscapeClashingElementAtEnd(n) {
 			// otherwise `**\` would return `**\**`
-			w.WriteByte(' ')
+			p.writeByte(' ')
 		}
 		if needsEscape {
-			w.WriteString(`\`)
+			p.writeByte('\\')
 		}
 		counter := counterpartInString(e.Delimiter)
-		w.WriteString(counter + counter)
+		p.writeString(counter + counter)
 
 	case node.TypePrefixed:
-		w.WriteString(e.Delimiter)
-		w.WriteString(n.TextContent())
+		p.writeString(e.Delimiter)
+		p.writeString(n.TextContent())
 	case node.TypeText:
-		w.WriteString(p.text(w, n))
+		p.writeText(n)
 
 	default:
 		return fmt.Errorf("unexpected node type %v (%s)", n.Type, n)
@@ -285,9 +275,11 @@ func isInlineContainer(n *node.Node) bool {
 	return false
 }
 
-func (p *printer) newline(w writer) {
-	w.WriteString("\n")
+func (p *printer) newline() {
+	p.writeString("\n")
 	p.line++
+	p.textColumn = 0
+	p.screenColumn = 0
 }
 
 type prefixSpacing int
@@ -298,7 +290,7 @@ const (
 	withoutTrailingSpacing
 )
 
-func (p *printer) writePrefix(w writer, spacing prefixSpacing) {
+func (p *printer) writePrefix(spacing prefixSpacing) {
 	if p.lastPrefixLine == p.line {
 		return
 	}
@@ -318,7 +310,7 @@ func (p *printer) writePrefix(w writer, spacing prefixSpacing) {
 	default:
 		panic(fmt.Sprintf("printer: unexpected spacing state (%d)", spacing))
 	}
-	w.WriteString(prefix)
+	p.writeString(prefix)
 }
 
 func fencedNeedsEscape(s, delimiter string) bool {
@@ -398,49 +390,51 @@ func (p printer) hasInlineDelimiterPrefix(s string) bool {
 	return false
 }
 
-func (p printer) text(w writer, n *node.Node) string {
+func (p printer) writeText(n *node.Node) {
 	if n.Type != node.TypeText {
 		panic(fmt.Sprintf("printer: expected text node (%s)", n))
 	}
 
-	content := n.Value
-	if content == "" {
-		return ""
+	v := n.Value
+	if v == "" {
+		return
 	}
 
-	var b strings.Builder
-	for i := 0; i < len(content); i++ {
-		ch := content[i]
+	for i := 0; i < len(v); i++ {
+		ch := v[i]
 
 		if ch == '\n' {
-			p.newline(&b)
-			// i+1 must exist (so no need to bound check)
-			//
-			// must exist because parser doesn't leave newlines at
-			// the end of text
-			if p.needsBlockEscape(string(content[i+1:])) {
-				b.WriteByte('\\')
+			if p.lineLength <= 0 || p.lineLength > 0 && p.textColumn <= p.lineLength {
+				// undefined line length or a defined line
+				// length but the current newline is within the
+				// allowed length
+				p.newline()
+				// i+1 must exist (so no need to bound check)
+				//
+				// must exist because parser doesn't leave newlines at
+				// the end of text
+				if p.needsBlockEscape(string(v[i+1:])) {
+					p.writeByte('\\')
+				}
+				p.writePrefix(withTrailingSpacing)
 			}
-			p.writePrefix(&b, withTrailingSpacing)
 			continue
 		}
 
+		escape := false
 		// backslash escape checks
-		if ch == '\\' && i+1 < len(content) && content[i+1] == '\\' {
+		if ch == '\\' && i+1 < len(v) && v[i+1] == '\\' {
 			// A: consecutive backslashes
-
-			b.WriteByte('\\')
-		} else if ch == '\\' && i+1 < len(content) && isPunct(content[i+1]) {
+			escape = true
+		} else if ch == '\\' && i+1 < len(v) && isPunct(v[i+1]) {
 			// B: escape backslash so it doesn't escape the
 			// following punctuation
-
-			b.WriteByte('\\')
-		} else if ch == '\\' && i == len(content)-1 && n.NextSibling != nil {
+			escape = true
+		} else if ch == '\\' && i == len(v)-1 && n.NextSibling != nil {
 			// C: escape backslash so it doesn't escape the
 			// following non-emtpy inline element
-
-			b.WriteByte('\\')
-		} else if ch == '\\' && i+1 < len(content) && p.hasInlineDelimiterPrefix(content[i+1:]) {
+			escape = true
+		} else if ch == '\\' && i+1 < len(v) && p.hasInlineDelimiterPrefix(v[i+1:]) {
 			// D: escape backslash so it doesn't escape the
 			// following inline delimiter
 			//
@@ -448,13 +442,11 @@ func (p printer) text(w writer, n *node.Node) string {
 			// caught by escape-B; as such don't need to check
 			// the closing delimiters as non-punctuation can only be
 			// prefixed elements
-
-			b.WriteByte('\\')
-		} else if p.hasInlineDelimiterPrefix(content[i:]) || p.hasClosingDelimiterPrefix(n, content[i:]) {
+			escape = true
+		} else if p.hasInlineDelimiterPrefix(v[i:]) || p.hasClosingDelimiterPrefix(n, v[i:]) {
 			// E: escape inline delimiter
-
-			b.WriteByte('\\')
-		} else if i == len(content)-1 && n.NextSibling != nil {
+			escape = true
+		} else if i == len(v)-1 && n.NextSibling != nil {
 			// F: last character and the following non-empty
 			// element's delimiter's first character may form an
 			// inline delimiter
@@ -463,40 +455,61 @@ func (p printer) text(w writer, n *node.Node) string {
 				e, _ := p.elements[x.Element]
 				if e.Delimiter != "" && ch == e.Delimiter[0] {
 					// escape inline delimiter
-					b.WriteByte('\\')
+					escape = true
 				}
 			}
-
 		}
 
-		b.WriteByte(ch)
+		escape2 := false // whether a second escape is needed
+		if i == len(v)-1 {
+			// last character
+			if parent := searchFirstNonContainerParent(n.Parent); parent != nil &&
+				(parent.Type == node.TypeUniform || parent.Type == node.TypeEscaped) {
+				// consider parent closing delimiter
+
+				e, _ := p.elements[parent.Element]
+				counter := counterpartInString(e.Delimiter)
+				closingDelimiter := counter + counter
+				if parent.Type == node.TypeEscaped && strings.Contains(parent.Value, e.Delimiter+e.Delimiter) {
+					closingDelimiter = `\` + closingDelimiter
+				}
+
+				if !escape && ch == '\\' || closingDelimiter != "" &&
+					(escape && closingDelimiter[0] == '\\' || !escape && closingDelimiter[0] == ch) {
+					// unescaped '\' or a closing delimiter character at end of text
+					escape2 = true
+				}
+			}
+		}
+
+		if p.lineLength > 0 {
+			// defined line length
+			ll := p.textColumn + 1 // would be current line length after this iteration
+			if escape {
+				ll++
+			}
+			if escape2 {
+				ll++
+			}
+
+			if ll > p.lineLength {
+				p.newline()
+				// i+1 must exist: look above
+				if p.needsBlockEscape(string(v[i+1:])) {
+					p.writeByte('\\')
+				}
+				p.writePrefix(withTrailingSpacing)
+			}
+		}
+
+		if escape {
+			p.writeByte('\\')
+		}
+		if escape2 {
+			p.writeByte('\\')
+		}
+		p.writeByte(ch)
 	}
-
-	text := b.String()
-	if parent := searchFirstNonContainerParent(n.Parent); parent != nil &&
-		(parent.Type == node.TypeUniform || parent.Type == node.TypeEscaped) {
-		// consider parent closing delimiter
-
-		e, _ := p.elements[parent.Element]
-		counter := counterpartInString(e.Delimiter)
-		closingDelimiter := counter + counter
-		if parent.Type == node.TypeEscaped && strings.Contains(parent.Value, e.Delimiter+e.Delimiter) {
-			closingDelimiter = `\` + closingDelimiter
-		}
-
-		if len(text) == 1 && text[0] == '\\' ||
-			len(text) > 1 && text[len(text)-2] != '\\' && text[len(text)-1] == '\\' {
-			// unescaped "\" at the end of text
-
-			text += `\`
-		} else if len(text) > 0 && closingDelimiter != "" && text[len(text)-1] == closingDelimiter[0] {
-			// closing delimiter character at end of text
-
-			text = text[:len(text)-1] + `\` + text[len(text)-1:]
-		}
-	}
-
-	return text
 }
 
 func searchFirstNonContainerParent(n *node.Node) *node.Node {
@@ -574,6 +587,29 @@ func (p *printer) addPrefix(s string) func() {
 	p.prefixes = append(p.prefixes, s)
 	return func() {
 		p.prefixes = p.prefixes[:size]
+	}
+}
+
+func (p *printer) writeString(s string) {
+	p.w.WriteString(s)
+	p.textColumn += len(s)
+	n := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == '\t' {
+			// -1 because rune count already counts tabs as 1
+			n += tabWidth - 1
+		}
+	}
+	p.screenColumn = utf8.RuneCountInString(s) + n
+}
+
+func (p *printer) writeByte(b byte) {
+	p.w.WriteByte(b)
+	p.textColumn++
+	if b == '\t' {
+		p.screenColumn += tabWidth
+	} else {
+		p.screenColumn++
 	}
 }
 

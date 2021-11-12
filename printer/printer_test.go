@@ -58,7 +58,7 @@ func TestText(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
+			test(t, elements, nil, c.in, c.out, 0)
 		})
 	}
 }
@@ -95,7 +95,7 @@ func TestVerbatimLine(t *testing.T) {
 	for _, c := range cases {
 		name := c.in
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
+			test(t, elements, nil, c.in, c.out, 0)
 		})
 	}
 }
@@ -140,7 +140,7 @@ func TestHanging(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
+			test(t, elements, nil, c.in, c.out, 0)
 		})
 	}
 }
@@ -187,7 +187,7 @@ func TestRankedHanging(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
+			test(t, elements, nil, c.in, c.out, 0)
 		})
 	}
 }
@@ -232,7 +232,7 @@ func TestWalled(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
+			test(t, elements, nil, c.in, c.out, 0)
 		})
 	}
 }
@@ -278,7 +278,7 @@ func TestVerbatimWalled(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
+			test(t, elements, nil, c.in, c.out, 0)
 		})
 	}
 }
@@ -335,7 +335,7 @@ func TestFenced(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
+			test(t, elements, nil, c.in, c.out, 0)
 		})
 	}
 }
@@ -373,7 +373,7 @@ func TestGroup(t *testing.T) {
 		for _, c := range cases {
 			name := fmt.Sprintf("%q", c.in)
 			t.Run(name, func(t *testing.T) {
-				test(t, elements, transformers, c.in, c.out)
+				test(t, elements, transformers, c.in, c.out, 0)
 			})
 		}
 	})
@@ -423,7 +423,7 @@ func TestGroup(t *testing.T) {
 		for _, c := range cases {
 			name := fmt.Sprintf("%q", c.in)
 			t.Run(name, func(t *testing.T) {
-				test(t, elements, transformers, c.in, c.out)
+				test(t, elements, transformers, c.in, c.out, 0)
 			})
 		}
 	})
@@ -480,7 +480,7 @@ func TestGroup(t *testing.T) {
 		for _, c := range cases {
 			name := fmt.Sprintf("%q", c.in)
 			t.Run(name, func(t *testing.T) {
-				test(t, elements, transformers, c.in, c.out)
+				test(t, elements, transformers, c.in, c.out, 0)
 			})
 		}
 	})
@@ -525,7 +525,7 @@ func TestGroup(t *testing.T) {
 		for _, c := range cases {
 			name := fmt.Sprintf("%q", c.in)
 			t.Run(name, func(t *testing.T) {
-				test(t, elements, transformers, c.in, c.out)
+				test(t, elements, transformers, c.in, c.out, 0)
 			})
 		}
 	})
@@ -578,7 +578,7 @@ func TestUniform(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
+			test(t, elements, nil, c.in, c.out, 0)
 		})
 	}
 }
@@ -640,7 +640,7 @@ func TestEscaped(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
+			test(t, elements, nil, c.in, c.out, 0)
 		})
 	}
 }
@@ -664,7 +664,7 @@ func TestPrefixed(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
+			test(t, elements, nil, c.in, c.out, 0)
 		})
 	}
 
@@ -687,7 +687,7 @@ func TestPrefixed(t *testing.T) {
 		for _, c := range cases {
 			name := fmt.Sprintf("%q", c.in)
 			t.Run(name, func(t *testing.T) {
-				test(t, elements, nil, c.in, c.out)
+				test(t, elements, nil, c.in, c.out, 0)
 			})
 		}
 	})
@@ -712,7 +712,7 @@ func TestPrefixed(t *testing.T) {
 		for _, c := range cases {
 			name := fmt.Sprintf("%q", c.in)
 			t.Run(name, func(t *testing.T) {
-				test(t, elements, nil, c.in, c.out)
+				test(t, elements, nil, c.in, c.out, 0)
 			})
 		}
 	})
@@ -866,7 +866,7 @@ func TestEscape(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", strings.ReplaceAll(c.in, "/", "2F")) // %2F is URL-escaped slash
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
+			test(t, elements, nil, c.in, c.out, 0)
 		})
 	}
 }
@@ -1028,19 +1028,78 @@ func TestEscapeWithClash(t *testing.T) {
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", strings.ReplaceAll(c.in, "/", "2F")) // %2F is URL-escaped slash
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out)
+			test(t, elements, nil, c.in, c.out, 0)
 		})
 	}
 }
 
-func test(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in, out string) {
+func TestLineLength(t *testing.T) {
+	cases := []struct {
+		in  string
+		out string
+	}{
+		{"abcdefgh", "abcdefgh"},
+		{"abcdefgha", "abcdefgh\na"},
+		{"abcd\nefgh", "abcd\nefgh"},
+		{"*abcdefgh", "* abcdef\n  gh"},
+		{"*\n abcdefgh", "* abcdef\n  gh"},
+		{">abcdefgh", "> abcdef\n> gh"},
+
+		// verbatim - shouldn't wrap
+		{".abcdefgh", ".abcdefgh"},
+		{"!abcdefgh", "!abcdefgh"},
+		{"`abcdefgh", "`abcdefgh\n`"},
+		{"`\nabcdefgh", "`\nabcdefgh\n`"},
+
+		// nested verbatim
+		{">.abcdefgh", "> .abcdefgh"},
+		{">!abcdefgh", "> !abcdefgh"},
+		{">`abcdefgh", "> `abcdefgh\n> `"},
+		{">`\n>abcdefgh", "> `\n> abcdefgh\n> `"},
+	}
+
+	elements := config.Elements{
+		"A": {
+			Type:      node.TypeHanging.String(),
+			Delimiter: "*",
+		},
+		"B": {
+			Type:      node.TypeWalled.String(),
+			Delimiter: ">",
+		},
+		"C": {
+			Type:      node.TypeVerbatimLine.String(),
+			Delimiter: ".",
+		},
+		"D": {
+			Type:      node.TypeVerbatimWalled.String(),
+			Delimiter: "!",
+		},
+		"E": {
+			Type:      node.TypeFenced.String(),
+			Delimiter: "`",
+		},
+		"MA": {
+			Type:      node.TypeUniform.String(),
+			Delimiter: "_",
+		},
+	}
+	for _, c := range cases {
+		name := fmt.Sprintf("%q", c.in)
+		t.Run(name, func(t *testing.T) {
+			test(t, elements, nil, c.in, c.out, 8)
+		})
+	}
+}
+
+func test(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in, out string, lineLength int) {
 	t.Helper()
 
 	if elements == nil {
 		elements = config.Elements{}
 	}
 
-	printed := runPrint(t, elements, transformers, in, *printTree)
+	printed := runPrint(t, elements, transformers, in, *printTree, lineLength)
 	if printed != out {
 		t.Errorf("got %q, want %q", printed, out)
 	}
@@ -1053,7 +1112,7 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 				break
 			}
 
-			reprinted := runPrint(t, elements, transformers, previousPrint, *printTree)
+			reprinted := runPrint(t, elements, transformers, previousPrint, *printTree, lineLength)
 			if reprinted == previousPrint {
 				break
 			}
@@ -1085,7 +1144,7 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 					Type: node.TypeText.String(),
 				}
 			}
-			printedDefined := runPrint(t, elements, transformers, in, false)
+			printedDefined := runPrint(t, elements, transformers, in, false, lineLength)
 			if printedDefined != printed {
 				t.Errorf("with defined text got %q, with undefined %q", printedDefined, printed)
 			}
@@ -1093,7 +1152,7 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 	}
 }
 
-func runPrint(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in string, printTree bool) string {
+func runPrint(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in string, printTree bool, lineLength int) string {
 	t.Helper()
 
 	r := strings.NewReader(in)
@@ -1112,7 +1171,7 @@ func runPrint(t *testing.T, elements config.Elements, transformers []transformer
 	}
 
 	var b strings.Builder
-	if err := (printer.Printer{Elements: elements.PrinterElements()}).Fprint(&b, root); err != nil {
+	if err := (printer.Printer{Elements: elements.PrinterElements(), LineLength: lineLength}).Fprint(&b, root); err != nil {
 		t.Fatal(err)
 	}
 	return b.String()
