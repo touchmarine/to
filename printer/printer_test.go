@@ -39,6 +39,8 @@ func TestText(t *testing.T) {
 		{"ab\n c", "ab\nc"},
 		{"ab\n\n c", "ab\n\nc"},
 
+		{"a **", "a ****"},
+
 		// interrupted by empty blocks
 		{"a\n>\n*\nb", "a\n\n>\n\n*\n\nb"},
 		{"a\n>b\n*\nc", "a\n\n> b\n\n*\n\nc"},
@@ -52,6 +54,10 @@ func TestText(t *testing.T) {
 		},
 		"B": {
 			Type:      node.TypeWalled.String(),
+			Delimiter: "*",
+		},
+		"MA": {
+			Type:      node.TypeUniform.String(),
 			Delimiter: "*",
 		},
 	}
@@ -1039,11 +1045,34 @@ func TestLineLength(t *testing.T) {
 		out string
 	}{
 		{"abcdefgh", "abcdefgh"},
-		{"abcdefgha", "abcdefgh\na"},
+		{"abcdefgha", "abcdefgha"},
+		{"*abcdefgh", "* abcdefgh"},
+		{"*\n abcdefgh", "* abcdefgh"},
+		{">abcdefgh", "> abcdefgh"},
+
+		// newline in the valid line length range
 		{"abcd\nefgh", "abcd\nefgh"},
-		{"*abcdefgh", "* abcdef\n  gh"},
-		{"*\n abcdefgh", "* abcdef\n  gh"},
-		{">abcdefgh", "> abcdef\n> gh"},
+
+		// multiple words
+		{"abcdef g", "abcdef g"},
+		{"abcdef gh", "abcdef\ngh"},
+		{"abcd e f", "abcd e f"},
+		{"abcd e fg", "abcd e\nfg"},
+		{"ab c d e", "ab c d e"},
+		{"abc d e f", "abc d e\nf"},
+		{"a b c d e", "a b c d\ne"},
+
+		{"abcdefgh a", "abcdefgh\na"},
+		{"abcdefgha b", "abcdefgha\nb"},
+		{"abcdefgh\nabcdefgha b", "abcdefgh\nabcdefgha\nb"},
+		{"abcd efgh abcd\nabcd efgh abcd", "abcd\nefgh\nabcd\nabcd\nefgh\nabcd"},
+		{"abcdef\na", "abcdef a"},
+		{"abcdef\na\nb", "abcdef a\nb"},
+
+		{"*abcd e", "* abcd e"},
+		{"*abcde f", "* abcde\n  f"},
+		{"*\n abcde f", "* abcde\n  f"},
+		{">abcde f", "> abcde\n> f"},
 
 		// verbatim - shouldn't wrap
 		{".abcdefgh", ".abcdefgh"},
@@ -1056,6 +1085,15 @@ func TestLineLength(t *testing.T) {
 		{">!abcdefgh", "> !abcdefgh"},
 		{">`abcdefgh", "> `abcdefgh\n> `"},
 		{">`\n>abcdefgh", "> `\n> abcdefgh\n> `"},
+
+		// with inlines
+		{"a __b__ c", "a __b__\nc"},
+
+		// escape
+		{"abcdefgh >a", "abcdefgh\n\\>a"},
+		{"abcdefgh >a b", "abcdefgh\n\\>a b"},
+		{">abcdef >a", "> abcdef\n> \\>a"},
+		{">abcdef >a b", "> abcdef\n> \\>a b"},
 	}
 
 	elements := config.Elements{

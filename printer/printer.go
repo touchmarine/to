@@ -40,12 +40,12 @@ func (p Printer) Fprint(w io.Writer, n *node.Node) error {
 		lineLength: p.LineLength,
 	}
 	if x, ok := w.(writer); ok {
-		pp.w = x
+		pp.w = &printerWriter{w: x}
 		return pp.print(n)
 	}
 
 	buf := bufio.NewWriter(w)
-	pp.w = buf
+	pp.w = &printerWriter{w: buf}
 	if err := pp.print(n); err != nil {
 		return err
 	}
@@ -53,15 +53,13 @@ func (p Printer) Fprint(w io.Writer, n *node.Node) error {
 }
 
 type printer struct {
-	w          writer
+	w          *printerWriter
 	elements   Elements
 	lineLength int
 
 	prefixes       []string // opened block prefixes
 	lastPrefixLine int      // last line on which a prefix was written
 	line           int      // current line
-	textColumn     int      // byte number (zero-based)
-	screenColumn   int      // utf8 number (zero-based, tab=tabWidth)
 }
 
 // print prints the node in its canonical form.
@@ -99,16 +97,16 @@ func (p printer) print(n *node.Node) error {
 			}
 		}
 	case node.TypeVerbatimLine:
-		p.writeString(e.Delimiter)
+		p.w.WriteString(e.Delimiter)
 		if t := n.TextContent(); t != "" {
-			p.writeString(strings.TrimRight(t, " \t"))
+			p.w.WriteString(strings.TrimRight(t, " \t"))
 		}
 	case node.TypeWalled:
 		defer p.addPrefix(e.Delimiter)()
-		p.writeString(e.Delimiter)
+		p.w.WriteString(e.Delimiter)
 
 		if x := searchFirstNonContainer(n.FirstChild); x != nil {
-			p.writeByte(' ')
+			p.w.WriteByte(' ')
 			for c := n.FirstChild; c != nil; c = c.NextSibling {
 				if err := p.print(c); err != nil {
 					return err
@@ -117,21 +115,21 @@ func (p printer) print(n *node.Node) error {
 		}
 	case node.TypeVerbatimWalled:
 		defer p.addPrefix(e.Delimiter)()
-		p.writeString(e.Delimiter)
+		p.w.WriteString(e.Delimiter)
 		lines := strings.Split(n.TextContent(), "\n")
 		for i, line := range lines {
 			if i > 0 {
 				p.newline()
 				p.writePrefix(withoutTrailingSpacing)
 			}
-			p.writeString(strings.TrimRight(line, " \t"))
+			p.w.WriteString(strings.TrimRight(line, " \t"))
 		}
 	case node.TypeHanging:
 		defer p.addPrefix(" ")()
-		p.writeString(e.Delimiter)
+		p.w.WriteString(e.Delimiter)
 
 		if x := searchFirstNonContainer(n.FirstChild); x != nil {
-			p.writeByte(' ')
+			p.w.WriteByte(' ')
 			for c := n.FirstChild; c != nil; c = c.NextSibling {
 				if err := p.print(c); err != nil {
 					return err
@@ -154,10 +152,10 @@ func (p printer) print(n *node.Node) error {
 		prefix := strings.Repeat(" ", len(delimiter))
 		defer p.addPrefix(prefix)()
 
-		p.writeString(delimiter)
+		p.w.WriteString(delimiter)
 
 		if x := searchFirstNonContainer(n.FirstChild); x != nil {
-			p.writeByte(' ')
+			p.w.WriteByte(' ')
 			for c := n.FirstChild; c != nil; c = c.NextSibling {
 				if err := p.print(c); err != nil {
 					return err
@@ -166,11 +164,11 @@ func (p printer) print(n *node.Node) error {
 		}
 	case node.TypeFenced:
 		// opening delimiter
-		p.writeString(e.Delimiter)
+		p.w.WriteString(e.Delimiter)
 		text := n.TextContent()
 		needsEscape := fencedNeedsEscape(text, e.Delimiter)
 		if needsEscape {
-			p.writeByte('\\')
+			p.w.WriteByte('\\')
 		}
 
 		if v, ok := n.Data[parser.KeyOpeningText]; ok {
@@ -179,7 +177,7 @@ func (p printer) print(n *node.Node) error {
 			if !isString {
 				return fmt.Errorf("openingText is not string (%T %s)", n.Data[parser.KeyOpeningText], n)
 			}
-			p.writeString(openingText)
+			p.w.WriteString(openingText)
 		}
 		p.newline()
 		p.writePrefix(withTrailingSpacing)
@@ -187,7 +185,7 @@ func (p printer) print(n *node.Node) error {
 		if text != "" {
 			lines := strings.Split(text, "\n")
 			for _, line := range lines {
-				p.writeString(line)
+				p.w.WriteString(line)
 				p.newline()
 				p.writePrefix(withTrailingSpacing)
 			}
@@ -195,13 +193,13 @@ func (p printer) print(n *node.Node) error {
 
 		// closing delimiter
 		if needsEscape {
-			p.writeByte('\\')
+			p.w.WriteByte('\\')
 		}
-		p.writeString(e.Delimiter)
+		p.w.WriteString(e.Delimiter)
 
 	case node.TypeLeaf:
 		if p.needBlockEscape(n) {
-			p.writeByte('\\')
+			p.w.WriteByte('\\')
 		}
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if err := p.print(c); err != nil {
@@ -209,7 +207,7 @@ func (p printer) print(n *node.Node) error {
 			}
 		}
 	case node.TypeUniform:
-		p.writeString(e.Delimiter + e.Delimiter)
+		p.w.WriteString(e.Delimiter + e.Delimiter)
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			if err := p.print(c); err != nil {
@@ -219,34 +217,34 @@ func (p printer) print(n *node.Node) error {
 
 		if p.hasEscapeClashingElementAtEnd(n) {
 			// otherwise `**\` would return `**\**`
-			p.writeByte(' ')
+			p.w.WriteByte(' ')
 		}
 		counter := counterpartInString(e.Delimiter)
-		p.writeString(counter + counter)
+		p.w.WriteString(counter + counter)
 
 	case node.TypeEscaped:
 		text := n.TextContent()
 		needsEscape := strings.Contains(text, e.Delimiter)
-		p.writeString(e.Delimiter + e.Delimiter)
+		p.w.WriteString(e.Delimiter + e.Delimiter)
 		if needsEscape {
-			p.writeByte('\\')
+			p.w.WriteByte('\\')
 		}
 
-		p.writeString(text)
+		p.w.WriteString(text)
 
 		if p.hasEscapeClashingElementAtEnd(n) {
 			// otherwise `**\` would return `**\**`
-			p.writeByte(' ')
+			p.w.WriteByte(' ')
 		}
 		if needsEscape {
-			p.writeByte('\\')
+			p.w.WriteByte('\\')
 		}
 		counter := counterpartInString(e.Delimiter)
-		p.writeString(counter + counter)
+		p.w.WriteString(counter + counter)
 
 	case node.TypePrefixed:
-		p.writeString(e.Delimiter)
-		p.writeString(n.TextContent())
+		p.w.WriteString(e.Delimiter)
+		p.w.WriteString(n.TextContent())
 	case node.TypeText:
 		p.writeText(n)
 
@@ -276,10 +274,10 @@ func isInlineContainer(n *node.Node) bool {
 }
 
 func (p *printer) newline() {
-	p.writeString("\n")
+	p.w.WriteString("\n")
 	p.line++
-	p.textColumn = 0
-	p.screenColumn = 0
+	p.w.textColumn = 0
+	p.w.screenColumn = 0
 }
 
 type prefixSpacing int
@@ -310,7 +308,7 @@ func (p *printer) writePrefix(spacing prefixSpacing) {
 	default:
 		panic(fmt.Sprintf("printer: unexpected spacing state (%d)", spacing))
 	}
-	p.writeString(prefix)
+	p.w.WriteString(prefix)
 }
 
 func fencedNeedsEscape(s, delimiter string) bool {
@@ -400,24 +398,61 @@ func (p printer) writeText(n *node.Node) {
 		return
 	}
 
+	buf := bufio.NewWriter(p.w)
+	var bp byte // last breakpoint character (0|' '|'\n')
+
+	// handleLineLength breaks the line if it determines that adding the
+	// last word (+ a space if not a single line) would result in the
+	// current line being over the given line length.
+	//
+	// Words are never split (a word that is longer than the line length
+	// will not be split and will stay as is).
+	handleLineLength := func(i int) {
+		bb := buf.Buffered() // last word
+		if bp > 0 {
+			bb += 1
+		}
+		ll := p.w.textColumn + bb
+		if ll > p.lineLength && bp > 0 {
+			// bp > 0 so we don't put a newline before the start
+			p.newline()
+			p.writePrefix(withTrailingSpacing)
+			if p.needsBlockEscape(string(v[i-buf.Buffered():])) {
+				// escape the content that will be flushed below
+				p.w.WriteByte('\\')
+			}
+		} else if bp > 0 {
+			p.w.WriteByte(' ') // flush previous space
+		}
+	}
+
 	for i := 0; i < len(v); i++ {
 		ch := v[i]
 
-		if ch == '\n' {
-			if p.lineLength <= 0 || p.lineLength > 0 && p.textColumn <= p.lineLength {
-				// undefined line length or a defined line
-				// length but the current newline is within the
-				// allowed length
-				p.newline()
-				// i+1 must exist (so no need to bound check)
-				//
-				// must exist because parser doesn't leave newlines at
-				// the end of text
-				if p.needsBlockEscape(string(v[i+1:])) {
-					p.writeByte('\\')
-				}
-				p.writePrefix(withTrailingSpacing)
+		if p.lineLength <= 0 && ch == '\n' {
+			// undefined line length
+			if bp == ' ' { // should only ever be 0 or ' ' as we catch '\n' here if undefined line length
+				p.w.WriteByte(bp)
 			}
+			buf.Flush()
+			p.newline()
+			// i+1 must exist (so no need to bound check)
+			//
+			// must exist because parser doesn't leave newlines at
+			// the end of text
+			if p.needsBlockEscape(string(v[i+1:])) {
+				p.w.WriteByte('\\')
+			}
+			p.writePrefix(withTrailingSpacing)
+			continue
+		}
+		if ch == ' ' || ch == '\n' {
+			if p.lineLength > 0 {
+				// defined line length
+				handleLineLength(i)
+			}
+			buf.Flush()
+			bp = ch
 			continue
 		}
 
@@ -482,34 +517,19 @@ func (p printer) writeText(n *node.Node) {
 			}
 		}
 
-		if p.lineLength > 0 {
-			// defined line length
-			ll := p.textColumn + 1 // would be current line length after this iteration
-			if escape {
-				ll++
-			}
-			if escape2 {
-				ll++
-			}
-
-			if ll > p.lineLength {
-				p.newline()
-				// i+1 must exist: look above
-				if p.needsBlockEscape(string(v[i+1:])) {
-					p.writeByte('\\')
-				}
-				p.writePrefix(withTrailingSpacing)
-			}
-		}
-
 		if escape {
-			p.writeByte('\\')
+			buf.WriteByte('\\')
 		}
 		if escape2 {
-			p.writeByte('\\')
+			buf.WriteByte('\\')
 		}
-		p.writeByte(ch)
+		buf.WriteByte(ch)
 	}
+	if p.lineLength > 0 {
+		// defined line length
+		handleLineLength(len(v))
+	}
+	buf.Flush()
 }
 
 func searchFirstNonContainerParent(n *node.Node) *node.Node {
@@ -590,27 +610,57 @@ func (p *printer) addPrefix(s string) func() {
 	}
 }
 
-func (p *printer) writeString(s string) {
-	p.w.WriteString(s)
-	p.textColumn += len(s)
-	n := 0
+type printerWriter struct {
+	w            writer
+	textColumn   int // byte number (zero-based)
+	screenColumn int // utf8 number (zero-based, tab=tabWidth)
+}
+
+func (w *printerWriter) Write(p []byte) (int, error) {
+	n, err := w.w.Write(p)
+	if err != nil {
+		return n, err
+	}
+	w.textColumn += len(p)
+	t := 0
+	for i := 0; i < len(p); i++ {
+		if p[i] == '\t' {
+			// -1 because rune count already counts tabs as 1
+			t += tabWidth - 1
+		}
+	}
+	w.screenColumn = utf8.RuneCount(p) + t
+	return n, nil
+}
+
+func (w *printerWriter) WriteString(s string) (int, error) {
+	n, err := w.w.WriteString(s)
+	if err != nil {
+		return n, err
+	}
+	w.textColumn += len(s)
+	t := 0
 	for i := 0; i < len(s); i++ {
 		if s[i] == '\t' {
 			// -1 because rune count already counts tabs as 1
-			n += tabWidth - 1
+			t += tabWidth - 1
 		}
 	}
-	p.screenColumn = utf8.RuneCountInString(s) + n
+	w.screenColumn = utf8.RuneCountInString(s) + t
+	return n, nil
 }
 
-func (p *printer) writeByte(b byte) {
-	p.w.WriteByte(b)
-	p.textColumn++
-	if b == '\t' {
-		p.screenColumn += tabWidth
-	} else {
-		p.screenColumn++
+func (w *printerWriter) WriteByte(b byte) error {
+	if err := w.w.WriteByte(b); err != nil {
+		return err
 	}
+	w.textColumn++
+	if b == '\t' {
+		w.screenColumn += tabWidth
+	} else {
+		w.screenColumn++
+	}
+	return nil
 }
 
 func counterpartInString(s string) string {
