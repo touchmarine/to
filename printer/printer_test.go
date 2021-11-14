@@ -33,6 +33,7 @@ func TestText(t *testing.T) {
 		{"\na", "a"},
 
 		{"ab", "ab"},
+		{"a b", "a b"},
 		{"a\nb", "a\nb"},
 		{"a\n b", "a\nb"},
 		{"a\n\n b", "a\n\nb"},
@@ -1088,6 +1089,13 @@ func TestLineLength(t *testing.T) {
 
 		// with inlines
 		{"a __b__ c", "a __b__\nc"},
+		{"abc__d__", "abc __d__"},
+		{"abc__defg__", "abc __\ndefg__"},
+
+		//{"``ab c", "``ab c``"},
+		//{"``abc d", "``abc\nd``"},
+		//{"``abcdef g", "``abcdef\ng``"},
+		//{"abcdef``a", "abcdef``\na``"},
 
 		// escape
 		{"abcdefgh >a", "abcdefgh\n\\>a"},
@@ -1120,6 +1128,10 @@ func TestLineLength(t *testing.T) {
 		"MA": {
 			Type:      node.TypeUniform.String(),
 			Delimiter: "_",
+		},
+		"MB": {
+			Type:      node.TypeEscaped.String(),
+			Delimiter: "`",
 		},
 	}
 	for _, c := range cases {
