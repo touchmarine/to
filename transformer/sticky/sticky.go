@@ -45,7 +45,7 @@ func (t Transformer) transform(n *node.Node) []func() {
 				x = s.NextSibling
 			}
 			if x != nil {
-				if _, ok := t.Stickies[x.Element]; !ok && (sticky.Target == "" || sticky.Target != "" && sticky.Target == x.Element) {
+				if _, ok := t.Stickies[x.Element]; (!ok || ok && x.Element != s.Element) && (sticky.Target == "" || sticky.Target != "" && sticky.Target == x.Element) {
 					ops = append(ops, makeDo(sticky, s, x))
 				}
 			}

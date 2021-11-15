@@ -73,7 +73,7 @@ func (p printer) print(n *node.Node) error {
 
 	if n.IsBlock() || (n.Type == node.TypeContainer && !isInlineContainer(n)) {
 		if n.PreviousSibling != nil {
-			if n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element != "" {
+			if n.Parent != nil && isGroup(n.Parent) {
 				// is in a group like list or sticky
 				p.newline()
 			} else {
@@ -207,20 +207,15 @@ func (p printer) print(n *node.Node) error {
 			}
 		}
 	case node.TypeUniform:
-		// TODO: all non-wrappable (escaped, prefixed, inline stickies)
-		//       break only if whole exceeds the line length not just
-		//       the delimiter
-		if n.PreviousSibling != nil && (n.Parent == nil || n.Parent != nil && n.Parent.Type != node.TypeContainer || n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element == "") {
-			// not in group like sticky
-			atStart := p.w.textColumn == len(p.prefixes)*2
-			if p.lineLength > 0 && p.w.textColumn+3 > p.lineLength { // +2 is for delimiter, +1 for space
+		hasPrev := hasPreviousSibling(n)
+		if hasPrev {
+			if p.lineLength > 0 && p.w.textColumn+3 > p.lineLength { // +2 is for delimiter, +1 for space that would be added
 				p.newline()
 				p.writePrefix(withTrailingSpacing)
-			} else if !atStart {
+			} else if !p.atStart() {
 				p.w.WriteByte(' ')
 			}
 		}
-
 		p.w.WriteString(e.Delimiter + e.Delimiter)
 
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
@@ -229,7 +224,16 @@ func (p printer) print(n *node.Node) error {
 			}
 		}
 
-		if p.hasEscapeClashingElementAtEnd(n) {
+		escapeClashing := p.hasEscapeClashingElementAtEnd(n)
+		dd := 2 // closing sequence (delimiter+optional space) length
+		if escapeClashing {
+			dd++
+		}
+		if p.lineLength > 0 && hasPrev && p.w.textColumn+dd > p.lineLength {
+			p.newline()
+			p.writePrefix(withTrailingSpacing)
+		}
+		if escapeClashing {
 			// otherwise `**\` would return `**\**`
 			p.w.WriteByte(' ')
 		}
@@ -239,18 +243,17 @@ func (p printer) print(n *node.Node) error {
 	case node.TypeEscaped:
 		text := n.TextContent()
 		needsEscape := strings.Contains(text, e.Delimiter)
-		dd := 2
-		if needsEscape {
-			dd++
-		}
 
-		if n.PreviousSibling != nil && (n.Parent == nil || n.Parent != nil && n.Parent.Type != node.TypeContainer || n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element == "") {
+		ll := p.w.textColumn + len(text) + 4 + 1 // +4 is for delimiters, +1 for space that would be added
+		if needsEscape {
+			ll += 2 // for opening and closing delimiter
+		}
+		if hasPreviousSibling(n) {
 			// not in group like sticky
-			atStart := p.w.textColumn == len(p.prefixes)*2
-			if p.lineLength > 0 && p.w.textColumn+dd+1 > p.lineLength { // +1 is for space
+			if p.lineLength > 0 && ll > p.lineLength {
 				p.newline()
 				p.writePrefix(withTrailingSpacing)
-			} else if !atStart {
+			} else if !p.atStart() {
 				p.w.WriteByte(' ')
 			}
 		}
@@ -259,13 +262,7 @@ func (p printer) print(n *node.Node) error {
 		if needsEscape {
 			p.w.WriteByte('\\')
 		}
-
 		p.w.WriteString(text)
-
-		if p.hasEscapeClashingElementAtEnd(n) {
-			// otherwise `**\` would return `**\**`
-			p.w.WriteByte(' ')
-		}
 		if needsEscape {
 			p.w.WriteByte('\\')
 		}
@@ -273,19 +270,19 @@ func (p printer) print(n *node.Node) error {
 		p.w.WriteString(counter + counter)
 
 	case node.TypePrefixed:
-		if n.PreviousSibling != nil && (n.Parent == nil || n.Parent != nil && n.Parent.Type != node.TypeContainer || n.Parent != nil && n.Parent.Type == node.TypeContainer && n.Parent.Element == "") {
+		t := n.TextContent()
+		if hasPreviousSibling(n) {
 			// not in group like sticky
-			atStart := p.w.textColumn == len(p.prefixes)*2
-			if p.lineLength > 0 && p.w.textColumn+len(e.Delimiter)+1 > p.lineLength { // +1 is for space
+			ll := p.w.textColumn + len(e.Delimiter) + len(t) + 1 // +1 is for space that would be added
+			if p.lineLength > 0 && ll > p.lineLength {
 				p.newline()
 				p.writePrefix(withTrailingSpacing)
-			} else if !atStart {
+			} else if !p.atStart() {
 				p.w.WriteByte(' ')
 			}
 		}
-
 		p.w.WriteString(e.Delimiter)
-		p.w.WriteString(n.TextContent())
+		p.w.WriteString(t)
 	case node.TypeText:
 		p.writeText(n)
 
@@ -312,6 +309,23 @@ func isInlineContainer(n *node.Node) bool {
 		return true
 	}
 	return false
+}
+
+func hasPreviousSibling(n *node.Node) bool {
+	if n.PreviousSibling != nil {
+		if n.Parent != nil {
+			return !isGroup(n.Parent)
+		} else {
+			return true
+		}
+	} else if n.Parent != nil && isGroup(n.Parent) {
+		return n == n.Parent.FirstChild
+	}
+	return false
+}
+
+func isGroup(n *node.Node) bool {
+	return n.Type == node.TypeContainer && n.Element != ""
 }
 
 func (p *printer) newline() {
@@ -432,19 +446,12 @@ func (p printer) writeText(n *node.Node) {
 		panic(fmt.Sprintf("printer: expected text node (%s)", n))
 	}
 
-	// TODO: decide if trim-if not we keep spacing between words as is,
-	//       otherwise we separate each word and notation by a space:
-	//       	s**tro**ng -> s **tro** ng	?
+	// By trimming the text we disregard spacing around the word:
+	// 	s**tro**ng -> s **tro** ng	?
 	v := strings.Trim(n.Value, " \t")
-	//v := n.Value
 	if v == "" {
 		return
 	}
-
-	// DONE: replace bufio.Writer with strings.Builder
-	// WHY:  Passing v[i-buf.Buffered():i] doesn't include the escapes which
-	//       means estimated line length and needsEscapeBlock in wrap can
-	//       both be wrong!
 
 	// use strings.Builder instead of bytes.Buffer as it's safer (can't
 	// access underlying bytes, no unreads); con: doesn't reuse the memory
@@ -454,8 +461,8 @@ func (p printer) writeText(n *node.Node) {
 	// (' '|'\n'); maybe sep and prependSpace could be joined?
 	var sep byte                             // last word separator character (0|' '|'\n')
 	prependSpace := n.PreviousSibling != nil // whether should add a space/newline before this text node
-	// TODO: if in uniform, don't prepend
-	if prependSpace && containsOnlyPunct(v) {
+	onlyPunct := containsOnlyPunct(v)
+	if onlyPunct {
 		// only punctuation
 		prependSpace = false
 	}
@@ -471,19 +478,21 @@ func (p printer) writeText(n *node.Node) {
 			}
 			if p.lineLength <= 0 && ch == '\n' {
 				// undefined line length
-				if prependSpace {
-					if buf.Len() > 0 {
-						p.w.WriteByte(' ')
+				if buf.Len() > 0 {
+					s := buf.String()
+					if !containsOnlyPunct(s) {
+						if prependSpace {
+							p.w.WriteByte(' ')
+						} else if sep > 0 { // should only ever be 0 or ' ' as we catch '\n' here if undefined line length
+							p.w.WriteByte(sep)
+						}
 					}
-					prependSpace = false
-				} else if sep > 0 { // should only ever be 0 or ' ' as we catch '\n' here if undefined line length
-					if sep != 0 && buf.Len() == 0 {
-						panic("set separator but nothing buffered")
-					}
-					p.w.WriteByte(sep)
+					p.w.WriteString(s)
+					buf.Reset()
 				}
-				p.w.WriteString(buf.String())
-				buf.Reset()
+				if prependSpace {
+					prependSpace = false
+				}
 				p.newline()
 				if p.needsBlockEscape(string(v[i+1:])) {
 					p.w.WriteByte('\\')
@@ -493,28 +502,30 @@ func (p printer) writeText(n *node.Node) {
 				continue
 			}
 
-			if prependSpace {
-				if p.lineLength > 0 {
-					// defined line length
-					if buf.Len() > 0 {
-						p.wrap(' ', buf.String())
+			if buf.Len() > 0 {
+				s := buf.String()
+				if !containsOnlyPunct(s) {
+					if prependSpace {
+						if p.lineLength > 0 {
+							// defined line length
+							p.wrap(' ', s)
+						} else {
+							// undefined line length
+							p.w.WriteByte(' ')
+						}
+					} else if p.lineLength > 0 {
+						// defined line length
+						p.wrap(sep, s)
+					} else if sep > 0 {
+						p.w.WriteByte(sep)
 					}
-				} else {
-					// undefined line length
-					p.w.WriteByte(' ')
 				}
-				prependSpace = false
-			} else if p.lineLength > 0 {
-				if sep != 0 && buf.Len() == 0 {
-					panic("set separator but nothing buffered")
-				}
-				// defined line length
-				p.wrap(sep, buf.String())
-			} else if sep > 0 {
-				p.w.WriteByte(sep)
+				p.w.WriteString(s)
+				buf.Reset()
 			}
-			p.w.WriteString(buf.String())
-			buf.Reset()
+			if prependSpace {
+				prependSpace = false
+			}
 			sep = ch
 			continue
 		}
@@ -592,29 +603,36 @@ func (p printer) writeText(n *node.Node) {
 	if prependSpace && sep != 0 {
 		panic("prependSpace can only be true once-before separator is set")
 	}
-	if prependSpace {
-		if buf.Len() == 0 {
-			// must be something buffered as v != "" and a separator has not
-			// been reached
-			panic("buffered is empty")
-		}
-		if p.lineLength > 0 {
-			// defined line linegth
-			p.wrap(' ', buf.String())
-		} else {
-			// undefined line length
-			p.w.WriteByte(' ')
-		}
-		prependSpace = false // not used anymore but still want to keep correct state
-	} else if p.lineLength > 0 {
-		// defined line length
-		p.wrap(sep, buf.String())
-	} else if sep > 0 {
-		p.w.WriteByte(sep)
+	if buf.Len() > 0 {
+		s := buf.String()
+		if !containsOnlyPunct(s) {
+			if prependSpace {
+				if buf.Len() == 0 {
+					// must be something buffered as v != "" and a separator has not
+					// been reached
+					panic("buffered is empty")
+				}
+				if p.lineLength > 0 {
+					// defined line linegth
+					p.wrap(' ', s)
+				} else {
+					// undefined line length
+					p.w.WriteByte(' ')
+				}
+			} else if p.lineLength > 0 {
+				// defined line length
+				p.wrap(sep, s)
+			} else if sep > 0 {
+				p.w.WriteByte(sep)
 
+			}
+		}
+		p.w.WriteString(s)
+		buf.Reset()
 	}
-	p.w.WriteString(buf.String())
-	buf.Reset()
+	if prependSpace {
+		prependSpace = false // not used anymore but still want to keep correct state
+	}
 }
 
 // containsOnlyPunct reports whether the given string contains only ASCII
@@ -643,8 +661,7 @@ func (p printer) wrap(sep byte, word string) {
 	// prefixes*2 accounts for a trailing and in-between spaces
 	// note: writeText is never called by an element not using
 	// withTrailingSpacing prefix (such as TypeVerbatimWalled)
-	atStart := p.w.textColumn == len(p.prefixes)*2
-	if m > p.lineLength && !atStart {
+	if m > p.lineLength && !p.atStart() {
 		// !atStart so '*a' !=> '*\n a' (lineLength=1)
 		p.newline()
 		p.writePrefix(withTrailingSpacing)
@@ -655,6 +672,10 @@ func (p printer) wrap(sep byte, word string) {
 	} else if sep > 0 {
 		p.w.WriteByte(' ') // flush previous space (in lineLength mode newline=space)
 	}
+}
+
+func (p printer) atStart() bool {
+	return p.w.textColumn == len(p.prefixes)*2
 }
 
 func searchFirstNonContainerParent(n *node.Node) *node.Node {

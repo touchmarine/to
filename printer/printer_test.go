@@ -508,7 +508,7 @@ func TestGroup(t *testing.T) {
 			{"((a))\n**b**", "((a))\n**b**"},
 
 			{"a\n((b))**c**", "a\n((b))**c**"},
-			{"((a))**b**((c))**d**", "((a))**b**((c))**d**"},
+			{"((a))**b**((c))**d**", "((a))**b** ((c))**d**"},
 		}
 
 		elements := config.Elements{
@@ -1030,6 +1030,9 @@ func TestLineLength(t *testing.T) {
 		// newline in the valid line length range
 		{"abcd\nefgh", "abcd\nefgh"},
 
+		// spacing
+		{"a  b", "a b"},
+
 		// multiple words
 		{"abcdef g", "abcdef g"},
 		{"abcdef gh", "abcdef\ngh"},
@@ -1064,14 +1067,54 @@ func TestLineLength(t *testing.T) {
 		{">`\n>abcdefgh", "> `\n> abcdefgh\n> `"},
 
 		// with inlines
+		{"____a", "____ a"},
+		{"__ab c", "__ab c__"},
+		{"__abc d", "__abc d__"},
+		{"a__", "a ____"},
 		{"a __b__ c", "a __b__\nc"},
-		{"abc__d__", "abc __d__"},
-		{"abc__defg__", "abc __\ndefg__"},
+		{"a__bc", "a __bc__"},
+		{"a__bcd", "a __bcd\n__"},
+		{"a__bc d", "a __bc d\n__"},
+		{"a__bcd e", "a __bcd\ne__"},
+		{"abc__", "abc ____"},
+		{"abc__d", "abc __d\n__"},
+		{"abcd__", "abcd __\n__"},
+		{"abcd__e", "abcd __e\n__"},
+		{"abcde__f", "abcde __\nf__"},
 
-		//{"``ab c", "``ab c``"},
-		//{"``abc d", "``abc\nd``"},
-		//{"``abcdef g", "``abcdef\ng``"},
-		//{"abcdef``a", "abcdef``\na``"},
+		// escaped
+		{"````a", "```` a"},
+		{"``ab c", "``ab c``"},
+		{"``abc d", "``abc d``"},
+		{"a``", "a ````"},
+		{"a ``b`` c", "a ``b``\nc"},
+		{"a``bc", "a ``bc``"},
+		{"a``bcd", "a\n``bcd``"},
+		{"a``bc d", "a\n``bc d``"},
+		{"a``bcd e", "a\n``bcd e``"},
+		{"abc``", "abc ````"},
+		{"abc``d", "abc\n``d``"},
+		{"abcd``", "abcd\n````"},
+
+		// prefixed
+		{"@a b", "@a b"},
+		{"@abcde f", "@abcde f"},
+		{"@abcdef g", "@abcdef\ng"},
+		{"a@b", "a @b"},
+		{"abcde @f", "abcde @f"},
+		{"abcdef @g", "abcdef\n@g"},
+		{"ab @cd ef", "ab @cd\nef"},
+
+		// inline sticky
+		{"[[a]]__b__c", "[[a]]__b__\nc"},
+		{"a[[b]]__c__", "a [[b]]__\nc__"},
+
+		{"[[a]]__b__,", "[[a]]__b__,"},
+		{"[[a]]__b__, a", "[[a]]__b__,\na"},
+
+		// inline sticky with escaped
+		{"__a__``b``c", "__a__``b``\nc"},
+		{"a__b__``c``", "a __b__``c``"},
 
 		// escape
 		{"abcdefgh >a", "abcdefgh\n\\>a"},
@@ -1106,14 +1149,35 @@ func TestLineLength(t *testing.T) {
 			Delimiter: "_",
 		},
 		"MB": {
+			Type:      node.TypeUniform.String(),
+			Delimiter: "[",
+		},
+		"MC": {
 			Type:      node.TypeEscaped.String(),
 			Delimiter: "`",
 		},
+		"MD": {
+			Type:      node.TypePrefixed.String(),
+			Delimiter: "@",
+			Matcher:   "url",
+		},
+	}
+	transformers := []transformer.Transformer{
+		sticky.Transformer{sticky.Map{
+			"MB": sticky.Sticky{
+				Name:   "SA",
+				Target: "MA",
+			},
+			"MA": sticky.Sticky{
+				Name:   "SB",
+				Target: "MC",
+			},
+		}},
 	}
 	for _, c := range cases {
 		name := fmt.Sprintf("%q", c.in)
 		t.Run(name, func(t *testing.T) {
-			test(t, elements, nil, c.in, c.out, 8)
+			test(t, elements, transformers, c.in, c.out, 8)
 		})
 	}
 }
