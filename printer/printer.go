@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/touchmarine/to/node"
@@ -209,7 +210,8 @@ func (p printer) print(n *node.Node) error {
 	case node.TypeUniform:
 		hasPrev := hasPreviousSibling(n)
 		if hasPrev {
-			if p.lineLength > 0 && p.w.textColumn+3 > p.lineLength { // +2 is for delimiter, +1 for space that would be added
+			// no need to use rune count for delimiter as it's always 2 chars
+			if p.lineLength > 0 && p.w.screenColumn+3 > p.lineLength { // +2 is for delimiter, +1 for space that would be added
 				p.newline()
 				p.writePrefix(withTrailingSpacing)
 			} else if !p.atStart() {
@@ -229,7 +231,7 @@ func (p printer) print(n *node.Node) error {
 		if escapeClashing {
 			dd++
 		}
-		if p.lineLength > 0 && hasPrev && p.w.textColumn+dd > p.lineLength {
+		if p.lineLength > 0 && hasPrev && p.w.screenColumn+dd > p.lineLength {
 			p.newline()
 			p.writePrefix(withTrailingSpacing)
 		}
@@ -244,7 +246,8 @@ func (p printer) print(n *node.Node) error {
 		text := n.TextContent()
 		needsEscape := strings.Contains(text, e.Delimiter)
 
-		ll := p.w.textColumn + len(text) + 4 + 1 // +4 is for delimiters, +1 for space that would be added
+		// no need to use rune count for delimiter as it's always 2+2 chars
+		ll := p.w.screenColumn + utf8.RuneCountInString(text) + 4 + 1 // +4 is for delimiters, +1 for space that would be added
 		if needsEscape {
 			ll += 2 // for opening and closing delimiter
 		}
@@ -273,7 +276,9 @@ func (p printer) print(n *node.Node) error {
 		t := n.TextContent()
 		if hasPreviousSibling(n) {
 			// not in group like sticky
-			ll := p.w.textColumn + len(e.Delimiter) + len(t) + 1 // +1 is for space that would be added
+			dc := utf8.RuneCountInString(e.Delimiter)
+			dt := utf8.RuneCountInString(t)
+			ll := p.w.screenColumn + dc + dt + 1 // +1 is for space that would be added
 			if p.lineLength > 0 && ll > p.lineLength {
 				p.newline()
 				p.writePrefix(withTrailingSpacing)
@@ -635,11 +640,11 @@ func (p printer) writeText(n *node.Node) {
 	}
 }
 
-// containsOnlyPunct reports whether the given string contains only ASCII
+// containsOnlyPunct reports whether the given string contains only Unicode
 // punctuation characters.
 func containsOnlyPunct(s string) bool {
-	for i := 0; i < len(s); i++ {
-		if !isPunct(s[i]) {
+	for _, r := range s {
+		if !unicode.IsPunct(r) {
 			return false
 		}
 	}
@@ -653,14 +658,11 @@ func containsOnlyPunct(s string) bool {
 // Words are never split (a word that is longer than the line length will not be
 // split and will stay as is).
 func (p printer) wrap(sep byte, word string) {
-	n := len(word) // last word
+	n := utf8.RuneCountInString(word) // last word
 	if sep > 0 {
 		n++
 	}
-	m := p.w.textColumn + n
-	// prefixes*2 accounts for a trailing and in-between spaces
-	// note: writeText is never called by an element not using
-	// withTrailingSpacing prefix (such as TypeVerbatimWalled)
+	m := p.w.screenColumn + n
 	if m > p.lineLength && !p.atStart() {
 		// !atStart so '*a' !=> '*\n a' (lineLength=1)
 		p.newline()
@@ -674,8 +676,15 @@ func (p printer) wrap(sep byte, word string) {
 	}
 }
 
+// atStart reports whether the current column is right after the current line's
+// prefix. It assumes that the current line's prefix was withTrailingSpacing
+// (only TypeVerbatimWalled does not use withTrailingSpacing).
 func (p printer) atStart() bool {
-	return p.w.textColumn == len(p.prefixes)*2
+	pl := 0
+	if len(p.prefixes) > 0 {
+		pl = len(strings.Join(p.prefixes, " ")) + 1 // +1 is for trailing space
+	}
+	return p.w.textColumn == pl
 }
 
 func searchFirstNonContainerParent(n *node.Node) *node.Node {
@@ -775,7 +784,7 @@ func (w *printerWriter) Write(p []byte) (int, error) {
 			t += tabWidth - 1
 		}
 	}
-	w.screenColumn = utf8.RuneCount(p) + t
+	w.screenColumn += utf8.RuneCount(p) + t
 	return n, nil
 }
 
@@ -792,7 +801,7 @@ func (w *printerWriter) WriteString(s string) (int, error) {
 			t += tabWidth - 1
 		}
 	}
-	w.screenColumn = utf8.RuneCountInString(s) + t
+	w.screenColumn += utf8.RuneCountInString(s) + t
 	return n, nil
 }
 

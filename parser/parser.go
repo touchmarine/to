@@ -957,7 +957,7 @@ func (p *parser) parseEscaped(name string) (*node.Node, bool) {
 				offs = p.offset
 			} else if p.isEscapedClosingDelimiter(closing, isEscaped) {
 				textEnd = p.pos()
-				for i := 0; i < len(closing); i++ {
+				for i := 0; i < utf8.RuneCountInString(closing); i++ {
 					p.next()
 				}
 				end = p.pos()
@@ -1043,7 +1043,7 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (*node.Node,
 
 	start := p.pos()
 	// consume prefix
-	for i := 0; i < len(prefix); i++ {
+	for i := 0; i < utf8.RuneCountInString(prefix); i++ {
 		p.next()
 	}
 	textStart := p.pos()

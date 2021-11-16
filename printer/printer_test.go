@@ -605,7 +605,7 @@ func TestEscaped(t *testing.T) {
 		{"``\na``", "``\na``"},
 		{"``\na``b", "``\na`` b"},
 		{"``\n``", "````"},
-		{"`````", "`````"},
+		{"`````", "```` `"},
 
 		{"a``", "a ````"},
 
@@ -1081,6 +1081,7 @@ func TestLineLength(t *testing.T) {
 		{"abcd__", "abcd __\n__"},
 		{"abcd__e", "abcd __e\n__"},
 		{"abcde__f", "abcde __\nf__"},
+		{"abcdef__", "abcdef\n____"},
 
 		// escaped
 		{"````a", "```` a"},
@@ -1121,6 +1122,39 @@ func TestLineLength(t *testing.T) {
 		{"abcdefgh >a b", "abcdefgh\n\\>a b"},
 		{">abcdef >a", "> abcdef\n> \\>a"},
 		{">abcdef >a b", "> abcdef\n> \\>a b"},
+
+		// no space/newline before puncutation
+		{"____,", "____,"},
+		{",____", ", ____"},
+		{"____…", "____…"}, // UTF-8
+		{"… ____", "… ____"},
+
+		// UTF-8
+		{"→ abcdef", "→ abcdef"},
+		{"→→ abcdef", "→→\nabcdef"},
+		{"abcdef →", "abcdef →"},
+		{"abcdef →→", "abcdef\n→→"},
+		// uniform
+		{"★★★★abc", "★★★★ abc"}, // want bytes=16, utf-8=8
+		{"abc★★", "abc ★★★★"},
+		{"ab→★★", "ab→ ★★★★"},
+		{"abcd★★", "abcd ★★\n★★"},
+		{"abcde★★", "abcde ★★\n★★"},
+		{"abcdef★★", "abcdef\n★★★★"},
+		// escaped
+		{"∑∑∑∑abc", "∑∑∑∑ abc"}, // want bytes=16, utf-8=8
+		{"ab→∑∑", "ab→ ∑∑∑∑"},
+		{"abc∑∑", "abc ∑∑∑∑"},
+		{"abcd∑∑", "abcd\n∑∑∑∑"},
+		{"abcde∑∑", "abcde\n∑∑∑∑"},
+		{"abcdef∑∑", "abcdef\n∑∑∑∑"},
+		{"ab∑∑c", "ab ∑∑c∑∑"},
+		{"ab∑∑→", "ab ∑∑→∑∑"},
+		// prefixed
+		{"¡a abcde", "¡a abcde"}, // want bytes=9, utf-8=8
+		{"abcde ¡a", "abcde ¡a"},
+		{"abcd→ ¡a", "abcd→ ¡a"},
+		{"abcde¡→", "abcde ¡→"},
 	}
 
 	elements := config.Elements{
@@ -1159,6 +1193,19 @@ func TestLineLength(t *testing.T) {
 		"MD": {
 			Type:      node.TypePrefixed.String(),
 			Delimiter: "@",
+			Matcher:   "url",
+		},
+		"ME": {
+			Type:      node.TypeUniform.String(),
+			Delimiter: "★",
+		},
+		"MF": {
+			Type:      node.TypeEscaped.String(),
+			Delimiter: "∑",
+		},
+		"MG": {
+			Type:      node.TypePrefixed.String(),
+			Delimiter: "¡",
 			Matcher:   "url",
 		},
 	}
