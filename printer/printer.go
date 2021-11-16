@@ -208,13 +208,24 @@ func (p printer) print(n *node.Node) error {
 			}
 		}
 	case node.TypeUniform:
-		hasPrev := hasPreviousSibling(n)
+		hasPrev := hasDirectPreviousSibling(n)
 		if hasPrev {
-			// no need to use rune count for delimiter as it's always 2 chars
-			if p.lineLength > 0 && p.w.screenColumn+3 > p.lineLength { // +2 is for delimiter, +1 for space that would be added
-				p.newline()
-				p.writePrefix(withTrailingSpacing)
-			} else if !p.atStart() {
+			if p.lineLength > 0 {
+				if n.Parent != nil && isGroup(n.Parent) && isFirstChild(n) && containsNonWrappableInline(n.Parent) {
+					// first in group (like sticky) that contains an non-wrappable element
+					if sl, err := p.screenLen(n.Parent); err != nil {
+						return err
+					} else if p.w.screenColumn+sl+1 > p.lineLength {
+						p.newline()
+						p.writePrefix(withTrailingSpacing)
+					}
+				} else if p.w.screenColumn+3 > p.lineLength { // +2 is for delimiter, +1 for space that would be added
+					// no need to use rune count for delimiter as it's always 2 chars
+					p.newline()
+					p.writePrefix(withTrailingSpacing)
+				}
+			}
+			if !p.atStart() {
 				p.w.WriteByte(' ')
 			}
 		}
@@ -251,12 +262,22 @@ func (p printer) print(n *node.Node) error {
 		if needsEscape {
 			ll += 2 // for opening and closing delimiter
 		}
-		if hasPreviousSibling(n) {
-			// not in group like sticky
-			if p.lineLength > 0 && ll > p.lineLength {
-				p.newline()
-				p.writePrefix(withTrailingSpacing)
-			} else if !p.atStart() {
+		if hasDirectPreviousSibling(n) {
+			if p.lineLength > 0 {
+				if n.Parent != nil && isGroup(n.Parent) && isFirstChild(n) {
+					// first in group like sticky
+					if sl, err := p.screenLen(n.Parent); err != nil {
+						return err
+					} else if p.w.screenColumn+sl+1 > p.lineLength {
+						p.newline()
+						p.writePrefix(withTrailingSpacing)
+					}
+				} else if ll > p.lineLength {
+					p.newline()
+					p.writePrefix(withTrailingSpacing)
+				}
+			}
+			if !p.atStart() {
 				p.w.WriteByte(' ')
 			}
 		}
@@ -274,15 +295,25 @@ func (p printer) print(n *node.Node) error {
 
 	case node.TypePrefixed:
 		t := n.TextContent()
-		if hasPreviousSibling(n) {
-			// not in group like sticky
+		if hasDirectPreviousSibling(n) {
 			dc := utf8.RuneCountInString(e.Delimiter)
 			dt := utf8.RuneCountInString(t)
 			ll := p.w.screenColumn + dc + dt + 1 // +1 is for space that would be added
-			if p.lineLength > 0 && ll > p.lineLength {
-				p.newline()
-				p.writePrefix(withTrailingSpacing)
-			} else if !p.atStart() {
+			if p.lineLength > 0 {
+				if n.Parent != nil && isGroup(n.Parent) && isFirstChild(n) {
+					// first in group like sticky
+					if sl, err := p.screenLen(n.Parent); err != nil {
+						return err
+					} else if p.w.screenColumn+sl+1 > p.lineLength {
+						p.newline()
+						p.writePrefix(withTrailingSpacing)
+					}
+				} else if ll > p.lineLength {
+					p.newline()
+					p.writePrefix(withTrailingSpacing)
+				}
+			}
+			if !p.atStart() {
 				p.w.WriteByte(' ')
 			}
 		}
@@ -296,6 +327,20 @@ func (p printer) print(n *node.Node) error {
 	}
 
 	return nil
+}
+
+func (p printer) screenLen(n *node.Node) (int, error) {
+	var b strings.Builder
+	pp := printer{
+		w: &printerWriter{
+			w: &b,
+		},
+		elements: p.elements,
+	}
+	if err := pp.print(n); err != nil {
+		return 0, err
+	}
+	return pp.w.screenColumn, nil
 }
 
 // isInlineContainer reports whether a container is inline based on its
@@ -316,21 +361,41 @@ func isInlineContainer(n *node.Node) bool {
 	return false
 }
 
-func hasPreviousSibling(n *node.Node) bool {
-	if n.PreviousSibling != nil {
-		if n.Parent != nil {
-			return !isGroup(n.Parent)
-		} else {
-			return true
+func hasDirectPreviousSibling(n *node.Node) bool {
+	if hasPreviousSibling(n) {
+		if n.Parent != nil && isGroup(n.Parent) && !isFirstChild(n) {
+			return false
 		}
-	} else if n.Parent != nil && isGroup(n.Parent) {
-		return n == n.Parent.FirstChild
+		return true
 	}
 	return false
 }
 
+// hasPreviousSibling reports if the current node has a previous sibling, even
+// if it is placed inside a group.
+func hasPreviousSibling(n *node.Node) bool {
+	if n.Parent != nil && isGroup(n.Parent) {
+		// in group like sticky
+		return hasPreviousSibling(n.Parent)
+	}
+	return n.PreviousSibling != nil
+}
+
+func isFirstChild(n *node.Node) bool {
+	return n.Parent != nil && n == n.Parent.FirstChild
+}
+
 func isGroup(n *node.Node) bool {
 	return n.Type == node.TypeContainer && n.Element != ""
+}
+
+func containsNonWrappableInline(n *node.Node) bool {
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		if c.Type == node.TypeEscaped || c.Type == node.TypePrefixed {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *printer) newline() {

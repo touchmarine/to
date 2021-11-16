@@ -1121,7 +1121,12 @@ func TestLineLength(t *testing.T) {
 
 		// inline sticky with escaped
 		{"__a__``b``c", "__a__``b``\nc"},
-		{"a__b__``c``", "a __b__``c``"},
+		{"a__b__``c``", "a\n__b__``c``"},
+		{"abcd__e__``f``", "abcd\n__e__``f``"},
+
+		{"``a``__b__c", "``a``__b__\nc"},
+		{"a``b``__c__", "a\n``b``__c__"},
+		{"abcd``e``__f__", "abcd\n``e``__f__"},
 
 		// escape
 		{"abcdefgh >a", "abcdefgh\n\\>a"},
@@ -1224,6 +1229,10 @@ func TestLineLength(t *testing.T) {
 			"MA": sticky.Sticky{
 				Name:   "SB",
 				Target: "MC",
+			},
+			"MC": sticky.Sticky{
+				Name:   "SB",
+				Target: "MA",
 			},
 		}},
 	}
