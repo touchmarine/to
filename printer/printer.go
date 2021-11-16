@@ -462,9 +462,7 @@ func (p printer) writeText(n *node.Node) {
 	// access underlying bytes, no unreads); con: doesn't reuse the memory
 	// on reset (but no premature optimizations)
 	var buf strings.Builder
-	// note: sep is basically just a marker that we are after a separator
-	// (' '|'\n'); maybe sep and prependSpace could be joined?
-	var sep byte                             // last word separator character (0|' '|'\n')
+	var sep byte                             // last word separator character (0|' '|'\t'|'\n')
 	prependSpace := n.PreviousSibling != nil // whether should add a space/newline before this text node
 	onlyPunct := containsOnlyPunct(v)
 	if onlyPunct {
@@ -475,9 +473,9 @@ func (p printer) writeText(n *node.Node) {
 	for i := 0; i < len(v); i++ {
 		ch := v[i]
 
-		if ch == ' ' || ch == '\n' {
-			// no need to be include in below escape checks as ' '
-			// or '\n' cannot be a part of a delimiter
+		if ch == ' ' || ch == '\t' || ch == '\n' {
+			// no need to be included in below escape checks as ' ',
+			// '\t', or '\n' cannot be a part of a delimiter
 			if prependSpace && sep != 0 {
 				panic("prependSpace can only be true once-before separator is set")
 			}
@@ -488,7 +486,7 @@ func (p printer) writeText(n *node.Node) {
 					if !containsOnlyPunct(s) {
 						if prependSpace {
 							p.w.WriteByte(' ')
-						} else if sep > 0 { // should only ever be 0 or ' ' as we catch '\n' here if undefined line length
+						} else if sep > 0 { // cannot be '\n' as we catch it here and set sep=0
 							p.w.WriteByte(sep)
 						}
 					}
@@ -777,14 +775,7 @@ func (w *printerWriter) Write(p []byte) (int, error) {
 		return n, err
 	}
 	w.textColumn += len(p)
-	t := 0
-	for i := 0; i < len(p); i++ {
-		if p[i] == '\t' {
-			// -1 because rune count already counts tabs as 1
-			t += tabWidth - 1
-		}
-	}
-	w.screenColumn += utf8.RuneCount(p) + t
+	w.screenColumn += utf8.RuneCount(p)
 	return n, nil
 }
 
@@ -794,14 +785,7 @@ func (w *printerWriter) WriteString(s string) (int, error) {
 		return n, err
 	}
 	w.textColumn += len(s)
-	t := 0
-	for i := 0; i < len(s); i++ {
-		if s[i] == '\t' {
-			// -1 because rune count already counts tabs as 1
-			t += tabWidth - 1
-		}
-	}
-	w.screenColumn += utf8.RuneCountInString(s) + t
+	w.screenColumn += utf8.RuneCountInString(s)
 	return n, nil
 }
 
@@ -810,11 +794,7 @@ func (w *printerWriter) WriteByte(b byte) error {
 		return err
 	}
 	w.textColumn++
-	if b == '\t' {
-		w.screenColumn += tabWidth
-	} else {
-		w.screenColumn++
-	}
+	w.screenColumn++
 	return nil
 }
 

@@ -1033,6 +1033,12 @@ func TestLineLength(t *testing.T) {
 		// spacing
 		{"a  b", "a b"},
 
+		// tab
+		{"abcd efg", "abcd efg"},
+		{"abcd\tefg", "abcd efg"},
+		{"abcd efgh", "abcd\nefgh"},
+		{"abcd\tefgh", "abcd\nefgh"},
+
 		// multiple words
 		{"abcdef g", "abcdef g"},
 		{"abcdef gh", "abcdef\ngh"},
