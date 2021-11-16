@@ -67,7 +67,7 @@ type printer struct {
 //
 // Blocks are separated by single lines, except in groups, such as lists or
 // stickies, where they are placed immediately one after another.
-func (p printer) print(n *node.Node) error {
+func (p *printer) print(n *node.Node) error {
 	if n.Type == node.TypeError {
 		return fmt.Errorf("error node (%s)", n)
 	}
@@ -87,6 +87,62 @@ func (p printer) print(n *node.Node) error {
 
 	if n.IsBlock() {
 		p.writePrefix(withTrailingSpacing)
+	}
+
+	if p.lineLength > 0 && n.IsInline() && n.Type != node.TypeText && hasDirectPreviousSibling(n) &&
+		n.Parent != nil && isGroup(n.Parent) && isFirstChild(n) && containsUnwrappableInline(n.Parent) {
+		// In a group (like sticky) that contains an unwrappable element
+		// (on the first element in the group):
+		// 	If a wrappable element in the group can wrap on its own
+		// 	(is in the valid line range), let it wrap. Otherwise,
+		// 	wrap the whole group here.
+		//
+		// Note: This was designed with stickies in mind (so 2 children
+		//       only). Any groups with more children were not tested
+		//       and will probably not work.
+		parent := nodeClone(n.Parent) // clone because we will modify
+		x := firstUnwrappableInline(parent)
+		if x == nil {
+			// must be non-nil because of containsUnwrap... in condition
+			panic("nil unwrappable inline")
+		}
+		if x == parent.FirstChild {
+			// unwrappable before
+			// pass the line length we want to test (-1 for space that would be added)
+			if ln, _, err := p.screenPos(parent, p.lineLength-p.w.screenColumn-1); err != nil {
+				return err
+			} else if ln > 0 {
+				p.newline()
+				p.writePrefix(withTrailingSpacing)
+			}
+		} else {
+			// unwrappable after
+			for c := x; c != nil; c = c.NextSibling {
+				// remove nodes from first unwrappable element
+				// onward (including)
+				parent.RemoveChild(c)
+			}
+			// get screen columns of the first sequence of wrappable
+			// elements
+			if ln, col, err := p.screenPos(parent, p.lineLength); err != nil {
+				return err
+			} else if ln == 0 && p.w.screenColumn+col+1 <= p.lineLength { // +1 is for space that would be added
+				// The first sequence of wrappable elements are
+				// too short to wrap themselves, check if the
+				// whole group needs to be wrapped (if it
+				// exceeds the line length).
+				//
+				// Note: n.Parent=group so there are no spaces
+				//       to account for between the elements.
+				pa := nodeClone(n.Parent) // without clone we never end and crash
+				if ln, col, err := p.screenPos(pa, p.lineLength); err != nil {
+					return err
+				} else if ln == 0 && p.w.screenColumn+col+1 > p.lineLength { // +1 is for space that would be added
+					p.newline()
+					p.writePrefix(withTrailingSpacing)
+				}
+			}
+		}
 	}
 
 	e, _ := p.elements[n.Element]
@@ -208,24 +264,13 @@ func (p printer) print(n *node.Node) error {
 			}
 		}
 	case node.TypeUniform:
-		hasPrev := hasDirectPreviousSibling(n)
-		if hasPrev {
-			if p.lineLength > 0 {
-				if n.Parent != nil && isGroup(n.Parent) && isFirstChild(n) && containsNonWrappableInline(n.Parent) {
-					// first in group (like sticky) that contains an non-wrappable element
-					if sl, err := p.screenLen(n.Parent); err != nil {
-						return err
-					} else if p.w.screenColumn+sl+1 > p.lineLength {
-						p.newline()
-						p.writePrefix(withTrailingSpacing)
-					}
-				} else if p.w.screenColumn+3 > p.lineLength { // +2 is for delimiter, +1 for space that would be added
-					// no need to use rune count for delimiter as it's always 2 chars
-					p.newline()
-					p.writePrefix(withTrailingSpacing)
-				}
-			}
-			if !p.atStart() {
+		if hasDirectPreviousSibling(n) { // only direct as don't want to separate elements in a group
+			// +2 is for delimiter, +1 for space that would be added
+			// no need to use rune count for delimiter as it's always 2 chars
+			if p.lineLength > 0 && p.w.screenColumn+3 > p.lineLength {
+				p.newline()
+				p.writePrefix(withTrailingSpacing)
+			} else if !p.atStart() {
 				p.w.WriteByte(' ')
 			}
 		}
@@ -242,7 +287,9 @@ func (p printer) print(n *node.Node) error {
 		if escapeClashing {
 			dd++
 		}
-		if p.lineLength > 0 && hasPrev && p.w.screenColumn+dd > p.lineLength {
+		if p.lineLength > 0 && hasPreviousSibling(n) && p.w.screenColumn+dd > p.lineLength {
+			// doesn't need to be a direct sibling as the closing
+			// delimiter cannot separate elements in a group
 			p.newline()
 			p.writePrefix(withTrailingSpacing)
 		}
@@ -256,28 +303,17 @@ func (p printer) print(n *node.Node) error {
 	case node.TypeEscaped:
 		text := n.TextContent()
 		needsEscape := strings.Contains(text, e.Delimiter)
-
+		// +4 is for delimiters, +1 for space that would be added
 		// no need to use rune count for delimiter as it's always 2+2 chars
-		ll := p.w.screenColumn + utf8.RuneCountInString(text) + 4 + 1 // +4 is for delimiters, +1 for space that would be added
+		ll := p.w.screenColumn + utf8.RuneCountInString(text) + 4 + 1
 		if needsEscape {
 			ll += 2 // for opening and closing delimiter
 		}
 		if hasDirectPreviousSibling(n) {
-			if p.lineLength > 0 {
-				if n.Parent != nil && isGroup(n.Parent) && isFirstChild(n) {
-					// first in group like sticky
-					if sl, err := p.screenLen(n.Parent); err != nil {
-						return err
-					} else if p.w.screenColumn+sl+1 > p.lineLength {
-						p.newline()
-						p.writePrefix(withTrailingSpacing)
-					}
-				} else if ll > p.lineLength {
-					p.newline()
-					p.writePrefix(withTrailingSpacing)
-				}
-			}
-			if !p.atStart() {
+			if p.lineLength > 0 && ll > p.lineLength {
+				p.newline()
+				p.writePrefix(withTrailingSpacing)
+			} else if !p.atStart() {
 				p.w.WriteByte(' ')
 			}
 		}
@@ -299,21 +335,10 @@ func (p printer) print(n *node.Node) error {
 			dc := utf8.RuneCountInString(e.Delimiter)
 			dt := utf8.RuneCountInString(t)
 			ll := p.w.screenColumn + dc + dt + 1 // +1 is for space that would be added
-			if p.lineLength > 0 {
-				if n.Parent != nil && isGroup(n.Parent) && isFirstChild(n) {
-					// first in group like sticky
-					if sl, err := p.screenLen(n.Parent); err != nil {
-						return err
-					} else if p.w.screenColumn+sl+1 > p.lineLength {
-						p.newline()
-						p.writePrefix(withTrailingSpacing)
-					}
-				} else if ll > p.lineLength {
-					p.newline()
-					p.writePrefix(withTrailingSpacing)
-				}
-			}
-			if !p.atStart() {
+			if p.lineLength > 0 && ll > p.lineLength {
+				p.newline()
+				p.writePrefix(withTrailingSpacing)
+			} else if !p.atStart() {
 				p.w.WriteByte(' ')
 			}
 		}
@@ -329,18 +354,22 @@ func (p printer) print(n *node.Node) error {
 	return nil
 }
 
-func (p printer) screenLen(n *node.Node) (int, error) {
+// screenPos prints the given node and returns the line and screen column on
+// which the printer finished. It is used to determine whether the given node
+// needs to be wrapped.
+func (p printer) screenPos(n *node.Node, lineLength int) (int, int, error) {
 	var b strings.Builder
-	pp := printer{
+	pp := &printer{
 		w: &printerWriter{
 			w: &b,
 		},
-		elements: p.elements,
+		elements:   p.elements,
+		lineLength: lineLength,
 	}
 	if err := pp.print(n); err != nil {
-		return 0, err
+		return 0, 0, err
 	}
-	return pp.w.screenColumn, nil
+	return pp.line, pp.w.screenColumn, nil
 }
 
 // isInlineContainer reports whether a container is inline based on its
@@ -389,13 +418,21 @@ func isGroup(n *node.Node) bool {
 	return n.Type == node.TypeContainer && n.Element != ""
 }
 
-func containsNonWrappableInline(n *node.Node) bool {
+func containsUnwrappableInline(n *node.Node) bool {
+	return firstUnwrappableInline(n) != nil
+}
+
+func firstUnwrappableInline(n *node.Node) *node.Node {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		if c.Type == node.TypeEscaped || c.Type == node.TypePrefixed {
-			return true
+		if !isWrappableInline(c) {
+			return c
 		}
 	}
-	return false
+	return nil
+}
+
+func isWrappableInline(n *node.Node) bool {
+	return n.IsInline() && n.Type != node.TypeEscaped && n.Type != node.TypePrefixed
 }
 
 func (p *printer) newline() {
@@ -511,7 +548,7 @@ func (p printer) hasInlineDelimiterPrefix(s string) bool {
 	return false
 }
 
-func (p printer) writeText(n *node.Node) {
+func (p *printer) writeText(n *node.Node) {
 	if n.Type != node.TypeText {
 		panic(fmt.Sprintf("printer: expected text node (%s)", n))
 	}
@@ -720,7 +757,7 @@ func containsOnlyPunct(s string) bool {
 //
 // Words are never split (a word that is longer than the line length will not be
 // split and will stay as is).
-func (p printer) wrap(sep byte, word string) {
+func (p *printer) wrap(sep byte, word string) {
 	n := utf8.RuneCountInString(word) // last word
 	if sep > 0 {
 		n++
@@ -898,4 +935,22 @@ var leftRightChars = map[rune]rune{
 	')': '(',
 	'<': '>',
 	'>': '<',
+}
+
+// nodeClone deep clones the given node but is detached from the parent.
+func nodeClone(n *node.Node) *node.Node {
+	if n == nil {
+		return nil
+	}
+	nn := &node.Node{
+		Element:  n.Element,
+		Type:     n.Type,
+		Data:     n.Data,
+		Value:    n.Value,
+		Location: n.Location,
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		nn.AppendChild(nodeClone(c))
+	}
+	return nn
 }
