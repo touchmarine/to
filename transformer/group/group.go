@@ -1,23 +1,42 @@
+// package group provides a transformer for recognizing and adding groups to
+// node trees.
 package group
 
 import (
 	"github.com/touchmarine/to/node"
 )
 
-// Map maps group names by element names.
+// Map is a map of group names (keys) to elements (values). Elements tell the
+// transformer which elements can it grouped.
 type Map map[string]string
 
+func (m Map) firstByElement(e string) (string, bool) {
+	for g, el := range m {
+		if el == e {
+			return g, true
+		}
+	}
+	return "", false
+}
+
+// Transformer recognizes groups based on the given Groups and adds them to the
+// given tree (it mutates the tree). A group is a contiguous sequence of the
+// same sibling elements.
+//
+// Transformer supports only one group per element. Using multiple groups
+// targeting the same element is undefined behaviour.
 type Transformer struct {
 	Groups Map
 }
 
+// Transform implements the Transformer interface.
 func (t Transformer) Transform(n *node.Node) *node.Node {
 	var ops []func()
 	walkBreadthFirstStack(n, func(nodes []*node.Node) {
 		name, start, end := "", -1, 0
 
 		for i, n := range nodes {
-			gname, found := t.Groups[n.Element]
+			gname, found := t.Groups.firstByElement(n.Element)
 
 			if name != "" {
 				// a group is open

@@ -112,7 +112,7 @@ Options:
 		os.Exit(1)
 	}
 
-	var transformers []transformer.Transformer
+	var transformers transformer.Group
 	paragraphs := paragraph.Map{}
 	lists := group.Map{}
 	stickies := sticky.Map{}
@@ -130,9 +130,9 @@ Options:
 				fmt.Fprintf(os.Stderr, "invalid paragraph option (%q)\n", e.Option)
 				os.Exit(2)
 			}
-			paragraphs[t] = n
+			paragraphs[n] = t
 		case "list":
-			lists[e.Element] = n
+			lists[n] = e.Element
 		case "sticky":
 			stickies[n] = sticky.Sticky{
 				Element: e.Element,
@@ -148,7 +148,7 @@ Options:
 	transformers = append(transformers, group.Transformer{lists})
 	transformers = append(transformers, sticky.Transformer{stickies})
 	transformers = append(transformers, transformer.Func(sequentialnumber.Transform))
-	transformer.Apply(root, transformers)
+	transformers.Transform(root)
 
 	if *printTree {
 		var m node.PrinterMode

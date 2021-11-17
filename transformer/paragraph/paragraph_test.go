@@ -61,7 +61,7 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 	testError(t, testPath, err)
 
 	root = paragraph.Transformer{paragraph.Map{
-		node.TypeLeaf: "GP",
+		"GP": node.TypeLeaf,
 	}}.Transform(root)
 
 	var b strings.Builder

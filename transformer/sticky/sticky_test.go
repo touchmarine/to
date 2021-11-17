@@ -63,7 +63,7 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 		t.Fatal(err)
 	}
 
-	root = transformer.Apply(root, []transformer.Transformer{sticky.Transformer{sticky.Map{
+	root = transformer.Group{sticky.Transformer{sticky.Map{
 		"SA": {
 			Element: "A",
 		},
@@ -75,7 +75,7 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 			Element: "MA",
 			Target:  "MB",
 		},
-	}}})
+	}}}.Transform(root)
 
 	var b strings.Builder
 	if err := node.Fprint(&b, root); err != nil {

@@ -374,7 +374,7 @@ func TestGroup(t *testing.T) {
 		}
 		transformers := []transformer.Transformer{
 			paragraph.Transformer{paragraph.Map{
-				node.TypeLeaf: "PA",
+				"PA": node.TypeLeaf,
 			}},
 		}
 		for _, c := range cases {
@@ -424,7 +424,7 @@ func TestGroup(t *testing.T) {
 		}
 		transformers := []transformer.Transformer{
 			group.Transformer{group.Map{
-				"A": "LA",
+				"LA": "A",
 			}},
 		}
 		for _, c := range cases {
@@ -1318,7 +1318,7 @@ func runPrint(t *testing.T, elements config.Elements, transformers []transformer
 	if err != nil {
 		t.Fatal(err)
 	}
-	root = transformer.Apply(root, transformers)
+	root = transformer.Group(transformers).Transform(root)
 
 	if printTree {
 		var b strings.Builder

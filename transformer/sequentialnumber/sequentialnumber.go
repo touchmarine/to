@@ -1,3 +1,6 @@
+// package sequentialnumber provides a transformer for calculating and attaching
+// sequential numbers in node trees. The resulting sequential numbers are used
+// by the sequentialnumber aggregator to generate table of contents.
 package sequentialnumber
 
 import (
@@ -8,8 +11,14 @@ import (
 	"github.com/touchmarine/to/parser"
 )
 
+// Key is a key to the sequential number in node.Data.
 const Key = "sequentialNumber"
 
+// Transform calculates the sequential numbers and attaches them to the element
+// in node.Data[Key] (it mutates the given tree). It calculates the sequential
+// numbers based on the elements' ranks stored in node.Data[parser.KeyRank].
+//
+// Transform implements the Transformer interface.
 func Transform(n *node.Node) *node.Node {
 	m := map[string]map[int]int{}
 	walk(n, func(n *node.Node) bool {

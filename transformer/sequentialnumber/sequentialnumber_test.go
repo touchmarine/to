@@ -61,7 +61,7 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 		t.Fatal(err)
 	}
 
-	root = transformer.Apply(root, []transformer.Transformer{transformer.Func(sequentialnumber.Transform)})
+	root = transformer.Group{transformer.Func(sequentialnumber.Transform)}.Transform(root)
 
 	var b strings.Builder
 	if err := (node.Printer{node.PrintData}).Fprint(&b, root); err != nil {

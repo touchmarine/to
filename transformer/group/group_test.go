@@ -61,10 +61,10 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 		t.Fatal(err)
 	}
 
-	root = transformer.Apply(root, []transformer.Transformer{group.Transformer{group.Map{
-		"A": "GA",
-		"D": "GB",
-	}}})
+	root = transformer.Group{group.Transformer{group.Map{
+		"GA": "A",
+		"GB": "D",
+	}}}.Transform(root)
 
 	var b strings.Builder
 	if err := node.Fprint(&b, root); err != nil {
