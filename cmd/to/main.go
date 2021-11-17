@@ -134,10 +134,10 @@ Options:
 		case "list":
 			lists[e.Element] = n
 		case "sticky":
-			stickies[e.Element] = sticky.Sticky{
-				Name:   n,
-				Target: e.Target,
-				After:  e.Option == "after",
+			stickies[n] = sticky.Sticky{
+				Element: e.Element,
+				Target:  e.Target,
+				After:   e.Option == "after",
 			}
 		default:
 			fmt.Fprintf(os.Stderr, "unsupported group type (%q)\n", e.Type)

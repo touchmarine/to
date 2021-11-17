@@ -64,16 +64,16 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 	}
 
 	root = transformer.Apply(root, []transformer.Transformer{sticky.Transformer{sticky.Map{
-		"A": {
-			Name: "SA",
+		"SA": {
+			Element: "A",
 		},
-		"B": {
-			Name:  "SB",
-			After: true,
+		"SB": {
+			Element: "B",
+			After:   true,
 		},
-		"MA": {
-			Name:   "CA",
-			Target: "MB",
+		"CA": {
+			Element: "MA",
+			Target:  "MB",
 		},
 	}}})
 

@@ -475,12 +475,12 @@ func TestGroup(t *testing.T) {
 		}
 		transformers := []transformer.Transformer{
 			sticky.Transformer{sticky.Map{
-				"A": sticky.Sticky{
-					Name: "SA",
+				"SA": sticky.Sticky{
+					Element: "A",
 				},
-				"B": sticky.Sticky{
-					Name:  "SB",
-					After: true,
+				"SB": sticky.Sticky{
+					Element: "B",
+					After:   true,
 				},
 			}},
 		}
@@ -523,9 +523,9 @@ func TestGroup(t *testing.T) {
 		}
 		transformers := []transformer.Transformer{
 			sticky.Transformer{sticky.Map{
-				"A": sticky.Sticky{
-					Name:   "SA",
-					Target: "B",
+				"SA": sticky.Sticky{
+					Element: "A",
+					Target:  "B",
 				},
 			}},
 		}
@@ -1228,17 +1228,17 @@ func TestLineLength(t *testing.T) {
 	}
 	transformers := []transformer.Transformer{
 		sticky.Transformer{sticky.Map{
-			"MB": sticky.Sticky{
-				Name:   "SA",
-				Target: "MA",
+			"SA": sticky.Sticky{
+				Element: "MB",
+				Target:  "MA",
 			},
-			"MA": sticky.Sticky{
-				Name:   "SB",
-				Target: "MC",
+			"SB": sticky.Sticky{
+				Element: "MA",
+				Target:  "MC",
 			},
-			"MC": sticky.Sticky{
-				Name:   "SB",
-				Target: "MA",
+			"SC": sticky.Sticky{
+				Element: "MC",
+				Target:  "MA",
 			},
 		}},
 	}

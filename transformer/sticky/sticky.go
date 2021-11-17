@@ -6,13 +6,22 @@ import (
 
 const Key = "sticky"
 
-// Map maps Stickies to Elements.
+// Map maps Stickies to their Names.
 type Map map[string]Sticky
 
+func (m Map) GetByElement(element string) (string, Sticky, bool) {
+	for name, s := range m {
+		if s.Element == element {
+			return name, s, true
+		}
+	}
+	return "", Sticky{}, false
+}
+
 type Sticky struct {
-	Name   string
-	Target string
-	After  bool
+	Element string
+	Target  string
+	After   bool
 }
 
 type Transformer struct {
@@ -37,7 +46,7 @@ func (t Transformer) Transform(n *node.Node) *node.Node {
 func (t Transformer) transform(n *node.Node) []func() {
 	var ops []func()
 	for s := n; s != nil; s = s.NextSibling {
-		if sticky, ok := t.Stickies[s.Element]; ok {
+		if name, sticky, ok := t.Stickies.GetByElement(s.Element); ok {
 			var x *node.Node
 			if sticky.After {
 				x = s.PreviousSibling
@@ -45,8 +54,8 @@ func (t Transformer) transform(n *node.Node) []func() {
 				x = s.NextSibling
 			}
 			if x != nil {
-				if _, ok := t.Stickies[x.Element]; (!ok || ok && x.Element != s.Element) && (sticky.Target == "" || sticky.Target != "" && sticky.Target == x.Element) {
-					ops = append(ops, makeDo(sticky, s, x))
+				if _, _, ok := t.Stickies.GetByElement(x.Element); (!ok || ok && x.Element != s.Element) && (sticky.Target == "" || sticky.Target != "" && sticky.Target == x.Element) {
+					ops = append(ops, makeDo(name, sticky, s, x))
 				}
 			}
 		}
@@ -63,10 +72,10 @@ func (t Transformer) transform(n *node.Node) []func() {
 	return ops
 }
 
-func makeDo(sticky Sticky, stickynode, targetnode *node.Node) func() {
+func makeDo(name string, sticky Sticky, stickynode, targetnode *node.Node) func() {
 	return func() {
 		s := &node.Node{
-			Element: sticky.Name,
+			Element: name,
 			Type:    node.TypeContainer,
 			Data:    node.Data{},
 		}
