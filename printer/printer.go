@@ -12,8 +12,6 @@ import (
 	"github.com/touchmarine/to/parser"
 )
 
-const tabWidth = 8
-
 // Elements maps Elements to Names.
 type Elements map[string]Element
 
@@ -868,7 +866,7 @@ func (p *printer) addPrefix(s string) func() {
 type printerWriter struct {
 	w            writer
 	textColumn   int // byte number (zero-based)
-	screenColumn int // utf8 number (zero-based, tab=tabWidth)
+	screenColumn int // utf8 number (zero-based)
 }
 
 func (w *printerWriter) Write(p []byte) (int, error) {

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/touchmarine/to/matcher"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/transformer"
@@ -58,7 +59,12 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 	// positions
 	input := strings.TrimSuffix(string(bi), "\n")
 
-	root, err := parser.Parse(strings.NewReader(input), elements)
+	p := parser.Parser{
+		Elements: elements,
+		Matchers: matcher.Defaults(),
+		TabWidth: 8,
+	}
+	root, err := p.Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}

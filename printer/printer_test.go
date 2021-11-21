@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/touchmarine/to/config"
+	"github.com/touchmarine/to/matcher"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
@@ -1314,7 +1315,12 @@ func runPrint(t *testing.T, elements config.Elements, transformers []transformer
 	t.Helper()
 
 	r := strings.NewReader(in)
-	root, err := parser.Parse(r, elements.ParserElements())
+	p := parser.Parser{
+		Elements: elements.ParserElements(),
+		Matchers: matcher.Defaults(),
+		TabWidth: 8,
+	}
+	root, err := p.Parse(r)
 	if err != nil {
 		t.Fatal(err)
 	}

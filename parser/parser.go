@@ -14,21 +14,10 @@ import (
 
 const trace = false
 
-const tabWidth = 8
-
 const (
 	KeyRank        = "rank"
 	KeyOpeningText = "openingText"
 )
-
-var tabSpaces []rune
-
-func init() {
-	tabSpaces = make([]rune, tabWidth)
-	for i := 0; i < tabWidth; i++ {
-		tabSpaces[i] = ' '
-	}
-}
 
 // Elements maps Elements by name.
 type Elements map[string]Element
@@ -40,14 +29,21 @@ type Element struct {
 	Matcher   string
 }
 
-func Parse(src io.Reader, elements Elements) (*node.Node, error) {
+type Parser struct {
+	Elements Elements
+	Matchers matcher.Map
+	TabWidth int
+}
+
+func (pp Parser) Parse(src io.Reader) (*node.Node, error) {
 	var p parser
-	p.matchers(matcher.Defaults())
-	p.elements(elements)
+	p.registerElements(pp.Elements)
+	p.registerMatchers(pp.Matchers)
+	p.tabWidth = pp.TabWidth
 	p.init(src)
-	n := p.parse(nil)
+	root := p.parse(nil)
 	p.errors.Sort()
-	return n, p.errors.Err()
+	return root, p.errors.Err()
 }
 
 // parser holds the parsing state.
@@ -60,7 +56,8 @@ type parser struct {
 	inlineMap      map[string]Element // registered inline elements by delimiter
 	textElement    string             // text element name
 	specialEscapes []string           // delimiters that do not start with a punctuation
-	matcherMap     matcher.Map        // registered matchers by name
+	matchers       matcher.Map        // registered matchers by name
+	tabWidth       int                // tab=tabWidth x spaces
 
 	// parsing
 	ch         rune // current character
@@ -79,7 +76,7 @@ type parser struct {
 	indent int // trace indentation
 }
 
-func (p *parser) elements(elements Elements) {
+func (p *parser) registerElements(elements Elements) {
 	if p.blockMap == nil {
 		p.blockMap = make(map[string]Element)
 	}
@@ -142,13 +139,13 @@ func (p *parser) elements(elements Elements) {
 	p.blockKeys = keys
 }
 
-func (p *parser) matchers(m matcher.Map) {
-	if p.matcherMap == nil {
-		p.matcherMap = make(matcher.Map)
+func (p *parser) registerMatchers(m matcher.Map) {
+	if p.matchers == nil {
+		p.matchers = make(matcher.Map)
 	}
 
 	for k, v := range m {
-		p.matcherMap[k] = v
+		p.matchers[k] = v
 	}
 }
 
@@ -414,7 +411,7 @@ func (p *parser) parseHanging0() *node.Node {
 		defer p.trace("parseHanging0")()
 	}
 
-	newBlocks := diff(p.blocks, p.lead)
+	newBlocks := p.diff(p.blocks, p.lead)
 	if trace {
 		p.printDelims("reqd", p.blocks)
 		p.printDelims("lead", p.lead)
@@ -487,8 +484,8 @@ func (p *parser) continuesAmbiguous(blocks []rune) (bool, bool) {
 				}
 			}
 
-			x := countSpacing(spacingSeq(blocks[n:i]))
-			y := countSpacing(spacingSeq(p.lead[m:j]))
+			x := p.countSpacing(spacingSeq(blocks[n:i]))
+			y := p.countSpacing(spacingSeq(p.lead[m:j]))
 
 			if y < x {
 				if trace {
@@ -543,7 +540,7 @@ func (p *parser) parseFenced(name string) *node.Node {
 
 	start := p.pos()
 	reqdBlocks := p.blocks
-	openSpacing := diffSpacing(lastSpacingSeq(p.blocks), lastSpacingSeq(p.lead))
+	openSpacing := p.diffSpacing(lastSpacingSeq(p.blocks), lastSpacingSeq(p.lead))
 	defer p.open(openSpacing...)()
 
 	delim := p.ch
@@ -598,7 +595,7 @@ func (p *parser) parseFenced(name string) *node.Node {
 
 		if p.ch < 0 || p.ch == '\n' {
 			// leading spacing that is part of the element
-			spacing := diffSpacing(lastSpacingSeq(p.blocks), lastSpacingSeq(p.lead))
+			spacing := p.diffSpacing(lastSpacingSeq(p.blocks), lastSpacingSeq(p.lead))
 			l := p.src[offs:p.offset]
 			line := append([]byte(string(spacing)), l...)
 			lines = append(lines, line)
@@ -654,9 +651,9 @@ func (p *parser) consumeLine() []byte {
 
 // a=old spacing
 // b=new spacing
-func diffSpacing(a, b []rune) []rune {
-	x := countSpacing(a)
-	y := countSpacing(b)
+func (p *parser) diffSpacing(a, b []rune) []rune {
+	x := p.countSpacing(a)
+	y := p.countSpacing(b)
 
 	if y == x {
 		return nil
@@ -669,7 +666,7 @@ func diffSpacing(a, b []rune) []rune {
 				break
 			}
 
-			w := countSpacing([]rune{b[i]})
+			w := p.countSpacing([]rune{b[i]})
 			if w > n {
 				for j := 0; j < n; j++ {
 					c = append(c, ' ')
@@ -686,14 +683,14 @@ func diffSpacing(a, b []rune) []rune {
 	return nil
 }
 
-func countSpacing(s []rune) int {
+func (p *parser) countSpacing(s []rune) int {
 	var i int
 	for _, ch := range s {
 		switch ch {
 		case ' ':
 			i++
 		case '\t':
-			i += tabWidth
+			i += p.tabWidth
 		default:
 			panic(fmt.Sprintf("countSpacing: got %q, want ' ' or '\t'", ch))
 		}
@@ -1062,7 +1059,7 @@ func (p *parser) parsePrefixed(name, prefix string, matcher string) (*node.Node,
 		}, true
 	}
 
-	m, ok := p.matcherMap[matcher]
+	m, ok := p.matchers[matcher]
 	if !ok {
 		panic("parser: matcher " + matcher + " not found")
 	}
@@ -1260,7 +1257,7 @@ func (p *parser) parseLead() {
 	p.lead = nil
 	p.blank = true
 
-	a := expandTabs(p.blocks)
+	a := p.expandTabs(p.blocks)
 
 	var lead []rune
 	var i int
@@ -1273,10 +1270,10 @@ func (p *parser) parseLead() {
 		ch := a[i]
 
 		if isSpacing(p.ch) && isSpacing(ch) {
-			if countSpacing([]rune{p.ch}) <= countSpacing(spacingSeq(a[i:])) {
-				i += countSpacing([]rune{p.ch})
-			} else if countSpacing([]rune{p.ch}) > countSpacing(spacingSeq(a[i:])) {
-				i += countSpacing([]rune{ch})
+			if p.countSpacing([]rune{p.ch}) <= p.countSpacing(spacingSeq(a[i:])) {
+				i += p.countSpacing([]rune{p.ch})
+			} else if p.countSpacing([]rune{p.ch}) > p.countSpacing(spacingSeq(a[i:])) {
+				i += p.countSpacing([]rune{ch})
 			} else {
 				break
 			}
@@ -1439,19 +1436,19 @@ func (p *parser) addLead(blocks ...rune) {
 	p.lead = append(p.lead, blocks...)
 }
 
-func diff(old, new []rune) []rune {
+func (p *parser) diff(old, new []rune) []rune {
 	if len(old) == 0 {
 		return new
 	}
 
-	n := expandTabs(new)
+	n := p.expandTabs(new)
 
 	a := trailingSpacing(old)
 	if len(a) < len(old) {
 		b := trailingSpacing(n)
 		if len(a) > 0 && len(b) > 0 {
-			x := countSpacing(a)
-			y := countSpacing(b)
+			x := p.countSpacing(a)
+			y := p.countSpacing(b)
 			if y > x {
 				// different trailing spacing
 				z := y - x
@@ -1486,11 +1483,13 @@ func trailingSpacing(a []rune) []rune {
 	return a[i+1:]
 }
 
-func expandTabs(a []rune) []rune {
+func (p *parser) expandTabs(a []rune) []rune {
 	n := make([]rune, 0, len(a))
 	for _, c := range a {
 		if c == '\t' {
-			n = append(n, tabSpaces...)
+			for i := 0; i < p.tabWidth; i++ {
+				n = append(n, ' ')
+			}
 		} else {
 			n = append(n, c)
 		}

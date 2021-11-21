@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/touchmarine/to/matcher"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 )
@@ -97,7 +98,12 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 		src = input
 	}
 
-	nodes, err := parser.Parse(strings.NewReader(src), elements)
+	p := parser.Parser{
+		Elements: elements,
+		Matchers: matcher.Defaults(),
+		TabWidth: 8,
+	}
+	nodes, err := p.Parse(strings.NewReader(src))
 	testError(t, testPath, err)
 
 	var m node.PrinterMode

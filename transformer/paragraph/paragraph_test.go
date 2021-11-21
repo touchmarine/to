@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/touchmarine/to/matcher"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/transformer/paragraph"
@@ -57,7 +58,12 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 	}
 	input := string(bi)
 
-	root, err := parser.Parse(strings.NewReader(input), elements)
+	p := parser.Parser{
+		Elements: elements,
+		Matchers: matcher.Defaults(),
+		TabWidth: 8,
+	}
+	root, err := p.Parse(strings.NewReader(input))
 	testError(t, testPath, err)
 
 	root = paragraph.Transformer{paragraph.Map{

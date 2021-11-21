@@ -12,6 +12,7 @@ import (
 	"github.com/touchmarine/to/aggregator"
 	seqnumaggregator "github.com/touchmarine/to/aggregator/sequentialnumber"
 	"github.com/touchmarine/to/config"
+	"github.com/touchmarine/to/matcher"
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
@@ -337,7 +338,12 @@ func shallowMergeConfigs(dst *config.Config, srcs []string) {
 }
 
 func parse(in io.Reader, elements parser.Elements) *node.Node {
-	root, err := parser.Parse(in, elements)
+	p := parser.Parser{
+		Elements: elements,
+		Matchers: matcher.Defaults(),
+		TabWidth: 8,
+	}
+	root, err := p.Parse(in)
 	if err != nil {
 		parser.PrintError(os.Stderr, err)
 		os.Exit(1)
