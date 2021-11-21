@@ -50,12 +50,16 @@ func main() {
 
 	switch cmd {
 	case "build", "fmt", "tree":
-		var configs []string
+		var (
+			configs  []string
+			tabWidth int
+		)
 		registerWorkFlags := func(fs *flag.FlagSet) {
 			fs.Func("config", "config files (shallow merged into the core config)", func(c string) error {
 				configs = append(configs, c)
 				return nil
 			})
+			fs.IntVar(&tabWidth, "tabwidth", 0, "tab=tabwidth x spaces") // default set in parse()
 		}
 
 		switch cmd {
@@ -109,7 +113,7 @@ Run 'to help build' for details.
 
 			cfg := config.Default
 			shallowMergeConfigs(cfg, configs)
-			root := parse(os.Stdin, cfg.Elements.ParserElements())
+			root := parse(os.Stdin, cfg.Elements.ParserElements(), tabWidth)
 			root = transformers(cfg.Elements).Transform(root)
 
 			build(cfg, root, format) // exits on error
@@ -152,7 +156,7 @@ Run 'to help fmt' for details.
 
 			cfg := config.Default
 			shallowMergeConfigs(cfg, configs)
-			root := parse(os.Stdin, cfg.Elements.ParserElements())
+			root := parse(os.Stdin, cfg.Elements.ParserElements(), tabWidth)
 			root = transformers(cfg.Elements).Transform(root)
 
 			format(cfg.Elements.PrinterElements(), *lineLength, root) // exits on error
@@ -199,7 +203,7 @@ Run 'to help tree' for details.
 
 			cfg := config.Default
 			shallowMergeConfigs(cfg, configs)
-			root := parse(os.Stdin, cfg.Elements.ParserElements())
+			root := parse(os.Stdin, cfg.Elements.ParserElements(), tabWidth)
 			root = transformers(cfg.Elements).Transform(root)
 
 			tree(root, modes) // exits on error
@@ -224,8 +228,11 @@ example: to build html < file.to
 Build converts Touch formatted text to the given format.
 
 Options:
-	-config config file, used to configure templates and elements
-	        (sequentially shallow merged into the core config)
+	-config file
+		configures templates and elements (sequentially shallow
+		merged into the core config)
+	-tabwidth int
+		tab=<tabwidth> x spaces (default=8)
 `))
 			return
 		case "fmt":
@@ -237,10 +244,13 @@ Fmt formats Touch formatted text into its canonical form. Fmt is like
 what is commonly known as prettify, but opinionated.
 
 Options:
-	-config     config file, used to configure templates and
-	            elements (sequentially shallow merged into the core
-		    config)
-	-linelength prose line length (hard-wrap)
+	-config file
+		configures templates and elements (sequentially shallow
+		merged into the core config)
+	-tabwidth int
+		tab=<tabwidth> x spaces (default=8)
+	-linelength int
+		hard-wrap prose at <linelength> column (default=0)
 `))
 			return
 		case "tree":
@@ -251,11 +261,15 @@ example: to tree -mode printdata < file.to
 Tree prints the node tree representation of Touch formatted text.
 
 Options:
-	-config config file, used to configure templates and elements
-	        (sequentially shallow merged into the core config)
-	-mode   dials the level of info to print
+	-config file
+		configures templates and elements (sequentially shallow
+		merged into the core config)
+	-tabwidth int
+		tab=<tabwidth> x spaces (default=8)
+	-mode
+		dials the level of info to print
 
-	        modes: printall, printData, printlocation
+		modes: printall, printData, printlocation
 `))
 			return
 		default:
@@ -337,11 +351,15 @@ func shallowMergeConfigs(dst *config.Config, srcs []string) {
 	}
 }
 
-func parse(in io.Reader, elements parser.Elements) *node.Node {
+func parse(in io.Reader, elements parser.Elements, tabWidth int) *node.Node {
 	p := parser.Parser{
 		Elements: elements,
 		Matchers: matcher.Defaults(),
-		TabWidth: 8,
+	}
+	if tabWidth > 0 {
+		p.TabWidth = tabWidth
+	} else {
+		p.TabWidth = 8
 	}
 	root, err := p.Parse(in)
 	if err != nil {
