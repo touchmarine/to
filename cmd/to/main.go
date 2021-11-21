@@ -5,7 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"io"
 	"os"
+	"strings"
 
 	"github.com/touchmarine/to/aggregator"
 	seqnumaggregator "github.com/touchmarine/to/aggregator/sequentialnumber"
@@ -23,100 +25,332 @@ import (
 
 const version = "1.0.0-beta"
 
-func usage() {
-	fmt.Fprintln(os.Stderr, "usage: to [options] format")
-	fmt.Fprintln(os.Stderr, "Run 'to -help' for details.")
-	os.Exit(2)
-}
-
 func main() {
-	var (
-		conf        = flag.String("config", "", "base configuration file")
-		printTree   = flag.Bool("print-tree", false, "print node tree to stdout (debugging)")
-		showHelp    = flag.Bool("help", false, "print help")
-		showVersion = flag.Bool("version", false, "print version")
-	)
-	var overrides []string
-	flag.Func("config-override", "configuration files that override the base file", func(s string) error {
-		overrides = append(overrides, s)
-		return nil
-	})
-	var printTreeModes []string
-	flag.Func("print-tree-mode", "enable print tree mode (options: PrintAll, PrintData, PrintLocation)", func(s string) error {
-		printTreeModes = append(printTreeModes, s)
-		return nil
-	})
-	flag.Usage = usage
-	flag.Parse()
+	rootFlags := flag.NewFlagSet("to", flag.ContinueOnError)
+	rootFlags.Usage = usage
+	if err := rootFlags.Parse(os.Args[1:]); err != nil {
+		// By default, Parse prints usage and returns flag.ErrHelp on
+		// -h/-help. However, we don't want this behaviour as Parse
+		// already prints usage (in which we show how to get help) on
+		// any error.
+		os.Exit(2)
+		return
+	}
+	// get non-flag arguments; it is considered a flag only if it's before
+	// any non-flag arguments, e.g. `-b` in `a -b` is not a flag
+	args := rootFlags.Args()
+	if len(args) == 0 {
+		// no command
+		usage()
+		os.Exit(2)
+		return
+	}
+	cmd, args := args[0], args[1:]
 
-	if *showHelp {
-		fmt.Fprint(os.Stdout, `usage: to [options] format
+	switch cmd {
+	case "build", "fmt", "tree":
+		var configs []string
+		registerWorkFlags := func(fs *flag.FlagSet) {
+			fs.Func("config", "config files (shallow merged into the core config)", func(c string) error {
+				configs = append(configs, c)
+				return nil
+			})
+		}
 
-Touch converts Touch formatted text to the given format. It reads the
-text from standard input and writes the converted text to standard
-output.
+		switch cmd {
+		case "build":
+			if len(args) < 1 {
+				fmt.Fprintln(os.Stderr, strings.TrimSpace(`
+to build: missing <format>
+
+usage:   to build <format> [options] stdin
+example: to build html < file.to
+Run 'to help build' for details.
+`))
+				os.Exit(2)
+				return
+			}
+			format, args := args[0], args[1:]
+
+			fs := flag.NewFlagSet("to build", flag.ContinueOnError)
+			fs.Usage = func() {
+				fmt.Fprintln(os.Stderr, strings.TrimSpace(`
+usage: to build <format> [options] stdin
+Run 'to help build' for details.
+`))
+			}
+			registerWorkFlags(fs)
+			if err := fs.Parse(args); err != nil {
+				os.Exit(2)
+				return
+			}
+			args = fs.Args()
+			if len(args) > 0 {
+				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to build %s: unexpected arguments: %s
+Run 'to help build' for details.
+`)+"\n", format, strings.Join(args, " "))
+				os.Exit(2)
+				return
+			}
+
+			if isEmptyStdin() {
+				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to build: empty stdin
+
+usage:   to build <format> [options] stdin
+example: to build html < file.to
+Run 'to help build' for details.
+`)+"\n")
+				os.Exit(2)
+				return
+			}
+
+			cfg := config.Default
+			shallowMergeConfigs(cfg, configs)
+			root := parse(os.Stdin, cfg.Elements.ParserElements())
+			root = transformers(cfg.Elements).Transform(root)
+
+			build(cfg, root, format) // exits on error
+			return
+		case "fmt":
+			fs := flag.NewFlagSet("to fmt", flag.ContinueOnError)
+			fs.Usage = func() {
+				fmt.Fprintln(os.Stderr, strings.TrimSpace(`
+usage: to fmt [options] stdin
+Run 'to help fmt' for details.
+`))
+			}
+			lineLength := fs.Int("linelength", 0, "prose line length (hard-wrap)")
+			registerWorkFlags(fs)
+			if err := fs.Parse(args); err != nil {
+				os.Exit(2)
+				return
+			}
+			args := fs.Args()
+			if len(args) > 0 {
+				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to fmt: unexpected arguments: %s
+Run 'to help fmt' for details.
+`)+"\n", strings.Join(args, " "))
+				os.Exit(2)
+				return
+			}
+
+			if isEmptyStdin() {
+				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to fmt: empty stdin
+
+usage:   to fmt [options] stdin
+example: to fmt < file.to
+Run 'to help fmt' for details.
+`)+"\n")
+				os.Exit(2)
+				return
+			}
+
+			cfg := config.Default
+			shallowMergeConfigs(cfg, configs)
+			root := parse(os.Stdin, cfg.Elements.ParserElements())
+			root = transformers(cfg.Elements).Transform(root)
+
+			format(cfg.Elements.PrinterElements(), *lineLength, root) // exits on error
+			return
+		case "tree":
+			var modes []string
+			fs := flag.NewFlagSet("to tree", flag.ContinueOnError)
+			fs.Usage = func() {
+				fmt.Fprintln(os.Stderr, strings.TrimSpace(`
+usage: to tree [options] stdin
+Run 'to help tree' for details.
+`))
+			}
+			fs.Func("mode", "set print mode (modes: printall, printdata, printlocation)", func(s string) error {
+				modes = append(modes, s)
+				return nil
+			})
+			registerWorkFlags(fs)
+			if err := fs.Parse(args); err != nil {
+				os.Exit(2)
+				return
+			}
+			args := fs.Args()
+			if len(args) > 0 {
+				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to tree: unexpected arguments: %s
+Run 'to help tree' for details.
+`)+"\n", strings.Join(args, " "))
+				os.Exit(2)
+				return
+			}
+
+			if isEmptyStdin() {
+				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to tree: empty stdin
+
+usage:   to tree [options] stdin
+example: to tree < file.to
+Run 'to help tree' for details.
+`)+"\n")
+				os.Exit(2)
+				return
+			}
+
+			cfg := config.Default
+			shallowMergeConfigs(cfg, configs)
+			root := parse(os.Stdin, cfg.Elements.ParserElements())
+			root = transformers(cfg.Elements).Transform(root)
+
+			tree(root, modes) // exits on error
+			return
+		default:
+			panic("unexpected cmd " + cmd)
+		}
+	case "help":
+		if len(args) == 0 {
+			help()
+			return
+		}
+
+		cmd := args[0]
+		allArgs := strings.Join(args, " ")
+		switch cmd {
+		case "build":
+			fmt.Println(strings.TrimSpace(`
+usage:   to build <format> [options] stdin
+example: to build html < file.to
+
+Build converts Touch formatted text to the given format.
 
 Options:
-	-config          base configuration file
-	-config-override configuration files that override the base file
-	-print-tree      print node tree to stdout (debugging)
-	-print-tree-mode enable print tree mode (options: PrintAll, PrintData, PrintLocation)
-	-help            print help
-	-version         print version
-`)
-		return
-	}
-	if *showVersion {
-		fmt.Fprintf(os.Stdout, "to %s\n", version)
-		return
-	}
+	-config config file, used to configure templates and elements
+	        (sequentially shallow merged into the core config)
+`))
+			return
+		case "fmt":
+			fmt.Println(strings.TrimSpace(`
+usage:           to fmt [options] stdin
+format in place: to fmt < file.to 1<> file.to
 
-	args := flag.Args()
-	if len(args) < 1 {
-		usage()
-		return
-	}
+Fmt formats Touch formatted text into its canonical form. Fmt is like
+what is commonly known as prettify, but opinionated.
 
-	var cfg *config.Config
-	if *conf != "" {
-		f, err := os.Open(*conf)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "cannot open config file (%s): %v\n", *conf, err)
+Options:
+	-config     config file, used to configure templates and
+	            elements (sequentially shallow merged into the core
+		    config)
+	-linelength prose line length (hard-wrap)
+`))
+			return
+		case "tree":
+			fmt.Println(strings.TrimSpace(`
+usage:   to tree [options] stdin
+example: to tree -mode printdata < file.to
+
+Tree prints the node tree representation of Touch formatted text.
+
+Options:
+	-config config file, used to configure templates and elements
+	        (sequentially shallow merged into the core config)
+	-mode   dials the level of info to print
+
+	        modes: printall, printData, printlocation
+`))
+			return
+		default:
+			fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to help %s: unknown topic
+Run 'to help'.
+`)+"\n", allArgs)
 			os.Exit(2)
+			return
 		}
-		if err := json.NewDecoder(f).Decode(&cfg); err != nil {
-			fmt.Fprintf(os.Stderr, "cannot decode JSON from config file (%s): %v\n", *conf, err)
+	case "version":
+		if len(args) > 0 {
+			fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to version: unexpected arguments: %s
+Run 'to version'.
+`)+"\n", strings.Join(args, " "))
 			os.Exit(2)
+			return
 		}
-	} else {
-		cfg = config.Default
+		fmt.Printf("to %s\n", version)
+		return
+	default:
+		fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to %s: unknown command
+Run 'to help %s' for details.
+`)+"\n", cmd, cmd)
+		os.Exit(2)
+		return
 	}
+}
 
-	for _, p := range overrides {
+func usage() {
+	fmt.Fprintln(os.Stderr, strings.TrimSpace(`
+usage: to <command> [arguments]
+Run 'to help' for details.
+`))
+}
+
+func help() {
+	fmt.Fprintln(os.Stdout, strings.TrimSpace(`
+Touch is a tool for managing Touch formatted text.
+
+usage: to <command> [arguments]
+
+Commands:
+	build  	convert Touch formatted text
+	fmt    	format Touch formatted text (prettify)
+	tree   	print node tree
+	help   	print help
+	version	print version
+
+Use "to help <command>" for details about a command.
+`))
+}
+
+func isEmptyStdin() bool {
+	stat, err := os.Stdin.Stat()
+	if err != nil {
+		panic(fmt.Sprintf("os.Stdin.Stat() failed: %v", err))
+	}
+	return (stat.Mode() & os.ModeCharDevice) != 0
+}
+
+func shallowMergeConfigs(dst *config.Config, srcs []string) {
+	for _, s := range srcs {
 		var o *config.Config
-		f, err := os.Open(p)
+		f, err := os.Open(s)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "cannot open config file (%s): %v\n", *conf, err)
+			fmt.Fprintf(os.Stderr, "cannot open config file (%s): %v\n", s, err)
 			os.Exit(2)
+			return
 		}
 		if err := json.NewDecoder(f).Decode(&o); err != nil {
-			fmt.Fprintf(os.Stderr, "cannot decode JSON from config file (%s): %v\n", *conf, err)
+			fmt.Fprintf(os.Stderr, "cannot decode JSON from config file (%s): %v\n", s, err)
 			os.Exit(2)
+			return
 		}
-		config.ShallowMerge(cfg, o)
+		_ = config.ShallowMerge(dst, o)
 	}
+}
 
-	root, err := parser.Parse(os.Stdin, cfg.Elements.ParserElements())
+func parse(in io.Reader, elements parser.Elements) *node.Node {
+	root, err := parser.Parse(in, elements)
 	if err != nil {
 		parser.PrintError(os.Stderr, err)
 		os.Exit(1)
+		return nil
 	}
+	return root
+}
 
-	var transformers transformer.Group
+func transformers(elements config.Elements) transformer.Group {
 	paragraphs := paragraph.Map{}
 	lists := group.Map{}
 	stickies := sticky.Map{}
-	for n, e := range cfg.Elements {
+	for n, e := range elements {
 		var x node.Type
 		if err := (&x).UnmarshalText([]byte(e.Type)); err == nil {
 			// is a node element (can't be a group)
@@ -129,6 +363,7 @@ Options:
 			if err := (&t).UnmarshalText([]byte(e.Option)); err != nil {
 				fmt.Fprintf(os.Stderr, "invalid paragraph option (%q)\n", e.Option)
 				os.Exit(2)
+				return transformer.Group{}
 			}
 			paragraphs[n] = t
 		case "list":
@@ -142,58 +377,79 @@ Options:
 		default:
 			fmt.Fprintf(os.Stderr, "unsupported group type (%q)\n", e.Type)
 			os.Exit(2)
+			return transformer.Group{}
 		}
 	}
-	transformers = append(transformers, paragraph.Transformer{paragraphs})
-	transformers = append(transformers, group.Transformer{lists})
-	transformers = append(transformers, sticky.Transformer{stickies})
-	transformers = append(transformers, transformer.Func(sequentialnumber.Transform))
-	transformers.Transform(root)
+	return transformer.Group{
+		paragraph.Transformer{paragraphs},
+		group.Transformer{lists},
+		sticky.Transformer{stickies},
+		transformer.Func(sequentialnumber.Transform),
+	}
+}
 
-	if *printTree {
-		var m node.PrinterMode
-		for _, s := range printTreeModes {
-			var mm node.PrinterMode
-			if err := (&mm).UnmarshalText([]byte(s)); err != nil {
-				fmt.Fprintf(os.Stderr, "invalid print tree mode %q (options: PrintAll, PrintData, PrintLocation)\n", s)
-				os.Exit(2)
-			}
-			m = m | mm // set flag
+func build(cfg *config.Config, root *node.Node, format string) {
+	aggregators := aggregator.Aggregators{}
+	for n, a := range cfg.Aggregates {
+		switch a.Type {
+		case "sequentialNumber":
+			aggregators[n] = seqnumaggregator.Aggregator{a.Elements}
+		default:
+			fmt.Fprintf(os.Stderr, "invalid config: unsupported aggregate type: %q\n", a.Type)
+			os.Exit(2)
+			return
 		}
-		if err := (node.Printer{m}).Fprint(os.Stdout, root); err != nil {
-			fmt.Fprintf(os.Stderr, "print tree failed: %v\n", err)
-			os.Exit(1)
-		}
+	}
+	aggregates := aggregator.Apply(root, aggregators)
+
+	tmpl := template.New(format)
+	global := map[string]interface{}{
+		"aggregates": aggregates,
+	}
+	tmpl.Funcs(totemplate.Funcs(tmpl, global))
+	_, err := cfg.ParseTemplates(tmpl, format)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "parse templates failed (format=%q): %v\n", format, err)
+		os.Exit(1)
 		return
 	}
+	if err := tmpl.ExecuteTemplate(os.Stdout, "root", root); err != nil {
+		fmt.Fprintf(os.Stderr, "execute template failed (\"root\"): %v\n", err)
+		os.Exit(1)
+		return
+	}
+}
 
-	if format := args[0]; format == "fmt" {
-		if err := (printer.Printer{Elements: cfg.Elements.PrinterElements()}).Fprint(os.Stdout, root); err != nil {
-			fmt.Fprintf(os.Stderr, "format failed: %v\n", err)
-			os.Exit(1)
-		}
-	} else {
-		aggregators := aggregator.Aggregators{}
-		for n, a := range cfg.Aggregates {
-			switch a.Type {
-			case "sequentialNumber":
-				aggregators[n] = seqnumaggregator.Aggregator{a.Elements}
-			default:
-				fmt.Fprintf(os.Stderr, "unsupported aggregate type (%q)\n", a.Type)
-				os.Exit(2)
-			}
-		}
-		aggregates := aggregator.Apply(root, aggregators)
+func format(elements printer.Elements, lineLength int, root *node.Node) {
+	if err := (printer.Printer{Elements: elements, LineLength: lineLength}).Fprint(os.Stdout, root); err != nil {
+		fmt.Fprintf(os.Stderr, "fmt failed: %v\n", err)
+		os.Exit(1)
+		return
+	}
+}
 
-		tmpl := template.New(format)
-		global := map[string]interface{}{
-			"aggregates": aggregates,
+func tree(root *node.Node, modes []string) {
+	var m node.PrinterMode
+	for _, s := range modes {
+		var mm node.PrinterMode
+		if err := (&mm).UnmarshalText([]byte(s)); err != nil {
+			fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to tree: invalid mode: %q
+
+valid modes: printall, printdata, printlocation
+
+usage:   to tree [options] stdin
+example: to tree -mode printdata < file.to
+Run 'to help tree' for details.
+`)+"\n", s)
+			os.Exit(2)
+			return
 		}
-		tmpl.Funcs(totemplate.Funcs(tmpl, global))
-		template.Must(cfg.ParseTemplates(tmpl, format))
-		if err := tmpl.ExecuteTemplate(os.Stdout, "root", root); err != nil {
-			fmt.Fprintf(os.Stderr, "execute template failed ('root'): %v\n", err)
-			os.Exit(1)
-		}
+		m = m | mm // set flag
+	}
+	if err := (node.Printer{m}).Fprint(os.Stdout, root); err != nil {
+		fmt.Fprintf(os.Stderr, "print tree failed: %v\n", err)
+		os.Exit(1)
+		return
 	}
 }
