@@ -1,3 +1,2 @@
-// package template provides Go template functions used for rendering exported
-// Touch formats.
+// Package template provides Go template functions for Touch element templates.
 package template

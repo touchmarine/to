@@ -1,4 +1,4 @@
-// package group provides a transformer for recognizing and adding groups to
+// Package group provides a transformer for recognizing and adding groups to
 // node trees.
 package group
 

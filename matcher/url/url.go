@@ -1,4 +1,4 @@
-// package url provides a Matcher that matches URLs.
+// Package url provides an URL matcher.
 package url
 
 import (

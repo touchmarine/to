@@ -1,7 +1,6 @@
-// package transformer provides a transformer interface and related utility
-// functions. Transformers transform a node tree. They usually traverse the node
-// tree, recognize patterns, and transform the tree by attaching, adding, or
-// removing nodes.
+// Package transformer provides an interface for transforming node trees.
+// Transformers usually traverse the node tree, recognize patterns, and
+// transform the tree by attaching, adding, or removing nodes.
 package transformer
 
 import (

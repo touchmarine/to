@@ -1,4 +1,4 @@
-// package sticky provides a transformer for recognizing and adding stickies to
+// Package sticky provides a transformer for recognizing and adding stickies to
 // node trees.
 package sticky
 

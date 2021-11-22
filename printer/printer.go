@@ -1,5 +1,5 @@
-// package printer allows for printing the canonical form of Touch formatted
-// text.
+// Package printer allows for printing node trees as Touch formatted text in its
+// canonical form.
 package printer
 
 import (
@@ -20,7 +20,7 @@ type writer interface {
 	io.StringWriter
 }
 
-// Printer prints the canonical form of Touch formatted text. The values in this
+// Printer prints Touch formatted text in its canonical form. The values in this
 // struct give the printer a valid element set and a line length to wrap prose
 // at (if set).
 type Printer struct {

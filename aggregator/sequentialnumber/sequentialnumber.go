@@ -1,5 +1,5 @@
-// package sequentialnumber provides an aggregator that aggregates sequential
-// numbers. The aggregate is used to generate table of contents.
+// Package sequentialnumber provides a sequential number aggregator. The
+// aggregate is used to generate table of contents.
 package sequentialnumber
 
 import (

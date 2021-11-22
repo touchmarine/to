@@ -1,10 +1,10 @@
-// configtmpl takes a config JSON template as stdin and outputs JSON. It
+// configtmpl takes a config JSON template as stdin and outputs plain JSON. It
 // provides raw multiline strings delimited by triple single quotes "'".
 // Immediate newline after the delimiter is discarded if present.
 //
 // Usage:
 //
-// go run scripts/configtmpl < config/to.jsontmpl > config/to.json
+// 	go run scripts/configtmpl < config/to.jsontmpl > config/to.json
 package main
 
 import (

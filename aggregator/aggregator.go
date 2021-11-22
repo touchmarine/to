@@ -1,4 +1,4 @@
-// package aggregator contains functions and types related to aggregates.
+// Package aggregator defines an interface for aggregating data from node trees.
 //
 // Aggregators traverse the node tree and aggregate (collect) data we are
 // interested in. For example, we use the sequential number aggregator to

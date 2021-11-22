@@ -1,5 +1,4 @@
-// package node provides a struct used to represent node trees for Touch
-// formatted text.
+// Package node provides a type used to represent node trees.
 package node
 
 import (

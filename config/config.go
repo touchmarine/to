@@ -1,5 +1,5 @@
-// package config provides structs and functions for configuring all of the core
-// Touch packages.
+// Package config provides types and functions for configuring the core Touch
+// packages.
 package config
 
 import (

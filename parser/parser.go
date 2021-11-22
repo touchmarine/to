@@ -1,4 +1,5 @@
-// package parser provides functions and types to parse Touch formatted text.
+// Package parser provides functions and types to parse Touch formatted text
+// into node trees.
 package parser
 
 import (

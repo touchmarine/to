@@ -1,5 +1,5 @@
-// package matcher provides a matcher interface and related functions. Matchers
-// are used by the parser to determine the contents of prefix elements.
+// Package matcher provides a matcher interface which is used by the parser to
+// determine the contents of prefix elements.
 package matcher
 
 import (

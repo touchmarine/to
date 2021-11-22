@@ -1,5 +1,5 @@
-// package sequentialnumber provides a transformer for calculating and attaching
-// sequential numbers in node trees. The resulting sequential numbers are used
+// Package sequentialnumber provides a transformer for calculating and attaching
+// sequential numbers to node trees. The resulting sequential numbers are used
 // by the sequentialnumber aggregator to generate table of contents.
 package sequentialnumber
 

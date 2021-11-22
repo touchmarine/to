@@ -1,4 +1,4 @@
-// package paragraph provides a transformer for recognizing and adding
+// Package paragraph provides a transformer for recognizing and adding
 // paragraphs to node trees.
 package paragraph
 

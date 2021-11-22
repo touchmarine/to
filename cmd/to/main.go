@@ -1,3 +1,15 @@
+// Touch is a tool for managing Touch formatted text.
+//
+// usage: to <command> [arguments]
+//
+// Commands:
+// 	build  	convert Touch formatted text
+// 	fmt    	format Touch formatted text (prettify)
+// 	tree   	print node tree
+// 	help   	print help
+// 	version	print version
+//
+// Use "to help <command>" for details about a command.
 package main
 
 import (

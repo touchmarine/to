@@ -1,3 +1,5 @@
+// refactortests converts old parser table tests to golden files.
+//
 // refactortests takes the old parser_test.go file, in which the tests were
 // written using the old-style nodes, and writes test cases as input files:
 // testdata/<testname>/<testcase>.input
