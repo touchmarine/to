@@ -7,11 +7,10 @@ import (
 	"github.com/touchmarine/to/node"
 )
 
-// Transformer transforms the given node tree and returns the transformed
-// variant.
+// Transformer transforms the given node tree and returns it.
 //
 // Transformers can also first inspect the given tree and transform it based on
-// the inspection results. This is common in To—transformers first recognize
+// the inspection results. This is common in Touch—transformers first recognize
 // patterns (like groups) and then, based on the results, transform the tree
 // (add the groups).
 type Transformer interface {

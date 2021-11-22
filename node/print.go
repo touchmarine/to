@@ -19,8 +19,8 @@ const (
 	PrintLocation                         // print node.Location
 )
 
-// UnmarshalText decodes the given text into a PrinterMode (case-insensitive).
-// It returns an error if the text cannot be decoded (unexpected value).
+// UnmarshalText decodes the given text into *PrinterMode (case-insensitive).
+// It returns an error on unexpected text.
 func (m *PrinterMode) UnmarshalText(text []byte) error {
 	s := strings.ToLower(string(text))
 	if mm, ok := validModes[s]; ok {
@@ -36,18 +36,18 @@ var validModes = map[string]PrinterMode{
 	strings.ToLower(PrintLocation.String()): PrintLocation,
 }
 
-// Print prints the given node to stdout.
+// Print prints the string representation of the given node tree to stdout.
 func Print(n *Node) error {
 	return Fprint(os.Stdout, n)
 }
 
-// Fprint prints the node to the writer.
+// Fprint prints the string representation of the node tree to the writer.
 func Fprint(w io.Writer, n *Node) error {
 	return Printer{}.Fprint(w, n)
 }
 
-// Printer prints the string representation of node trees.
-// It holds the printer configuration.
+// Printer prints the string representation of node trees. Output depends on the
+// values in this struct.
 type Printer struct {
 	Mode PrinterMode
 }
@@ -57,7 +57,7 @@ type writer interface {
 	io.StringWriter
 }
 
-// Fprint prints the node to the writer.
+// Fprint prints the string representation of the the node tree to the writer.
 func (p Printer) Fprint(w io.Writer, n *Node) error {
 	if x, ok := w.(writer); ok {
 		return p.fprint(x, n)

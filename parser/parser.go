@@ -16,25 +16,26 @@ import (
 
 const trace = false
 
+// Keys to values in node.Data.
 const (
-	KeyRank        = "rank"
-	KeyOpeningText = "openingText"
+	KeyRank        = "rank"        // rank (level) in ranked hanging elements
+	KeyOpeningText = "openingText" // opening text in fenced elements
 )
 
-// Elements maps element names to Elements.
+// Elements is a map of element names to Elements.
 type Elements map[string]Element
 
 // Element tells the parser how to recognize an element.
 type Element struct {
 	Name      string    // element name
 	Type      node.Type // node type
-	Delimiter string    // complete or a bit of a delimiter
+	Delimiter string    // delimiter character or a whole delimiter
 	Matcher   string    // used to determine the contents of prefixed elements
 }
 
 // Parser parses Touch formatted text based on the values in this struct.
 type Parser struct {
-	Elements Elements    // element set for this parse
+	Elements Elements    // element set
 	Matchers matcher.Map // available matchers (by name)
 	TabWidth int         // tab=<tabwidth> x spaces
 }
@@ -1346,7 +1347,7 @@ func isSpacing(r rune) bool {
 var (
 	ErrInvalidUTF8Encoding = &Error{"invalid UTF-8 encoding"}
 	ErrIllegalNULL         = &Error{"illegal character NULL"}
-	ErrIllegalBOM          = &Error{"illegal byte order mark"} // permitted only as first character
+	ErrIllegalBOM          = &Error{"illegal byte order mark"}
 )
 
 const (

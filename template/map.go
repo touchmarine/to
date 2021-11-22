@@ -4,8 +4,10 @@ import (
 	"strings"
 )
 
-// MakeGloblMapFunction returns a function that returns a map (via closure). A
-// map is made if the given map is nil.
+// MakeGlobalMapFunction returns a function that returns a map (via closure).
+// A map is made if the given map is nil.
+//
+// MakeGlobalMapFunction is used to create global maps in templates.
 func MakeGlobalMapFunction(base map[string]interface{}) func() map[string]interface{} {
 	m := base
 	if m == nil {
@@ -26,7 +28,7 @@ func Dot(m map[string]interface{}, selector string) interface{} {
 	return Get(m, selector)
 }
 
-// Get returns a map value or "" if entry doesn't exist.
+// Get returns a map value or an empty string if entry doesn't exist.
 func Get(m map[string]interface{}, key string) interface{} {
 	if v, ok := m[key]; ok {
 		return v

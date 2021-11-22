@@ -6,7 +6,8 @@ import (
 	"github.com/touchmarine/to/matcher/url"
 )
 
-// Matcher recognizes patterns and returns the length of the match.
+// Matcher recognizes patterns in the given bytes and returns the length of the
+// match.
 type Matcher interface {
 	Match([]byte) int
 }
@@ -20,10 +21,10 @@ func (m MatcherFunc) Match(p []byte) int {
 	return m(p)
 }
 
-// Map maps matcher names to matchers.
+// Map is a map of matcher names to Matchers.
 type Map map[string]Matcher
 
-// Defaults retuns a Map of default matchers.
+// Defaults returns a Map of default matchers.
 func Defaults() Map {
 	return Map{
 		"url": MatcherFunc(url.Match),

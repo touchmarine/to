@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-// Node represents a unit of Touch formatted text-a text node, an element, or a
-// container of other nodes.
+// Node represents an abstract unit of Touch formatted text: text, an element,
+// or a container of other nodes.
 type Node struct {
 	Element string // element name (blank if not an element)
 	Type    Type   // node type
@@ -16,13 +16,14 @@ type Node struct {
 
 	Value string // text node's content
 
+	// relationships
 	Parent          *Node
 	FirstChild      *Node
 	LastChild       *Node
 	PreviousSibling *Node
 	NextSibling     *Node
 
-	Location Location
+	Location Location // location in source
 }
 
 // Data holds any extra data associated with a node.
@@ -35,13 +36,15 @@ type Location struct {
 	Range Range
 }
 
-//   foo://example.com:8042/over/there?name=ferret#nose
-//   \_/   \______________/\_________/ \_________/ \__/
-//    |           |            |            |        |
-// scheme     authority       path        query   fragment
-//    |   _____________________|__
-//   / \ /                        \
-//   urn:example:animal:ferret:nose
+// DocumentURI is an URI of a document.
+//
+// 	  foo://example.com:8042/over/there?name=ferret#nose
+// 	  \_/   \______________/\_________/ \_________/ \__/
+// 	   |           |            |            |        |
+// 	scheme     authority       path        query   fragment
+// 	   |   _____________________|__
+// 	  / \ /                        \
+// 	  urn:example:animal:ferret:nose
 //
 // https://microsoft.github.io/language-server-protocol/specifications/specification-3-17/#uri
 // https://datatracker.ietf.org/doc/html/rfc3986
@@ -59,7 +62,8 @@ type Position struct {
 	Column int // zero-based, byte-count
 }
 
-// String is used for debugging and can change at any time.
+// String returns the node's type and element value. It is used for debugging
+// and can change at any time.
 func (n Node) String() string {
 	return fmt.Sprintf("%s(%s)", n.Type.String(), n.Element)
 }
@@ -75,7 +79,7 @@ func (n Node) IsInline() bool {
 }
 
 // InsertBefore inserts the newChild immediately before the oldChild.
-// newChild is inserted at the end if oldChild is nil.
+// newChild is inserted after existing children if oldChild is nil.
 //
 // https://pkg.go.dev/golang.org/x/net/html#Node.InsertBefore
 func (n *Node) InsertBefore(newChild, oldChild *Node) {

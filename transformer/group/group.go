@@ -7,7 +7,7 @@ import (
 )
 
 // Map is a map of group names (keys) to elements (values). Elements tell the
-// transformer which elements can it grouped.
+// transformer which elements can it group.
 type Map map[string]string
 
 func (m Map) firstByElement(e string) (string, bool) {
@@ -24,7 +24,7 @@ func (m Map) firstByElement(e string) (string, bool) {
 // same sibling elements.
 //
 // Transformer supports only one group per element. Using multiple groups
-// targeting the same element is undefined behaviour.
+// targeting the same element is considered undefined behaviour.
 type Transformer struct {
 	Groups Map
 }

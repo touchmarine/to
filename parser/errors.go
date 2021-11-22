@@ -6,8 +6,8 @@ import (
 	"sort"
 )
 
-// PrintError prints a list of errors to the writer, one error per line, if the
-// given error is an ErrorList. Otherwise, it prints the error.
+// PrintError prints one error per line if the given error is an ErrorList.
+// Otherwise, it just prints the error.
 //
 // https://pkg.go.dev/go/scanner#PrintError
 func PrintError(w io.Writer, err error) {
@@ -53,20 +53,18 @@ func (el ErrorList) Sort() {
 	sort.Sort(el)
 }
 
-// Len implements the error list length. It implements the sort Interface.
+// Len implements the sort Interface.
 func (el ErrorList) Len() int {
 	return len(el)
 }
 
-// Swap swaps the elements with indexes i and j. It implements the sort
-// Interface.
+// Swap implements the sort Interface.
 func (el ErrorList) Swap(i, j int) {
 	el[i] = el[j]
 	el[j] = el[i]
 }
 
-// Less reports whether the element with index i must sort before the element
-// with index j. It implements the sort Interface.
+// Less implements the sort Interface.
 func (el ErrorList) Less(i, j int) bool {
 	return el[i].Message < el[j].Message
 }

@@ -6,10 +6,10 @@ import (
 	"github.com/touchmarine/to/node"
 )
 
-// Key is a key to sticky's position ("before" or "after") in node.Data.
-const Key = "sticky"
+// Key is a key to sticky's position in node.Data.
+const Key = "sticky" // value can be "before" or "after"
 
-// Map is a map of sticky names (keys) to Sticky structs (values).
+// Map is a map of sticky names to Stickys.
 type Map map[string]Sticky
 
 func (m Map) containsElement(e string) bool {

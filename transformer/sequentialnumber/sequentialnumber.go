@@ -15,8 +15,8 @@ import (
 const Key = "sequentialNumber"
 
 // Transform calculates the sequential numbers and attaches them to the element
-// in node.Data[Key] (it mutates the given tree). It calculates the sequential
-// numbers based on the elements' ranks stored in node.Data[parser.KeyRank].
+// in node.Data[Key] (it mutates the tree). It calculates the sequential numbers
+// based on the elements' ranks stored in node.Data[parser.KeyRank].
 //
 // Transform implements the Transformer interface.
 func Transform(n *node.Node) *node.Node {

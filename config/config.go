@@ -25,15 +25,15 @@ func init() {
 	}
 }
 
-// Config holds abstracted, user-friendly options that can be used to configure
-// all of the core Touch packages.
+// Config holds abstracted options that can be used to configure the core Touch
+// packages.
 type Config struct {
 	Templates  Templates
 	Elements   Elements
 	Aggregates Aggregates
 }
 
-// Templates maps formats to template strings.
+// Templates is a map of formats to template strings.
 type Templates map[string]string
 
 func (ts Templates) parse(t *template.Template, name, format string) (*template.Template, error) {
@@ -47,8 +47,8 @@ func (ts Templates) parse(t *template.Template, name, format string) (*template.
 	return t, nil
 }
 
-// ParseTemplates parses all config templates as template bodies for the given
-// template. It parses templates that match the given format.
+// ParseTemplates parses config templates that match the given format as
+// template bodies for the given template.
 func (c Config) ParseTemplates(t *template.Template, format string) (*template.Template, error) {
 	if _, err := c.Templates.parse(t, "root", format); err != nil {
 		return nil, err
@@ -59,17 +59,16 @@ func (c Config) ParseTemplates(t *template.Template, format string) (*template.T
 	return t, nil
 }
 
-// Elements maps element names to Elements.
+// Elements is a map of element names to Elements.
 type Elements map[string]Element
 
-// Element is an abstraction of parser.Element, printer.Element, and groups
-// (transformers).
+// Element is an abstraction of parser.Element and transformer options.
 type Element struct {
-	Type      string    // node or group (transformer) type (e.g. walled, list)
+	Type      string    // node type or transformer name (e.g. walled, list)
 	Delimiter string    // element delimiter
-	Matcher   string    // element matcher name (e.g. url)
-	Element   string    // group main element (e.g. list element)
-	Target    string    // group target element (e.g. sticky target)
+	Matcher   string    // prefixed element matcher name (e.g. url)
+	Element   string    // transformer main element (list element)
+	Target    string    // transformer target element (sticky target)
 	Option    string    // extra option (primarily for one-off options)
 	Templates Templates // map of formats to template strings
 }
@@ -103,11 +102,11 @@ func (es Elements) parseTemplates(t *template.Template, format string) (*templat
 	return t, nil
 }
 
-// Aggregates maps aggregate names to Aggregates.
+// Aggregates is a map of aggregate names to Aggregates.
 type Aggregates map[string]Aggregate
 
 // Aggregate holds aggregator options.
 type Aggregate struct {
-	Type     string   // which aggregator
-	Elements []string // limit elements aggregator can aggregate from
+	Type     string   // which aggregator (aggregator name)
+	Elements []string // allowed elements to aggregate from
 }

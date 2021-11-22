@@ -14,10 +14,10 @@ import (
 	"github.com/touchmarine/to/node"
 )
 
-// Aggregators maps Aggregators by name.
+// Aggregators is a map of aggregator names to Aggregators.
 type Aggregators map[string]Aggregator
 
-// Aggregator is an object that aggregates (collects) nodes.
+// Aggregator aggregates (collects) data from node trees.
 type Aggregator interface {
 	Aggregate(n *node.Node) Aggregate
 }
@@ -31,7 +31,7 @@ func (a AggregatorFunc) Aggregate(n *node.Node) Aggregate {
 	return a(n)
 }
 
-// Aggregates maps Aggregates by name.
+// Aggregates is a map of aggregate names to Aggregates.
 type Aggregates map[string]Aggregate
 
 // Aggregate is an aggregate of data we are interested in.

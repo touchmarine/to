@@ -55,7 +55,8 @@ func Errorf(format string, v ...interface{}) (string, error) {
 // MakeTemplateFunction returns a function that can be used like the default Go
 // {{template}} function but supports variable template names.
 //
-// e.g. {{dynamicTemplate $c.Element $c}}
+// Example:
+// 	{{dynamicTemplate $c.Element $c}}
 func MakeTemplateFunction(tmpl *template.Template) func(name string, v ...interface{}) (template.HTML, error) {
 	return func(name string, v ...interface{}) (template.HTML, error) {
 		var arg interface{}
@@ -75,7 +76,7 @@ func MakeTemplateFunction(tmpl *template.Template) func(name string, v ...interf
 	}
 }
 
-// ElementChildren returns a list of element children-children that represent an
+// ElementChildren returns a list of element children—children that represent an
 // element and not a plain node (e.g. container).
 func ElementChildren(n *node.Node) []*node.Node {
 	var nodes []*node.Node

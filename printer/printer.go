@@ -20,15 +20,14 @@ type writer interface {
 	io.StringWriter
 }
 
-// Printer prints Touch formatted text in its canonical form. The values in this
-// struct give the printer a valid element set and a line length to wrap prose
-// at (if set).
+// Printer prints Touch formatted text in its canonical form. Output depends on
+// the values in this struct.
 type Printer struct {
 	Elements   parser.Elements // element set used to parse the node tree
 	LineLength int             // line length to wrap text at
 }
 
-// Fprint prints the touch formatted text of the node tree to the writer.
+// Fprint prints the touch formatted text to the writer.
 func (p Printer) Fprint(w io.Writer, n *node.Node) error {
 	pp := printer{
 		elements:   p.Elements,
