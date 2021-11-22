@@ -10,15 +10,17 @@ import (
 	"strings"
 )
 
-//go:generate stringer -type=PrinterMode
+// PrinterMode controls the printing.
 type PrinterMode int
 
+//go:generate stringer -type=PrinterMode
 const (
-	PrintAll  PrinterMode = PrintData | PrintLocation
-	PrintData PrinterMode = 1 << iota
-	PrintLocation
+	PrintData     PrinterMode = 1 << iota // print node.Data
+	PrintLocation                         // print node.Location
 )
 
+// UnmarshalText decodes the given text into a PrinterMode (case-insensitive).
+// It returns an error if the text cannot be decoded (unexpected value).
 func (m *PrinterMode) UnmarshalText(text []byte) error {
 	s := strings.ToLower(string(text))
 	if mm, ok := validModes[s]; ok {
@@ -30,19 +32,22 @@ func (m *PrinterMode) UnmarshalText(text []byte) error {
 }
 
 var validModes = map[string]PrinterMode{
-	strings.ToLower(PrintAll.String()):      PrintAll,
 	strings.ToLower(PrintData.String()):     PrintData,
 	strings.ToLower(PrintLocation.String()): PrintLocation,
 }
 
+// Print prints the given node to stdout.
 func Print(n *Node) error {
 	return Fprint(os.Stdout, n)
 }
 
+// Fprint prints the node to the writer.
 func Fprint(w io.Writer, n *Node) error {
 	return Printer{}.Fprint(w, n)
 }
 
+// Printer prints the string representation of node trees.
+// It holds the printer configuration.
 type Printer struct {
 	Mode PrinterMode
 }
@@ -52,6 +57,7 @@ type writer interface {
 	io.StringWriter
 }
 
+// Fprint prints the node to the writer.
 func (p Printer) Fprint(w io.Writer, n *Node) error {
 	if x, ok := w.(writer); ok {
 		return p.fprint(x, n)

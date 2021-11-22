@@ -1,3 +1,5 @@
+// package node provides a struct used to represent node trees for Touch
+// formatted text.
 package node
 
 import (
@@ -6,12 +8,14 @@ import (
 	"strings"
 )
 
+// Node represents a unit of Touch formatted text-a text node, an element, or a
+// container of other nodes.
 type Node struct {
-	Element string // element name
-	Type    Type
-	Data    Data // additional data, like rank
+	Element string // element name (blank if not an element)
+	Type    Type   // node type
+	Data    Data   // extra data (e.g. rank)
 
-	Value string
+	Value string // text node's content
 
 	Parent          *Node
 	FirstChild      *Node
@@ -22,6 +26,7 @@ type Node struct {
 	Location Location
 }
 
+// Data holds any extra data associated with a node.
 type Data map[string]interface{}
 
 // Location represents a location inside a resource, such as a line inside a
@@ -60,14 +65,20 @@ func (n Node) String() string {
 	return fmt.Sprintf("%s(%s)", n.Type.String(), n.Element)
 }
 
+// IsBlock reports whether the node type is a member of the block type set.
 func (n Node) IsBlock() bool {
 	return IsBlock(n.Type)
 }
 
+// IsInline reports whether the node type is a member of the inline type set.
 func (n Node) IsInline() bool {
 	return IsInline(n.Type)
 }
 
+// InsertBefore inserts the newChild immediately before the oldChild.
+// newChild is inserted at the end if oldChild is nil.
+//
+// https://pkg.go.dev/golang.org/x/net/html#Node.InsertBefore
 func (n *Node) InsertBefore(newChild, oldChild *Node) {
 	if newChild.Parent != nil || newChild.PreviousSibling != nil || newChild.NextSibling != nil {
 		panic("node: InsertBefore called for an attached child Node")
@@ -93,6 +104,11 @@ func (n *Node) InsertBefore(newChild, oldChild *Node) {
 	newChild.NextSibling = next
 }
 
+// AppendChild appends the given node (at the end).
+//
+// It will panic if the given node already has a parent or siblings.
+//
+// https://pkg.go.dev/golang.org/x/net/html#Node.AppendChild
 func (n *Node) AppendChild(c *Node) {
 	if c.Parent != nil || c.PreviousSibling != nil || c.NextSibling != nil {
 		panic("node: AppendChild called for an attached child Node")
@@ -110,6 +126,10 @@ func (n *Node) AppendChild(c *Node) {
 	c.PreviousSibling = last
 }
 
+// RemoveChild removes the given child. Afterwards, the removed child will have
+// no parent or siblings.
+//
+// https://pkg.go.dev/golang.org/x/net/html#Node.RemoveChild
 func (n *Node) RemoveChild(c *Node) {
 	if c.Parent != n {
 		panic("node: RemoveChild called for a non-child Node")

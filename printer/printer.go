@@ -1,3 +1,5 @@
+// package printer allows for printing the canonical form of Touch formatted
+// text.
 package printer
 
 import (
@@ -12,27 +14,21 @@ import (
 	"github.com/touchmarine/to/parser"
 )
 
-// Elements maps Elements to Names.
-type Elements map[string]Element
-
-type Element struct {
-	Name      string
-	Type      node.Type
-	Delimiter string
-	Matcher   string
-}
-
 type writer interface {
 	io.Writer
 	io.ByteWriter
 	io.StringWriter
 }
 
+// Printer prints the canonical form of Touch formatted text. The values in this
+// struct give the printer a valid element set and a line length to wrap prose
+// at (if set).
 type Printer struct {
-	Elements   Elements
-	LineLength int // line length to wrap text at
+	Elements   parser.Elements // element set used to parse the node tree
+	LineLength int             // line length to wrap text at
 }
 
+// Fprint prints the touch formatted text of the node tree to the writer.
 func (p Printer) Fprint(w io.Writer, n *node.Node) error {
 	pp := printer{
 		elements:   p.Elements,
@@ -53,7 +49,7 @@ func (p Printer) Fprint(w io.Writer, n *node.Node) error {
 
 type printer struct {
 	w          *printerWriter
-	elements   Elements
+	elements   parser.Elements
 	lineLength int
 
 	prefixes       []string // opened block prefixes

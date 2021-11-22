@@ -1335,7 +1335,7 @@ func runPrint(t *testing.T, elements config.Elements, transformers []transformer
 	}
 
 	var b strings.Builder
-	if err := (printer.Printer{Elements: elements.PrinterElements(), LineLength: lineLength}).Fprint(&b, root); err != nil {
+	if err := (printer.Printer{Elements: elements.ParserElements(), LineLength: lineLength}).Fprint(&b, root); err != nil {
 		t.Fatal(err)
 	}
 	return b.String()

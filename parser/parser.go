@@ -1,3 +1,4 @@
+// package parser provides functions and types to parse Touch formatted text.
 package parser
 
 import (
@@ -19,22 +20,26 @@ const (
 	KeyOpeningText = "openingText"
 )
 
-// Elements maps Elements by name.
+// Elements maps element names to Elements.
 type Elements map[string]Element
 
+// Element tells the parser how to recognize an element.
 type Element struct {
-	Name      string
-	Type      node.Type
-	Delimiter string
-	Matcher   string
+	Name      string    // element name
+	Type      node.Type // node type
+	Delimiter string    // complete or a bit of a delimiter
+	Matcher   string    // used to determine the contents of prefixed elements
 }
 
+// Parser parses Touch formatted text based on the values in this struct.
 type Parser struct {
-	Elements Elements
-	Matchers matcher.Map
-	TabWidth int
+	Elements Elements    // element set for this parse
+	Matchers matcher.Map // available matchers (by name)
+	TabWidth int         // tab=<tabwidth> x spaces
 }
 
+// Parse parses Touch formatted text supplied by the given reader and returns
+// the parsed node tree.
 func (pp Parser) Parse(src io.Reader) (*node.Node, error) {
 	var p parser
 	p.registerElements(pp.Elements)
@@ -1340,7 +1345,7 @@ func isSpacing(r rune) bool {
 var (
 	ErrInvalidUTF8Encoding = &Error{"invalid UTF-8 encoding"}
 	ErrIllegalNULL         = &Error{"illegal character NULL"}
-	ErrIllegalBOM          = &Error{"illegal byte order mark"}
+	ErrIllegalBOM          = &Error{"illegal byte order mark"} // permitted only as first character
 )
 
 const (

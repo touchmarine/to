@@ -1,3 +1,5 @@
+// package sequentialnumber provides an aggregator that aggregates sequential
+// numbers. The aggregate is used to generate table of contents.
 package sequentialnumber
 
 import (
@@ -8,10 +10,13 @@ import (
 	"github.com/touchmarine/to/transformer/sequentialnumber"
 )
 
+// Aggregator aggregates sequential numbers of elements that belong to the
+// Elements set.
 type Aggregator struct {
 	Elements []string
 }
 
+// Aggregate implements the Aggregator interface.
 func (ar Aggregator) Aggregate(n *node.Node) aggregator.Aggregate {
 	var ae aggregate
 	walk(n, func(n *node.Node) bool {
@@ -42,6 +47,7 @@ func (a Aggregator) isTargetElement(s string) bool {
 
 type aggregate []particle
 
+// AnAggregate implements the Aggregate interface.
 func (aggregate) AnAggregate() {}
 
 type particle struct {

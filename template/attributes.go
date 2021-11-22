@@ -35,6 +35,7 @@ func AttributesToHTML(attrs map[string]interface{}) template.HTMLAttr {
 	return template.HTMLAttr(b.String())
 }
 
+// ParseAttributes parses the attributes in the given string and returns them.
 func ParseAttributes(s string) map[string]interface{} {
 	p := attributeParser{}
 	reader := strings.NewReader(s)

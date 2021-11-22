@@ -1,5 +1,6 @@
 package sequentialnumber
 
+// Group groups particles into per depth groups.
 func (a aggregate) Group() group {
 	return (&grouper{a: a}).group(1)
 }

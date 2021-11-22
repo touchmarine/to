@@ -159,7 +159,7 @@ Run 'to help fmt' for details.
 			root := parse(os.Stdin, cfg.Elements.ParserElements(), tabWidth)
 			root = transformers(cfg.Elements).Transform(root)
 
-			format(cfg.Elements.PrinterElements(), *lineLength, root) // exits on error
+			format(cfg.Elements.ParserElements(), *lineLength, root) // exits on error
 			return
 		case "tree":
 			var modes []string
@@ -170,7 +170,7 @@ usage: to tree [options] stdin
 Run 'to help tree' for details.
 `))
 			}
-			fs.Func("mode", "set print mode (modes: printall, printdata, printlocation)", func(s string) error {
+			fs.Func("mode", "set print mode (modes: printdata, printlocation)", func(s string) error {
 				modes = append(modes, s)
 				return nil
 			})
@@ -269,7 +269,7 @@ Options:
 	-mode
 		dials the level of info to print
 
-		modes: printall, printData, printlocation
+		modes: printData, printlocation
 `))
 			return
 		default:
@@ -444,7 +444,7 @@ func build(cfg *config.Config, root *node.Node, format string) {
 	}
 }
 
-func format(elements printer.Elements, lineLength int, root *node.Node) {
+func format(elements parser.Elements, lineLength int, root *node.Node) {
 	if err := (printer.Printer{Elements: elements, LineLength: lineLength}).Fprint(os.Stdout, root); err != nil {
 		fmt.Fprintf(os.Stderr, "fmt failed: %v\n", err)
 		os.Exit(1)
@@ -460,7 +460,7 @@ func tree(root *node.Node, modes []string) {
 			fmt.Fprintf(os.Stderr, strings.TrimSpace(`
 to tree: invalid mode: %q
 
-valid modes: printall, printdata, printlocation
+valid modes: printdata, printlocation
 
 usage:   to tree [options] stdin
 example: to tree -mode printdata < file.to

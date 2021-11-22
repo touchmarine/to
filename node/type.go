@@ -60,14 +60,23 @@ var validTypes = map[string]Type{
 	strings.ToLower(TypeText.String()):     TypeText,
 }
 
+// IsInline reports whether the given type is a member of the block type set.
+//
+// Note that a non-block type is not necessarily an inline type:
+// 	!IsBlock() != IsInline()
 func IsBlock(t Type) bool {
 	return t >= TypeWalled && t <= TypeLeaf
 }
 
+// IsInline reports whether the given type is a member of the inline type set.
+//
+// Note that a non-inline type is not necessarily a block type:
+// 	!IsInline() != IsBlock()
 func IsInline(t Type) bool {
 	return t >= TypeUniform
 }
 
+// HasDelimiter reports whether the given type must have a delimiter.
 func HasDelimiter(t Type) bool {
 	return t == TypeWalled || t == TypeVerbatimWalled || t == TypeHanging ||
 		t == TypeRankedHanging || t == TypeFenced || t == TypeVerbatimLine ||

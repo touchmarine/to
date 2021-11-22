@@ -1,3 +1,5 @@
+// package config provides structs and functions for configuring all of the core
+// Touch packages.
 package config
 
 import (
@@ -9,7 +11,6 @@ import (
 
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
-	"github.com/touchmarine/to/printer"
 )
 
 //go:embed to.json
@@ -24,12 +25,15 @@ func init() {
 	}
 }
 
+// Config holds abstracted, user-friendly options that can be used to configure
+// all of the core Touch packages.
 type Config struct {
 	Templates  Templates
 	Elements   Elements
 	Aggregates Aggregates
 }
 
+// Templates maps formats to template strings.
 type Templates map[string]string
 
 func (ts Templates) parse(t *template.Template, name, format string) (*template.Template, error) {
@@ -55,20 +59,23 @@ func (c Config) ParseTemplates(t *template.Template, format string) (*template.T
 	return t, nil
 }
 
-// Elements maps Elements by name.
+// Elements maps element names to Elements.
 type Elements map[string]Element
 
+// Element is an abstraction of parser.Element, printer.Element, and groups
+// (transformers).
 type Element struct {
-	Type      string
-	Delimiter string
-	Matcher   string
-	Element   string
-	Target    string
-	Option    string
-	Templates Templates
+	Type      string    // node or group (transformer) type (e.g. walled, list)
+	Delimiter string    // element delimiter
+	Matcher   string    // element matcher name (e.g. url)
+	Element   string    // group main element (e.g. list element)
+	Target    string    // group target element (e.g. sticky target)
+	Option    string    // extra option (primarily for one-off options)
+	Templates Templates // map of formats to template strings
 }
 
-// ParserElements returns the elements converted to parser.Elements.
+// ParserElements returns the elements with a valid node type converted to
+// parser.Elements.
 func (es Elements) ParserElements() parser.Elements {
 	m := parser.Elements{}
 	for n, e := range es {
@@ -87,25 +94,6 @@ func (es Elements) ParserElements() parser.Elements {
 	return m
 }
 
-// PrinterElements returns the elements converted to printer.Elements.
-func (es Elements) PrinterElements() printer.Elements {
-	m := printer.Elements{}
-	for n, e := range es {
-		var t node.Type
-		if err := (&t).UnmarshalText([]byte(e.Type)); err != nil {
-			// isn't a node element
-			continue
-		}
-		m[n] = printer.Element{
-			Name:      n,
-			Type:      t,
-			Delimiter: e.Delimiter,
-			Matcher:   e.Matcher,
-		}
-	}
-	return m
-}
-
 func (es Elements) parseTemplates(t *template.Template, format string) (*template.Template, error) {
 	for n, e := range es {
 		if _, err := e.Templates.parse(t, n, format); err != nil {
@@ -115,10 +103,11 @@ func (es Elements) parseTemplates(t *template.Template, format string) (*templat
 	return t, nil
 }
 
-// Aggregates maps Aggregates by name.
+// Aggregates maps aggregate names to Aggregates.
 type Aggregates map[string]Aggregate
 
+// Aggregate holds aggregator options.
 type Aggregate struct {
-	Type     string
-	Elements []string
+	Type     string   // which aggregator
+	Elements []string // limit elements aggregator can aggregate from
 }

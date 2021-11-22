@@ -76,7 +76,7 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 
 	fs := flag.NewFlagSet("", flag.ContinueOnError)
 	var printModes []string
-	fs.Func("print-mode", "enable print tree mode (options: PrintAll, PrintData, PrintLocation)", func(s string) error {
+	fs.Func("print-mode", "enable print tree mode (options: PrintData, PrintLocation)", func(s string) error {
 		printModes = append(printModes, s)
 		return nil
 	})

@@ -1,3 +1,4 @@
+// package url provides a Matcher that matches URLs.
 package url
 
 import (
@@ -125,7 +126,6 @@ func isSpacing(ch byte) bool {
 	return ch == ' ' || ch == '\t'
 }
 
-// same as in parser/parser.go, cycle import not allowed
 func validRune(r rune, w int) rune {
 	switch r {
 	case utf8.RuneError:
