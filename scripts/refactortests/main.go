@@ -15,6 +15,10 @@
 // Caveats (need to do manually):
 // - tests that do not use a cases table, such as TestBOM, are not handled
 // - expected errors are not handled
+//
+// NOTE: On publishing the module, go module zip creation failed as many ASCII
+//       characters are not allowed in the path (e.g. '\', '*', '>').
+//       https://github.com/golang/vgo/blob/master/vendor/cmd/go/internal/module/module.go
 package main
 
 import (
