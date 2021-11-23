@@ -1,11 +1,12 @@
-// configtmpl takes a config JSON template as stdin and outputs plain JSON. It
-// provides raw multiline strings delimited by triple single quotes "'".
+// Package extjson converts extended JSON, used for Touch config, to plain JSON.
+//
+// Extended JSON is a superset of JSON and converts to plain JSON. It makes it
+// easier to write JSON Touch configs.
+//
+// Extended JSON introduces raw multiline strings which are converted to regular
+// JSON strings. Multiline strings are delimited by triple single quotes.
 // Immediate newline after the delimiter is discarded if present.
-//
-// Usage:
-//
-// 	go run scripts/configtmpl < config/to.jsontmpl > config/to.json
-package main
+package extjson
 
 import (
 	"bufio"
@@ -13,12 +14,12 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"os"
 )
 
-func main() {
+// Convert reads and converts extended JSON to plain JSON.
+func Convert(w io.Writer, r io.Reader) {
 	var p parser
-	p.init(os.Stdin, os.Stdout)
+	p.init(r, w)
 	p.parse()
 }
 

@@ -1,11 +1,13 @@
 // Touch is a tool for managing Touch formatted text.
 //
-// usage: to <command> [arguments]
+// Usage:
+// 	to <command> [arguments]
 //
 // Commands:
 // 	build  	convert Touch formatted text
 // 	fmt    	format Touch formatted text (prettify)
 // 	tree   	print node tree
+// 	tool    run specified Touch tool
 // 	help   	print help
 // 	version	print version
 //
@@ -29,6 +31,7 @@ import (
 	"github.com/touchmarine/to/parser"
 	"github.com/touchmarine/to/printer"
 	totemplate "github.com/touchmarine/to/template"
+	"github.com/touchmarine/to/tools/extjson"
 	"github.com/touchmarine/to/transformer"
 	"github.com/touchmarine/to/transformer/group"
 	"github.com/touchmarine/to/transformer/paragraph"
@@ -111,7 +114,7 @@ Run 'to help build' for details.
 				return
 			}
 
-			if isEmptyStdin() {
+			if isStdinEmpty() {
 				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
 to build: empty stdin
 
@@ -154,7 +157,7 @@ Run 'to help fmt' for details.
 				return
 			}
 
-			if isEmptyStdin() {
+			if isStdinEmpty() {
 				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
 to fmt: empty stdin
 
@@ -201,7 +204,7 @@ Run 'to help tree' for details.
 				return
 			}
 
-			if isEmptyStdin() {
+			if isStdinEmpty() {
 				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
 to tree: empty stdin
 
@@ -223,6 +226,49 @@ Run 'to help tree' for details.
 		default:
 			panic("unexpected cmd " + cmd)
 		}
+	case "tool":
+		if len(args) == 0 {
+			fmt.Println(strings.TrimSpace(`
+to tool: missing <tool>
+Run 'to help tool' for details.
+`))
+			return
+		}
+
+		cmd, args := args[0], args[1:]
+		switch cmd {
+		case "extjson":
+			if len(args) > 0 {
+				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to tool extjson: unexpected arguments: %s
+Run 'to help tool extjson' for details.
+`)+"\n", strings.Join(args, " "))
+				os.Exit(2)
+				return
+			}
+
+			if isStdinEmpty() {
+				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to tool extjson: empty stdin
+
+usage:   to tool extjson stdin
+example: to tool extjson < config.extjson
+Run 'to help tool extjson' for details.
+`)+"\n")
+				os.Exit(2)
+				return
+			}
+
+			extjson.Convert(os.Stdout, os.Stdin)
+		default:
+			fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to tool %s: unknown tool
+Run 'to help tool'.
+`)+"\n", cmd)
+			os.Exit(2)
+			return
+
+		}
 	case "help":
 		if len(args) == 0 {
 			help()
@@ -230,7 +276,6 @@ Run 'to help tree' for details.
 		}
 
 		cmd := args[0]
-		allArgs := strings.Join(args, " ")
 		switch cmd {
 		case "build":
 			fmt.Println(strings.TrimSpace(`
@@ -284,11 +329,76 @@ Options:
 		modes: printData, printlocation
 `))
 			return
+		case "tool":
+			args := args[1:]
+			if len(args) == 0 {
+				fmt.Fprintln(os.Stdout, strings.TrimSpace(`
+usage: to tool <tool> [arguments]
+
+Tool runs the Touch tool.
+
+Tools:
+	extjson  convert extended JSON to plain JSON
+
+Use "to help tool <tool>" for details about a tool.
+`))
+				return
+			}
+
+			cmd, args := args[0], args[1:]
+			if len(args) > 0 {
+				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to help tool %s: unexpected arguments: %s
+Run 'to help tool'.
+`)+"\n", cmd, strings.Join(args, " "))
+				os.Exit(2)
+				return
+			}
+
+			switch cmd {
+			case "extjson":
+				fmt.Println(strings.TrimSpace(`
+extjson reads and converts extended JSON to plain JSON from stdin.
+
+usage:   to tool extjson stdin
+example: to tool extjson < config.extjson > config.json
+
+Extended JSON is a superset of JSON and converts to plain JSON. It
+makes it easier to write JSON Touch configs.
+
+Features:
+- raw multiline strings
+	Raw multiline strings are delimited by triple single
+	quotes and convert to regular JSON strings. Immediate
+	newline after the delimiter is discarded if present.
+
+	For example:
+		"Templates": {
+			"html": '''
+		<blockquote>
+			{{template "children" .}}
+		</blockquote>
+			'''
+		}
+	converts to:
+		"Templates": {
+			"html": "<blockquote>\n\t{{template \"children\" .}}\n</blockquote>\n"
+		}
+`))
+				return
+			default:
+				fmt.Fprintf(os.Stderr, strings.TrimSpace(`
+to help tool %s: unknown topic
+Run 'to help tool'.
+`)+"\n", strings.Join(args, " "))
+				os.Exit(2)
+				return
+			}
 		default:
 			fmt.Fprintf(os.Stderr, strings.TrimSpace(`
 to help %s: unknown topic
 Run 'to help'.
-`)+"\n", allArgs)
+`)+"\n", strings.Join(args, " "))
 			os.Exit(2)
 			return
 		}
@@ -330,6 +440,7 @@ Commands:
 	build  	convert Touch formatted text
 	fmt    	format Touch formatted text (prettify)
 	tree   	print node tree
+	tool    run specified Touch tool
 	help   	print help
 	version	print version
 
@@ -337,7 +448,7 @@ Use "to help <command>" for details about a command.
 `))
 }
 
-func isEmptyStdin() bool {
+func isStdinEmpty() bool {
 	stat, err := os.Stdin.Stat()
 	if err != nil {
 		panic(fmt.Sprintf("os.Stdin.Stat() failed: %v", err))
