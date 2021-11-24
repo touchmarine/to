@@ -1132,7 +1132,6 @@ func (p *parser) parseText(name string) (*node.Node, bool) {
 				line = append(line[:x], line[x+1:]...) // remove escape char
 			}
 			escapes = nil
-			line = bytes.TrimRight(line, " \t")
 			lines = append(lines, line)
 
 			if p.ch < 0 {
