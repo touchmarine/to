@@ -22,6 +22,7 @@ func Funcs(tmpl *template.Template, global map[string]interface{}) template.Func
 		"trimSpacing":      TrimSpacing,
 		"parseAttributes":  ParseAttributes,
 		"setData":          NodeSetData,
+		"until":            Until,
 		"attributesToHTML": AttributesToHTML,
 		"global":           MakeGlobalMapFunction(global),
 		"get":              Dot,
@@ -118,4 +119,19 @@ func NodeSetData(n *node.Node, key string, v interface{}) *node.Node {
 		n.Data[key] = v
 	}
 	return n
+}
+
+// Until makes a list of integers that can be used as for loop from 0 to n.
+//
+// Usage:
+// 	{{range until 2}}{{.}}{{end}}
+func Until(n int) []int {
+	if n <= 0 {
+		return nil
+	}
+	x := make([]int, n)
+	for i := 0; i < n; i++ {
+		x[i] = i
+	}
+	return x
 }
