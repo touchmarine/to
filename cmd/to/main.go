@@ -513,6 +513,9 @@ func transformers(elements config.Elements) transformer.Group {
 	lists := group.Map{}
 	stickies := sticky.Map{}
 	for n, e := range elements {
+		if e.Disabled {
+			continue
+		}
 		var x node.Type
 		if err := (&x).UnmarshalText([]byte(e.Type)); err == nil {
 			// is a node element (can't be a group)
@@ -537,7 +540,7 @@ func transformers(elements config.Elements) transformer.Group {
 				After:   e.Option == "after",
 			}
 		default:
-			fmt.Fprintf(os.Stderr, "unsupported group type (%q)\n", e.Type)
+			fmt.Fprintf(os.Stderr, "unsupported group type: %q (element=%q)\n", e.Type, n)
 			os.Exit(2)
 			return transformer.Group{}
 		}
@@ -575,8 +578,8 @@ func build(cfg *config.Config, root *node.Node, format string) {
 		os.Exit(1)
 		return
 	}
-	if err := tmpl.ExecuteTemplate(os.Stdout, "root", root); err != nil {
-		fmt.Fprintf(os.Stderr, "execute template failed (\"root\"): %v\n", err)
+	if err := tmpl.Execute(os.Stdout, root); err != nil {
+		fmt.Fprintf(os.Stderr, "execute template failed: %v\n", err)
 		os.Exit(1)
 		return
 	}
