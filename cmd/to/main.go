@@ -66,14 +66,11 @@ func main() {
 	switch cmd {
 	case "build", "fmt", "tree":
 		var (
-			configs  []string
+			configs  string
 			tabWidth int
 		)
 		registerWorkFlags := func(fs *flag.FlagSet) {
-			fs.Func("config", "config files (shallow merged into the core config)", func(c string) error {
-				configs = append(configs, c)
-				return nil
-			})
+			fs.StringVar(&configs, "config", "", "comma-separated list of configs to use")
 			fs.IntVar(&tabWidth, "tabwidth", 0, "tab=tabwidth x spaces") // default set in parse()
 		}
 
@@ -126,8 +123,14 @@ Run 'to help build' for details.
 				return
 			}
 
-			cfg := config.Default
-			shallowMergeConfigs(cfg, configs)
+			cfg := &config.Default
+			for _, p := range strings.Split(configs, ",") {
+				if p == "" {
+					continue
+				}
+				c := jsonDecodeConfigFile(p) // exits on error
+				config.ShallowMerge(cfg, c)
+			}
 			root := parse(os.Stdin, cfg.Elements.ParserElements(), tabWidth)
 			root = transformers(cfg.Elements).Transform(root)
 
@@ -169,15 +172,20 @@ Run 'to help fmt' for details.
 				return
 			}
 
-			cfg := config.Default
-			shallowMergeConfigs(cfg, configs)
+			cfg := &config.Default
+			for _, p := range strings.Split(configs, ",") {
+				if p == "" {
+					continue
+				}
+				c := jsonDecodeConfigFile(p) // exits on error
+				config.ShallowMerge(cfg, c)
+			}
 			root := parse(os.Stdin, cfg.Elements.ParserElements(), tabWidth)
 			root = transformers(cfg.Elements).Transform(root)
 
 			format(cfg.Elements.ParserElements(), *lineLength, root) // exits on error
 			return
 		case "tree":
-			var modes []string
 			fs := flag.NewFlagSet("to tree", flag.ContinueOnError)
 			fs.Usage = func() {
 				fmt.Fprintln(os.Stderr, strings.TrimSpace(`
@@ -185,10 +193,7 @@ usage: to tree [options] stdin
 Run 'to help tree' for details.
 `))
 			}
-			fs.Func("mode", "set print mode (modes: printdata, printlocation)", func(s string) error {
-				modes = append(modes, s)
-				return nil
-			})
+			modes := fs.String("mode", "", "comma-separated list of modes to use")
 			registerWorkFlags(fs)
 			if err := fs.Parse(args); err != nil {
 				os.Exit(2)
@@ -216,12 +221,19 @@ Run 'to help tree' for details.
 				return
 			}
 
-			cfg := config.Default
-			shallowMergeConfigs(cfg, configs)
+			cfg := &config.Default
+			for _, p := range strings.Split(configs, ",") {
+				if p == "" {
+					continue
+				}
+				c := jsonDecodeConfigFile(p) // exits on error
+				config.ShallowMerge(cfg, c)
+			}
 			root := parse(os.Stdin, cfg.Elements.ParserElements(), tabWidth)
 			root = transformers(cfg.Elements).Transform(root)
 
-			tree(root, modes) // exits on error
+			m := strings.Split(*modes, ",")
+			tree(root, m) // exits on error
 			return
 		default:
 			panic("unexpected cmd " + cmd)
@@ -285,9 +297,11 @@ example: to build html < file.to
 Build converts Touch formatted text to the given format.
 
 Options:
-	-config file
-		configures templates and elements (sequentially shallow
-		merged into the core config)
+	-config file,list
+		a comma-separated list of configs to use. Configs are
+		shallow merged (sequentially) into the default config.
+		(Shallow merge adds or overrides only whole objects, it
+		cannot override specific properties.)
 	-tabwidth int
 		tab=<tabwidth> x spaces (default=8)
 `))
@@ -301,9 +315,11 @@ Fmt formats Touch formatted text into its canonical form. Fmt is like
 what is commonly known as prettify, but opinionated.
 
 Options:
-	-config file
-		configures templates and elements (sequentially shallow
-		merged into the core config)
+	-config file,list
+		a comma-separated list of configs to use. Configs are
+		shallow merged (sequentially) into the default config.
+		(Shallow merge adds or overrides only whole objects, it
+		cannot override specific properties.)
 	-tabwidth int
 		tab=<tabwidth> x spaces (default=8)
 	-linelength int
@@ -318,15 +334,16 @@ example: to tree -mode printdata < file.to
 Tree prints the node tree representation of Touch formatted text.
 
 Options:
-	-config file
-		configures templates and elements (sequentially shallow
-		merged into the core config)
+	-config file,list
+		a comma-separated list of configs to use. Configs are
+		shallow merged (sequentially) into the default config.
+		(Shallow merge adds or overrides only whole objects, it
+		cannot override specific properties.)
 	-tabwidth int
 		tab=<tabwidth> x spaces (default=8)
-	-mode
-		dials the level of info to print
-
-		modes: printData, printlocation
+	-mode   mode,list
+		a comma-separated list of modes to use:
+		printdata, printlocation
 `))
 			return
 		case "tool":
@@ -456,22 +473,20 @@ func isStdinEmpty() bool {
 	return (stat.Mode() & os.ModeCharDevice) != 0
 }
 
-func shallowMergeConfigs(dst *config.Config, srcs []string) {
-	for _, s := range srcs {
-		var o *config.Config
-		f, err := os.Open(s)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "cannot open config file (%s): %v\n", s, err)
-			os.Exit(2)
-			return
-		}
-		if err := json.NewDecoder(f).Decode(&o); err != nil {
-			fmt.Fprintf(os.Stderr, "cannot decode JSON from config file (%s): %v\n", s, err)
-			os.Exit(2)
-			return
-		}
-		_ = config.ShallowMerge(dst, o)
+func jsonDecodeConfigFile(path string) *config.Config {
+	var c config.Config
+	f, err := os.Open(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "cannot open config file (%s): %v\n", path, err)
+		os.Exit(2)
+		return nil
 	}
+	if err := json.NewDecoder(f).Decode(&c); err != nil {
+		fmt.Fprintf(os.Stderr, "cannot decode JSON from config file (%s): %v\n", path, err)
+		os.Exit(2)
+		return nil
+	}
+	return &c
 }
 
 func parse(in io.Reader, elements parser.Elements, tabWidth int) *node.Node {

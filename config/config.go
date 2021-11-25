@@ -16,13 +16,16 @@ import (
 //go:embed to.json
 var b []byte
 
-var Default *Config
+// Default is the default Config.
+var Default = defaultConfig()
 
-func init() {
+func defaultConfig() Config {
+	var c Config
 	r := bytes.NewReader(b)
-	if err := json.NewDecoder(r).Decode(&Default); err != nil {
+	if err := json.NewDecoder(r).Decode(&c); err != nil {
 		panic(err)
 	}
+	return c
 }
 
 // Config holds abstracted options that can be used to configure the core Touch
