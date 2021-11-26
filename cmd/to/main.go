@@ -232,7 +232,10 @@ Run 'to help tree' for details.
 			root := parse(os.Stdin, cfg.Elements.ParserElements(), tabWidth)
 			root = transformers(cfg.Elements).Transform(root)
 
-			m := strings.Split(*modes, ",")
+			var m []string
+			if *modes != "" {
+				m = strings.Split(*modes, ",")
+			}
 			tree(root, m) // exits on error
 			return
 		default:
