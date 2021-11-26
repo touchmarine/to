@@ -1,5 +1,20 @@
 = Changelog
 
+== 1.0.0-beta (November 22, 2021)
+
+Many improvments from alpha releases, some of them are:
+- simpler node—only one node type
+- add core DOM-like manipulation methods to node
+- printer now outputs proper canoncial form (previously it didn't even support many elements properly)
+- simpler config
+- document exported types, functions, and packages
+- usable CLI
+- config overrides (shallow merges)
+- autolink URLs
+- parser keeps newlines in text
+- add position info
+- don't replace illegal characters
+
 == 1.0.0-alpha (May 19, 2021)
 
 Implemented core features, first public release (pre-release).

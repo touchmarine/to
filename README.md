@@ -10,7 +10,7 @@ Touch is a lightweight markup language like Markdown but
 
 ## Quick Start
 
-1. Install the latest binary from [Releases](releases) or run `go get github.com/touchmarine/to` if you have Go installed.
+1. Install the latest binary from [Releases](https://github.com/touchmarine/to/releases) or run `go get github.com/touchmarine/to` if you have Go installed.
 1. Run `to version` to verify it's working.
 1. Run `to build html < file.to > file.html` to convert Touch to HTML.
 
@@ -394,7 +394,7 @@ Immediate newline after the opening delimiter is discarded if present.
 
 This extjson:
 
-```json
+```
 "Templates": {
 	"html": '''
 <blockquote {{- template "HTMLAttributes" .}}>
