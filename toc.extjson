@@ -1,0 +1,36 @@
+{
+	"Elements": {
+		"TableOfContents": {
+			"Type": "hanging",
+			"Delimiter": ".toc",
+			"Templates": {
+				"html": '''
+		<div {{- template "HTMLAttributes" .}}>
+			<p>{{template "children" .}}</p>
+			{{template "grouper" global.aggregates.numberedHeadings.Group}}
+		</div>
+
+		{{define "grouper"}}
+			<ul>
+				{{range .}}
+					{{if eq (printf "%T" .) "sequentialnumber.group"}}
+						{{template "grouper" .}}
+					{{else}}
+						<li>
+							<a href="#{{.ID}}">{{.SequentialNumber}} {{.Text}}</a>
+						</li>
+					{{end}}
+				{{end}}
+			</ul>
+		{{end}}
+		'''
+			}
+		}
+	},
+	"Aggregates": {
+		"numberedHeadings": {
+			"Type": "sequentialNumber",
+			"Elements": ["NumberedHeading"]
+		}
+	}
+}

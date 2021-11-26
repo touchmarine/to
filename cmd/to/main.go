@@ -39,7 +39,7 @@ import (
 	"github.com/touchmarine/to/transformer/sticky"
 )
 
-const version = "1.0.0-beta"
+const version = "1.0.0-beta.1"
 
 func main() {
 	rootFlags := flag.NewFlagSet("to", flag.ContinueOnError)
