@@ -190,7 +190,16 @@ func (p *parser) parse(reqdBlocks []rune) *node.Node {
 			}
 
 			container.AppendChild(b)
-			end = p.pos()
+			if len(reqdBlocks) > 0 && reqdBlocks[len(reqdBlocks)-1] == ' ' {
+				// parent (caller) is a hanging element
+				//
+				// fixes TestGolden/hanging/location4 and
+				// location5 where hanging end position
+				// incorrectly included the blank line
+				end = b.Location.Range.End
+			} else {
+				end = p.pos()
+			}
 		}
 	}
 
