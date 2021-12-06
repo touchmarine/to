@@ -1314,13 +1314,12 @@ func test(t *testing.T, elements config.Elements, transformers []transformer.Tra
 func runPrint(t *testing.T, elements config.Elements, transformers []transformer.Transformer, in string, printTree bool, lineLength int) string {
 	t.Helper()
 
-	r := strings.NewReader(in)
 	p := parser.Parser{
 		Elements: elements.ParserElements(),
 		Matchers: matcher.Defaults(),
 		TabWidth: 8,
 	}
-	root, err := p.Parse(nil, r)
+	root, err := p.Parse(nil, []byte(in))
 	if err != nil {
 		t.Fatal(err)
 	}

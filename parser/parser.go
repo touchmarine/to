@@ -5,7 +5,6 @@ package parser
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -43,7 +42,7 @@ type Parser struct {
 
 // Parse parses Touch formatted text supplied by the given reader and returns
 // the parsed node tree.
-func (pp Parser) Parse(sourceMap *source.Map, src io.Reader) (*node.Node, error) {
+func (pp Parser) Parse(sourceMap *source.Map, src []byte) (*node.Node, error) {
 	var p parser
 	p.registerElements(pp.Elements)
 	p.registerMatchers(pp.Matchers)
@@ -1253,12 +1252,8 @@ func (p *parser) closingDelimiter() rune {
 	return -1
 }
 
-func (p *parser) init(sourceMap *source.Map, src io.Reader) {
-	b, err := io.ReadAll(src)
-	if err != nil {
-		panic(fmt.Errorf("parser: ReadAll failed: %s", err))
-	}
-	p.src = b
+func (p *parser) init(sourceMap *source.Map, src []byte) {
+	p.src = src
 	p.sourceMap = sourceMap
 	p.next()
 	if p.ch == bom {

@@ -162,7 +162,8 @@ func TestNodeRanges(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.in, func(t *testing.T) {
-			sm := source.NewMap([]byte(c.in))
+			in := []byte(c.in)
+			sm := source.NewMap(in)
 			p := parser.Parser{
 				Elements: parser.Elements{
 					"A": {
@@ -180,7 +181,7 @@ func TestNodeRanges(t *testing.T) {
 				},
 				TabWidth: 8,
 			}
-			_, err := p.Parse(sm, strings.NewReader(c.in))
+			_, err := p.Parse(sm, in)
 			if err != nil {
 				t.Fatal(err)
 			}

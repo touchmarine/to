@@ -103,7 +103,7 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 		Matchers: matcher.Defaults(),
 		TabWidth: 8,
 	}
-	nodes, err := p.Parse(nil, strings.NewReader(src))
+	nodes, err := p.Parse(nil, []byte(src))
 	testError(t, testPath, err)
 
 	var m node.PrinterMode
