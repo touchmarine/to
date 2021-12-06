@@ -1320,7 +1320,7 @@ func runPrint(t *testing.T, elements config.Elements, transformers []transformer
 		Matchers: matcher.Defaults(),
 		TabWidth: 8,
 	}
-	root, err := p.Parse(r)
+	root, err := p.Parse(nil, r)
 	if err != nil {
 		t.Fatal(err)
 	}

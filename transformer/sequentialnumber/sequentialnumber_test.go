@@ -62,7 +62,7 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 		Matchers: matcher.Defaults(),
 		TabWidth: 8,
 	}
-	root, err := p.Parse(strings.NewReader(input))
+	root, err := p.Parse(nil, strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}

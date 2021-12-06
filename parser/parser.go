@@ -12,6 +12,7 @@ import (
 
 	"github.com/touchmarine/to/matcher"
 	"github.com/touchmarine/to/node"
+	"github.com/touchmarine/to/source"
 )
 
 const trace = false
@@ -42,12 +43,12 @@ type Parser struct {
 
 // Parse parses Touch formatted text supplied by the given reader and returns
 // the parsed node tree.
-func (pp Parser) Parse(src io.Reader) (*node.Node, error) {
+func (pp Parser) Parse(sourceMap *source.Map, src io.Reader) (*node.Node, error) {
 	var p parser
 	p.registerElements(pp.Elements)
 	p.registerMatchers(pp.Matchers)
 	p.tabWidth = pp.TabWidth
-	p.init(src)
+	p.init(sourceMap, src)
 	root := p.parse(nil)
 	p.errors.Sort()
 	return root, p.errors.Err()
@@ -55,6 +56,7 @@ func (pp Parser) Parse(src io.Reader) (*node.Node, error) {
 
 // parser holds the parsing state.
 type parser struct {
+	sourceMap      *source.Map
 	errors         ErrorList
 	src            []byte             // source
 	blockMap       map[string]Element // registered elements by delimiter
@@ -292,6 +294,10 @@ func (p *parser) parseWalled(name string) *node.Node {
 	}
 
 	start := p.pos()
+	startOffs := p.offset
+	// - subscribe to len(p.leads)
+	// - when lead at number is added, call back here
+	// - on call, start a new line range
 	p.addLead(p.ch)
 	defer p.open(p.ch)()
 
@@ -300,10 +306,13 @@ func (p *parser) parseWalled(name string) *node.Node {
 	reqdBlocks := p.blocks
 	children := p.parse(reqdBlocks)
 	end := children.Location.Range.End
+	endOffs := children.End
 
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypeWalled,
+		Start:   startOffs,
+		End:     endOffs,
 		Location: node.Location{
 			Range: node.Range{
 				Start: start,
@@ -364,11 +373,9 @@ func (p *parser) parseHanging(name, delim string) *node.Node {
 	}
 
 	start := p.pos()
-	c := utf8.RuneCountInString(delim)
-	p.addLead([]rune(strings.Repeat(" ", c))...)
-
-	for i := 0; i < c; i++ {
+	for i := 0; i < utf8.RuneCountInString(delim); i++ {
 		// consume delimiter
+		p.addLead(' ')
 		p.next()
 	}
 
@@ -398,10 +405,10 @@ func (p *parser) parseRankedHanging(name, delim string) *node.Node {
 	d := p.ch
 	for p.ch == d {
 		// count rank and consume delimiter
+		p.addLead(' ')
 		rank++
 		p.next()
 	}
-	p.addLead([]rune(strings.Repeat(" ", rank))...)
 
 	children := p.parseHanging0()
 	end := children.Location.Range.End
@@ -645,6 +652,7 @@ func (p *parser) parseFenced(name string) *node.Node {
 	return n
 }
 
+// TODO: unused, remove
 func (p *parser) consumeLine() []byte {
 	if trace {
 		defer p.trace("consumeLine")()
@@ -1245,14 +1253,13 @@ func (p *parser) closingDelimiter() rune {
 	return -1
 }
 
-func (p *parser) init(src io.Reader) {
+func (p *parser) init(sourceMap *source.Map, src io.Reader) {
 	b, err := io.ReadAll(src)
 	if err != nil {
 		panic(fmt.Errorf("parser: ReadAll failed: %s", err))
 	}
-
 	p.src = b
-
+	p.sourceMap = sourceMap
 	p.next()
 	if p.ch == bom {
 		// skip BOM at file beginning
@@ -1272,18 +1279,15 @@ func (p *parser) parseLead() {
 	p.lead = nil
 	p.blank = true
 
-	a := p.expandTabs(p.blocks)
-
-	var lead []rune
+	from := len(p.lead)
 	var i int
-
+	a := p.expandTabs(p.blocks)
 	for p.ch >= 0 && p.ch != '\n' && i < len(a) {
 		if !isSpacing(p.ch) {
 			p.blank = false
 		}
 
 		ch := a[i]
-
 		if isSpacing(p.ch) && isSpacing(ch) {
 			if p.countSpacing([]rune{p.ch}) <= p.countSpacing(spacingSeq(a[i:])) {
 				i += p.countSpacing([]rune{p.ch})
@@ -1301,15 +1305,12 @@ func (p *parser) parseLead() {
 			break
 		}
 
-		lead = append(lead, p.ch)
-
+		p.addLead(p.ch)
 		p.next()
 	}
 
-	p.addLead(lead...)
-
 	if trace {
-		p.printDelims("new", lead)
+		p.printDelims("new", p.lead[from:])
 		p.printDelims("lead", p.lead)
 	}
 }
@@ -1331,18 +1332,13 @@ func (p *parser) parseSpacing() {
 	if trace {
 		defer p.trace("parseSpacing")()
 	}
-
-	var lead []rune
+	from := len(p.lead)
 	for isSpacing(p.ch) {
-		lead = append(lead, p.ch)
-
+		p.addLead(p.ch)
 		p.next()
 	}
-
-	p.addLead(lead...)
-
 	if trace {
-		p.printDelims("new", lead)
+		p.printDelims("new", p.lead[from:])
 		p.printDelims("lead", p.lead)
 	}
 }
@@ -1373,6 +1369,9 @@ func (p *parser) next() {
 	if p.rdOffset < len(p.src) {
 		p.offset = p.rdOffset
 		if p.ch == '\n' {
+			if p.sourceMap != nil {
+				p.sourceMap.AddLine(p.offset)
+			}
 			p.line++
 			p.lineOffset = p.offset
 		}
@@ -1396,6 +1395,9 @@ func (p *parser) next() {
 	} else {
 		p.offset = len(p.src)
 		if p.ch == '\n' {
+			if p.sourceMap != nil {
+				p.sourceMap.AddLine(p.offset)
+			}
 			p.line++
 			p.lineOffset = p.offset
 		}
@@ -1447,8 +1449,11 @@ func (p *parser) open(blocks ...rune) func() {
 	}
 }
 
-func (p *parser) addLead(blocks ...rune) {
-	p.lead = append(p.lead, blocks...)
+func (p *parser) addLead(ch rune) {
+	if p.sourceMap != nil {
+		p.sourceMap.AddLead(p.offset)
+	}
+	p.lead = append(p.lead, ch)
 }
 
 func (p *parser) diff(old, new []rune) []rune {

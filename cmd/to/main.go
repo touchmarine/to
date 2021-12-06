@@ -502,7 +502,7 @@ func parse(in io.Reader, elements parser.Elements, tabWidth int) *node.Node {
 	} else {
 		p.TabWidth = 8
 	}
-	root, err := p.Parse(in)
+	root, err := p.Parse(nil, in)
 	if err != nil {
 		parser.PrintError(os.Stderr, err)
 		os.Exit(1)
