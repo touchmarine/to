@@ -1,8 +1,8 @@
-0:0#0-2:2#8: Container()(
-	0:0#0-0:2#2: RankedHanging(A)(
-		0:2#2-0:2#2: Container()()
+0-8: Container()(
+	0-2: RankedHanging(A)(
+		2-2: Container()()
 	),
-	2:0#6-2:2#8: RankedHanging(A)(
-		2:2#8-2:2#8: Container()()
+	6-8: RankedHanging(A)(
+		8-8: Container()()
 	)
 )

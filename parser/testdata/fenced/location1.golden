@@ -1,3 +1,3 @@
-0:0#0-0:1#1: Container()(
-	0:0#0-0:1#1: Fenced(A)()
+0-1: Container()(
+	0-1: Fenced(A)()
 )

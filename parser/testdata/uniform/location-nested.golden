@@ -1,11 +1,11 @@
-0:0#0-3:1#14: Container()(
-	0:0#0-3:1#14: Walled(A)(
-		0:1#1-3:1#14: Container()(
-			1:2#4-2:5#12: Leaf(T)(
-				1:2#4-2:5#12: Container()(
-					1:2#4-2:5#12: Uniform(MA)(
-						1:4#6-2:3#10: Container()(
-							1:4#6-2:3#10: Text(MT)(
+0-14: Container()(
+	0-14: Walled(A)(
+		1-14: Container()(
+			4-12: Leaf(T)(
+				4-12: Container()(
+					4-12: Uniform(MA)(
+						6-10: Container()(
+							6-10: Text(MT)(
 								
 a
 							)

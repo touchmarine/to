@@ -1,10 +1,10 @@
-0:0#0-0:12#12: Container()(
-	0:0#0-0:12#12: Leaf(T)(
-		0:0#0-0:12#12: Container()(
-			0:0#0-0:12#12: Uniform(MD)(
-				0:2#2-0:10#10: Container()(
-					0:2#2-0:9#9: Prefixed(MB)(),
-					0:9#9-0:10#10: Text(MT)(
+0-12: Container()(
+	0-12: Leaf(T)(
+		0-12: Container()(
+			0-12: Uniform(MD)(
+				2-10: Container()(
+					2-9: Prefixed(MB)(),
+					9-10: Text(MT)(
 						a
 					)
 				)

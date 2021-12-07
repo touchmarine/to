@@ -1,7 +1,7 @@
-0:0#0-0:2#2: Container()(
-	0:0#0-0:2#2: Leaf(T)(
-		0:0#0-0:2#2: Container()(
-			0:0#0-0:2#2: Escaped(MA)()
+0-2: Container()(
+	0-2: Leaf(T)(
+		0-2: Container()(
+			0-2: Escaped(MA)()
 		)
 	)
 )

@@ -364,7 +364,7 @@ Options:
 		tab=<tabwidth> x spaces (default=8)
 	-mode   mode,list
 		a comma-separated list of modes to use:
-		printdata, printlocation
+		printdata, printoffsets, printlocation
 `))
 			return
 		case "tool":
@@ -622,7 +622,7 @@ func tree(root *node.Node, modes []string) {
 			fmt.Fprintf(os.Stderr, strings.TrimSpace(`
 to tree: invalid mode: %q
 
-valid modes: printdata, printlocation
+valid modes: printdata, printoffsets, printlocation
 
 usage:   to tree [options] stdin
 example: to tree -mode printdata < file.to
