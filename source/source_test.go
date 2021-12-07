@@ -18,8 +18,10 @@ func TestNodeRanges(t *testing.T) {
 		in     string
 		ranges []rang
 	}{
+		// text -------------------------------------------------------
+
 		{
-			"a\n>\n>+",
+			"a",
 			[]rang{
 				{
 					start: 0,
@@ -39,49 +41,96 @@ func TestNodeRanges(t *testing.T) {
 						},
 					},
 				},
+			},
+		},
+		{
+			" a",
+			[]rang{
 				{
-					start: 2,
-					end:   6,
+					start: 1,
+					end:   2,
 					ranges: []source.Range{
 						{
 							Start: source.Position{
-								Offset: 2,
-								Line:   1,
-								Column: 0,
-							},
-							End: source.Position{
-								Offset: 3,
-								Line:   1,
+								Offset: 1,
+								Line:   0,
 								Column: 1,
 							},
-						},
-						{
-							Start: source.Position{
-								Offset: 4,
-								Line:   2,
-								Column: 0,
-							},
 							End: source.Position{
-								Offset: 6,
-								Line:   2,
+								Offset: 2,
+								Line:   0,
 								Column: 2,
 							},
 						},
 					},
 				},
+			},
+		},
+		{
+			"\na",
+			[]rang{
 				{
-					start: 4,
-					end:   6,
+					start: 1,
+					end:   2,
 					ranges: []source.Range{
 						{
 							Start: source.Position{
-								Offset: 4,
-								Line:   2,
+								Offset: 1,
+								Line:   1,
 								Column: 0,
 							},
 							End: source.Position{
-								Offset: 6,
-								Line:   2,
+								Offset: 2,
+								Line:   1,
+								Column: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+
+		// walled ------------------------------------------------------
+
+		{
+			">",
+			[]rang{
+				{
+					start: 0,
+					end:   1,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			" >",
+			[]rang{
+				{
+					start: 1,
+					end:   2,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   0,
 								Column: 2,
 							},
 						},
@@ -125,6 +174,715 @@ func TestNodeRanges(t *testing.T) {
 			},
 		},
 		{
+			">\n>>",
+			[]rang{
+				{
+					// parent >
+					start: 0,
+					end:   4,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 2,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 2,
+							},
+						},
+					},
+				},
+				{
+					// nested >
+					start: 3,
+					end:   4,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 3,
+								Line:   1,
+								Column: 1,
+							},
+							End: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 2,
+							},
+						},
+					},
+				},
+			},
+		},
+
+		// fenced ------------------------------------------------------
+
+		{
+			"`\n",
+			[]rang{
+				{
+					start: 0,
+					end:   2,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 2,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   1,
+								Column: 0,
+							},
+						},
+					},
+				},
+				{
+					start: 2,
+					end:   2,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 2,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   1,
+								Column: 0,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			" `\n ",
+			[]rang{
+				{
+					start: 1,
+					end:   4,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   0,
+								Column: 2,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 1,
+							},
+							End: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"`a\n",
+			[]rang{
+				{
+					start: 0,
+					end:   3,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   0,
+								Column: 2,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 3,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 3,
+								Line:   1,
+								Column: 0,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"`a\nb",
+			[]rang{
+				{
+					start: 0,
+					end:   4,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   0,
+								Column: 2,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 3,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 1,
+							},
+						},
+					},
+				},
+				{
+					start: 3,
+					end:   4,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 3,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"`\n`",
+			[]rang{
+				{
+					start: 0,
+					end:   3,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 2,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 3,
+								Line:   1,
+								Column: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"`\na`",
+			[]rang{
+				{
+					start: 0,
+					end:   4,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 2,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 2,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"`\n`a",
+			[]rang{
+				{
+					start: 0,
+					end:   3,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 2,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 3,
+								Line:   1,
+								Column: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			">`\n>",
+			[]rang{
+				{
+					// >
+					start: 0,
+					end:   4,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   0,
+								Column: 2,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 3,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 1,
+							},
+						},
+					},
+				},
+				{
+					// `
+					start: 1,
+					end:   4,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   0,
+								Column: 2,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 1,
+							},
+							End: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+
+		// hanging -----------------------------------------------------
+
+		{
+			"-",
+			[]rang{
+				{
+					start: 0,
+					end:   1,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"-a",
+			[]rang{
+				{
+					start: 0,
+					end:   2,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   0,
+								Column: 2,
+							},
+						},
+					},
+				},
+				{
+					start: 1,
+					end:   2,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   0,
+								Column: 2,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"-\n a",
+			[]rang{
+				{
+					start: 0,
+					end:   4,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 2,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 2,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"-\n -a",
+			[]rang{
+				{
+					start: 0,
+					end:   5,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 2,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 5,
+								Line:   1,
+								Column: 3,
+							},
+						},
+					},
+				},
+			},
+		},
+
+		// uniform -----------------------------------------------------
+
+		{
+			"**",
+			[]rang{
+				{
+					start: 0,
+					end:   2,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   0,
+								Column: 2,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"**a",
+			[]rang{
+				{
+					start: 0,
+					end:   3,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 3,
+								Line:   0,
+								Column: 3,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"**a**",
+			[]rang{
+				{
+					start: 0,
+					end:   5,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 5,
+								Line:   0,
+								Column: 5,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"**a**b",
+			[]rang{
+				{
+					start: 0,
+					end:   5,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 5,
+								Line:   0,
+								Column: 5,
+							},
+						},
+					},
+				},
+				{
+					start: 5,
+					end:   6,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 5,
+								Line:   0,
+								Column: 5,
+							},
+							End: source.Position{
+								Offset: 6,
+								Line:   0,
+								Column: 6,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"**a**b\nc",
+			[]rang{
+				{
+					start: 0,
+					end:   5,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 5,
+								Line:   0,
+								Column: 5,
+							},
+						},
+					},
+				},
+				{
+					start: 5,
+					end:   8,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 5,
+								Line:   0,
+								Column: 5,
+							},
+							End: source.Position{
+								Offset: 6,
+								Line:   0,
+								Column: 6,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 7,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 8,
+								Line:   1,
+								Column: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			">**\n>**",
 			[]rang{
 				{
@@ -157,6 +915,36 @@ func TestNodeRanges(t *testing.T) {
 						},
 					},
 				},
+				{
+					start: 1,
+					end:   7,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+							End: source.Position{
+								Offset: 3,
+								Line:   0,
+								Column: 3,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 5,
+								Line:   1,
+								Column: 1,
+							},
+							End: source.Position{
+								Offset: 7,
+								Line:   1,
+								Column: 3,
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -171,8 +959,12 @@ func TestNodeRanges(t *testing.T) {
 						Delimiter: ">",
 					},
 					"B": {
-						Type:      node.TypeWalled,
-						Delimiter: "+",
+						Type:      node.TypeFenced,
+						Delimiter: "`",
+					},
+					"C": {
+						Type:      node.TypeHanging,
+						Delimiter: "-",
 					},
 					"MA": {
 						Type:      node.TypeUniform,

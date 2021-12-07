@@ -19,8 +19,9 @@ func NewMap(src []byte) *Map {
 				},
 			},
 		},
-		lines: []int{0},
-		leads: [][]int{nil},
+		lines:  []int{0},
+		leads:  [][]int{nil},
+		blanks: [][]bool{nil},
 	}
 }
 
@@ -28,8 +29,9 @@ func NewMap(src []byte) *Map {
 type Map struct {
 	src      []byte
 	location Location
-	lines    []int   // lines offsets (index=line, value=offset)
-	leads    [][]int // lead offsets (index=line, value=lead offsets)
+	lines    []int    // line offsets (index=line)
+	leads    [][]int  // lead columns (index=line)
+	blanks   [][]bool // leads overlay; lead=' ' if true, otherwise false
 }
 
 // NodeRanges reports line ranges of the node that starts and ends at the given
@@ -41,64 +43,107 @@ func (m Map) NodeRanges(start, end int) []Range {
 	}
 
 	var ranges []Range
-	d := m.delimiter(lnStart)
-	for i := lnStart; i <= lnEnd; i++ {
-		x := m.lineStart(i, d)
-		if x < 0 {
-			panic(fmt.Sprintf("line start not found (line=%d)", i))
-		}
-		var y int
-		if i+1 < len(m.lines) {
-			y = m.lines[i+1] - 1
+	col := start - m.lines[lnStart]
+	leadIx := m.leadIndex(lnStart, col)
+	d := m.delimiter(lnStart, start)
+	blank := false // whether lead=' '
+	if leadIx >= 0 {
+		blank = m.blanks[lnStart][leadIx]
+	}
+	for ln := lnStart; ln <= lnEnd; ln++ {
+		var s int
+		if ln == lnStart {
+			// on first line, use the given start; needed for
+			// inlines (e.g. for 'b' in '**a**b')
+			s = start - m.lines[ln]
+		} else if ln > lnStart && blank {
+			s = m.startColumn(ln, leadIx, ' ')
 		} else {
-			// at last line -> must span until the end
-			y = len(m.src)
+			s = m.startColumn(ln, leadIx, d)
 		}
+		if s < 0 {
+			panic(fmt.Sprintf("start column not found (line=%d)", ln))
+		}
+		var e int
+		if ln == lnEnd {
+			// on last line, use the given end; needed for fenced
+			// and the like (e.g. to no include 'a' in '`\n`a')
+			e = end - m.lines[ln]
+		} else {
+			e = m.endColumn(ln)
+		}
+		if e < s {
+			panic(fmt.Sprintf("end column less than start column (%d<%d)", e, s))
+		}
+		lnOffs := m.lines[ln]
 		ranges = append(ranges, Range{
-			Start: m.Position(x),
-			End:   m.Position(y),
+			Start: m.Position(lnOffs + s),
+			End:   m.Position(lnOffs + e),
 		})
 	}
 	return ranges
 }
 
-func (m Map) delimiter(ln int) rune {
-	leads := m.leads[ln]
-	if len(leads) == 0 {
+func (m Map) delimiter(ln, offs int) rune {
+	col := offs - m.lines[ln]
+	if m.leadIndex(ln, col) < 0 {
+		// can't have a delimiter if there is no lead
 		return -1
 	}
-	offs := leads[0]
-	r, _ := utf8.DecodeRune(m.src[offs:])
-	if r == utf8.RuneError {
-		return -1
+	if r, _ := utf8.DecodeRune(m.src[offs:]); r != utf8.RuneError {
+		return r
 	}
-	return r
+	return -1
 }
 
-func (m Map) lineStart(ln int, d rune) int {
+func (m Map) leadIndex(ln, col int) int {
+	if i := sort.SearchInts(m.leads[ln], col); i < len(m.leads[ln]) && m.leads[ln][i] == col {
+		return i
+	}
+	return -1
+}
+
+func (m Map) startColumn(ln, leadIx int, d rune) int {
 	leads := m.leads[ln]
-	if d < 0 {
+	if leadIx < 0 || d < 0 {
+		if leadIx >= 0 || d >= 0 {
+			panic(fmt.Sprintf("inconsistent lead index and delimiter; they should both be negative (leadIx=%d, d=%q)", leadIx, d))
+		}
 		// no delimiter
 		if len(leads) == 0 {
 			return 0
 		}
-		offs := leads[len(leads)-1]
-		_, w := utf8.DecodeRune(m.src[offs:])
-		return offs + w
+		col := leads[len(leads)-1]
+		_, w := utf8.DecodeRune(m.src[m.lines[ln]+col:])
+		return col + w
 	}
-	for _, offs := range leads {
-		ch, _ := utf8.DecodeRune(m.src[offs:])
-		if d != ' ' && ch == ' ' {
-			// allow spaces in-between for non-hanging elements
-			continue
+	trueIx := leadIx
+	if d != ' ' {
+		// non-hanging element
+		for _, col := range leads[leadIx:] {
+			if ch, _ := utf8.DecodeRune(m.src[m.lines[ln]+col:]); ch == ' ' {
+				// allow spaces in-between for non-hanging elements
+				trueIx++
+				continue
+			}
+			break
 		}
-		if ch == d {
-			// found
-			return offs
+	}
+	for _, col := range leads[trueIx:] {
+		if ch, _ := utf8.DecodeRune(m.src[m.lines[ln]+col:]); ch == d {
+			return col
 		}
 	}
 	// not found, element must have already ended
 	return -1
+}
+
+func (m Map) endColumn(ln int) int {
+	if ln+1 < len(m.lines) {
+		return m.lines[ln+1] - 1 - m.lines[ln]
+	}
+	// at last line -> must span until the end
+	return len(m.src) - m.lines[ln]
 }
 
 // Position reports the offset's line and column in the source. Offset, line,
@@ -120,20 +165,22 @@ func (m Map) line(offs int) int {
 // AddLine registers a line offset. It is used by the parser to mark line
 // positions in the source.
 func (m *Map) AddLine(offs int) {
-	m.location.Range.End = m.Position(offs)
+	m.location.Range.End = m.Position(len(m.src))
 	m.lines = append(m.lines, offs)
 	m.leads = append(m.leads, nil)
+	m.blanks = append(m.blanks, nil)
 }
 
-// AddLead registers a lead offset. It is used by the parser to mark the starts
-// of elements across multiple lines.
-func (m *Map) AddLead(offs int) {
+// AddLead registers a lead column and whether the lead is a space (blank). It
+// is used by the parser to mark the starts of elements across multiple lines.
+func (m *Map) AddLead(col int, blank bool) {
 	l := len(m.lines)
 	if l <= 0 {
 		panic("cannot add lead, no lines yet")
 	}
 	ln := l - 1
-	m.leads[ln] = append(m.leads[ln], offs)
+	m.leads[ln] = append(m.leads[ln], col)
+	m.blanks[ln] = append(m.blanks[ln], blank)
 }
 
 // Location represents a location inside a resource, such as a line inside a

@@ -1522,7 +1522,7 @@ func (p *parser) open(blocks ...rune) func() {
 
 func (p *parser) addLead(ch rune) {
 	if p.sourceMap != nil {
-		p.sourceMap.AddLead(p.offset)
+		p.sourceMap.AddLead(p.offset-p.lineOffset, ch == ' ')
 	}
 	p.lead = append(p.lead, ch)
 }
