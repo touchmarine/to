@@ -195,17 +195,20 @@ func (p *parser) parse(reqdBlocks []rune) *node.Node {
 			}
 
 			container.AppendChild(b)
-			if len(reqdBlocks) > 0 && reqdBlocks[len(reqdBlocks)-1] == ' ' {
-				// parent (caller) is a hanging element
-				//
-				// fixes TestGolden/hanging/location4 and
-				// location5 where hanging end position
-				// incorrectly included the blank line
-				end = b.Location.Range.End
-				endOffs = b.End
-			} else {
+
+			// parent (caller) is a hanging element
+			//
+			// fixes TestGolden/hanging/location4 and location5
+			// where hanging end position incorrectly included the
+			// blank line
+			isHanging := len(reqdBlocks) > 0 && reqdBlocks[len(reqdBlocks)-1] == ' '
+			if t, a := p.continuesAmbiguous(reqdBlocks); isHanging && t && !a || !isHanging && t {
+				// t = continues, a = amgiuously
 				end = p.pos()
 				endOffs = p.offset
+			} else {
+				end = b.Location.Range.End
+				endOffs = b.End
 			}
 		}
 	}
@@ -957,14 +960,16 @@ func (p *parser) parseUniform(name string) (*node.Node, bool) {
 
 	children, cont := p.parseInlines()
 
+	end := children.Location.Range.End
+	endOffs := children.End
 	if p.closingDelimiter() == counterpart(delim) {
 		// consume closing delimiter
 		p.next()
 		p.next()
+		end = p.pos()
+		endOffs = p.offset
 	}
 
-	end := p.pos()
-	endOffs := p.offset
 	n := &node.Node{
 		Element: name,
 		Type:    node.TypeUniform,

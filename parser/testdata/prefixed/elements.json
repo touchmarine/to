@@ -1,4 +1,9 @@
 {
+	"A": {
+		"name": "A",
+		"type": "walled",
+		"delimiter": "\u003e"
+	},
 	"MA": {
 		"name": "MA",
 		"type": "prefixed",

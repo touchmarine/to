@@ -62,7 +62,7 @@ func (m Map) NodeRanges(start, end int) []Range {
 			s = m.startColumn(ln, leadIx, d)
 		}
 		if s < 0 {
-			panic(fmt.Sprintf("start column not found (line=%d)", ln))
+			break
 		}
 		var e int
 		if ln == lnEnd {
@@ -73,7 +73,7 @@ func (m Map) NodeRanges(start, end int) []Range {
 			e = m.endColumn(ln)
 		}
 		if e < s {
-			panic(fmt.Sprintf("end column less than start column (%d<%d)", e, s))
+			panic(fmt.Sprintf("end column less than start column (%d,%d line=%d)", s, e, ln))
 		}
 		lnOffs := m.lines[ln]
 		ranges = append(ranges, Range{
@@ -105,13 +105,13 @@ func (m Map) leadIndex(ln, col int) int {
 
 func (m Map) startColumn(ln, leadIx int, d rune) int {
 	leads := m.leads[ln]
+	if len(leads) == 0 {
+		return 0
+	}
 	if leadIx < 0 || d < 0 {
+		// no delimiter
 		if leadIx >= 0 || d >= 0 {
 			panic(fmt.Sprintf("inconsistent lead index and delimiter; they should both be negative (leadIx=%d, d=%q)", leadIx, d))
-		}
-		// no delimiter
-		if len(leads) == 0 {
-			return 0
 		}
 		col := leads[len(leads)-1]
 		_, w := utf8.DecodeRune(m.src[m.lines[ln]+col:])

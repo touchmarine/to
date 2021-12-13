@@ -1,0 +1,12 @@
+0-4: Container()(
+	0-2: Leaf(T)(
+		0-2: Container()(
+			0-2: Uniform(MA)(
+				2-2: Container()()
+			)
+		)
+	),
+	3-4: Walled(A)(
+		4-4: Container()()
+	)
+)

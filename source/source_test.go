@@ -139,6 +139,41 @@ func TestNodeRanges(t *testing.T) {
 			},
 		},
 		{
+			">\n>",
+			[]rang{
+				{
+					start: 0,
+					end:   3,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+						},
+						{
+							Start: source.Position{
+								Offset: 2,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 3,
+								Line:   1,
+								Column: 1,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			">\n >",
 			[]rang{
 				{
@@ -830,6 +865,47 @@ func TestNodeRanges(t *testing.T) {
 			},
 		},
 		{
+			"**\n**",
+			[]rang{
+				{
+					start: 0,
+					end:   2,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   0,
+								Column: 2,
+							},
+						},
+					},
+				},
+				{
+					start: 3,
+					end:   5,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 3,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 5,
+								Line:   1,
+								Column: 2,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			"**a**b\nc",
 			[]rang{
 				{
@@ -941,6 +1017,91 @@ func TestNodeRanges(t *testing.T) {
 								Offset: 7,
 								Line:   1,
 								Column: 3,
+							},
+						},
+					},
+				},
+			},
+		},
+
+		// mixed -------------------------------------------------------
+
+		{
+			">\n**",
+			[]rang{
+				{
+					start: 0,
+					end:   1,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 1,
+								Line:   0,
+								Column: 1,
+							},
+						},
+					},
+				},
+				{
+					start: 2,
+					end:   4,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 2,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 2,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			"**\n>",
+			[]rang{
+				{
+					start: 0,
+					end:   2,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 0,
+								Line:   0,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 2,
+								Line:   0,
+								Column: 2,
+							},
+						},
+					},
+				},
+				{
+					start: 3,
+					end:   4,
+					ranges: []source.Range{
+						{
+							Start: source.Position{
+								Offset: 3,
+								Line:   1,
+								Column: 0,
+							},
+							End: source.Position{
+								Offset: 4,
+								Line:   1,
+								Column: 1,
 							},
 						},
 					},
