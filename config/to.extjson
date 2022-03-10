@@ -165,7 +165,7 @@
 			"Templates": {
 				"html": '''
 <span {{- template "HTMLAttributes" .}}>
-	{{template "children" .}}
+	{{- template "children" . -}}
 </span>
 '''
 			}
@@ -379,8 +379,8 @@
 			"Target": "Link",
 			"Templates": {
 				"html": '''
-{{$group := .FirstChild}}
-{{$link  := .LastChild -}}
+{{- $group := .FirstChild -}}
+{{- $link  := .LastChild -}}
 <a href="{{$link.TextContent}}">
 	{{- dynamicTemplate $group.Element $group -}}
 </a>'''
