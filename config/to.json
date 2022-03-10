@@ -118,7 +118,7 @@
 		"TextBlock": {
 			"Type": "leaf",
 			"Templates": {
-				"html": "<span {{- template \"HTMLAttributes\" .}}>\n\t{{template \"children\" .}}\n</span>\n"
+				"html": "<span {{- template \"HTMLAttributes\" .}}>\n\t{{- template \"children\" . -}}\n</span>\n"
 			}
 		},
 
@@ -274,7 +274,7 @@
 			"Element": "Group",
 			"Target": "Link",
 			"Templates": {
-				"html": "{{$group := .FirstChild}}\n{{$link  := .LastChild -}}\n<a href=\"{{$link.TextContent}}\">\n\t{{- dynamicTemplate $group.Element $group -}}\n</a>"
+				"html": "{{- $group := .FirstChild -}}\n{{- $link  := .LastChild -}}\n<a href=\"{{$link.TextContent}}\">\n\t{{- dynamicTemplate $group.Element $group -}}\n</a>"
 			}
 		}
 	}
