@@ -131,7 +131,13 @@ Run 'to help build' for details.
 				c := jsonDecodeConfigFile(p) // exits on error
 				config.ShallowMerge(cfg, c)
 			}
-			root := parse(os.Stdin, cfg.Elements.ParserElements(), tabWidth)
+			src, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "read stdint failed: %v\n", err)
+				os.Exit(1)
+				return
+			}
+			root := parse(src, cfg.Elements.ParserElements(), tabWidth)
 			root = transformers(cfg.Elements).Transform(root)
 
 			build(cfg, root, format) // exits on error
@@ -180,7 +186,13 @@ Run 'to help fmt' for details.
 				c := jsonDecodeConfigFile(p) // exits on error
 				config.ShallowMerge(cfg, c)
 			}
-			root := parse(os.Stdin, cfg.Elements.ParserElements(), tabWidth)
+			src, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "read stdint failed: %v\n", err)
+				os.Exit(1)
+				return
+			}
+			root := parse(src, cfg.Elements.ParserElements(), tabWidth)
 			root = transformers(cfg.Elements).Transform(root)
 
 			format(cfg.Elements.ParserElements(), *lineLength, root) // exits on error
@@ -229,7 +241,13 @@ Run 'to help tree' for details.
 				c := jsonDecodeConfigFile(p) // exits on error
 				config.ShallowMerge(cfg, c)
 			}
-			root := parse(os.Stdin, cfg.Elements.ParserElements(), tabWidth)
+			src, err := io.ReadAll(os.Stdin)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "read stdint failed: %v\n", err)
+				os.Exit(1)
+				return
+			}
+			root := parse(src, cfg.Elements.ParserElements(), tabWidth)
 			root = transformers(cfg.Elements).Transform(root)
 
 			var m []string
@@ -346,7 +364,7 @@ Options:
 		tab=<tabwidth> x spaces (default=8)
 	-mode   mode,list
 		a comma-separated list of modes to use:
-		printdata, printlocation
+		printdata, printoffsets, printlocation
 `))
 			return
 		case "tool":
@@ -492,7 +510,7 @@ func jsonDecodeConfigFile(path string) *config.Config {
 	return &c
 }
 
-func parse(in io.Reader, elements parser.Elements, tabWidth int) *node.Node {
+func parse(src []byte, elements parser.Elements, tabWidth int) *node.Node {
 	p := parser.Parser{
 		Elements: elements,
 		Matchers: matcher.Defaults(),
@@ -502,7 +520,7 @@ func parse(in io.Reader, elements parser.Elements, tabWidth int) *node.Node {
 	} else {
 		p.TabWidth = 8
 	}
-	root, err := p.Parse(in)
+	root, err := p.Parse(nil, src)
 	if err != nil {
 		parser.PrintError(os.Stderr, err)
 		os.Exit(1)
@@ -604,7 +622,7 @@ func tree(root *node.Node, modes []string) {
 			fmt.Fprintf(os.Stderr, strings.TrimSpace(`
 to tree: invalid mode: %q
 
-valid modes: printdata, printlocation
+valid modes: printdata, printoffsets, printlocation
 
 usage:   to tree [options] stdin
 example: to tree -mode printdata < file.to

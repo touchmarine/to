@@ -1,8 +1,8 @@
-0:0#0-4:1#15: Container()(
-	0:0#0-4:1#15: Walled(B)(
-		0:1#1-4:1#15: Container()(
-			1:2#4-3:3#13: Fenced(A)(
-				2:2#8-2:3#9: Text(MT)(
+0-15: Container()(
+	0-15: Walled(B)(
+		1-15: Container()(
+			4-13: Fenced(A)(
+				8-9: Text(MT)(
 					a
 				)
 			)

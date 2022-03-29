@@ -1,6 +1,7 @@
 package sticky_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"os"
@@ -51,20 +52,20 @@ func testDir(t *testing.T, dir string) {
 }
 
 func runTest(t *testing.T, elements parser.Elements, testPath string) {
-	bi, err := os.ReadFile(testPath + ".to")
+	src, err := os.ReadFile(testPath + ".to")
 	if err != nil {
 		t.Fatal(err)
 	}
 	// \n is always added, don't know by what, but it isn't nice for testing
 	// positions
-	input := strings.TrimSuffix(string(bi), "\n")
+	src = bytes.TrimSuffix(src, []byte("\n"))
 
 	p := parser.Parser{
 		Elements: elements,
 		Matchers: matcher.Defaults(),
 		TabWidth: 8,
 	}
-	root, err := p.Parse(strings.NewReader(input))
+	root, err := p.Parse(nil, src)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,6 +104,6 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 	golden := string(bg)
 
 	if res != golden {
-		t.Errorf("\nfrom input:\n%s\ngot:\n%s\nwant:\n%s", input, res, golden)
+		t.Errorf("\nfrom input:\n%s\ngot:\n%s\nwant:\n%s", string(src), res, golden)
 	}
 }

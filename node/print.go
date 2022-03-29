@@ -16,6 +16,7 @@ type PrinterMode int
 //go:generate stringer -type=PrinterMode
 const (
 	PrintData     PrinterMode = 1 << iota // print node.Data
+	PrintOffsets                          // print node.Start and node.End
 	PrintLocation                         // print node.Location
 )
 
@@ -33,6 +34,7 @@ func (m *PrinterMode) UnmarshalText(text []byte) error {
 
 var validModes = map[string]PrinterMode{
 	strings.ToLower(PrintData.String()):     PrintData,
+	strings.ToLower(PrintOffsets.String()):  PrintOffsets,
 	strings.ToLower(PrintLocation.String()): PrintLocation,
 }
 
@@ -87,6 +89,9 @@ type printer struct {
 }
 
 func (p *printer) print(n *Node) error {
+	if p.mode&PrintOffsets != 0 {
+		p.writef("%d-%d: ", n.Start, n.End)
+	}
 	if p.mode&PrintLocation != 0 {
 		s := n.Location.Range.Start
 		e := n.Location.Range.End

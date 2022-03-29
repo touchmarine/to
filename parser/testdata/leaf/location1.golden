@@ -1,7 +1,7 @@
-0:0#0-0:1#1: Container()(
-	0:0#0-0:1#1: Leaf(T)(
-		0:0#0-0:1#1: Container()(
-			0:0#0-0:1#1: Text(MT)(
+0-1: Container()(
+	0-1: Leaf(T)(
+		0-1: Container()(
+			0-1: Text(MT)(
 				a
 			)
 		)

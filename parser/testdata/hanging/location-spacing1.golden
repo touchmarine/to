@@ -1,5 +1,5 @@
-0:0#0-1:1#3: Container()(
-	0:0#0-0:1#1: Hanging(A)(
-		0:1#1-0:1#1: Container()()
+0-3: Container()(
+	0-1: Hanging(A)(
+		1-1: Container()()
 	)
 )

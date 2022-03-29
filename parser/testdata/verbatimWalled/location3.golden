@@ -1,6 +1,6 @@
-0:0#0-1:1#4: Container()(
-	0:0#0-0:2#2: VerbatimWalled(A)(
-		0:1#1-0:2#2: Text(MT)(
+0-4: Container()(
+	0-2: VerbatimWalled(A)(
+		1-2: Text(MT)(
 			a
 		)
 	)

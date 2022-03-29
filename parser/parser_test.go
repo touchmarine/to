@@ -76,7 +76,7 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 
 	fs := flag.NewFlagSet("", flag.ContinueOnError)
 	var printModes []string
-	fs.Func("print-mode", "enable print tree mode (options: PrintData, PrintLocation)", func(s string) error {
+	fs.Func("print-mode", "enable print tree mode (options: printdata, printoffsets, printlocation)", func(s string) error {
 		printModes = append(printModes, s)
 		return nil
 	})
@@ -103,7 +103,7 @@ func runTest(t *testing.T, elements parser.Elements, testPath string) {
 		Matchers: matcher.Defaults(),
 		TabWidth: 8,
 	}
-	nodes, err := p.Parse(strings.NewReader(src))
+	nodes, err := p.Parse(nil, []byte(src))
 	testError(t, testPath, err)
 
 	var m node.PrinterMode

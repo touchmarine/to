@@ -23,7 +23,8 @@ type Node struct {
 	PreviousSibling *Node
 	NextSibling     *Node
 
-	Location Location // location in source
+	Start, End int
+	Location   Location // location in source
 }
 
 // Data holds any extra data associated with a node.

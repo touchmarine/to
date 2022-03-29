@@ -1,4 +1,4 @@
-0:0#0-1:6#13: Container()(
-	0:0#0-0:6#6: VerbatimLine(A)(),
-	1:0#7-1:6#13: VerbatimLine(A)()
+0-13: Container()(
+	0-6: VerbatimLine(A)(),
+	7-13: VerbatimLine(A)()
 )

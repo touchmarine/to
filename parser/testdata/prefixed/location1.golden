@@ -1,7 +1,7 @@
-0:0#0-0:7#7: Container()(
-	0:0#0-0:7#7: Leaf(T)(
-		0:0#0-0:7#7: Container()(
-			0:0#0-0:7#7: Prefixed(MB)()
+0-7: Container()(
+	0-7: Leaf(T)(
+		0-7: Container()(
+			0-7: Prefixed(MB)()
 		)
 	)
 )

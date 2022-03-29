@@ -9,17 +9,27 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[PrintData-1]
-	_ = x[PrintLocation-2]
+	_ = x[PrintOffsets-2]
+	_ = x[PrintLocation-4]
 }
 
-const _PrinterMode_name = "PrintDataPrintLocation"
+const (
+	_PrinterMode_name_0 = "PrintDataPrintOffsets"
+	_PrinterMode_name_1 = "PrintLocation"
+)
 
-var _PrinterMode_index = [...]uint8{0, 9, 22}
+var (
+	_PrinterMode_index_0 = [...]uint8{0, 9, 21}
+)
 
 func (i PrinterMode) String() string {
-	i -= 1
-	if i < 0 || i >= PrinterMode(len(_PrinterMode_index)-1) {
-		return "PrinterMode(" + strconv.FormatInt(int64(i+1), 10) + ")"
+	switch {
+	case 1 <= i && i <= 2:
+		i -= 1
+		return _PrinterMode_name_0[_PrinterMode_index_0[i]:_PrinterMode_index_0[i+1]]
+	case i == 4:
+		return _PrinterMode_name_1
+	default:
+		return "PrinterMode(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
-	return _PrinterMode_name[_PrinterMode_index[i]:_PrinterMode_index[i+1]]
 }

@@ -1,8 +1,8 @@
-0:0#0-1:2#6: Container()(
-	0:0#0-1:2#6: Leaf(T)(
-		0:0#0-1:2#6: Container()(
-			0:0#0-1:2#6: Escaped(MA)(
-				0:2#2-1:0#4: Text(MT)(
+0-6: Container()(
+	0-6: Leaf(T)(
+		0-6: Container()(
+			0-6: Escaped(MA)(
+				2-4: Text(MT)(
 					a
 
 				)
