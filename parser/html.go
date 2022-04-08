@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/touchmarine/to/node"
@@ -116,6 +117,8 @@ func ParseFromHTML(els Elements, hels map[atom.Atom]string, src []byte) (*node.N
 			}
 
 			switch n.DataAtom {
+			case atom.Br:
+				// do nothing; br marks actual line breaks
 			case atom.Div:
 				m := &node.Node{
 					Element: hels[n.DataAtom],
@@ -126,33 +129,59 @@ func ParseFromHTML(els Elements, hels map[atom.Atom]string, src []byte) (*node.N
 				}
 				tr.AppendChild(m)
 				return
-			case atom.B:
-				m := &node.Node{
-					Element: hels[n.DataAtom],
-					Type:    node.TypeUniform,
+			//case atom.B, atom.Strong, atom.I, atom.Em:
+			//	m := &node.Node{
+			//		Element: hels[n.DataAtom],
+			//		Type:    node.TypeUniform,
+			//	}
+			//	for c := n.FirstChild; c != nil; c = c.NextSibling {
+			//		f(m, c)
+			//	}
+			//	tr.AppendChild(m)
+			//	return
+			//case atom.P:
+			//	m := &node.Node{
+			//		Element: hels[n.DataAtom],
+			//		Type:    node.TypeLeaf,
+			//	}
+			//	for c := n.FirstChild; c != nil; c = c.NextSibling {
+			//		f(m, c)
+			//	}
+			//	tr.AppendChild(m)
+			//	return
+			default:
+				if name, ok := hels[n.DataAtom]; ok {
+					if e, ok := els[name]; ok {
+						m := &node.Node{
+							Element: e.Name,
+							Type:    e.Type,
+						}
+						for c := n.FirstChild; c != nil; c = c.NextSibling {
+							f(m, c)
+						}
+						tr.AppendChild(m)
+						return
+					}
 				}
-				for c := n.FirstChild; c != nil; c = c.NextSibling {
-					f(m, c)
-				}
-				tr.AppendChild(m)
-				return
-			case atom.P:
-				m := &node.Node{
-					Element: hels[n.DataAtom],
-					Type:    node.TypeLeaf,
-				}
-				for c := n.FirstChild; c != nil; c = c.NextSibling {
-					f(m, c)
-				}
-				tr.AppendChild(m)
-				return
 			}
 		case html.TextNode:
-			m := &node.Node{
-				Type:  node.TypeText,
-				Value: n.Data,
+			txt := normalizeText(n.Data)
+			t := &node.Node{
+				Element: "Text",
+				Type:    node.TypeText,
+				Value:   txt,
 			}
-			tr.AppendChild(m)
+			if n.PrevSibling != nil && n.PrevSibling.DataAtom == atom.Br ||
+				n.NextSibling != nil && n.NextSibling.DataAtom == atom.Br {
+				// before or after a hard line break
+				m := &node.Node{
+					Type: node.TypeLeaf,
+				}
+				m.AppendChild(t)
+				tr.AppendChild(m)
+			} else {
+				tr.AppendChild(t)
+			}
 			return
 		}
 
@@ -165,6 +194,15 @@ func ParseFromHTML(els Elements, hels map[atom.Atom]string, src []byte) (*node.N
 	}
 	f(ctr, doc)
 	return ctr, nil
+}
+
+var lfs = regexp.MustCompile(`\n+`)
+
+func normalizeText(s string) string {
+	s = strings.ReplaceAll(s, "\r", "") // strip CRs
+	s = lfs.ReplaceAllString(s, " ")    // replace newlines with spacing
+	s = strings.TrimSpace(s)
+	return s
 }
 
 func map2attrs(m map[string]string) []html.Attribute {

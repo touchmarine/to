@@ -99,7 +99,8 @@ func renderHTML(t *testing.T, n *html.Node) string {
 
 func TestParseFromHTML(t *testing.T) {
 	hels := map[atom.Atom]string{
-		atom.B: "A",
+		atom.B:      "A",
+		atom.Strong: "A",
 	}
 	els := parser.Elements{
 		"A": parser.Element{
@@ -124,8 +125,37 @@ func TestParseFromHTML(t *testing.T) {
 			to: "**a**",
 		},
 		{
+			in: "<strong>a</strong>",
+			to: "**a**",
+		},
+		{
 			in: "<p>a</p>",
 			to: "a",
+		},
+		{
+			in: "a**",
+			to: `a\**`,
+		},
+		{
+			in: `a\**`,
+			to: `a\\\**`,
+		},
+
+		{
+			in: "a\nb",
+			to: "a b",
+		},
+		{
+			in: "a\n\nb",
+			to: "a b",
+		},
+		{
+			in: "a<br>b",
+			to: "a\n\nb",
+		},
+		{
+			in: "<br>",
+			to: "",
 		},
 	}
 	for _, c := range cases {
