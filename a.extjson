@@ -1,0 +1,66 @@
+{
+	"Elements": {
+		"root": {
+			"Type": "container",
+			"Templates": {
+				"html": '''
+<html>
+<body>
+{{{children}}}
+</body>
+</html>
+'''
+			}
+		},
+		"attributes": {
+			"Type": "verbatimWalled",
+			"Delimiter": "!",
+			"Templates": {
+				"html": ""
+			}
+		},
+		"textBlock": {
+			"Type": "leaf",
+			"Templates": {
+				"html": '''
+<span {{{attributes}}}>{{{children}}}</span>'''
+			}
+		},
+		"text": {
+			"Type": "text",
+			"Templates": {
+				"html": "{{content}}"
+			}
+		},
+
+		"Title": {
+			"Type": "hanging",
+			"Delimiter": "=",
+			"Templates": {
+				"html": '''
+<h1 {{{attributes}}}>
+	{{{children}}}
+</h1>
+'''
+			}
+		},
+		"Paragraph": {
+			"Type": "paragraph",
+			"Option": "leaf",
+			"Templates": {
+				"html": '''
+<p {{{attributes}}}>
+	{{{children}}}
+</p>
+'''
+			}
+		},
+		"StickyAttributes": {
+			"Type": "sticky",
+			"Element": "Attributes",
+			"Templates": {
+				"html": '''{{{stickyTarget}}}'''
+			}
+		}
+	}
+}

@@ -18,13 +18,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"html/template"
 	"io"
 	"os"
 	"strings"
 
-	"github.com/touchmarine/to/aggregator"
-	seqnumaggregator "github.com/touchmarine/to/aggregator/sequentialnumber"
+	"github.com/cbroglie/mustache"
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/matcher"
 	"github.com/touchmarine/to/node"
@@ -124,6 +122,7 @@ Run 'to help build' for details.
 			}
 
 			cfg := &config.Default
+			cfg = &config.Config{}
 			for _, p := range strings.Split(configs, ",") {
 				if p == "" {
 					continue
@@ -544,6 +543,7 @@ func transformers(elements config.Elements) transformer.Group {
 		}
 
 		switch e.Type {
+		case "container":
 		case "paragraph":
 			var t node.Type
 			if err := (&t).UnmarshalText([]byte(e.Option)); err != nil {
@@ -575,35 +575,142 @@ func transformers(elements config.Elements) transformer.Group {
 }
 
 func build(cfg *config.Config, root *node.Node, format string) {
-	aggregators := aggregator.Aggregators{}
-	for n, a := range cfg.Aggregates {
-		switch a.Type {
-		case "sequentialNumber":
-			aggregators[n] = seqnumaggregator.Aggregator{a.Elements}
-		default:
-			fmt.Fprintf(os.Stderr, "invalid config: unsupported aggregate type: %q\n", a.Type)
-			os.Exit(2)
-			return
+	o, err := render(cfg, root, format, "")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "render: %v\n", err)
+		os.Exit(1)
+		return
+	}
+	io.WriteString(os.Stdout, o)
+	return
+
+	//aggregators := aggregator.Aggregators{}
+	//for n, a := range cfg.Aggregates {
+	//	switch a.Type {
+	//	case "sequentialNumber":
+	//		aggregators[n] = seqnumaggregator.Aggregator{a.Elements}
+	//	default:
+	//		fmt.Fprintf(os.Stderr, "invalid config: unsupported aggregate type: %q\n", a.Type)
+	//		os.Exit(2)
+	//		return
+	//	}
+	//}
+	//aggregates := aggregator.Apply(root, aggregators)
+
+	//tmpl := template.New(format)
+	//global := map[string]interface{}{
+	//	"aggregates": aggregates,
+	//}
+	//tmpl.Funcs(totemplate.Funcs(tmpl, global))
+	//_, err := cfg.ParseTemplates(tmpl, format)
+	//if err != nil {
+	//	fmt.Fprintf(os.Stderr, "parse templates failed (format=%q): %v\n", format, err)
+	//	os.Exit(1)
+	//	return
+	//}
+	//if err := tmpl.Execute(os.Stdout, root); err != nil {
+	//	fmt.Fprintf(os.Stderr, "execute template failed: %v\n", err)
+	//	os.Exit(1)
+	//	return
+	//}
+}
+
+func render(cfg *config.Config, n *node.Node, format string, attr string) (string, error) {
+	e := cfg.Elements[n.Element]
+	var st, tgt string
+	if e.Type == "sticky" {
+		s, t, attrStr, err := handleSticky(n, e)
+		if err != nil {
+			return "", fmt.Errorf("handleSticky: %w", err)
+		}
+		st, err = render(cfg, s, format, attrStr)
+		if err != nil {
+			return "", fmt.Errorf("render sticky: %v", err)
+		}
+		tgt, err = render(cfg, t, format, attrStr)
+		if err != nil {
+			return "", fmt.Errorf("render sticky target: %v", err)
 		}
 	}
-	aggregates := aggregator.Apply(root, aggregators)
-
-	tmpl := template.New(format)
-	global := map[string]interface{}{
-		"aggregates": aggregates,
-	}
-	tmpl.Funcs(totemplate.Funcs(tmpl, global))
-	_, err := cfg.ParseTemplates(tmpl, format)
+	chldn, err := renderChildren(cfg, n, format)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "parse templates failed (format=%q): %v\n", format, err)
-		os.Exit(1)
-		return
+		return "", fmt.Errorf("renderChildren: %w", err)
 	}
-	if err := tmpl.Execute(os.Stdout, root); err != nil {
-		fmt.Fprintf(os.Stderr, "execute template failed: %v\n", err)
-		os.Exit(1)
-		return
+	m := map[string]string{
+		"content":      n.Value, // only for text
+		"attributes":   attr,    // passed from parent (from sticky elements)
+		"sticky":       st,      // sticky element
+		"stickyTarget": tgt,     // the element onto which sticky sticks to
+		"children":     chldn,   // rendered children
 	}
+	tpl, err := elementTemplate(n.Element, e, format)
+	if err != nil {
+		return "", fmt.Errorf("elementTemplate: %w", err)
+	}
+	out, err := mustache.Render(tpl, m)
+	if err != nil {
+		return "", fmt.Errorf("mustache render: %v", err)
+	}
+	return out, nil
+}
+
+func elementTemplate(nm string, e config.Element, format string) (string, error) {
+	if e.Disabled {
+		return "", nil
+	}
+	tpl, ok := e.Templates[format]
+	if !ok {
+		return "", fmt.Errorf("element template not found: element=%q format=%q", nm, format)
+	}
+	return tpl, nil
+}
+
+func handleSticky(n *node.Node, e config.Element) (*node.Node, *node.Node, string, error) {
+	if e.Type != "sticky" {
+		return nil, nil, "", fmt.Errorf("element not of type sticky")
+	}
+
+	var s, t *node.Node
+	if e.Option == "after" {
+		s = n.LastChild
+		t = n.FirstChild
+	} else {
+		s = n.FirstChild
+		t = n.LastChild
+	}
+	if s == nil {
+		return nil, nil, "", fmt.Errorf("nil sticky node")
+	}
+	if t == nil {
+		return nil, nil, "", fmt.Errorf("nil sticky target node")
+	}
+
+	var a *node.Node
+	switch "attributes" {
+	case s.Element:
+		a = s
+	case t.Element:
+		a = t
+	}
+	var attrStr string
+	if a != nil {
+		m := totemplate.ParseAttributes(a.TextContent())
+		attrStr = string(totemplate.AttributesToHTML(m))
+	}
+	return s, t, attrStr, nil
+}
+
+func renderChildren(cfg *config.Config, n *node.Node, format string) (string, error) {
+	var b strings.Builder
+	chldn := totemplate.ElementChildren(n)
+	for _, c := range chldn {
+		o, err := render(cfg, c, format, "")
+		if err != nil {
+			return "", fmt.Errorf("render: %w", err)
+		}
+		b.WriteString(o)
+	}
+	return b.String(), nil
 }
 
 func format(elements parser.Elements, lineLength int, root *node.Node) {

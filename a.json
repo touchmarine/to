@@ -1,0 +1,51 @@
+{
+	"Elements": {
+		"root": {
+			"Type": "container",
+			"Templates": {
+				"html": "<html>\n<body>\n{{{children}}}\n</body>\n</html>\n"
+			}
+		},
+		"attributes": {
+			"Type": "verbatimWalled",
+			"Delimiter": "!",
+			"Templates": {
+				"html": ""
+			}
+		},
+		"textBlock": {
+			"Type": "leaf",
+			"Templates": {
+				"html": "<span {{{attributes}}}>{{{children}}}</span>"
+			}
+		},
+		"text": {
+			"Type": "text",
+			"Templates": {
+				"html": "{{content}}"
+			}
+		},
+
+		"Title": {
+			"Type": "hanging",
+			"Delimiter": "=",
+			"Templates": {
+				"html": "<h1 {{{attributes}}}>\n\t{{{children}}}\n</h1>\n"
+			}
+		},
+		"Paragraph": {
+			"Type": "paragraph",
+			"Option": "leaf",
+			"Templates": {
+				"html": "<p {{{attributes}}}>\n\t{{{children}}}\n</p>\n"
+			}
+		},
+		"StickyAttributes": {
+			"Type": "sticky",
+			"Element": "Attributes",
+			"Templates": {
+				"html": "{{{stickyTarget}}}"
+			}
+		}
+	}
+}
