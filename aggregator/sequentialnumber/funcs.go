@@ -5,7 +5,7 @@ func (a aggregate) Group() group {
 	return (&grouper{a: a}).group(1)
 }
 
-type group []interface{}
+type group []any
 
 type grouper struct {
 	a   aggregate

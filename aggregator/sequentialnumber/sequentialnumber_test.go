@@ -183,7 +183,7 @@ func appendChildren(n *node.Node, children []*node.Node) *node.Node {
 	return n
 }
 
-func jsonMarshal(t *testing.T, v interface{}) string {
+func jsonMarshal(t *testing.T, v any) string {
 	t.Helper()
 
 	json, err := json.MarshalIndent(v, "", "\t")

@@ -11,7 +11,7 @@ import (
 )
 
 // Funcs returns the set of Touch template functions.
-func Funcs(tmpl *template.Template, global map[string]interface{}) template.FuncMap {
+func Funcs(tmpl *template.Template, global map[string]any) template.FuncMap {
 	return template.FuncMap{
 		"log":              Log,
 		"logf":             Logf,
@@ -32,13 +32,13 @@ func Funcs(tmpl *template.Template, global map[string]interface{}) template.Func
 }
 
 // Log wraps log.Print.
-func Log(v ...interface{}) string {
+func Log(v ...any) string {
 	log.Print(v...)
 	return ""
 }
 
 // Logf wraps log.Printf.
-func Logf(format string, v ...interface{}) string {
+func Logf(format string, v ...any) string {
 	log.Printf(format, v...)
 	return ""
 }
@@ -49,7 +49,7 @@ func Error(text string) (string, error) {
 }
 
 // Errorf returns a new formatted error.
-func Errorf(format string, v ...interface{}) (string, error) {
+func Errorf(format string, v ...any) (string, error) {
 	return "", fmt.Errorf(format, v...)
 }
 
@@ -58,9 +58,9 @@ func Errorf(format string, v ...interface{}) (string, error) {
 //
 // Example:
 // 	{{dynamicTemplate $c.Element $c}}
-func MakeTemplateFunction(tmpl *template.Template) func(name string, v ...interface{}) (template.HTML, error) {
-	return func(name string, v ...interface{}) (template.HTML, error) {
-		var arg interface{}
+func MakeTemplateFunction(tmpl *template.Template) func(name string, v ...any) (template.HTML, error) {
+	return func(name string, v ...any) (template.HTML, error) {
+		var arg any
 		switch len(v) {
 		case 0:
 		case 1:
@@ -111,7 +111,7 @@ func TrimSpacing(s string) string {
 }
 
 // NodeSetData sets an entry in node.Data.
-func NodeSetData(n *node.Node, key string, v interface{}) *node.Node {
+func NodeSetData(n *node.Node, key string, v any) *node.Node {
 	if n != nil {
 		if n.Data == nil {
 			n.Data = node.Data{}

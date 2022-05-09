@@ -28,7 +28,7 @@ type Node struct {
 }
 
 // Data holds any extra data associated with a node.
-type Data map[string]interface{}
+type Data map[string]any
 
 // Location represents a location inside a resource, such as a line inside a
 // text file.

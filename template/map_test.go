@@ -8,28 +8,28 @@ import (
 )
 
 func TestDot(t *testing.T) {
-	m := map[string]interface{}{
+	m := map[string]any{
 		"a": "a",
-		"b": map[string]interface{}{
-			"bb": map[string]interface{}{
+		"b": map[string]any{
+			"bb": map[string]any{
 				"bbb": "bbb",
 			},
 		},
-		"c": map[int]interface{}{
+		"c": map[int]any{
 			0: "0",
 		},
 	}
 
 	cases := []struct {
 		in  string
-		out interface{}
+		out any
 	}{
 		{"a", m["a"]},
 		{"a.a", ""},
 		{"b", m["b"]},
 		{"b.b", ""},
-		{"b.bb", m["b"].(map[string]interface{})["bb"]},
-		{"b.bb.bbb", m["b"].(map[string]interface{})["bb"].(map[string]interface{})["bbb"]},
+		{"b.bb", m["b"].(map[string]any)["bb"]},
+		{"b.bb.bbb", m["b"].(map[string]any)["bb"].(map[string]any)["bbb"]},
 		{"c", m["c"]},
 		{"c.0", ""},
 		{"c.a", ""},

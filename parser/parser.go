@@ -1637,7 +1637,7 @@ func fmtBlocks(blocks []rune) string {
 	return b.String()
 }
 
-func (p *parser) tracef(format string, v ...interface{}) func() {
+func (p *parser) tracef(format string, v ...any) func() {
 	return p.trace(fmt.Sprintf(format, v...))
 }
 
@@ -1651,7 +1651,7 @@ func (p *parser) trace(msg string) func() {
 	}
 }
 
-func (p *parser) printf(format string, v ...interface{}) {
+func (p *parser) printf(format string, v ...any) {
 	p.print(fmt.Sprintf(format, v...))
 }
 

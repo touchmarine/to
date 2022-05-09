@@ -621,9 +621,9 @@ func build(cfg *config.Config, root *node.Node, format string) {
 	//}
 }
 
-func render(cfg *config.Config, n *node.Node, format string, attrs map[string]interface{}) (string, error) {
+func render(cfg *config.Config, n *node.Node, format string, attrs map[string]any) (string, error) {
 	if attrs == nil {
-		attrs = map[string]interface{}{}
+		attrs = map[string]any{}
 	}
 
 	// get element content—text value if text otherwise rendered children
@@ -711,11 +711,11 @@ func render(cfg *config.Config, n *node.Node, format string, attrs map[string]in
 	return out, nil
 }
 
-func copyMap(m map[string]interface{}) map[string]interface{} {
+func copyMap(m map[string]any) map[string]any {
 	if m == nil {
 		return nil
 	}
-	n := make(map[string]interface{}, len(m))
+	n := make(map[string]any, len(m))
 	for k, v := range m {
 		n[k] = v
 	}
@@ -733,7 +733,7 @@ func elementTemplate(nm string, e config.Element, format string) (string, error)
 	return tpl, nil
 }
 
-func handleSticky(n *node.Node, e config.Element) (*node.Node, *node.Node, map[string]interface{}, error) {
+func handleSticky(n *node.Node, e config.Element) (*node.Node, *node.Node, map[string]any, error) {
 	if e.Type != "sticky" {
 		return nil, nil, nil, fmt.Errorf("element not of type sticky")
 	}
@@ -760,7 +760,7 @@ func handleSticky(n *node.Node, e config.Element) (*node.Node, *node.Node, map[s
 	case t.Element:
 		a = t
 	}
-	var m map[string]interface{}
+	var m map[string]any
 	if a != nil {
 		m = totemplate.ParseAttributes(a.TextContent())
 	}

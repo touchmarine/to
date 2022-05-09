@@ -142,7 +142,7 @@ func (p *printer) print(n *Node) error {
 	return nil
 }
 
-func (p printer) prettyJSON(v interface{}) string {
+func (p printer) prettyJSON(v any) string {
 	b, err := json.MarshalIndent(v, strings.Repeat("\t", p.indent), "\t")
 	if err != nil {
 		panic(err)
@@ -165,7 +165,7 @@ func (p *printer) newline() {
 	p.afterNewline = true
 }
 
-func (p *printer) writef(format string, v ...interface{}) {
+func (p *printer) writef(format string, v ...any) {
 	p.write(fmt.Sprintf(format, v...))
 }
 

@@ -292,7 +292,7 @@ func TestGroup(t *testing.T) {
 	}
 }
 
-func indentedJSON(t *testing.T, v interface{}) string {
+func indentedJSON(t *testing.T, v any) string {
 	t.Helper()
 	json, err := json.MarshalIndent(v, "", "\t")
 	if err != nil {

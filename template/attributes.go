@@ -11,7 +11,7 @@ import (
 
 // AttributesToHTML returns a HTML-formatted string of attributes from the given
 // attributes.
-func AttributesToHTML(attrs map[string]interface{}) template.HTMLAttr {
+func AttributesToHTML(attrs map[string]any) template.HTMLAttr {
 	var b strings.Builder
 	var i int
 	for k, v := range attrs {
@@ -36,7 +36,7 @@ func AttributesToHTML(attrs map[string]interface{}) template.HTMLAttr {
 }
 
 // ParseAttributes parses the attributes in the given string and returns them.
-func ParseAttributes(s string) map[string]interface{} {
+func ParseAttributes(s string) map[string]any {
 	p := attributeParser{}
 	reader := strings.NewReader(s)
 	p.init(reader)
@@ -66,12 +66,12 @@ type attributeParser struct {
 	reader *bufio.Reader
 
 	ch    byte
-	attrs map[string]interface{}
+	attrs map[string]any
 }
 
 func (p *attributeParser) init(r io.Reader) {
 	p.reader = bufio.NewReader(r)
-	p.attrs = map[string]interface{}{}
+	p.attrs = map[string]any{}
 }
 
 func (p *attributeParser) next() bool {

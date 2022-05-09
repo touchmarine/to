@@ -8,20 +8,20 @@ import (
 // A map is made if the given map is nil.
 //
 // MakeGlobalMapFunction is used to create global maps in templates.
-func MakeGlobalMapFunction(base map[string]interface{}) func() map[string]interface{} {
+func MakeGlobalMapFunction(base map[string]any) func() map[string]any {
 	m := base
 	if m == nil {
-		m = map[string]interface{}{}
+		m = map[string]any{}
 	}
-	return func() map[string]interface{} {
+	return func() map[string]any {
 		return m
 	}
 }
 
 // Dot implements dot notation for accessing map values.
-func Dot(m map[string]interface{}, selector string) interface{} {
+func Dot(m map[string]any, selector string) any {
 	if i := strings.Index(selector, "."); i > -1 && i+1 < len(selector) {
-		if mm, ok := m[selector[:i]].(map[string]interface{}); ok {
+		if mm, ok := m[selector[:i]].(map[string]any); ok {
 			return Dot(mm, selector[i+1:])
 		}
 	}
@@ -29,7 +29,7 @@ func Dot(m map[string]interface{}, selector string) interface{} {
 }
 
 // Get returns a map value or an empty string if entry doesn't exist.
-func Get(m map[string]interface{}, key string) interface{} {
+func Get(m map[string]any, key string) any {
 	if v, ok := m[key]; ok {
 		return v
 	}
@@ -37,16 +37,16 @@ func Get(m map[string]interface{}, key string) interface{} {
 }
 
 // Set sets a map entry. A map is made if the given map is nil.
-func Set(m map[string]interface{}, key string, v interface{}) map[string]interface{} {
+func Set(m map[string]any, key string, v any) map[string]any {
 	if m == nil {
-		m = map[string]interface{}{}
+		m = map[string]any{}
 	}
 	m[key] = v
 	return m
 }
 
 // SetDefault sets a map entry if the entry doesn't exist.
-func SetDefault(m map[string]interface{}, key string, v interface{}) map[string]interface{} {
+func SetDefault(m map[string]any, key string, v any) map[string]any {
 	if m != nil {
 		if _, ok := m[key]; ok {
 			// an entry already exists
