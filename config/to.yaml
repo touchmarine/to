@@ -1,0 +1,283 @@
+---
+elements:
+  # templates
+  root:
+    type: template
+    templates:
+      html: |
+        <html>
+        <body>
+        {{{content}}}
+        </body>
+        </html>
+
+  # built-in and special elements (their names matter):
+  # - textBlock            = default leaf element
+  # - text                 = default text element
+  # - blockComment/comment = the comment elements
+  # - attributes           = the attribute element
+  textBlock:
+    type: leaf
+    templates:
+      html: '<span {{{attributes}}}>{{{content}}}</span>'
+  text:
+    type: text
+    templates:
+      html: '{{content}}'
+  blockComment:
+    type: verbatimWalled
+    delimiter: '/'
+    templates:
+      html: ''
+  comment:
+    type: escaped
+    delimiter: '/'
+    templates:
+      html: ''
+  attributes:
+    type: verbatimWalled
+    delimiter: '!'
+    templates:
+      html: ''
+
+  # default elements
+  StickyAttributes:
+    type: sticky
+    element: attributes
+    templates:
+      html: '{{{target}}}'
+  Paragraph:
+    type: paragraph
+    option: leaf
+    templates:
+      html: |
+        <p {{{attributes}}}>
+          {{{content}}}
+        </p>
+  Title:
+    type: hanging
+    delimiter: '='
+    templates:
+      html: |
+        <h1 {{{attributes}}}>
+          {{{content}}}
+        </h1>
+  Subtitle:
+    type: walled
+    delimiter: '_'
+    templates:
+      html: '{{{content}}}'
+  Heading:
+    type: rankedHanging
+    delimiter: '='
+    templates:
+      html: |
+        <h{{rank}} {{{attributes}}}>
+          {{{content}}}
+        </h{{rank}}>
+  NumberedHeading:
+    type: rankedHanging
+    delimiter: '#'
+    templates:
+      html: |
+        <h{{rank}} {{{attributes}}}>
+          <span style="float:left">{{seqNum}}&nbsp;</span>
+          {{{content}}}
+        </h{{rank}}>
+  Blockquote:
+    type: walled
+    delimiter: '>'
+    templates:
+      html: |
+        <blockquote {{{attributes}}}>
+          {{{content}}}
+        </blockquote>
+  ListItem:
+    type: hanging
+    delimiter: '-'
+    templates:
+      html: '<li>{{{content}}}</li>'
+  NumberedListItem:
+    type: hanging
+    delimiter: '1.'
+    templates:
+      html: '<li>{{{content}}}</li>'
+  PreformattedBlock:
+    type: fenced
+    delimiter: "'"
+    templates:
+      html: '<pre {{{attributes}}}>{{{content}}}</pre>'
+  CodeBlock:
+    type: fenced
+    delimiter: '`'
+    templates:
+      html: >
+        <pre {{{attributes}}}>
+          <code lang="{{openingText}}">{{{content}}}</code>
+        </pre>
+  Image:
+    type: verbatimLine
+    delimiter: '.image'
+    templates:
+      html: '<img src="{{textContent}}" {{{attributes}}}/>'
+  Note:
+    type: walled
+    delimiter: '*'
+    templates:
+      html: |
+        <div style="margin-left: 1em; padding-left: 1em; border-left: 2px solid blue;" {{{attributes}}}>
+          {{{content}}}
+        </div>
+  Term:
+    type: hanging
+    delimiter: '?'
+    templates:
+      html: '{{{content}}}'
+  Description:
+    type: hanging
+    delimiter: ':'
+    templates:
+      html: '{{{content}}}'
+  Caption:
+    type: walled
+    delimiter: '+'
+    templates:
+      html: '{{{content}}}'
+  Emphasis:
+    type: uniform
+    delimiter: '_'
+    templates:
+      html: '<em>{{{content}}}</em>'
+  Strong:
+    type: uniform
+    delimiter: '*'
+    templates:
+      html: '<strong>{{{content}}}</strong>'
+  Code:
+    type: escaped
+    delimiter: '`'
+    templates:
+      html: '<code>{{textContent}}</code>'
+  Link:
+    type: escaped
+    delimiter: '<'
+    templates:
+      html: '<a href="{{textContent}}">{{textContent}}</a>'
+  HTTP:
+    type: prefixed
+    delimiter: 'http://'
+    matcher: url
+    templates:
+      html: '<a href="http://{{textContent}}">http://{{textContent}}</a>'
+  HTTPS:
+    type: prefixed
+    delimiter: 'https://'
+    matcher: url
+    templates:
+      html: '<a href="https://{{textContent}}">https://{{textContent}}</a>'
+  WWW:
+    type: prefixed
+    delimiter: 'www.'
+    matcher: url
+    templates:
+      html: '<a href="http://www.{{textContent}}">www.{{textContent}}</a>'
+  LineBreak:
+    type: prefixed
+    delimiter: '\'
+    templates:
+      html: '<br>'
+  Group:
+    type: uniform
+    delimiter: '['
+    templates:
+      html: '{{{content}}}'
+
+  # groups
+  List:
+    type: list
+    element: ListItem
+    templates:
+      html: |
+        <ul {{{attributes}}}>
+          {{{content}}}
+        </ul>
+  NumberedList:
+    type: list
+    element: NumberedListItem
+    templates:
+      html: |
+        <ol {{{attributes}}}>
+          {{{content}}}
+        </ol>
+  TermList:
+    type: list
+    element: Term
+    templates:
+      html: |
+        <div {{{attributes}}}>
+          {{{content}}}
+        </div>
+  DescriptionList:
+    type: list
+    element: Description
+    templates:
+      html: |
+        <div {{{attributes}}}>
+          {{{content}}}
+        </div>
+
+  # stickies
+  StickySubtitle:
+    type: sticky
+    element: Subtitle
+    option: after
+    templates:
+      html: |
+        <header {{{attributes}}}>
+          {{{target}}}
+          <p>{{{sticky}}}</p>
+        </header>
+  StickyDescription:
+    type: sticky
+    element: DescriptionList
+    option: after
+    templates:
+      html: |
+        <dl {{{attributes}}}>
+          {{{target}}}
+          {{{sticky}}}
+        </dl>
+    targettemplates:
+      html: |
+        {{#children}}
+          <dt>{{{.}}}</dt>
+        {{/children}}
+    stickytemplates:
+      html: |
+        {{#children}}
+          <dd>{{{.}}}</dd>
+        {{/children}}
+  StickyCaption:
+    type: sticky
+    element: Caption
+    option: after
+    templates:
+      html: |
+        <figure {{{attributes}}}>
+          {{{target}}}
+          <figcaption>
+            {{{sticky}}}
+          </figcaption>
+        </figure>
+  NamedLink:
+    type: sticky
+    element: Group
+    target: Link
+    templates:
+      html: |
+        <a href="{{target}}">
+          {{{sticky}}}
+        </a>
+    # overrides target template in this instance
+    targettemplates:
+      html: '{{textContent}}'

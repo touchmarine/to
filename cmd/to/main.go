@@ -15,13 +15,14 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/cbroglie/mustache"
 	"github.com/gosimple/slug"
@@ -128,12 +129,11 @@ Run 'to help build' for details.
 			}
 
 			cfg := &config.Default
-			cfg = &config.Config{}
 			for _, p := range strings.Split(configs, ",") {
 				if p == "" {
 					continue
 				}
-				c := jsonDecodeConfigFile(p) // exits on error
+				c := yamlDecodeConfigFile(p) // exits on error
 				config.ShallowMerge(cfg, c)
 			}
 			src, err := io.ReadAll(os.Stdin)
@@ -188,7 +188,7 @@ Run 'to help fmt' for details.
 				if p == "" {
 					continue
 				}
-				c := jsonDecodeConfigFile(p) // exits on error
+				c := yamlDecodeConfigFile(p) // exits on error
 				config.ShallowMerge(cfg, c)
 			}
 			src, err := io.ReadAll(os.Stdin)
@@ -243,7 +243,7 @@ Run 'to help tree' for details.
 				if p == "" {
 					continue
 				}
-				c := jsonDecodeConfigFile(p) // exits on error
+				c := yamlDecodeConfigFile(p) // exits on error
 				config.ShallowMerge(cfg, c)
 			}
 			src, err := io.ReadAll(os.Stdin)
@@ -499,7 +499,7 @@ func isStdinEmpty() bool {
 	return (stat.Mode() & os.ModeCharDevice) != 0
 }
 
-func jsonDecodeConfigFile(path string) *config.Config {
+func yamlDecodeConfigFile(path string) *config.Config {
 	var c config.Config
 	f, err := os.Open(path)
 	if err != nil {
@@ -507,8 +507,10 @@ func jsonDecodeConfigFile(path string) *config.Config {
 		os.Exit(2)
 		return nil
 	}
-	if err := json.NewDecoder(f).Decode(&c); err != nil {
-		fmt.Fprintf(os.Stderr, "cannot decode JSON from config file (%s): %v\n", path, err)
+	dec := yaml.NewDecoder(f)
+	dec.SetStrict(true)
+	if err := dec.Decode(&c); err != nil {
+		fmt.Fprintf(os.Stderr, "cannot decode YAML from config file (%s): %v\n", path, err)
 		os.Exit(2)
 		return nil
 	}
@@ -549,7 +551,8 @@ func transformers(elements config.Elements) transformer.Group {
 		}
 
 		switch e.Type {
-		case "container":
+		case "template":
+			// TODO: added for templates in config.elements?
 		case "paragraph":
 			var t node.Type
 			if err := (&t).UnmarshalText([]byte(e.Option)); err != nil {
@@ -581,9 +584,17 @@ func transformers(elements config.Elements) transformer.Group {
 }
 
 func build(cfg *config.Config, root *node.Node, format string) {
-	o, err := render(cfg, root, format, nil)
+
+	tpl, err := elementTemplate(cfg, "root", format)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "render: %v\n", err)
+		fmt.Fprintf(os.Stderr, "no root template: %v", err)
+		os.Exit(1)
+		return
+	}
+
+	o, err := render(cfg, root, format, nil, tpl)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "render failed: %v\n", err)
 		os.Exit(1)
 		return
 	}
@@ -604,7 +615,7 @@ func build(cfg *config.Config, root *node.Node, format string) {
 	//aggregates := aggregator.Apply(root, aggregators)
 
 	//tmpl := template.New(format)
-	//global := map[string]interface{}{
+	//global := map[string]any{
 	//	"aggregates": aggregates,
 	//}
 	//tmpl.Funcs(totemplate.Funcs(tmpl, global))
@@ -621,7 +632,8 @@ func build(cfg *config.Config, root *node.Node, format string) {
 	//}
 }
 
-func render(cfg *config.Config, n *node.Node, format string, attrs map[string]any) (string, error) {
+// tpl overrides the default tepmlate found in config
+func render(cfg *config.Config, n *node.Node, format string, attrs map[string]any, tpl string) (string, error) {
 	if attrs == nil {
 		attrs = map[string]any{}
 	}
@@ -634,21 +646,18 @@ func render(cfg *config.Config, n *node.Node, format string, attrs map[string]an
 		var err error
 		cont, err = renderChildren(cfg, n, format)
 		if err != nil {
-			return "", fmt.Errorf("renderChildren: %w", err)
+			return "", fmt.Errorf("renderChildren: %v", err)
 		}
 	}
 
-	// get rank from node data
-	var rank string
-	if v, ok := n.Data[parser.KeyRank]; ok {
-		switch r := v.(type) {
-		case int:
-			rank = strconv.Itoa(r)
-		case string:
-			rank = r
-		default:
-			return "", fmt.Errorf("rank is neither int nor string (%T %s)", n.Data[parser.KeyRank], n)
-		}
+	chldn, err := renderChildrenSeparate(cfg, n, format)
+	if err != nil {
+		return "", fmt.Errorf("renderChildrenSeparate: %v", err)
+	}
+
+	nd, err := extractNodeData(n.Data)
+	if err != nil {
+		return "", fmt.Errorf("extractNodeData: %v", err)
 	}
 
 	// add id attribute to all ranked hanging elements (they usually denote
@@ -677,38 +686,91 @@ func render(cfg *config.Config, n *node.Node, format string, attrs map[string]an
 
 	// get sticky element and its target
 	var st, tgt string
-	if e.Type == "sticky" {
+	if e.Type == sticky.Key {
 		s, t, m, err := handleSticky(n, e)
 		if err != nil {
-			return "", fmt.Errorf("handleSticky: %w", err)
+			return "", fmt.Errorf("handleSticky: %v", err)
 		}
-		st, err = render(cfg, s, format, copyMap(m))
+
+		var stTpl string // override template
+		if e.StickyTemplates != nil {
+			stTpl = e.StickyTemplates[format]
+		}
+		st, err = render(cfg, s, format, copyMap(m), stTpl)
 		if err != nil {
 			return "", fmt.Errorf("render sticky: %v", err)
 		}
-		tgt, err = render(cfg, t, format, copyMap(m))
+
+		var tgtTpl string // override template
+		if e.TargetTemplates != nil {
+			tgtTpl = e.TargetTemplates[format]
+		}
+		tgt, err = render(cfg, t, format, copyMap(m), tgtTpl)
 		if err != nil {
 			return "", fmt.Errorf("render sticky target: %v", err)
 		}
 	}
 
 	// render template
-	m := map[string]string{
-		"content":      cont,    // text value if text otherwise rendered children
-		"rank":         rank,    // node's rank
-		"attributes":   attrStr, // passed from parent (from sticky elements)
-		"sticky":       st,      // sticky element
-		"stickyTarget": tgt,     // the element onto which sticky sticks to
+	m := map[string]any{
+		"content":     cont,           // text value if text otherwise rendered children
+		"children":    chldn,          // list of rendered element children
+		"rank":        nd.rank,        // node's rank
+		"openingText": nd.openingText, // node's opening text
+		"seqNum":      nd.seqNum,      // node's sequential number
+		"attributes":  attrStr,        // passed from parent (from sticky elements)
+		"textContent": n.TextContent(),
+		"sticky":      st,  // sticky element
+		"target":      tgt, // the element onto which sticky sticks to
 	}
-	tpl, err := elementTemplate(n.Element, e, format)
-	if err != nil {
-		return "", fmt.Errorf("elementTemplate: %w", err)
+	if tpl == "" {
+		// no override template
+		var err error
+		tpl, err = elementTemplate(cfg, n.Element, format)
+		if err != nil {
+			return "", fmt.Errorf("elementTemplate: %v", err)
+		}
 	}
 	out, err := mustache.Render(tpl, m)
 	if err != nil {
 		return "", fmt.Errorf("mustache render: %v", err)
 	}
 	return out, nil
+}
+
+type extractedData struct {
+	rank, openingText, seqNum string
+}
+
+func extractNodeData(d node.Data) (extractedData, error) {
+	var ed extractedData
+	if v, ok := d[parser.KeyRank]; ok {
+		switch r := v.(type) {
+		case int:
+			ed.rank = strconv.Itoa(r)
+		case string:
+			ed.rank = r
+		default:
+			return extractedData{}, fmt.Errorf("rank is neither int nor string (%T %s)", v, v)
+		}
+	}
+	if v, ok := d[parser.KeyOpeningText]; ok {
+		switch r := v.(type) {
+		case string:
+			ed.openingText = r
+		default:
+			return extractedData{}, fmt.Errorf("opening text is not a string (%T %s)", v, v)
+		}
+	}
+	if v, ok := d[sequentialnumber.Key]; ok {
+		switch r := v.(type) {
+		case string:
+			ed.seqNum = r
+		default:
+			return extractedData{}, fmt.Errorf("seqNum is not a string (%T %s)", v, v)
+		}
+	}
+	return ed, nil
 }
 
 func copyMap(m map[string]any) map[string]any {
@@ -722,7 +784,8 @@ func copyMap(m map[string]any) map[string]any {
 	return n
 }
 
-func elementTemplate(nm string, e config.Element, format string) (string, error) {
+func elementTemplate(cfg *config.Config, nm string, format string) (string, error) {
+	e := cfg.Elements[nm]
 	if e.Disabled {
 		return "", nil
 	}
@@ -734,7 +797,7 @@ func elementTemplate(nm string, e config.Element, format string) (string, error)
 }
 
 func handleSticky(n *node.Node, e config.Element) (*node.Node, *node.Node, map[string]any, error) {
-	if e.Type != "sticky" {
+	if e.Type != sticky.Key {
 		return nil, nil, nil, fmt.Errorf("element not of type sticky")
 	}
 
@@ -768,16 +831,24 @@ func handleSticky(n *node.Node, e config.Element) (*node.Node, *node.Node, map[s
 }
 
 func renderChildren(cfg *config.Config, n *node.Node, format string) (string, error) {
-	var b strings.Builder
-	chldn := totemplate.ElementChildren(n)
-	for _, c := range chldn {
-		o, err := render(cfg, c, format, nil)
-		if err != nil {
-			return "", fmt.Errorf("render: %w", err)
-		}
-		b.WriteString(o)
+	chldn, err := renderChildrenSeparate(cfg, n, format)
+	if err != nil {
+		return "", fmt.Errorf("renderChildrenSeparate: %v", err)
 	}
-	return b.String(), nil
+	return strings.Join(chldn, ""), nil
+}
+
+func renderChildrenSeparate(cfg *config.Config, n *node.Node, format string) ([]string, error) {
+	chldn := totemplate.ElementChildren(n)
+	p := make([]string, 0, len(chldn))
+	for _, c := range chldn {
+		o, err := render(cfg, c, format, nil, "")
+		if err != nil {
+			return nil, fmt.Errorf("render: %v", err)
+		}
+		p = append(p, o)
+	}
+	return p, nil
 }
 
 func format(elements parser.Elements, lineLength int, root *node.Node) {

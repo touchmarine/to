@@ -49,7 +49,6 @@ func (pp Parser) Parse(sourceMap *source.Map, src []byte) (*node.Node, error) {
 	p.tabWidth = pp.TabWidth
 	p.init(sourceMap, src)
 	root := p.parse(nil)
-	root.Element = "root"
 	p.errors.Sort()
 	return root, p.errors.Err()
 }

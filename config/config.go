@@ -5,15 +5,16 @@ package config
 import (
 	"bytes"
 	_ "embed"
-	"encoding/json"
 	"fmt"
 	"html/template"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/touchmarine/to/node"
 	"github.com/touchmarine/to/parser"
 )
 
-//go:embed to.json
+//go:embed to.yaml
 var b []byte
 
 // Default is the default Config.
@@ -22,7 +23,9 @@ var Default = defaultConfig()
 func defaultConfig() Config {
 	var c Config
 	r := bytes.NewReader(b)
-	if err := json.NewDecoder(r).Decode(&c); err != nil {
+	dec := yaml.NewDecoder(r)
+	dec.SetStrict(true)
+	if err := dec.Decode(&c); err != nil {
 		panic(err)
 	}
 	return c
@@ -69,14 +72,16 @@ type Elements map[string]Element
 
 // Element is an abstraction of parser.Element and transformer options.
 type Element struct {
-	Disabled  bool      // disabled=as if the element wasn't present
-	Type      string    // node type or transformer name (e.g. walled, list)
-	Delimiter string    // element delimiter
-	Matcher   string    // prefixed element matcher name (e.g. url)
-	Element   string    // transformer main element (list element)
-	Target    string    // transformer target element (sticky target)
-	Option    string    // extra option (primarily for one-off options)
-	Templates Templates // map of formats to template strings
+	Disabled        bool      // disabled=as if the element wasn't present
+	Type            string    // node type or transformer name (e.g. walled, list)
+	Delimiter       string    // element delimiter
+	Matcher         string    // prefixed element matcher name (e.g. url)
+	Element         string    // transformer main element (list element)
+	Target          string    // transformer target element (sticky target)
+	Option          string    // extra option (primarily for one-off options)
+	Templates       Templates // map of formats to template strings
+	StickyTemplates Templates // map of formats to template strings
+	TargetTemplates Templates // map of formats to template strings
 }
 
 // ParserElements returns the elements with a valid node type converted to
@@ -107,6 +112,7 @@ type Aggregates map[string]Aggregate
 
 // Aggregate holds aggregator options.
 type Aggregate struct {
-	Type     string   // which aggregator (aggregator name)
-	Elements []string // allowed elements to aggregate from
+	Type      string   // which aggregator (aggregator name)
+	Elements  []string // allowed elements to aggregate from
+	Templates map[string]map[string]string
 }
