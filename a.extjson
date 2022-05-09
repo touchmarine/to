@@ -6,7 +6,7 @@
 				"html": '''
 <html>
 <body>
-{{{children}}}
+{{{content}}}
 </body>
 </html>
 '''
@@ -23,7 +23,7 @@
 			"Type": "leaf",
 			"Templates": {
 				"html": '''
-<span {{{attributes}}}>{{{children}}}</span>'''
+<span {{{attributes}}}>{{{content}}}</span>'''
 			}
 		},
 		"text": {
@@ -39,8 +39,19 @@
 			"Templates": {
 				"html": '''
 <h1 {{{attributes}}}>
-	{{{children}}}
+	{{{content}}}
 </h1>
+'''
+			}
+		},
+		"NumberedHeading": {
+			"Type": "rankedHanging",
+			"Delimiter": "#",
+			"Templates": {
+				"html": '''
+<h{{rank}} {{{attributes}}}>
+	{{{content}}}
+</h{{rank}}>
 '''
 			}
 		},
@@ -50,17 +61,37 @@
 			"Templates": {
 				"html": '''
 <p {{{attributes}}}>
-	{{{children}}}
+	{{{content}}}
 </p>
 '''
 			}
 		},
 		"StickyAttributes": {
 			"Type": "sticky",
-			"Element": "Attributes",
+			"Element": "attributes",
 			"Templates": {
 				"html": '''{{{stickyTarget}}}'''
 			}
+		},
+		"TableOfContents": {
+			"Type": "hanging",
+			"Delimiter": ".toc",
+			"Templates": {
+				"html": '''
+TOC
+{{{content}}}
+'''
+			}
+		}
+	},
+	"Aggregates": {
+		"headings": {
+			"Type": "sequentialNumber",
+			"Elements": ["NumberedHeading"] 
+		},
+		"NumberedHeadings": {
+			"Type": "sequentialNumber",
+			"Elements": ["NumberedHeading"] 
 		}
 	}
 }

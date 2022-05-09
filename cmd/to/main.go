@@ -20,9 +20,11 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/cbroglie/mustache"
+	"github.com/gosimple/slug"
 	"github.com/touchmarine/to/config"
 	"github.com/touchmarine/to/matcher"
 	"github.com/touchmarine/to/node"
@@ -36,6 +38,10 @@ import (
 	"github.com/touchmarine/to/transformer/sequentialnumber"
 	"github.com/touchmarine/to/transformer/sticky"
 )
+
+func init() {
+	slug.MaxLength = 20
+}
 
 const version = "1.0.0-beta.1"
 
@@ -575,7 +581,7 @@ func transformers(elements config.Elements) transformer.Group {
 }
 
 func build(cfg *config.Config, root *node.Node, format string) {
-	o, err := render(cfg, root, format, "")
+	o, err := render(cfg, root, format, nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "render: %v\n", err)
 		os.Exit(1)
@@ -615,33 +621,84 @@ func build(cfg *config.Config, root *node.Node, format string) {
 	//}
 }
 
-func render(cfg *config.Config, n *node.Node, format string, attr string) (string, error) {
+func render(cfg *config.Config, n *node.Node, format string, attrs map[string]interface{}) (string, error) {
+	if attrs == nil {
+		attrs = map[string]interface{}{}
+	}
+
+	// get element content—text value if text otherwise rendered children
+	var cont string
+	if n.Value != "" {
+		cont = n.Value
+	} else {
+		var err error
+		cont, err = renderChildren(cfg, n, format)
+		if err != nil {
+			return "", fmt.Errorf("renderChildren: %w", err)
+		}
+	}
+
+	// get rank from node data
+	var rank string
+	if v, ok := n.Data[parser.KeyRank]; ok {
+		switch r := v.(type) {
+		case int:
+			rank = strconv.Itoa(r)
+		case string:
+			rank = r
+		default:
+			return "", fmt.Errorf("rank is neither int nor string (%T %s)", n.Data[parser.KeyRank], n)
+		}
+	}
+
+	// add id attribute to all ranked hanging elements (they usually denote
+	// sections) and to elements with an id attribute
+	if v, ok := attrs["id"]; ok {
+		var new string
+		switch id := v.(type) {
+		case string:
+			// TODO: must start with a letter
+			new = id
+		default:
+			return "", fmt.Errorf("attribute id is not a string (%T %s)", v, v)
+		}
+		attrs["id"] = new
+	} else {
+		if n.Type == node.TypeRankedHanging {
+			id := slug.Make(n.TextContent())
+			attrs["id"] = id
+		}
+	}
+
+	// serialize attributes map to html-formatted attribute string
+	attrStr := string(totemplate.AttributesToHTML(attrs))
+
 	e := cfg.Elements[n.Element]
+
+	// get sticky element and its target
 	var st, tgt string
 	if e.Type == "sticky" {
-		s, t, attrStr, err := handleSticky(n, e)
+		s, t, m, err := handleSticky(n, e)
 		if err != nil {
 			return "", fmt.Errorf("handleSticky: %w", err)
 		}
-		st, err = render(cfg, s, format, attrStr)
+		st, err = render(cfg, s, format, copyMap(m))
 		if err != nil {
 			return "", fmt.Errorf("render sticky: %v", err)
 		}
-		tgt, err = render(cfg, t, format, attrStr)
+		tgt, err = render(cfg, t, format, copyMap(m))
 		if err != nil {
 			return "", fmt.Errorf("render sticky target: %v", err)
 		}
 	}
-	chldn, err := renderChildren(cfg, n, format)
-	if err != nil {
-		return "", fmt.Errorf("renderChildren: %w", err)
-	}
+
+	// render template
 	m := map[string]string{
-		"content":      n.Value, // only for text
-		"attributes":   attr,    // passed from parent (from sticky elements)
+		"content":      cont,    // text value if text otherwise rendered children
+		"rank":         rank,    // node's rank
+		"attributes":   attrStr, // passed from parent (from sticky elements)
 		"sticky":       st,      // sticky element
 		"stickyTarget": tgt,     // the element onto which sticky sticks to
-		"children":     chldn,   // rendered children
 	}
 	tpl, err := elementTemplate(n.Element, e, format)
 	if err != nil {
@@ -652,6 +709,17 @@ func render(cfg *config.Config, n *node.Node, format string, attr string) (strin
 		return "", fmt.Errorf("mustache render: %v", err)
 	}
 	return out, nil
+}
+
+func copyMap(m map[string]interface{}) map[string]interface{} {
+	if m == nil {
+		return nil
+	}
+	n := make(map[string]interface{}, len(m))
+	for k, v := range m {
+		n[k] = v
+	}
+	return n
 }
 
 func elementTemplate(nm string, e config.Element, format string) (string, error) {
@@ -665,9 +733,9 @@ func elementTemplate(nm string, e config.Element, format string) (string, error)
 	return tpl, nil
 }
 
-func handleSticky(n *node.Node, e config.Element) (*node.Node, *node.Node, string, error) {
+func handleSticky(n *node.Node, e config.Element) (*node.Node, *node.Node, map[string]interface{}, error) {
 	if e.Type != "sticky" {
-		return nil, nil, "", fmt.Errorf("element not of type sticky")
+		return nil, nil, nil, fmt.Errorf("element not of type sticky")
 	}
 
 	var s, t *node.Node
@@ -679,10 +747,10 @@ func handleSticky(n *node.Node, e config.Element) (*node.Node, *node.Node, strin
 		t = n.LastChild
 	}
 	if s == nil {
-		return nil, nil, "", fmt.Errorf("nil sticky node")
+		return nil, nil, nil, fmt.Errorf("nil sticky node")
 	}
 	if t == nil {
-		return nil, nil, "", fmt.Errorf("nil sticky target node")
+		return nil, nil, nil, fmt.Errorf("nil sticky target node")
 	}
 
 	var a *node.Node
@@ -692,19 +760,18 @@ func handleSticky(n *node.Node, e config.Element) (*node.Node, *node.Node, strin
 	case t.Element:
 		a = t
 	}
-	var attrStr string
+	var m map[string]interface{}
 	if a != nil {
-		m := totemplate.ParseAttributes(a.TextContent())
-		attrStr = string(totemplate.AttributesToHTML(m))
+		m = totemplate.ParseAttributes(a.TextContent())
 	}
-	return s, t, attrStr, nil
+	return s, t, m, nil
 }
 
 func renderChildren(cfg *config.Config, n *node.Node, format string) (string, error) {
 	var b strings.Builder
 	chldn := totemplate.ElementChildren(n)
 	for _, c := range chldn {
-		o, err := render(cfg, c, format, "")
+		o, err := render(cfg, c, format, nil)
 		if err != nil {
 			return "", fmt.Errorf("render: %w", err)
 		}

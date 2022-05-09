@@ -3,7 +3,7 @@
 		"root": {
 			"Type": "container",
 			"Templates": {
-				"html": "<html>\n<body>\n{{{children}}}\n</body>\n</html>\n"
+				"html": "<html>\n<body>\n{{{content}}}\n</body>\n</html>\n"
 			}
 		},
 		"attributes": {
@@ -16,7 +16,7 @@
 		"textBlock": {
 			"Type": "leaf",
 			"Templates": {
-				"html": "<span {{{attributes}}}>{{{children}}}</span>"
+				"html": "<span {{{attributes}}}>{{{content}}}</span>"
 			}
 		},
 		"text": {
@@ -30,22 +30,46 @@
 			"Type": "hanging",
 			"Delimiter": "=",
 			"Templates": {
-				"html": "<h1 {{{attributes}}}>\n\t{{{children}}}\n</h1>\n"
+				"html": "<h1 {{{attributes}}}>\n\t{{{content}}}\n</h1>\n"
+			}
+		},
+		"NumberedHeading": {
+			"Type": "rankedHanging",
+			"Delimiter": "#",
+			"Templates": {
+				"html": "<h{{rank}} {{{attributes}}}>\n\t{{{content}}}\n</h{{rank}}>\n"
 			}
 		},
 		"Paragraph": {
 			"Type": "paragraph",
 			"Option": "leaf",
 			"Templates": {
-				"html": "<p {{{attributes}}}>\n\t{{{children}}}\n</p>\n"
+				"html": "<p {{{attributes}}}>\n\t{{{content}}}\n</p>\n"
 			}
 		},
 		"StickyAttributes": {
 			"Type": "sticky",
-			"Element": "Attributes",
+			"Element": "attributes",
 			"Templates": {
 				"html": "{{{stickyTarget}}}"
 			}
+		},
+		"TableOfContents": {
+			"Type": "hanging",
+			"Delimiter": ".toc",
+			"Templates": {
+				"html": "TOC\n{{{content}}}\n"
+			}
+		}
+	},
+	"Aggregates": {
+		"headings": {
+			"Type": "sequentialNumber",
+			"Elements": ["NumberedHeading"] 
+		},
+		"NumberedHeadings": {
+			"Type": "sequentialNumber",
+			"Elements": ["NumberedHeading"] 
 		}
 	}
 }

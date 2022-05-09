@@ -1,8 +1,13 @@
 <html>
 <body>
-<h1 >
+<h1 id="c" class="b">
 	<span >A</span>
 </h1>
+TOC
+<span >C</span>
+<h2 id="b">
+	<span >B</span>
+</h2>
 
 </body>
 </html>
